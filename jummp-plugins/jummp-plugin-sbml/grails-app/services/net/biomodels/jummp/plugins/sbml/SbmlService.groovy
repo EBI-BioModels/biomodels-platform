@@ -45,7 +45,7 @@ import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RepoFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
-import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.model.ModellingApproach as MA
 import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.apache.commons.io.FileUtils
 import org.apache.commons.logging.Log
@@ -148,8 +148,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
     }
 
     @Override
-    boolean addModellingApproachAsAnnotation(RevisionTC revision,
-            ModellingApproach approach) throws ModelException {
+    boolean addModellingApproachAsAnnotation(RevisionTC revision, MA approach) throws ModelException {
         final Qualifier bqbHasProperty = Qualifier.BQB_HAS_PROPERTY
         String[] identifiers = ["http://identifiers.org/mamo/${approach?.accession}"] as String[]
         String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
@@ -189,7 +188,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         Model model = Objects.requireNonNull(document).model
 
         // resources with this pattern should be removed
-        def targetAccessionPattern = Pattern.compile(accessionPattern)
+        Pattern targetAccessionPattern = Pattern.compile(accessionPattern)
 
         List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
 
@@ -202,7 +201,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         }
 
         // find the set of resources that should be kept
-        def filteredAnnotations = cVTerms.collect { CVTerm t ->
+        List filteredAnnotations = cVTerms.collect { CVTerm t ->
             t.getResources().findAll { String xref ->
                 if (!targetAccessionPattern.matcher(xref).find()) {
                     return true
@@ -839,11 +838,8 @@ the user has attempted to update an blank value for the name attribute.""")
         files = files.findAll { it.mainFile }
 
         files.each {
-            def bis
             try {
-                File file=new File(it.path)
-                byte[] fileBytes = file.getBytes()
-                bis = new ByteArrayInputStream(fileBytes)
+                File file = new File(it.path)
                 def reader = new SBMLReader()
                 document = reader.readSBML(file)
                 if (document) {
@@ -853,7 +849,7 @@ the user has attempted to update an blank value for the name attribute.""")
             } catch(Exception ignore) {
                 ignore.printStackTrace();
             } finally {
-                bis?.close()
+
             }
         }
         return document
@@ -1189,20 +1185,20 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Override
-    ModellingApproach getModellingApproach(final RevisionTC revision) {
+    MA getModellingApproach(final RevisionTC revision) {
         SBMLDocument document = getFromCache(revision)
         def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
         guessModellingApproachFromSBMLDocument(document, rID)
     }
 
-    ModellingApproach guessModellingApproach(final File modelFile) {
+    MA guessModellingApproach(final File modelFile) {
         List<String> errors = new ArrayList<>()
         SBMLDocument document = getFileAsValidatedSBMLDocument(modelFile, errors)
         String rID = modelFile.name
         guessModellingApproachFromSBMLDocument(document, rID)
     }
 
-    private ModellingApproach guessModellingApproachFromSBMLDocument(final SBMLDocument document, final String rID) {
+    private MA guessModellingApproachFromSBMLDocument(final SBMLDocument document, final String rID) {
         if (null == document) {
             log.error("Cannot extract modelling approach from $rID as we could not parse its main files")
             return null
@@ -1235,7 +1231,7 @@ the user has attempted to update an blank value for the name attribute.""")
                 log.warn("Revision $rID has invalid modelling approach '$first'")
                 return null
             }
-            ModellingApproach approach = ModellingApproach.findByResourceOrAccession(first, parts[1])
+            MA approach = MA.findByResourceOrAccession(first, parts[1])
             log.info("Revision $rID declares modelling approach ${approach?.name}")
             return approach
         }
@@ -1255,7 +1251,7 @@ the user has attempted to update an blank value for the name attribute.""")
                                          Qualifier qualifier,
                                          String accessionPattern,
                                          String... identifiers) {
-        boolean validRevision = revision && "SBML".equals(revision.format.identifier)
+        boolean validRevision = revision && "SBML" == revision.format.identifier
         boolean validIdentifiers = null != identifiers && 0 != identifiers.length
         if (!validIdentifiers || !validRevision) {
             String msg = """A revision whose main files are encoded in SBML and at least one model \

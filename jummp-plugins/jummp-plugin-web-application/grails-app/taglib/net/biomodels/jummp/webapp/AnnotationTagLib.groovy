@@ -96,7 +96,7 @@ class BioModelsOrderedStatement {
         this.listRRTC = listRRTC
     }
 
-    public int order() {
+    int order() {
         List<String> collectionNames = listRRTC.collect {
             it.collectionName
         }

@@ -92,7 +92,7 @@ class SubmissionController implements InitializingBean {
                 working.put("accessType", "create")
                 working.put("changesMade", [])
             } else {
-                HashSet<String> changesMade = working.get("changesMade")
+                HashSet<String> changesMade = working.get("changesMade") as HashSet<String>
                 changesMade.addAll(result)
                 HashSet<String> changes = changesMade.sort()
                 working.put("changesMade", changes)
@@ -175,7 +175,7 @@ class SubmissionController implements InitializingBean {
                 e["detectedModelInfo"] = detectedModelInfo
             }
             // check for the valid file name
-            if (!FileHelper.isFileNameAcceptable(e["filename"])) {
+            if (!FileHelper.isFileNameAcceptable(e["filename"] as String)) {
                 String warningMessage = """\
 Please make sure the file name '${e["filename"]}' only containing alphanumeric characters, spaces, \
 hyphens, plus signs and underscores. It should also have a proper file extension.

@@ -2247,8 +2247,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             String[] idXRefs = [revision.model.submissionId, publicationId].collect { String id ->
                 "http://identifiers.org/biomodels.db/$id".toString()
             } as String[]
-            boolean revisionUpdated = sbmlService.addModelIdentifiersAsAnnotation(revisionTC,
-                 idXRefs)
+            boolean revisionUpdated = sbmlService.addModelIdentifiersAsAnnotation(revisionTC, idXRefs)
 
             if (!revisionUpdated) {
                 return revision // nothing else to do
