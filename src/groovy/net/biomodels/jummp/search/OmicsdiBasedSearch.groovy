@@ -28,12 +28,11 @@ import grails.transaction.NotTransactional
 import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
-import groovy.json.JsonSlurper
 import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
+import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
 import net.biomodels.jummp.core.ModelSearchStrategy as MST
-import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.events.ModelOperationEvent
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelState
@@ -43,7 +42,6 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.utils.EbiSearchHelper
-import net.biomodels.jummp.utils.WebServiceFetcher
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware as GCA
@@ -408,7 +406,9 @@ The root cause is ${e.toString()}""")
     }
 
     void clearIndex(RevisionTC revisionTC) {
-        List revisionAnnotationRecords = RevisionAnnotation.findAll { revision.id == rev.id }
+        List revisionAnnotationRecords = RevisionAnnotation.findAll {
+            revision.id == revisionTC.id
+        }
         List listElementAnnotation = revisionAnnotationRecords*.elementAnnotation
 
         // delete RevisionAnnotation
