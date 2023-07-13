@@ -144,7 +144,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             throws ModelException {
         Qualifier qualifier = Qualifier.BQM_IS
         String accessionPattern = "biomodels.db[/:](BIOMD|MODEL)[0-9]{10}"
-        addAnnotations2Model(revision, qualifier, accessionPattern, identifiers)
+        addAnnotations2Model(TypeAnno.MODEL_IDENTIFIER, revision, qualifier, accessionPattern, identifiers)
     }
 
     @Override
@@ -152,7 +152,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         final Qualifier bqbHasProperty = Qualifier.BQB_HAS_PROPERTY
         String[] identifiers = ["http://identifiers.org/mamo/${approach?.accession}"] as String[]
         String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
-        addAnnotations2Model(revision, bqbHasProperty, accessionPattern, identifiers)
+        addAnnotations2Model(TypeAnno.MODELLING_APPROACH, revision, bqbHasProperty, accessionPattern, identifiers)
     }
 
     @Override
@@ -172,11 +172,11 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             throw new UnsupportedOperationException("BioModels only supports to add an annotation to SBML file for PubMed and DOI.")
         }
         String[] identifiers = ["http://identifiers.org/$namespace:$publication.link"] as String[]
-        addAnnotations2Model(revision, bqmIsDescribedBy, accessionPattern, identifiers)
+        addAnnotations2Model(TypeAnno.PUBLICATION, revision, bqmIsDescribedBy, accessionPattern, identifiers)
     }
 
-
-    private boolean addAnnotationsIfNeeded(RevisionTC revision,
+    private boolean addAnnotationsIfNeeded(TypeAnno typeAnno,
+                                           RevisionTC revision,
                                            SBMLDocument document,
                                            Qualifier qualifier,
                                            String accessionPattern,
@@ -184,72 +184,26 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         String rID = Objects.requireNonNull(revision).identifier()
         Model model = Objects.requireNonNull(document).model
 
-        MA ma = revision.model.modellingApproach
-        if (ma.accession.toLowerCase() != "other") {
-            // resources with this pattern should be removed
-            Pattern targetAccessionPattern = Pattern.compile(accessionPattern)
-
-            List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
-            // there is no CVTerm associated with the qualifier. So add all without checking
-            if (cVTerms.isEmpty()) {
-                def cvTerm = new CVTerm(qualifier, identifiers)
-                if (!model.addCVTerm(cvTerm)) {
-                    throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
+        boolean retVal = false
+        switch (typeAnno) {
+            case TypeAnno.MODEL_IDENTIFIER:
+                retVal = doAddAnnotations(model, revision, rID, qualifier, accessionPattern, identifiers)
+                break
+            case TypeAnno.MODELLING_APPROACH:
+                MA ma = revision.model.modellingApproach
+                if (ma?.accession.toLowerCase() != "other") {
+                    retVal = doAddAnnotations(model, revision, rID, qualifier, accessionPattern, identifiers)
+                } else {
+                    // remove the former modelling approach if we are in the update process
+                    retVal = doRemoveAnnotation(model, revision, qualifier, rID)
                 }
-                return true
-            }
-
-            // find the set of resources that should be kept
-            List filteredAnnotations = cVTerms.collect { CVTerm t ->
-                t.getResources().findAll { String xref ->
-                    if (!targetAccessionPattern.matcher(xref).find()) {
-                        return true
-                    }
-                    return false
-                }
-            }.flatten() as List<String>
-
-            for (CVTerm t: cVTerms) {
-                if (!model.removeCVTerm(t)) {
-                    throw new ModelException(revision.model, "Could not remove CVTerm $t for revision $rID")
-                }
-            }
-
-            // add the filtered ones to be retained and newly updated terms
-            List<String> idList = Arrays.asList(identifiers)
-            filteredAnnotations.addAll(idList)
-            String[] replacementAnnotations = filteredAnnotations as String[]
-            def replacementCVTerm = new CVTerm(qualifier, replacementAnnotations)
-            boolean haveAddedNewQualifier = model.addCVTerm(replacementCVTerm)
-            if (!haveAddedNewQualifier) {
-                String msg = "Could not insert qualifier for resources ${identifiers} to revision $rID"
-                throw new ModelException(revision.model, msg)
-            }
-            true
-        } else {
-            // remove the former modelling approach if we are in the update process
-            long mId = revision.model.id
-            if (mId) {
-                MA oldMA = net.biomodels.jummp.model.Model.get(mId).modellingApproach
-                if (!oldMA) {
-                    return true
-                }
-                List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
-                List lstTermsToBeRemoved = cVTerms.collect { CVTerm t ->
-                    t.getResources().findAll { String resource ->
-                        resource == oldMA.resource
-                    }
-                }.flatten() as List<String>
-                String[] terms = lstTermsToBeRemoved as String[]
-                if (terms) {
-                    CVTerm cvTerm = new CVTerm(qualifier, terms)
-                    if (!model.removeCVTerm(cvTerm)) {
-                        throw new ModelException(revision.model, "Could not remove CVTerm $cvTerm for revision $rID")
-                    }
-                }
-            }
-            return true
+                break
+            case TypeAnno.PUBLICATION:
+                retVal = doAddAnnotations(model, revision, rID, qualifier, accessionPattern, identifiers)
+                break
         }
+
+        return retVal
     }
 
     private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
@@ -1266,12 +1220,14 @@ the user has attempted to update an blank value for the name attribute.""")
      * This utility is used to add annotations in a batch mode. The requirement is that these annotations
      * have to go with the identical biological qualifier.
      *
+     * @param typeAnno The type of annotations
      * @param revision  The Revision instance denoting the given model
      * @param qualifier The Qualifier instance denoting the biological qualifier
      * @param identifiers   The list of identifiers.org based URLs denoting the input annotations
      * @return a boolean value indicating whether the service finished successfully or failed.
      */
-    private boolean addAnnotations2Model(RevisionTC revision,
+    private boolean addAnnotations2Model(TypeAnno typeAnno,
+                                         RevisionTC revision,
                                          Qualifier qualifier,
                                          String accessionPattern,
                                          String... identifiers) {
@@ -1283,18 +1239,91 @@ the user has attempted to update an blank value for the name attribute.""")
         }
         SBMLDocument document = getFromCache(revision)
         String rID = revision.identifier() ? "the revision ${revision.identifier()}" : "the provisional revision in the new submission"
-        if (null == document) {
+        if (!document) {
             log.error("Cannot add $identifiers to the main files of $rID as we could not parse its main files")
             return false
         }
 
-        boolean needsUpdating = addAnnotationsIfNeeded(revision, document, qualifier, accessionPattern, identifiers)
+        boolean needsUpdating = addAnnotationsIfNeeded(typeAnno, revision, document, qualifier, accessionPattern, identifiers)
         if (!needsUpdating) {
             return false
         }
 
         writeModelMainFile(document, revision, rID, identifiers)
     }
+
+    private boolean doAddAnnotations(Model model,
+                                     RevisionTC revision,
+                                     String rID,
+                                     Qualifier qualifier,
+                                     String accessionPattern,
+                                     String...identifiers) {
+        // resources with this pattern should be removed
+        Pattern targetAccessionPattern = Pattern.compile(accessionPattern)
+
+        List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+        // there is no CVTerm associated with the qualifier. So add all without checking
+        if (cVTerms.isEmpty()) {
+            def cvTerm = new CVTerm(qualifier, identifiers)
+            if (!model.addCVTerm(cvTerm)) {
+                throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
+            }
+            return true
+        }
+
+        // find the set of resources that should be kept
+        List filteredAnnotations = cVTerms.collect { CVTerm t ->
+            t.getResources().findAll { String xref ->
+                if (!targetAccessionPattern.matcher(xref).find()) {
+                    return true
+                }
+                return false
+            }
+        }.flatten() as List<String>
+
+        for (CVTerm t: cVTerms) {
+            if (!model.removeCVTerm(t)) {
+                throw new ModelException(revision.model, "Could not remove CVTerm $t for revision $rID")
+            }
+        }
+
+        // add the filtered ones to be retained and newly updated terms
+        List<String> idList = Arrays.asList(identifiers)
+        filteredAnnotations.addAll(idList)
+        String[] replacementAnnotations = filteredAnnotations as String[]
+        def replacementCVTerm = new CVTerm(qualifier, replacementAnnotations)
+        boolean haveAddedNewQualifier = model.addCVTerm(replacementCVTerm)
+        if (!haveAddedNewQualifier) {
+            String msg = "Could not insert qualifier for resources ${identifiers} to revision $rID"
+            throw new ModelException(revision.model, msg)
+        }
+        true
+    }
+
+    private boolean doRemoveAnnotation(Model model, RevisionTC revision, Qualifier qualifier, String rID) {
+        long mId = revision.model.id
+        if (mId) {
+            MA oldMA = net.biomodels.jummp.model.Model.get(mId).modellingApproach
+            if (!oldMA) {
+                return true
+            }
+            List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+            List lstTermsToBeRemoved = cVTerms.collect { CVTerm t ->
+                t.getResources().findAll { String resource ->
+                    resource == oldMA.resource
+                }
+            }.flatten() as List<String>
+            String[] terms = lstTermsToBeRemoved as String[]
+            if (terms) {
+                CVTerm cvTerm = new CVTerm(qualifier, terms)
+                if (!model.removeCVTerm(cvTerm)) {
+                    throw new ModelException(revision.model, "Could not remove CVTerm $cvTerm for revision $rID")
+                }
+            }
+        }
+        return true
+    }
+
     private boolean writeModelMainFile(SBMLDocument document, RevisionTC revision, String rID, String... identifiers) {
         File sbmlFile = fetchMainFileFromRevision(revision)
         SBMLWriter sbmlWriter = new SBMLWriter()
@@ -1312,4 +1341,9 @@ due to an issue with JSBML"""
             return result
         }
     }
+
+    enum TypeAnno {
+        MODEL_IDENTIFIER, MODELLING_APPROACH, PUBLICATION
+    }
 }
+
