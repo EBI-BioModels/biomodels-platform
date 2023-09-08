@@ -455,7 +455,11 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
                 MTC model = revision.model
                 PubTC pub = model.publication
                 if (pub) {
-                    modelService.addPublicationAsAnnotation(revision, pub)
+                    boolean result = modelService.addPublicationAsAnnotation(revision, pub)
+                    if (!result) {
+                        logger.error("""\
+There has been error while adding ${pub.link} (${pub.linkProvider.linkType}) to the model main file of the ${revision.identifier()}. Otherwise, BioModels only supports to add a PubMed or DOI publication as an annotation to SBML document.""")
+                    }
                 }
             }
         }

@@ -2529,7 +2529,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             boolean result = sbmlService.addPublicationAsAnnotation(revisionTC, pubTC)
             if (!result) {
                 logger.error("""\
-There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType}) to the model main file of the ${revisionTC.identifier()}""")
+There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType}) to the model main file of the ${revisionTC.identifier()}. Otherwise, BioModels only supports to add a PubMed or DOI publication as an annotation to SBML document.""")
             }
         }
     }
