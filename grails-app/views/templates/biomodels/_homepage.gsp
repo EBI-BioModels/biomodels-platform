@@ -84,6 +84,8 @@
     }
 </script>
 <div id="hp-intro" class="row text-center top-widget-area">
+    <!-- Announcement area -->
+    <!--
     <div class="columns small-12 medium-12 large-12">
         <div id="announcement"
              style="padding: 0px; background-color: #ff9800; margin-bottom: 15px; font-size: large">
@@ -91,6 +93,7 @@
                target="_blank">"Model of the year" Competition 2023</a>. Evaluation under progress!</h3>
         </div>
     </div>
+    -->
     <div class="large-12 medium-12 small-12 columns">
     <p class="welcome-message" style="margin-top: 0.5em;">
         BioModels is a repository of mathematical models of biological and biomedical systems.
