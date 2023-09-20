@@ -103,7 +103,7 @@ class DataExtractor {
     void lookForSedMlFileInModel(final String submissionId) {
         List files = ctx.modelDelegateService.retrieveModelFiles(submissionId)
         boolean isSedMl = files*.filename.find { name ->
-            def ext = name.getAt((name.lastIndexOf('.')+1)..(name.length()-1))
+            String ext = name[(name.lastIndexOf('.') + 1)..(name.length() - 1)]
             ext == 'sedml'
         }
         if (isSedMl) {
