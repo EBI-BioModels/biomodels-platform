@@ -392,6 +392,11 @@ interface IModelService {
      * submission, and true if there are multiple identifier schemes defined - e.g. submission,
      * publication etc.
      */
+
+    String getVcsIdentifier(final String perennialIdentifier)
+
+    Map getRevisionsState(final String modelId)
+
     boolean haveMultiplePerennialIdentifierTypes()
 
     /**

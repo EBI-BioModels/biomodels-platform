@@ -355,6 +355,26 @@ class ModelController {
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def revisionsState() {
+        // PageFragmentCachingFilter throws a NPE for unsupported format parameter values
+        if (!(response.format in ['json', 'xml'])) {
+            render view: '/errors/error415', status: 415
+            return
+        }
+        try {
+            Map resultMap = modelDelegateService.getRevisionsState(params.id)
+            withFormat {
+                json { respond resultMap }
+                xml { respond resultMap }
+                '*' { render status: 415, view: "/errors/error415" }
+            }
+        } catch(Exception err) {
+            LOGGER.error err.message, err
+            forward controller: 'errors', action: 'error404'
+        }
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def identifiers() {
         if (!(response.format in ['json', 'xml'])) {
             render view: '/errors/error415', status: 415

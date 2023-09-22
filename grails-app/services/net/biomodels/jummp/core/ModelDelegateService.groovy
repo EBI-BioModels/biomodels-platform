@@ -259,6 +259,26 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return null
     }
 
+    Map getRevisionsState(final String modelId) {
+        Model model = modelService.getModel(modelId)
+
+        // for example: "aaa/2023-09-08T13-04-45-193_MODEL2309080001/"
+        String vcsId = model.vcsIdentifier
+        vcsId = vcsId?.take(3)
+
+        List publishedRevs = new ArrayList()
+        List privateRevs = new ArrayList()
+        for (Revision revision : model.revisions) {
+            if (revision.state == ModelState.PUBLISHED) {
+                publishedRevs.add(revision.revisionNumber)
+            } else if (revision.state == ModelState.UNPUBLISHED) {
+                privateRevs.add(revision.revisionNumber)
+            }
+        }
+
+        ["vcsId": vcsId, "publishedRevs": publishedRevs, "privateRevs": privateRevs]
+    }
+
     ModelTC uploadModel(List<File> modelFiles, ModelTC meta) throws
                 ModelException {
         return new ModelAdapter(model: modelService.uploadModelAsList(modelFiles, meta)).toCommandObject()
@@ -604,6 +624,11 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             }
         }
         results
+    }
+
+    String getVcsIdentifier(final String id) {
+        Model model = modelService.findByPerennialIdentifier(id)
+        model.vcsIdentifier
     }
 
     int updateHistory(String modelId, String user, String accessType,
