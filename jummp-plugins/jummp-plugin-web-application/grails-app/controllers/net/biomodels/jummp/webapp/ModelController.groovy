@@ -37,6 +37,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
+import grails.transaction.Transactional
 import grails.util.Environment
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -157,7 +158,7 @@ class ModelController {
         }
     }
 
-    @grails.transaction.Transactional
+    @Transactional
     def showWithMessage() {
         flash["giveMessage"] = params.flashMessage
         StringBuilder modelId = new StringBuilder(params.id as String)
@@ -168,7 +169,7 @@ class ModelController {
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-    @grails.transaction.Transactional
+    @Transactional
     def show() {
         RevisionTransportCommand rev
         boolean isPrivateModel = false
@@ -210,6 +211,11 @@ class ModelController {
                     return
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+                    String vcsId = modelDelegateService.getVcsIdentifier(PERENNIAL_ID)
+                    String modelParentFolder = ""
+                    if (vcsId) {
+                        modelParentFolder = vcsId.take(3)
+                    }
                     RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     boolean showPublishOption = modelDelegateService.canPublish(revision)
                     boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
@@ -281,7 +287,8 @@ class ModelController {
                                  bmTags                 : tags,
                                  serverURL              : grailsApplication.config.grails.serverURL,
                                  canAskReviewerAccount  : canAskReviewerAccount,
-                                 canSeeCurationTab      : canSeeCurationTab
+                                 canSeeCurationTab      : canSeeCurationTab,
+                                 modelParentFolder      : modelParentFolder
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model

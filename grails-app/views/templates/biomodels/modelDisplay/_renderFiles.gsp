@@ -1,10 +1,19 @@
+<%@ page import="net.biomodels.jummp.core.constants.BioModels" %>
+<%@ page import="net.biomodels.jummp.core.model.ModelState" %>
 <%@ page import="net.biomodels.jummp.utils.DisplayFormat" %>
+
 <% int index = 1 %>
 <g:each in="${repoFiles}" var="file">
     <%
         String fileSize = DisplayFormat.format((double)file.size, 2)
         String downloadLink = createLink(controller: 'model',
             action: 'download', params: [id: revision.identifier(), filename: file.filename])
+        if (revision.state == ModelState.PUBLISHED) {
+            // get download link from EBI BioModels public FTP
+            String EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository"
+            String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${file.filename}"
+            downloadLink = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"
+        }
     %>
     <tr>
         <td>${file.filename}</td>
