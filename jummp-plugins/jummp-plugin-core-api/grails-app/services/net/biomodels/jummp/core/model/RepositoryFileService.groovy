@@ -21,6 +21,7 @@
 
 package net.biomodels.jummp.core.model
 
+import grails.plugins.rest.client.RestBuilder
 import grails.transaction.Transactional
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
@@ -49,10 +50,14 @@ import java.nio.file.StandardCopyOption
 class RepositoryFileService implements GrailsConfigurationAware {
     static scope = "prototype"
     private static final Logger logger = LoggerFactory.getLogger(RepositoryFileService.class)
+    def configurationService
     def modelService
     def vcsService
     def grailsApplication
+
     private String modelCacheDir
+
+    private String srvFtpDataMover
 
     /**
      * Populate the model cache directory
@@ -64,6 +69,9 @@ class RepositoryFileService implements GrailsConfigurationAware {
             String message = "The configuration file is missing the property of jummp.model.cache.dir"
             logger.debug(message)
         }
+
+        // the hostname of the server running FTP Data Mover service
+        srvFtpDataMover = co.jummp.revision.ftpdatamover.srv
     }
 
     /**
@@ -82,6 +90,14 @@ class RepositoryFileService implements GrailsConfigurationAware {
      */
     void setModelCacheDir(final String location) {
         modelCacheDir = location
+    }
+
+    String getSrvFtpDataMover() {
+        return srvFtpDataMover
+    }
+
+    void setSrvFtpDataMover(String srvFtpDataMover) {
+        this.srvFtpDataMover = srvFtpDataMover
     }
 
     /**
@@ -151,6 +167,11 @@ The revision has been checked out from VCS instead."""
             if (files?.size()) {
                 // update the cache directory of this revision
                 doUpdateModelRevisionCacheDirectory(revision)
+                if (grailsApplication.isWarDeployed()) {
+                    message = copyRevisionFilesToFtp(revision)
+                    logger.debug("sent a request to cluster to copy the revision files to FTP: $message")
+                }
+
             } else {
                 message = """The revision ${modelId} (commit id:${revision.vcsId}) has no files"""
                 logger.error(message)
@@ -344,6 +365,30 @@ for revision ${revision.dump()} without main file"""
             throw new ModelException(m, "Missing main file for the new model revision ${revision.name}")
         }
         results
+    }
+
+    String copyRevisionFilesToFtp(final Revision revision) {
+        String vcsId = revision.model.vcsIdentifier
+        String parentFolderName = vcsId.take(3)
+        String submissionId = revision.model.submissionId
+        int revisionNumber = revision.revisionNumber
+
+        Proxy proxy = configurationService.verifyHttpProxy()
+        RestBuilder rest
+        if (proxy) {
+            rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
+        } else {
+            rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
+        }
+
+        String SRV_URL = getSrvFtpDataMover()
+        String queryURL = "${SRV_URL}/model/publish/${parentFolderName}/${submissionId}/${revisionNumber}"
+        def response = rest.get(queryURL) {
+            accept("application/json")
+            contentType("application/json;charset=UTF-8")
+        }
+        logger.debug(response.toString())
+        response
     }
 
     private void doUpdateModelRevisionCacheDirectory(final Revision revision) {

@@ -524,6 +524,13 @@ Please add the setting 'jummp.search.url', pointing to a Solr instance, to your 
     }
 }
 
+// FTP Data Mover Service
+if (!(jummpConfig.jummp.revision.ftpdatamover.srv instanceof ConfigObject)) {
+    jummp.revision.ftpdatamover.srv = jummpConfig.jummp.revision.ftpdatamover.srv
+} else {
+    jummp.revision.ftpdatamover.srv = "http://0.0.0.0:8000"
+}
+
 // folder containing the exports
 if (!(jummpConfig.jummp.model.exportFolder instanceof ConfigObject)) {
     jummp.model.exportFolder = jummpConfig.jummp.model.exportFolder
