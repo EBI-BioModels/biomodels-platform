@@ -2265,6 +2265,15 @@ the perennial publication identifier to the model file.""")
             RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: revision).toCommandObject()
             indexModelRevision(toPublishTC)
         }
+
+        // publish the revision files to FTP
+        if (grailsApplication.isWarDeployed()) {
+            String message = repositoryFileService.copyRevisionFilesToFtp(revision)
+            logger.debug("""\
+sent a request to cluster to copy the files of the revision \
+${revision.model.submissionId}.${revision.revisionNumber} to FTP: ${message.toString()}""")
+        }
+
         return revision
     }
 
