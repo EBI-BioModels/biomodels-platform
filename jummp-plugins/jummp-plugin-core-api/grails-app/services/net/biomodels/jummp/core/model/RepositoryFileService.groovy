@@ -167,11 +167,6 @@ The revision has been checked out from VCS instead."""
             if (files?.size()) {
                 // update the cache directory of this revision
                 doUpdateModelRevisionCacheDirectory(revision)
-                if (grailsApplication.isWarDeployed()) {
-                    message = copyRevisionFilesToFtp(revision)
-                    logger.debug("sent a request to cluster to copy the revision files to FTP: $message")
-                }
-
             } else {
                 message = """The revision ${modelId} (commit id:${revision.vcsId}) has no files"""
                 logger.error(message)

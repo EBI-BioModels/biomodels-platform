@@ -2726,6 +2726,10 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
 
     private void updateModelCache(final Revision revision) {
         repositoryFileService.updateModelRevisionCache(revision)
+        if (grailsApplication.isWarDeployed()) {
+            String message = repositoryFileService.copyRevisionFilesToFtp(revision)
+            logger.debug("sent a request to cluster to copy the revision files to FTP: $message")
+        }
     }
 
     /**
