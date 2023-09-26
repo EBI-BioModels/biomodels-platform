@@ -363,11 +363,6 @@ for revision ${revision.dump()} without main file"""
     }
 
     String copyRevisionFilesToFtp(final Revision revision) {
-        String vcsId = revision.model.vcsIdentifier
-        String parentFolderName = vcsId.take(3)
-        String submissionId = revision.model.submissionId
-        int revisionNumber = revision.revisionNumber
-
         Proxy proxy = configurationService.verifyHttpProxy()
         RestBuilder rest
         if (proxy) {
@@ -377,7 +372,16 @@ for revision ${revision.dump()} without main file"""
         }
 
         String SRV_URL = getSrvFtpDataMover()
-        String queryURL = "${SRV_URL}/model/publish/${parentFolderName}/${submissionId}/${revisionNumber}"
+        String vcsId = revision.model.vcsIdentifier
+        String parentFolderName = vcsId.take(3)
+        String submissionId = revision.model.submissionId
+        int revisionNumber = revision.revisionNumber
+        String site = "prod"
+        String serverURL = grailsApplication.config.grails.serverURL as String
+        if (serverURL.contains("wwwdev")) {
+            site = "dev"
+        }
+        String queryURL = "${SRV_URL}/model/publish/${site}/${parentFolderName}/${submissionId}/${revisionNumber}"
         def response = rest.get(queryURL) {
             accept("application/json")
             contentType("application/json;charset=UTF-8")
