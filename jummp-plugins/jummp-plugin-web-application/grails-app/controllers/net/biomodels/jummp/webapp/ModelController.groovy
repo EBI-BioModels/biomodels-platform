@@ -43,6 +43,7 @@ import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.util.ReactomeEnvironment
@@ -728,7 +729,7 @@ class ModelController extends CommonController {
         int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
         ByteArrayInputStream  stream = null
         try {
-            if (file.length() > 100*1024*1024) {
+            if (file.length() > BioModels.MAX_FILE_SIZE) {
                 String warnMsg = "File ${file.name} is too large to be served now."
                 LOGGER.debug(warnMsg)
                 println(warnMsg)

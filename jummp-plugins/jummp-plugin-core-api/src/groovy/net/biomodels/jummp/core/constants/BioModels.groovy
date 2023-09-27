@@ -8,4 +8,7 @@ final class BioModels {
     static final String BM_PROD_SEARCH_URL_PREFIX = "$BM_ROOT_URL/search"
     static final String EBI_PROD_WS_REST_BM_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels"
     static final String EBI_BM_PUBLIC_FTP = "https://ftp.ebi.ac.uk/pub/databases/biomodels"
+
+    // the maximum file size allowed to upload and download
+    static long MAX_FILE_SIZE = 500 * 1024 * 1024
 }

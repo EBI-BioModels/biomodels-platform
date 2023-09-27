@@ -6,6 +6,7 @@
 <g:each in="${repoFiles}" var="file">
     <%
         String fileSize = DisplayFormat.format((double)file.size, 2)
+        boolean isBigFile = file.size >= BioModels.MAX_FILE_SIZE
         String previewLink = createLink(controller: 'model',
             action: 'download', params: [id: revision.identifier(), filename: file.filename])
         String downloadLink = previewLink
