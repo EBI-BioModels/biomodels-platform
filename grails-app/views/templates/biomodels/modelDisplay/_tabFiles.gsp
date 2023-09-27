@@ -58,17 +58,19 @@
 </div>
 
 <script type="text/javascript">
-    var formats = ["text", "txt", "xml", "pdf", "jpg", "jpeg", "gif", "png",
-        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "cc3d", "zip"];
+    const formats = ["text", "txt", "xml", "pdf", "jpg", "jpeg", "gif", "png",
+        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "cc3d", "zip", "onnx", "owl", "vcml"];
     $('[id^="previewButton"]').on('click', function (e) {
         e.preventDefault();
         const filename = $(this).attr("data-file-name");
         const mimeType = $(this).attr("data-file-mime-type");
         const downloadLink = $(this).attr("data-download-link");
+        const previewLink = $(this).attr("data-preview-link");
         const showPreview = $(this).attr("data-preview");
+        const isBigFile = $(this).attr("data-is-big-file") === "true";
 
         $.ajax({
-            url: downloadLink + "&preview=" + showPreview + "&inline=true",
+            url: previewLink + "&preview=" + showPreview + "&inline=true",
             dataType: "text",
             success: function(data) {
                 $('#boxTitle').html(filename);
@@ -79,25 +81,34 @@
                     let mdlType = false;
                     let xmlType = false;
                     let csvType = false;
+                    let onnxType = false;
                     // var msDocument = false;
                     const content = [];
                     for (let index in formats) {
                         let format = formats[index];
-                        if (mimeType.indexOf(format) != -1) {
+                        if (mimeType.indexOf(format) !== -1) {
                             if (format === "jpg" || format === "jpeg" || format === "gif" ||
                                 format === "png" || format === "bmp" || format === "svg") {
                                 imageType = true;
-                            } else if (format === "txt" || format === "text" || format === "xml" || format === "cc3d") {
+                            } else if (format === "txt" || format === "text" ||
+                                format === "xml" || format === "cc3d" ||
+                                format === "onnx" || format === "vcml" || format === "owl") {
                                 if (filename.indexOf('.mdl') !== -1) {
                                     mdlType = true;
                                     fileExtension = "mdl";
                                 }
-                                if (filename.indexOf('.xml') !== -1 || filename.indexOf('.cc3d') !== -1 ) {
+                                if (filename.indexOf('.xml') !== -1 ||
+                                    filename.indexOf('.cc3d') !== -1 ||
+                                    filename.indexOf('.vcml') !== -1 ||
+                                    filename.indexOf(".owl") !== -1) {
                                     xmlType = true;
-                                    fileExtension = "Xml";
+                                    fileExtension = "xml";
                                 }
                                 if (filename.indexOf('.csv') !== -1) {
                                     csvType = true;
+                                }
+                                if (filename.lastIndexOf('.onnx') !== -1) {
+                                    onnxType = true;
                                 }
                             } else if (format === "pdf") {
                                 pdfType = true;
@@ -118,13 +129,12 @@
                     // create a placeholder where the content is put down
                     $('#previewContentContainer').html(content.join(""));
                     if (data === "BIG_FILE") {
-                        //alert("File " + filename + " is too big to be served now. Please contact us if you really need to download this file.");
-                        // $('#previewContentContainer').html("");
                         addPreviewNotification(showPreview, downloadLink, true);
-                        return;
+                    } else if (onnxType) {
+                        addPreviewNotification(showPreview, downloadLink, false)
                     } else if (mdlType || xmlType) {
                         let brush;
-                        if (fileExtension == "mdl") {
+                        if (fileExtension === "mdl") {
                             brush = new SyntaxHighlighter.brushes.mdl();
                         } else {
                             brush = new SyntaxHighlighter.brushes.Xml();
@@ -133,10 +143,10 @@
                         const html = brush.getHtml(data);
                         $('#filegoeshere').html(html);
                         $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
-                        addPreviewNotification(showPreview, downloadLink);
+                        addPreviewNotification(showPreview, downloadLink, isBigFile);
                         //$(".syntaxhighlighter").css({'max-height': (screen.height * 0.45)+'px'});
                     } else if (imageType) {
-                        const img = $("<img style='width: 100%;' />").attr('src', downloadLink + "&inline=true")
+                        const img = $("<img style='width: 100%;' />").attr('src', previewLink + "&inline=true")
                             .load(function () {
                                 if (!this.complete
                                     || typeof this.naturalWidth === "undefined"
@@ -147,21 +157,21 @@
                                 }
                             });
                         $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
-                        addPreviewNotification(showPreview, downloadLink);
+                        addPreviewNotification(showPreview, downloadLink, isBigFile);
                     } else if (pdfType) {
                         const h = $('#previewContentContainer').height() * 0.98;
                         let cont = [];
                         cont.push("<iframe width='100%' height='" + h + "px' src='");
-                        cont.push(downloadLink+"&inline=true' />");
+                        cont.push(previewLink+"&inline=true' />");
                         const frame = $(cont.join(""));
                         $('#filegoeshere').append(frame);
                         $('#previewContentContainer').removeClass("forCode").addClass("forPdf");
-                        addPreviewNotification(showPreview, downloadLink);
+                        addPreviewNotification(showPreview, downloadLink, isBigFile);
                     } else if (filename.indexOf('.csv') === -1 && (mimeType.indexOf("txt") !== -1 || mimeType.indexOf("text") !== -1)) {
                         data = data.replace(/(\r\n|\n|\r)/gm, '<br/>');
                         $("#filegoeshere").html(data);
                         $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
-                        addPreviewNotification(showPreview, downloadLink);
+                        addPreviewNotification(showPreview, downloadLink, isBigFile);
                     } else if (csvType) {
                         const plottingData = getCSVData(data);
                         const handsontable = $("<div id='handsontable' class='hot handsontable htRowHeaders htColumnHeaders'></div>");
@@ -173,7 +183,7 @@
                             colHeaders: true, filters: true, columnSorting: true
                         });
                         $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
-                        addPreviewNotification(showPreview, downloadLink);
+                        addPreviewNotification(showPreview, downloadLink, isBigFile);
                     } else {
                         $("#notificationgoeshere").show();
                         let message = "<h3>Files of this type cannot be displayed here. Please <a href='";
@@ -191,25 +201,26 @@
     });
 
     function addPreviewNotification(showNotification, downloadLink, bigFile = false) {
-        if (showNotification && !bigFile) {
-            $("#notificationgoeshere").html("<h4 style='color: darkorange'>As this is a large file, only a part of it is loaded below. " +
-                "<a id='loadFileCompletely' href='" + downloadLink + "'>Click here</a> " +
-                "to download the file to your device. Please be aware that downloading it may be slow.</h4");
-        } else if (bigFile) {
-            $("#notificationgoeshere").html("<h4 style='color: darkorange'>The file is too large for serving now. " +
-                "Please contact us if you actually need to download it.</h4>");
-        }
-        else {
+        if (showNotification) {
+            if (bigFile) {
+                $("#notificationgoeshere").html("<h4 style='color: darkorange'>The file is too large to preview it now. " +
+                    "Please contact us if you're having trouble downloading it.</h4>");
+            } else {
+                $("#notificationgoeshere").html("<h4 style='color: darkorange'>Only a part of the file is loaded below. " +
+                    "<a id='loadFileCompletely' href='" + downloadLink + "'>Click here</a> " +
+                    "to download the file to your device.</h4");
+            }
+        } else {
             $("#notificationgoeshere").hide();
         }
     }
 
     function getCSVData(data) {
-        var lines = data.match(/[^\r\n]+/g);
-        var data = [];
-        for (var id = 0; id < lines.length; id++) {
-            var line = lines[id];
-            var fields = line.split(",");
+        const lines = data.match(/[^\r\n]+/g);
+        data = [];
+        for (let id = 0; id < lines.length; id++) {
+            const line = lines[id];
+            const fields = line.split(",");
             data.push(fields);
         }
         return data;

@@ -24,8 +24,10 @@
         <td>${fileSize}</td>
         <td><a id="previewButton${index++}" data-file-mime-type="${file.mimeType}"
                data-file-name="${file.filename}"
-               data-download-link="${previewLink}"
+               data-preview-link="${previewLink}"
                data-preview="${file.showPreview}"
+               data-is-big-file = "${isBigFile}"
+               data-download-link = "${downloadLink}"
                data-open="filePreviewBox">Preview</a> |
             <a href="${downloadLink}" style="text-decoration: none">Download</a></td>
     </tr>
