@@ -39,14 +39,15 @@ import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import grails.transaction.Transactional
 import grails.util.Environment
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.util.ReactomeEnvironment
-import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
-import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand as CNTC
+import net.biomodels.jummp.deployment.biomodels.TagTransportCommand as TagTC
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
@@ -68,7 +69,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class ModelController {
+class ModelController extends CommonController {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelController.class)
     private final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
     IFileSystemService fileSystemService
@@ -233,7 +234,7 @@ class ModelController {
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
                     List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId(PERENNIAL_ID)
-                    CurationNotesTransportCommand curationNotes =
+                    CNTC curationNotes =
                         metadataDelegateService.fetchCurationNotes(rev)
                     String curationState = rev.curationState.name()
                     List<String> possibleCurationStates = CurationState.values()*.name()
@@ -244,7 +245,7 @@ class ModelController {
                     boolean hasCuratorRole = userService.isLoggedInUserACurator()
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
-                    Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
+                    Set<TagTC> tags = metadataDelegateService.findTagsByModel(rev.model)
                     String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
                     String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
                     def currentUser = springSecurityService.currentUser
@@ -256,40 +257,41 @@ class ModelController {
                     }
                     def contributors = modelDelegateService.collectContributors(revision.model.contributors)
                     boolean canSeeCurationTab = modelDelegateService.canSeeCurationTab(revision, hasCuratorRole, currentUser)
-                    def model = [
-                                 revision               : rev,
-                                 reactomeIds            : reactomeIds,
-                                 reactomeUrl            : reactomeUrl,
-                                 hrefLinkToNewtEditor   : hrefLinkToNewtEditor,
-                                 authors                : rev.model.creators,
-                                 contributors           : contributors,
-                                 allRevs                : revs,
-                                 flashMessage           : flashMessage,
-                                 canUpdate              : canUpdate,
-                                 canDelete              : canDelete,
-                                 canShare               : canShare,
-                                 showPublishOption      : showPublishOption,
-                                 canSubmitForPublication: canSubmitForPublication,
-                                 canCertify             : canCertify,
-                                 repoFiles              : repoFiles,
-                                 validationLevel        : rev.getValidationLevelMessage(),
-                                 certComment            : rev.getCertificationMessage(),
-                                 flags                  : flags,
-                                 curationState          : curationState,
-                                 possibleCurationStates : possibleCurationStates,
-                                 modellingApproaches    : modellingApproaches,
-                                 curationNotes          : curationNotes,
-                                 modelLevelAnnotations  : modelLevelAnnotations,
-                                 originalModels         : originalModels,
-                                 hasCuratorRole         : hasCuratorRole,
-                                 supportedForConversion : supportedForConversion,
-                                 convertedFilesTC       : convertedFilesTC,
-                                 bmTags                 : tags,
-                                 serverURL              : grailsApplication.config.grails.serverURL,
-                                 canAskReviewerAccount  : canAskReviewerAccount,
-                                 canSeeCurationTab      : canSeeCurationTab,
-                                 modelParentFolder      : modelParentFolder
+                    Map model = [
+                         revision               : rev,
+                         reactomeIds            : reactomeIds,
+                         reactomeUrl            : reactomeUrl,
+                         hrefLinkToNewtEditor   : hrefLinkToNewtEditor,
+                         authors                : rev.model.creators,
+                         contributors           : contributors,
+                         allRevs                : revs,
+                         flashMessage           : flashMessage,
+                         canUpdate              : canUpdate,
+                         canDelete              : canDelete,
+                         canShare               : canShare,
+                         showPublishOption      : showPublishOption,
+                         canSubmitForPublication: canSubmitForPublication,
+                         canCertify             : canCertify,
+                         repoFiles              : repoFiles,
+                         validationLevel        : rev.getValidationLevelMessage(),
+                         certComment            : rev.getCertificationMessage(),
+                         flags                  : flags,
+                         curationState          : curationState,
+                         possibleCurationStates : possibleCurationStates,
+                         modellingApproaches    : modellingApproaches,
+                         curationNotes          : curationNotes,
+                         modelLevelAnnotations  : modelLevelAnnotations,
+                         originalModels         : originalModels,
+                         hasCuratorRole         : hasCuratorRole,
+                         supportedForConversion : supportedForConversion,
+                         convertedFilesTC       : convertedFilesTC,
+                         bmTags                 : tags,
+                         canAskReviewerAccount  : canAskReviewerAccount,
+                         canSeeCurationTab      : canSeeCurationTab,
+                         modelParentFolder      : modelParentFolder
                     ]
+                    Map cmmProps = COMMON_PROPERTIES
+                    model.putAll(cmmProps)
                     if (rev.id == revision.id) {
                         flash.genericModel = model
                         ModelFormatTransportCommand format = revision.format
