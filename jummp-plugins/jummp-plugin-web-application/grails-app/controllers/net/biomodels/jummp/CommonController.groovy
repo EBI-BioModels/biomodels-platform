@@ -49,14 +49,14 @@ class CommonController implements GrailsConfigurationAware {
         serverURL = grailsApplication.config.grails.serverURL
         deployTarget = "local"
         if (serverURL.contains("wwwdev")) {
-            bmStaticAssetsURL = "${BioModels.BMDEV_ROOT_URL}/static-assets"
+            bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
             deployTarget = "dev"
         } else if (Environment.current == Environment.PRODUCTION && !serverURL.contains("wwwdev")) {
             bmStaticAssetsURL = "${BioModels.BM_ROOT_URL}/static-assets"
             deployTarget = "prod"
         } else {
             // local or dev target
-            bmStaticAssetsURL = "${BioModels.BMDEV_ROOT_URL}/static-assets"
+            bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
         }
         theme = grailsApplication.config.jummp.branding.style
         if (!theme) theme = "default"
