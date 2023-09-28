@@ -59,7 +59,7 @@
 
 <script type="text/javascript">
     const formats = ["text", "txt", "xml", "pdf", "jpg", "jpeg", "gif", "png",
-        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "cc3d", "zip", "onnx", "owl", "vcml"];
+        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "cc3d", "zip", "onnx", "owl", "vcml", "cps", "sedml"];
     $('[id^="previewButton"]').on('click', function (e) {
         e.preventDefault();
         const filename = $(this).attr("data-file-name");
@@ -92,7 +92,8 @@
                                 imageType = true;
                             } else if (format === "txt" || format === "text" ||
                                 format === "xml" || format === "cc3d" ||
-                                format === "onnx" || format === "vcml" || format === "owl") {
+                                format === "onnx" || format === "vcml" || format === "owl" ||
+                                format === "cps" || format === "sedml") {
                                 if (filename.indexOf('.mdl') !== -1) {
                                     mdlType = true;
                                     fileExtension = "mdl";
@@ -100,7 +101,9 @@
                                 if (filename.indexOf('.xml') !== -1 ||
                                     filename.indexOf('.cc3d') !== -1 ||
                                     filename.indexOf('.vcml') !== -1 ||
-                                    filename.indexOf(".owl") !== -1) {
+                                    filename.indexOf(".owl") !== -1 ||
+                                    filename.indexOf(".cps") !== -1 ||
+                                    filename.indexOf(".sedml") !== -1) {
                                     xmlType = true;
                                     fileExtension = "xml";
                                 }
