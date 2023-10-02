@@ -2268,10 +2268,7 @@ the perennial publication identifier to the model file.""")
 
         // publish the revision files to FTP
         if (grailsApplication.isWarDeployed()) {
-            String message = repositoryFileService.copyRevisionFilesToFtp(revision)
-            logger.debug("""\
-sent a request to cluster to copy the files of the revision \
-${revision.model.submissionId}.${revision.revisionNumber} to FTP: ${message.toString()}""")
+            copyRevisionFilesToFtp(revision)
         }
 
         return revision
@@ -2733,12 +2730,17 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
         return revision
     }
 
-    private void updateModelCache(final Revision revision) {
+    void updateModelCache(final Revision revision) {
         repositoryFileService.updateModelRevisionCache(revision)
-        if (grailsApplication.isWarDeployed()) {
-            String message = repositoryFileService.copyRevisionFilesToFtp(revision)
-            logger.debug("sent a request to cluster to copy the revision files to FTP: $message")
+        // do not copy files in the local development and with a private model
+        if (grailsApplication.isWarDeployed() && revision.state == ModelState.PUBLISHED) {
+            copyRevisionFilesToFtp(revision)
         }
+    }
+
+    void copyRevisionFilesToFtp(final Revision revision) {
+        String message = repositoryFileService.copyRevisionFilesToFtp(revision)
+        logger.debug("sent a request to cluster to copy the revision files to FTP: $message")
     }
 
     /**
