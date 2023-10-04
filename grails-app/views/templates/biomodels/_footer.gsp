@@ -1,3 +1,5 @@
+<%@ page import="grails.plugin.springsecurity.SpringSecurityUtils" %>
+<%@ page import="grails.util.Environment" %>
 <%--
  Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
@@ -36,8 +38,7 @@
             </div>
             <div class="small-12 medium-6 large-6 columns" style="text-align: right">
                 <span style="font-size: small">
-                    <g:if test="${grails.util.Environment.isDevelopmentMode() ||
-                        grails.plugin.springsecurity.SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
+                    <g:if test="${Environment.isDevelopmentMode() || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
                         <g:render template="/templates/biomodels/renderedFrom"/></span>
                     </g:if>
             </div>
@@ -134,4 +135,8 @@
 
     gtag('config', 'UA-39747892-1');
 </script>
+
+
+<!-- JS -->
+<script src="https://assets.emblstatic.net/vf/v2.5.13/scripts/scripts.js"></script>
 

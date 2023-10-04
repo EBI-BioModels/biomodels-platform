@@ -35,11 +35,11 @@
   Time: 13:05
 --%>
 
-<g:applyLayout name="biomodels/main">
+<meta name="layout" content="${session['branding.style']}/modelDisplay"/>
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Model ${id} | Basic Information View</title>
+    <title>Model ${id} - Basic Info | BioModels</title>
 </head>
 
 <body>
@@ -47,4 +47,3 @@
     <p>${description}</p>
 </body>
 </html>
-</g:applyLayout>
