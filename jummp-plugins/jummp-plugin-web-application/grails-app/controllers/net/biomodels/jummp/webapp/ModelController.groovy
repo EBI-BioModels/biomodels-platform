@@ -231,6 +231,8 @@ class ModelController extends CommonController {
                         flashMessage = flash.now["giveMessage"]
                     }
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
+                    long totalSize = repoFiles.collect { it.size }.sum() as long
+                    boolean canCreateOmex = totalSize <= 300*1024*1024 // 300MB
                     repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
@@ -289,7 +291,8 @@ class ModelController extends CommonController {
                          bmTags                 : tags,
                          canAskReviewerAccount  : canAskReviewerAccount,
                          canSeeCurationTab      : canSeeCurationTab,
-                         modelParentFolder      : modelParentFolder
+                         modelParentFolder      : modelParentFolder,
+                         canCreateOmex          : canCreateOmex
                     ]
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)

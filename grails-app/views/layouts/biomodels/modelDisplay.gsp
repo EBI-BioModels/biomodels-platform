@@ -429,6 +429,16 @@
             }
         }
 
+        function linkDownloadOmex() {
+            if (${canCreateOmex}) {
+                return $.jummp.openPage('${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}');
+            } else {
+                const EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository";
+                let filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${revision.model.submissionId}.omex";
+                return EBI_BM_FTP + "/${modelParentFolder}/" + filePath;
+            }
+        }
+
         $(function () {
             <sec:ifLoggedIn>
                 displayToolbar(true, true);
@@ -508,8 +518,7 @@
             <ul id='toolbarList'>
                 <li>
                 <button class='toolbutton' id="download"
-                    onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
-                    action: 'download', id: revision.identifier())}')">Download</button></li>
+                    onclick="return linkDownloadOmex();">Download</button></li>
                 <g:if test="${canUpdate}">
                     <li>
                     <button class='toolbutton' id="update"
