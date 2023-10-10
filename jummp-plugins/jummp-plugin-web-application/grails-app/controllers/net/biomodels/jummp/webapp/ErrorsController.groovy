@@ -84,4 +84,12 @@ class ErrorsController {
             '*' { respond new Error("Internal Server Error", digest)}
         }
     }
+
+    def error507() {
+        response.status = HttpServletResponse.SC_METHOD_NOT_ALLOWED
+        withFormat {
+            html { [resource: request.forwardURI] }
+            '*' { respond getError("507", [request.forwardURI]) }
+        }
+    }
 }

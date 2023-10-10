@@ -432,10 +432,12 @@
         function linkDownloadOmex() {
             if (${canCreateOmex}) {
                 return $.jummp.openPage('${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}');
-            } else {
+            } else if (${revision.state == ModelState.PUBLISHED} && ${deployTarget != "local"}) {
                 const EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository";
                 let filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${revision.model.submissionId}.omex";
                 return EBI_BM_FTP + "/${modelParentFolder}/" + filePath;
+            } else {
+                return "${createLink(controller: 'errors', action: 'error507')}";
             }
         }
 
