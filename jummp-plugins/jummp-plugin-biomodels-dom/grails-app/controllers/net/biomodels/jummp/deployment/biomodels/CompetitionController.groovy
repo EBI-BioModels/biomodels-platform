@@ -46,4 +46,14 @@ class CompetitionController {
         render(view: "model-of-the-year",
             model: [id: id, content: content, canEdit: canEdit, titlePage: titlePage])
     }
+
+    def modelOfTheYear2024() {
+        List result = featureService.getContentForModelOfTheYear2024CompetitionPage()
+        Long id = result[0] ?: null
+        String content = result[1] ?: ""
+        boolean canEdit = cmsContentService.canEdit()
+        String titlePage = "Model Of The Year 2024 Competition | BioModels"
+        render(view: "model-of-the-year",
+            model: [id: id, content: content, canEdit: canEdit, titlePage: titlePage])
+    }
 }
