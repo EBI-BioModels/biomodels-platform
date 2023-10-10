@@ -43,7 +43,7 @@ class WebServiceFetcher implements InitializingBean {
         requestUrl = _requestUrl
     }
 
-    static String getText() {
+    static getText = { ->
         URL url = new URL(requestUrl)
         String result = null
         try {

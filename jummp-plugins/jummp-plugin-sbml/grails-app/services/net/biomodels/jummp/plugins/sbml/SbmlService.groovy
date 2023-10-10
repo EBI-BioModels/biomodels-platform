@@ -192,7 +192,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
                 break
             case TypeAnno.MODELLING_APPROACH:
                 MA ma = revision.model.modellingApproach
-                if (ma?.accession.toLowerCase() != "other") {
+                if (ma?.accession?.toLowerCase() != "other") {
                     retVal = doAddAnnotations(model, revision, rID, qualifier, accessionPattern, identifiers)
                 } else {
                     // remove the former modelling approach if we are in the update process
@@ -1221,7 +1221,7 @@ the user has attempted to update an blank value for the name attribute.""")
      * This utility is used to add annotations in a batch mode. The requirement is that these annotations
      * have to go with the identical biological qualifier.
      *
-     * @param typeAnno The type of annotations
+     * @param typeAnno The {@link TypeAnno} denoting the type of annotations
      * @param revision  The Revision instance denoting the given model
      * @param qualifier The Qualifier instance denoting the biological qualifier
      * @param identifiers   The list of identifiers.org based URLs denoting the input annotations

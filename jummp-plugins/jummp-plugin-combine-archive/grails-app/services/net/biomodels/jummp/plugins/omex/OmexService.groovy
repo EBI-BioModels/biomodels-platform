@@ -194,9 +194,8 @@ class OmexService extends FileFormatServiceAdapter {
         }
         String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
         String TEMP_PATH = System.getProperty("java.io.tmpdir")
-        String namePrefix = modelId ? modelId : "biomodels"
-        String absoluteOmexFileName = Paths.get(TEMP_PATH,
-                "$namePrefix-${dateTimeString}.omex").toString()
+        String namePrefix = modelId
+        String absoluteOmexFileName = Paths.get(TEMP_PATH, "$namePrefix-${dateTimeString}.omex").toString()
         ICombineArchive arch
         CombineArchiveFactory fact = new CombineArchiveFactory()
         arch = fact.openArchive(absoluteOmexFileName, true)
