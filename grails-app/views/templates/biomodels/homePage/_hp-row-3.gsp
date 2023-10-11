@@ -74,9 +74,8 @@
                         client API to consume BioModels' RESTful Web Services</a>
                     </li>
                     <li><a href="${grailsApplication.config.jummp.ws.client.pyapi.docs}" target="_blank"
-                           style="pointer-events: none; cursor: default; opacity: 0.8"
                            title="The Python library provides a convenient way to consume a few web services endpoints requested by BioModels' existing clients.">Python-based
-                        client API to consume BioModels' RESTful Web Services</a> (<span style="color: red">coming soon</span>)
+                        client API to consume BioModels' RESTful Web Services</a>.
                     </li>
                     <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Read more</a></li>
                 </ul>
