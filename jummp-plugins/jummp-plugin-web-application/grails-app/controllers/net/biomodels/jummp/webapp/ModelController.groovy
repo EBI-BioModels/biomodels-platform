@@ -622,6 +622,10 @@ class ModelController extends CommonController {
         } finally {
             LOGGER.info("File Path: $filePath")
         }
+        // asynchronous jobs have to be called here
+        // TODO: email or notify the requester the location of the OMEX file so that they can download it later.
+        // TODO: send the map of parameters below to the server to copy this file to FTP public (for the public ones)
+        // and the location that will be expired within 1 hour (for the private ones)
         render ([modelId: modelId, revisionNumber: revisionNumber, location: filePath] as JSON)
     }
 
