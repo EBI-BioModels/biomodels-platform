@@ -34,7 +34,7 @@
         <title><g:message code="error.507.title"/> | BioModels</title>
     </head>
     <body>
-        <h2><g:message code="error.507.title"/></h2>
+        <h2 class="errors">${code}: <g:message code="error.507.title"/></h2>
         <p><g:message code="error.507.explanation" args="${[code]}"/>
     </body>
 </html>

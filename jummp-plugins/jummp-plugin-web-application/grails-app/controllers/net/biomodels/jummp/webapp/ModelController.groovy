@@ -41,6 +41,7 @@ import grails.transaction.Transactional
 import grails.util.Environment
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.IFileSystemService
+import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.constants.BioModels
@@ -58,7 +59,15 @@ import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
+import org.apache.http.HttpEntity
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.json.JSONArray
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
@@ -94,7 +103,7 @@ class ModelController extends CommonController {
     final List<String> AUDIT_EXCEPTIONS = ['showWithMessage',
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
-                                           'identifiers']
+                                           'identifiers', 'createCombineArchive']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -232,7 +241,7 @@ class ModelController extends CommonController {
                     }
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     long totalSize = repoFiles.collect { it.size }.sum() as long
-                    boolean canCreateOmex = totalSize <= 300*1024*1024 // 300MB
+                    boolean canCreateOmex = totalSize <= BioModels.MAX_FILE_SIZE // 500MB
                     repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
@@ -571,6 +580,51 @@ class ModelController extends CommonController {
         [serverURL: grailsApplication.config.grails.serverURL]
     }
 
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def createCombineArchive() {
+        RevisionTransportCommand revisionTC
+        String filePath = ""
+        String modelId = ""
+        Integer revisionNumber = 0
+        try {
+            revisionTC = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+            modelId = revisionTC.model.submissionId
+            revisionNumber = revisionTC.revisionNumber
+            final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revisionTC)
+            JSONArray array = modelDelegateService.buildJsonArray(modelId, revisionNumber, FILES)
+
+            CloseableHttpClient httpClient = HttpClientBuilder.create().build()
+            final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", "http://localhost:8090/api/v1.0")
+            try {
+                HttpPost request = new HttpPost("${FS_SVR_URL}/file-format/create-omex")
+                StringEntity params = new StringEntity(array.toString())
+                request.addHeader("content-type", "application/json")
+                request.setEntity(params)
+
+                CloseableHttpResponse response = httpClient.execute(request)
+                try {
+                    HttpEntity entity = response.getEntity()
+                    if (entity != null) {
+                        filePath = EntityUtils.toString(entity)
+                    }
+
+                } finally {
+                    response.close()
+                }
+            } catch (Exception ignored) {
+                // handle exception here
+                ignored.printStackTrace()
+            } finally {
+                httpClient.close()
+            }
+        } catch (ModelException ignored) {
+            ignored.printStackTrace()
+        } finally {
+            LOGGER.info("File Path: $filePath")
+        }
+        render ([modelId: modelId, revisionNumber: revisionNumber, location: filePath] as JSON)
+    }
+
     def delete() {
         try {
             boolean deleted = modelDelegateService.deleteModel(params.id)
@@ -770,17 +824,18 @@ class ModelController extends CommonController {
                 def revisionId = params.revisionId
                 String fileName = params.filename.decodeHTML()
                 if (Environment.isWarDeployed() && fileName != null) {
-                    // This block temporarily solves this problem with special characters in the file name
-                    String resCharacterEncoding = response.characterEncoding
-                    boolean IS_ISO_8859_1 = resCharacterEncoding.equalsIgnoreCase("iso-8859-1")
-                    boolean FILENAME_REQUESTED = request.parameterMap.containsKey("filename")
-                    if (IS_ISO_8859_1 && FILENAME_REQUESTED) {
-                        fileName = request.getParameter("filename")
-                        fileName = new String(fileName.getBytes("iso-8859-1"))
-                    }
+                    fileName = handleSpecialCharacters(fileName)
                 }
                 RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
                 final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revision)
+                long totalSize = FILES.collect { it.size }.sum()
+                boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
+                if (isLargeSubmission) {
+                    forward(controller: "errors", action: "error413")
+                    // TODO: will redirect to FTP public
+                    //for example: redirect(url:"https://ftp.ebi.ac.uk/pub/databases/biomodels/repository/aaa/MODEL1204280007/1/MODEL1204280007.omex")
+                    return
+                }
                 if (!fileName) {
                     serveModelAsCombineArchive(FILES, response)
                 } else {
@@ -809,18 +864,18 @@ class ModelController extends CommonController {
             } else {
                 forward(controller: "errors", action: "error400")
             }
-        } catch (AccessDeniedException e) {
-            forward(controller: "errors", action: "error403")
-        } catch (IOException | Exception e ) {
+        } catch (Exception e ) {
+            if (e instanceof AccessDeniedException) {
+                forward(controller: "errors", action: "error403")
+            }
             String errDesc = ""
             if (e instanceof IOException) {
                 errDesc = "The client has probably aborted the download request."
-            } else if (e instanceof Exception) {
+            } else {
                 errDesc = "The model identifier parameter must be provided."
             }
             LOGGER.error(errDesc, e)
             render(status: 400, view: "/errors/error400", model: [errorDescription: errDesc])
-            return
         } finally {
             // TODO: How to clean up the recently used resources to free the heap memory
             // In fact, the cleaning process is performed in the sub processes of this action,
@@ -956,6 +1011,18 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
                 stream.close()
             }
         }
+    }
+
+    private String handleSpecialCharacters(String fileName) {
+        // This block temporarily solves this problem with special characters in the file name
+        String resCharacterEncoding = response.characterEncoding
+        boolean IS_ISO_8859_1 = resCharacterEncoding.equalsIgnoreCase("iso-8859-1")
+        boolean FILENAME_REQUESTED = request.parameterMap.containsKey("filename")
+        if (IS_ISO_8859_1 && FILENAME_REQUESTED) {
+            fileName = request.getParameter("filename")
+            fileName = new String(fileName.getBytes("iso-8859-1"))
+        }
+        return fileName
     }
 
     private List getMainFiles(Map<String,Object> workingMemory) {

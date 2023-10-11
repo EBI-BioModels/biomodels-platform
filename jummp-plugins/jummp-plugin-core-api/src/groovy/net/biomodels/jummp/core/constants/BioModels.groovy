@@ -9,6 +9,6 @@ final class BioModels {
     static final String EBI_PROD_WS_REST_BM_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels"
     static final String EBI_BM_PUBLIC_FTP = "https://ftp.ebi.ac.uk/pub/databases/biomodels"
 
-    // the maximum file size allowed to upload and download
+    // the maximum file size or the total size allowed to upload and download by streaming directly via web interface
     static long MAX_FILE_SIZE = 500 * 1024 * 1024
 }

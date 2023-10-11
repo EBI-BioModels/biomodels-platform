@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2023 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -31,10 +31,10 @@
 <html>
     <head>
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title><g:message code="error.403.title"/> | BioModels</title>
+        <title><g:message code="error.413.title"/> | BioModels</title>
     </head>
     <body>
-        <h2 class="errors">${code}: <g:message code="error.403.title"/></h2>
-        <p><g:message code="error.403.explanation"/>
+        <h2 class="errors">${code}: <g:message code="error.413.title"/></h2>
+        <p><g:message code="error.413.explanation" args="${[code]}"/>
     </body>
 </html>

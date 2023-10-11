@@ -24,7 +24,7 @@
         <title><g:message code="error.415.title"/> | BioModels</title>
     </head>
     <body>
-        <h2><g:message code="error.415.title"/></h2>
+        <h2 class="errors">${code}: <g:message code="error.415.title"/></h2>
         <g:message code="error.415.explanation"/>
     </body>
 </html>

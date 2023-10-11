@@ -37,7 +37,7 @@ class ErrorsController {
     def error400() {
         response.status = HttpServletResponse.SC_BAD_REQUEST
         withFormat {
-            html { [resource: request.forwardURI, errorDescription: params?.errorDescription] }
+            html { [resource: request.forwardURI, errorDescription: params?.errorDescription, code: response.status] }
             '*' { respond getError("400", [request.forwardURI]) }
         }
     }
@@ -45,7 +45,7 @@ class ErrorsController {
     def error403() {
         response.setStatus HttpServletResponse.SC_FORBIDDEN
         withFormat {
-            html { [authenticated: springSecurityService.isLoggedIn()] }
+            html { [authenticated: springSecurityService.isLoggedIn(), code: response.status] }
             '*' { respond getError("403") }
         }
     }
@@ -53,7 +53,7 @@ class ErrorsController {
     def error404() {
         response.status = HttpServletResponse.SC_NOT_FOUND
         withFormat {
-            html { [resource: request.forwardURI] }
+            html { [resource: request.forwardURI, code: response.status] }
             '*' { respond getError("404", [request.forwardURI]) }
         }
     }
@@ -61,8 +61,21 @@ class ErrorsController {
     def error405() {
         response.status = HttpServletResponse.SC_METHOD_NOT_ALLOWED
         withFormat {
-            html { [resource: request.forwardURI] }
+            html { [resource: request.forwardURI, code: response.status] }
             '*' { respond getError("405", [request.forwardURI]) }
+        }
+    }
+
+
+    def error413() {
+        // See  https://docs.oracle.com/javaee/6/api/javax/servlet/http/HttpServletResponse.html
+        // Status code (413) indicating that the server is refusing to process the request because the request entity
+        // is larger than the server is willing or able to process.
+        response.status = HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE
+
+        withFormat {
+            html { [resource: request.forwardURI, code: response.status] }
+            '*' { respond getError("413", [request.forwardURI]) }
         }
     }
 
@@ -80,15 +93,18 @@ class ErrorsController {
         }
         digest = digest.encodeAsMD5()
         withFormat {
-            html { [code: digest] }
+            html { [code: digest, code: response.status] }
             '*' { respond new Error("Internal Server Error", digest)}
         }
     }
 
     def error507() {
-        response.status = HttpServletResponse.SC_METHOD_NOT_ALLOWED
+        // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/507
+        // HttpServletResponse.SC_INSUFFICIENT_STORAGE doesn't exist in javax.servlet.HttpServletResponse in grails 2.5.x
+        response.status = 507
+
         withFormat {
-            html { [resource: request.forwardURI] }
+            html { [resource: request.forwardURI, code: response.status] }
             '*' { respond getError("507", [request.forwardURI]) }
         }
     }

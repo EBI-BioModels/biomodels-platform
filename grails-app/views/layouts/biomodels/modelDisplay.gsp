@@ -429,15 +429,35 @@
             }
         }
 
+        /**
+         * This function computes a proper link for the download button depending on the size/total size of the model
+         * files in the submission in request.
+         * @returns {string|void}
+         */
         function linkDownloadOmex() {
             if (${canCreateOmex}) {
                 return $.jummp.openPage('${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}');
-            } else if (${revision.state == ModelState.PUBLISHED} && ${deployTarget != "local"}) {
+            } else if (${revision.state == ModelState.PUBLISHED && deployTarget != "local"}) {
                 const EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository";
                 let filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${revision.model.submissionId}.omex";
-                return EBI_BM_FTP + "/${modelParentFolder}/" + filePath;
+                let retURL = EBI_BM_FTP + "/${modelParentFolder}/" + filePath;
+                return retURL;
             } else {
-                return "${createLink(controller: 'errors', action: 'error507')}";
+                // used for local development or private models
+                // TODO: we should deal with the private large file (meaning canCreateOmex = false).
+                // Approach: generate the OMEX file in a background process and give the link to the requester. Also, set
+                // the file expired after 1 hour, for example, because it is a private one.
+                return $.jummp.openPage('${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}');
+                /**
+                 * We can redirect users to the error507 page as below instead of returning a URL. However, we will
+                 * encounter the other issue on the server side. The reason is that the actions in Errors controller
+                 * is invoked in a specific context leading to the error where there has been an action occurred early.
+                 * Therefore, users are required to log in when downloading a model if we have a redirection statement
+                 * in this else block below.
+                 *
+                 * location.href = "${createLink(controller: 'errors', action: 'error507')}";
+                 * return;
+                 */
             }
         }
 
