@@ -55,7 +55,6 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.utils.MathUtils
 import org.json.JSONArray
 import org.json.JSONObject
 import org.slf4j.Logger
@@ -65,7 +64,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-
 /**
  * @short Service delegating methods to ModelService.
  *
@@ -81,7 +79,6 @@ import java.util.zip.ZipOutputStream
 @Transactional
 class ModelDelegateService implements IModelService {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
-    def grailsApplication
     def curationNotesService
     def modelService
     def modelFileFormatService
@@ -704,6 +701,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             json.put("showPreview", it.showPreview)
             array.put(json)
         }
+        System.out.println(array.toString())
+        LOGGER.info(array.toString())
         return array
     }
 }
