@@ -18,12 +18,9 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-
-import grails.util.Environment
-import grails.util.Holders
+import org.springframework.security.access.AccessDeniedException
 
 import java.util.regex.Pattern
-
 
 class UrlMappings {
 
@@ -100,8 +97,7 @@ class UrlMappings {
         "403"(controller: "errors", action: "error403")
         "404"(controller: "errors", action: "error404")
         "500"(controller: "errors", action: "error500")
-        "500"(controller: "errors", action: "error403", exception:
-                    org.springframework.security.access.AccessDeniedException)
+        "500"(controller: "errors", action: "error403", exception: AccessDeniedException)
         "/models"(controller: "search", action: "list")
         "/search"(controller: "search", action: "search")
         "/omicsdi"(controller: "omicsdi", action: "index")

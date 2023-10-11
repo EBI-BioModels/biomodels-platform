@@ -37,7 +37,7 @@ class ErrorsController {
     def error400() {
         response.status = HttpServletResponse.SC_BAD_REQUEST
         withFormat {
-            html { [resource: request.forwardURI, errorDescription: params?.errorDescription] }
+            html { [resource: request.forwardURI, errorDescription: params?.errorDescription, code: response.status] }
             '*' { respond getError("400", [request.forwardURI]) }
         }
     }
@@ -45,7 +45,7 @@ class ErrorsController {
     def error403() {
         response.setStatus HttpServletResponse.SC_FORBIDDEN
         withFormat {
-            html { [authenticated: springSecurityService.isLoggedIn()] }
+            html { [authenticated: springSecurityService.isLoggedIn(), code: response.status] }
             '*' { respond getError("403") }
         }
     }
@@ -53,7 +53,7 @@ class ErrorsController {
     def error404() {
         response.status = HttpServletResponse.SC_NOT_FOUND
         withFormat {
-            html { [resource: request.forwardURI] }
+            html { [resource: request.forwardURI, code: response.status] }
             '*' { respond getError("404", [request.forwardURI]) }
         }
     }
@@ -61,7 +61,7 @@ class ErrorsController {
     def error405() {
         response.status = HttpServletResponse.SC_METHOD_NOT_ALLOWED
         withFormat {
-            html { [resource: request.forwardURI] }
+            html { [resource: request.forwardURI, code: response.status] }
             '*' { respond getError("405", [request.forwardURI]) }
         }
     }
@@ -93,7 +93,7 @@ class ErrorsController {
         }
         digest = digest.encodeAsMD5()
         withFormat {
-            html { [code: digest] }
+            html { [code: digest, code: response.status] }
             '*' { respond new Error("Internal Server Error", digest)}
         }
     }
