@@ -41,6 +41,7 @@ import grails.transaction.Transactional
 import grails.util.Environment
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.IFileSystemService
+import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.constants.BioModels
@@ -58,7 +59,15 @@ import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
+import org.apache.http.HttpEntity
+import org.apache.http.client.methods.CloseableHttpResponse
+import org.apache.http.client.methods.HttpPost
+import org.apache.http.entity.StringEntity
+import org.apache.http.impl.client.CloseableHttpClient
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.json.JSONArray
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
@@ -94,7 +103,7 @@ class ModelController extends CommonController {
     final List<String> AUDIT_EXCEPTIONS = ['showWithMessage',
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
-                                           'identifiers']
+                                           'identifiers', 'createCombineArchive']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -569,6 +578,51 @@ class ModelController extends CommonController {
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def terms() {
         [serverURL: grailsApplication.config.grails.serverURL]
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def createCombineArchive() {
+        RevisionTransportCommand revisionTC
+        String filePath = ""
+        String modelId = ""
+        Integer revisionNumber = 0
+        try {
+            revisionTC = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+            modelId = revisionTC.model.submissionId
+            revisionNumber = revisionTC.revisionNumber
+            final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revisionTC)
+            JSONArray array = modelDelegateService.buildJsonArray(modelId, revisionNumber, FILES)
+
+            CloseableHttpClient httpClient = HttpClientBuilder.create().build()
+            final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", "http://localhost:8090/api/v1.0")
+            try {
+                HttpPost request = new HttpPost("${FS_SVR_URL}/file-format/create-omex")
+                StringEntity params = new StringEntity(array.toString())
+                request.addHeader("content-type", "application/json")
+                request.setEntity(params)
+
+                CloseableHttpResponse response = httpClient.execute(request)
+                try {
+                    HttpEntity entity = response.getEntity()
+                    if (entity != null) {
+                        filePath = EntityUtils.toString(entity)
+                    }
+
+                } finally {
+                    response.close()
+                }
+            } catch (Exception ignored) {
+                // handle exception here
+                ignored.printStackTrace()
+            } finally {
+                httpClient.close()
+            }
+        } catch (ModelException ignored) {
+            ignored.printStackTrace()
+        } finally {
+            LOGGER.info("File Path: $filePath")
+        }
+        render ([modelId: modelId, revisionNumber: revisionNumber, location: filePath] as JSON)
     }
 
     def delete() {

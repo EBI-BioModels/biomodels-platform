@@ -56,6 +56,8 @@ import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.utils.MathUtils
+import org.json.JSONArray
+import org.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
@@ -682,5 +684,26 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             // otherwise, display it to curators or the model's submitter
             return hasCuratorRole || isOwnedBy(revision, userService.getCurrentUser())
         }
+    }
+
+    JSONArray buildJsonArray(final String modelId, final Integer revisionNumber, final List<RFTC> files) {
+        JSONArray array = new JSONArray()
+        for (RFTC it : files) {
+            JSONObject json = new JSONObject()
+            json.put("modelId", modelId)
+            json.put("revisionNumber", revisionNumber)
+            json.put("id", it.id)
+            json.put("filename", it.filename)
+            json.put("path", it.path)
+            json.put("mimeType", it.mimeType)
+            json.put("size", it.size)
+            json.put("mainFile", it.mainFile)
+            json.put("hidden", it.hidden)
+            json.put("description", it.description)
+            json.put("userSubmitted", it.userSubmitted)
+            json.put("showPreview", it.showPreview)
+            array.put(json)
+        }
+        return array
     }
 }
