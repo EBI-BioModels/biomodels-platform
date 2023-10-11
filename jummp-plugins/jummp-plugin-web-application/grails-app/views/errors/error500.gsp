@@ -35,6 +35,6 @@
     </head>
     <body>
         <h2 class="errors">${code}: <g:message code="error.500.title"/></h2>
-        <p><g:message code="error.500.explanation" args="${[code]}"/>
+        <p><g:message code="error.500.explanation" args="${[digest]}"/>
     </body>
 </html>

@@ -93,7 +93,7 @@ class ErrorsController {
         }
         digest = digest.encodeAsMD5()
         withFormat {
-            html { [code: digest, code: response.status] }
+            html { [digest: digest, code: response.status] }
             '*' { respond new Error("Internal Server Error", digest)}
         }
     }
