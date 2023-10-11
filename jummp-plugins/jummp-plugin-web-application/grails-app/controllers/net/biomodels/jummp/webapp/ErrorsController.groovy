@@ -66,6 +66,19 @@ class ErrorsController {
         }
     }
 
+
+    def error413() {
+        // See  https://docs.oracle.com/javaee/6/api/javax/servlet/http/HttpServletResponse.html
+        // Status code (413) indicating that the server is refusing to process the request because the request entity
+        // is larger than the server is willing or able to process.
+        response.status = HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE
+
+        withFormat {
+            html { [resource: request.forwardURI, code: response.status] }
+            '*' { respond getError("413", [request.forwardURI]) }
+        }
+    }
+
     def error500() {
         response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
         def exception = request.getAttribute('exception')
@@ -86,9 +99,12 @@ class ErrorsController {
     }
 
     def error507() {
-        response.status = HttpServletResponse.SC_METHOD_NOT_ALLOWED
+        // See https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/507
+        // HttpServletResponse.SC_INSUFFICIENT_STORAGE doesn't exist in javax.servlet.HttpServletResponse in grails 2.5.x
+        response.status = 507
+
         withFormat {
-            html { [resource: request.forwardURI] }
+            html { [resource: request.forwardURI, code: response.status] }
             '*' { respond getError("507", [request.forwardURI]) }
         }
     }

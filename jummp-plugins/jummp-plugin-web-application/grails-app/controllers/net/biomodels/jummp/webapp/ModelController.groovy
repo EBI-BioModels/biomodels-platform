@@ -232,7 +232,7 @@ class ModelController extends CommonController {
                     }
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     long totalSize = repoFiles.collect { it.size }.sum() as long
-                    boolean canCreateOmex = totalSize <= 300*1024*1024 // 300MB
+                    boolean canCreateOmex = totalSize <= BioModels.MAX_FILE_SIZE // 500MB
                     repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
@@ -774,6 +774,14 @@ class ModelController extends CommonController {
                 }
                 RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
                 final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revision)
+                long totalSize = FILES.collect { it.size }.sum()
+                boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
+                if (isLargeSubmission) {
+                    forward(controller: "errors", action: "error413")
+                    // TODO: will redirect to FTP public
+                    //for example: redirect(url:"https://ftp.ebi.ac.uk/pub/databases/biomodels/repository/aaa/MODEL1204280007/1/MODEL1204280007.omex")
+                    return
+                }
                 if (!fileName) {
                     serveModelAsCombineArchive(FILES, response)
                 } else {
@@ -802,18 +810,18 @@ class ModelController extends CommonController {
             } else {
                 forward(controller: "errors", action: "error400")
             }
-        } catch (AccessDeniedException e) {
-            forward(controller: "errors", action: "error403")
-        } catch (IOException | Exception e ) {
+        } catch (Exception e ) {
+            if (e instanceof AccessDeniedException) {
+                forward(controller: "errors", action: "error403")
+            }
             String errDesc = ""
             if (e instanceof IOException) {
                 errDesc = "The client has probably aborted the download request."
-            } else if (e instanceof Exception) {
+            } else {
                 errDesc = "The model identifier parameter must be provided."
             }
             LOGGER.error(errDesc, e)
             render(status: 400, view: "/errors/error400", model: [errorDescription: errDesc])
-            return
         } finally {
             // TODO: How to clean up the recently used resources to free the heap memory
             // In fact, the cleaning process is performed in the sub processes of this action,

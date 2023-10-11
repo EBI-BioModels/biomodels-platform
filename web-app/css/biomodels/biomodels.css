@@ -251,6 +251,10 @@ div#local-masthead {
     font-size: 90%;
 }
 
+.errors {
+    color: red;
+}
+
 .additionalLinks {
     list-style: none;
     display: block;
