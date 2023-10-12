@@ -952,5 +952,5 @@ if (!(jummpConfig.ws.client.japi.docs instanceof ConfigObject)) {
 if (!(jummpConfig.ws.client.pyapi.docs instanceof ConfigObject)) {
     jummp.ws.client.pyapi.docs = jummpConfig.jummp.ws.client.pyapi.docs
 } else {
-    jummp.ws.client.pyapi.docs = "https://bitbucket.org/biomodels/biomodelswsclient/src/master/"
+    jummp.ws.client.pyapi.docs = "https://bitbucket.org/biomodels/biomodels-resftful-api-client/src/main/"
 }
