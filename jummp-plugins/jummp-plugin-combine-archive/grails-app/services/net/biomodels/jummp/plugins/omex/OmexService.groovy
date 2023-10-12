@@ -157,7 +157,7 @@ class OmexService extends FileFormatServiceAdapter {
             return false
         }
         FileSystem fs
-        boolean containsManifest
+        boolean containsManifest = false
         try {
             fs = FileSystems.newFileSystem(path, null)
             final String MANIFEST_LOCATION =  "manifest.xml"
@@ -173,7 +173,7 @@ class OmexService extends FileFormatServiceAdapter {
             msg.append(f.name).append(" is")
             msg.append(containsManifest ? "" : " not").append(" a COMBINE archive.")
             msg.append(containsManifest ?: " The manifest file is missing.")
-            log.info(msg.toString())
+            log.debug(msg.toString())
         }
         return containsManifest
     }

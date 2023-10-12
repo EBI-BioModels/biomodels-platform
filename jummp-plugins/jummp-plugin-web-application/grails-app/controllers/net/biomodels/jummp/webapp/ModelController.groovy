@@ -719,6 +719,7 @@ class ModelController extends CommonController {
     }
 
     private void serveModelAsCombineArchive(List<RFTC> files, def resp) {
+        long time = System.nanoTime()
         String omexFileName = omexService.createCombineArchive(files, params.id)
         File omexFile = new File(omexFileName)
         String name = omexFile.name
@@ -740,6 +741,13 @@ class ModelController extends CommonController {
                 stream.close()
             }
         }
+        time = (System.nanoTime() - time) / 1_000_000.0
+        long seconds = time / 1_000;
+        long HH = seconds / 3600;
+        long MM = (seconds % 3600) / 60;
+        long SS = seconds % 60;
+        String timeInHHMMSS = String.format("%02d:%02d:%02d", HH, MM, SS);
+        LOGGER.info("It took ${time}ms ~ ${timeInHHMMSS} to generate the OMEX file $omexFileName.")
     }
 
     private void serveModelAsZip(List<RFTC> files, def resp) {
