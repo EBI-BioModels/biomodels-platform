@@ -626,7 +626,7 @@ class ModelController extends CommonController {
         // TODO: email or notify the requester the location of the OMEX file so that they can download it later.
         // TODO: send the map of parameters below to the server to copy this file to FTP public (for the public ones)
         // and the location that will be expired within 1 hour (for the private ones)
-        render ([modelId: modelId, revisionNumber: revisionNumber, location: filePath] as JSON)
+        render([modelId: modelId, revisionNumber: revisionNumber, location: filePath] as JSON)
     }
 
     def delete() {
@@ -718,7 +718,35 @@ class ModelController extends CommonController {
         }
     }
 
-    private void serveModelAsCombineArchive(List<RFTC> files, def resp) {
+    private void serveModelAsCombineArchive(RevisionTransportCommand revision, List<RFTC> files, def resp) {
+        String EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository"
+        String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
+        String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
+        String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
+        // Use case 2 and 4: Revision is public regardless of its size
+        if (revision.state == ModelState.PUBLISHED) {
+            println "use case 2 and 4: public"
+            String url = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"
+            redirect(url: url)
+            return
+        }
+        // Revision is private, then considering the size of the request
+        long totalSize = files.collect { it.size }.sum()
+        boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
+        // Use case 1: large and private
+        if (isLargeSubmission) {
+            println "use case 1: large and private"
+            Map result = createCombineArchive()
+            filePath = result.get("location")
+            if (filePath) {
+                forward(filePath)
+            } else {
+                forward(controller: "errors", action: "error413")
+            }
+            return
+        }
+        // Use case 3: small and private, then generate/create CombineArchive on the spot
+        println "use case 3: small and private"
         long time = System.nanoTime()
         String omexFileName = omexService.createCombineArchive(files, params.id)
         File omexFile = new File(omexFileName)
@@ -840,16 +868,8 @@ class ModelController extends CommonController {
                 }
                 RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
                 final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revision)
-                long totalSize = FILES.collect { it.size }.sum()
-                boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
-                if (isLargeSubmission) {
-                    forward(controller: "errors", action: "error413")
-                    // TODO: will redirect to FTP public
-                    //for example: redirect(url:"https://ftp.ebi.ac.uk/pub/databases/biomodels/repository/aaa/MODEL1204280007/1/MODEL1204280007.omex")
-                    return
-                }
                 if (!fileName) {
-                    serveModelAsCombineArchive(FILES, response)
+                    serveModelAsCombineArchive(revision, FILES, response)
                 } else {
                     RFTC requested = FILES.find {
                         !it.hidden && new File(it.path).getName() == fileName
