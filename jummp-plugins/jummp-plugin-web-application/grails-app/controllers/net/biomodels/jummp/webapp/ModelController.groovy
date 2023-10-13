@@ -836,7 +836,7 @@ class ModelController extends CommonController {
                 def revisionId = params.revisionId
                 String fileName = params.filename.decodeHTML()
                 if (Environment.isWarDeployed() && fileName != null) {
-                    fileName = handleSpecialCharacters(fileName)
+                    fileName = handleDlSpecialCharacters(fileName)
                 }
                 RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
                 final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revision)
@@ -852,11 +852,7 @@ class ModelController extends CommonController {
                     serveModelAsCombineArchive(FILES, response)
                 } else {
                     RFTC requested = FILES.find {
-                        if (it.hidden) {
-                            return false
-                        }
-                        File file = new File(it.path)
-                        file.getName() == fileName
+                        !it.hidden && new File(it.path).getName() == fileName
                     }
                     boolean inline = params.inline == "true"
                     boolean preview = params.preview == "true"
@@ -877,16 +873,7 @@ class ModelController extends CommonController {
                 forward(controller: "errors", action: "error400")
             }
         } catch (Exception e ) {
-            if (e instanceof AccessDeniedException) {
-                forward(controller: "errors", action: "error403")
-            }
-            String errDesc = ""
-            if (e instanceof IOException) {
-                errDesc = "The client has probably aborted the download request."
-            } else {
-                errDesc = "The model identifier parameter must be provided."
-            }
-            LOGGER.error(errDesc, e)
+            String errDesc = handleDlException(e)
             render(status: 400, view: "/errors/error400", model: [errorDescription: errDesc])
         } finally {
             // TODO: How to clean up the recently used resources to free the heap memory
@@ -896,7 +883,7 @@ class ModelController extends CommonController {
     }
 
     /**
-     * Update the curation status of the model
+     * Updates the curation status of the model
      */
     def updateCurationState() {
         def requestObject = request.JSON
@@ -1025,7 +1012,21 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         }
     }
 
-    private String handleSpecialCharacters(String fileName) {
+    private String handleDlException(Exception e) {
+        if (e instanceof AccessDeniedException) {
+            forward(controller: "errors", action: "error403")
+        }
+        String errDesc = ""
+        if (e instanceof IOException) {
+            errDesc = "The client has probably aborted the download request."
+        } else {
+            errDesc = "The model identifier parameter must be provided."
+        }
+        LOGGER.error(errDesc, e)
+        errDesc
+    }
+
+    private String handleDlSpecialCharacters(String fileName) {
         // This block temporarily solves this problem with special characters in the file name
         String resCharacterEncoding = response.characterEncoding
         boolean IS_ISO_8859_1 = resCharacterEncoding.equalsIgnoreCase("iso-8859-1")
