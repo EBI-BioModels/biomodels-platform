@@ -747,6 +747,10 @@ class ModelController extends CommonController {
         }
         // Use case 3: small and private, then generate/create CombineArchive on the spot
         println "use case 3: small and private"
+        createInstantCombineArchive(files, resp)
+    }
+
+    private void createInstantCombineArchive(List<RFTC> files, def resp) {
         long time = System.nanoTime()
         String omexFileName = omexService.createCombineArchive(files, params.id)
         File omexFile = new File(omexFileName)
