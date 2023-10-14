@@ -683,10 +683,14 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         }
     }
 
-    JSONArray buildJsonArray(final String modelId, final Integer revisionNumber, final List<RFTC> files) {
+    JSONArray buildJsonArray(final String deployTarget, final String parentDir, final String modelId,
+                             final Integer revisionNumber, final List<RFTC> files, final String modelExportsDir) {
         JSONArray array = new JSONArray()
         for (RFTC it : files) {
             JSONObject json = new JSONObject()
+            json.put("site", deployTarget)
+            json.put("parentDir", parentDir)
+            json.put("modelExportsDir", modelExportsDir)
             json.put("modelId", modelId)
             json.put("revisionNumber", revisionNumber)
             json.put("id", it.id)
