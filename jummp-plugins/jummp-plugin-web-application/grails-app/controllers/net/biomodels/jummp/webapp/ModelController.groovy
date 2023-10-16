@@ -757,7 +757,6 @@ class ModelController extends CommonController {
     }
 
     private void serveModelAsCombineArchiveForPublished(RTC revision) {
-        String EBI_BM_FTP = "${BioModels.EBI_BMPROD_PUBLIC_FTP}/repository"
         String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
@@ -827,7 +826,6 @@ class ModelController extends CommonController {
 
     private void serveModelAsFileForPublished(RTC revision, RFTC rf, def resp,
                                               boolean inline, boolean preview = false) {
-        String EBI_BM_FTP = "${BioModels.EBI_BMPROD_PUBLIC_FTP}/repository"
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${rf.filename}"
         String url = "${EBI_BM_FTP}/${modelParentFolder}/${filePath}"

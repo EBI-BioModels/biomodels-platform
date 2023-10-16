@@ -37,6 +37,7 @@ class CommonController implements GrailsConfigurationAware {
     static String manualURL
     static String theme
     static String deployTarget
+    static String EBI_BM_FTP
     static Map COMMON_PROPERTIES = [:]
 
     def grailsApplication
@@ -48,12 +49,15 @@ class CommonController implements GrailsConfigurationAware {
         manualURL = grailsApplication.config.jummp.context.help.root
         serverURL = grailsApplication.config.grails.serverURL
         deployTarget = "local"
+        EBI_BM_FTP = "local"
         if (serverURL.contains("wwwdev")) {
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
             deployTarget = "dev"
+            EBI_BM_FTP = BioModels.EBI_BMDEV_PUBLIC_FTP
         } else if (Environment.current == Environment.PRODUCTION && !serverURL.contains("wwwdev")) {
             bmStaticAssetsURL = "${BioModels.BM_ROOT_URL}/static-assets"
             deployTarget = "prod"
+            EBI_BM_FTP = BioModels.EBI_BMPROD_PUBLIC_FTP
         } else {
             // local or dev target
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
