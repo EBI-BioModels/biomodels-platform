@@ -743,6 +743,7 @@ class ModelController extends CommonController {
             Map result = createCombineArchive() as Map
             String filePath = result.get("location")
             if (filePath) {
+                LOGGER.info("Downloading COMBINEArchive file from FTP: ${filePath}")
                 forward(url: filePath)
             } else {
                 forward(controller: "errors", action: "error413")
@@ -763,7 +764,8 @@ class ModelController extends CommonController {
         String url = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"
         WebServiceFetcher wsf = new WebServiceFetcher(url)
         if (wsf.isReachable()) {
-            redirect(url: url)
+            LOGGER.info("Downloading COMBINEArchive file from FTP: ${url}")
+            forward(url: url)
         } else {
             // fallback
             serveModelAsCombineArchiveForPrivate()
@@ -784,6 +786,7 @@ class ModelController extends CommonController {
         } catch (IOException ioE) {
             LOGGER.error("The client might have aborted their download request.", ioE)
         } finally {
+            LOGGER.info("Downloading COMBINEArchive instantly: $omexFile")
             if (omexFile.delete()) {
                 LOGGER.info("The temporary file was deleted successfully.")
             } else {
@@ -829,7 +832,8 @@ class ModelController extends CommonController {
         String url = "${EBI_BM_FTP}/${modelParentFolder}/${filePath}"
         WebServiceFetcher wsf = new WebServiceFetcher(url)
         if (wsf.isReachable()) {
-            redirect(url: url)
+            LOGGER.info("Downloading from FTP: ${url}")
+            forward(url: url)
         } else {
             // fallback
             serveModelAsFileInstantly(rf, resp, inline, preview)
@@ -876,6 +880,7 @@ class ModelController extends CommonController {
         } catch (IOException ioE) {
             LOGGER.error("The client might have cancelled downloading the file ${file.name}.", ioE)
         } finally {
+            LOGGER.info("Downloading file instantly: ${file?.absolutePath}")
             if (stream != null) {
                 LOGGER.debug("InputStream of the file ${file.name} has been flushed and closed.")
                 stream.close()
