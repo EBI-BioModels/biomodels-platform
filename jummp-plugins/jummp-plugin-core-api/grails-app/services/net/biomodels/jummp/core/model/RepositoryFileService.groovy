@@ -25,6 +25,7 @@ import grails.plugins.rest.client.RestBuilder
 import grails.transaction.Transactional
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.model.Model
@@ -253,6 +254,7 @@ $modelId, revision $revNum: ${e.message}""")
             if (tmpFile != null) {
                 long size = tmpFile.length()
                 long configPreviewSize = grailsApplication.config.jummp.web.file.preview
+                configPreviewSize = BioModels.MAX_FILE_SIZE
                 boolean showPreview = size > configPreviewSize
                 RFTC rftc = new RFTC(
                     id: rf.id,
