@@ -255,7 +255,7 @@ $modelId, revision $revNum: ${e.message}""")
                 long size = tmpFile.length()
                 long configPreviewSize = grailsApplication.config.jummp.web.file.preview
                 configPreviewSize = BioModels.MAX_FILE_SIZE
-                boolean showPreview = size > configPreviewSize
+                boolean showPreview = size < configPreviewSize
                 RFTC rftc = new RFTC(
                     id: rf.id,
                     path: tmpFile.absolutePath,
