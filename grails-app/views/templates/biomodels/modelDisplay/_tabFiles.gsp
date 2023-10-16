@@ -66,9 +66,9 @@
         const mimeType = $(this).attr("data-file-mime-type");
         const downloadLink = $(this).attr("data-download-link");
         const previewLink = $(this).attr("data-preview-link");
-        const showPreview = $(this).attr("data-preview");
+        const showPreview = $(this).attr("data-preview").toLowerCase() === "true";
         const isBigFile = $(this).attr("data-is-big-file") === "true";
-        if (showPreview.toLowerCase() === "true") {
+        if (showPreview) {
             $.ajax({
                 url: previewLink + "&preview=" + showPreview + "&inline=true",
                 dataType: "text",
@@ -203,6 +203,13 @@
             });
         } else {
             console.log("This file " + filename + " does not support inline preview.");
+            $('#boxTitle').html(filename);
+            let content = [];
+            content.push("<div id='notificationgoeshere' class='pad-left pad-bottom' style='font-size: 18px'></div>");
+            content.push("<div id='filegoeshere' class='pad-right pad-bottom");
+            content.push("'></div>");
+            $('#previewContentContainer').html(content.join(""));
+            addPreviewNotification(showPreview, downloadLink, isBigFile);
         }
     });
 
@@ -216,6 +223,11 @@
                     "<a id='loadFileCompletely' href='" + downloadLink + "'>Click here</a> " +
                     "to download the file to your device.</h4");
             }
+            $("#notificationgoeshere").show();
+        } else if (bigFile) {
+            $("#notificationgoeshere").html("<h4 style='color: darkorange'>The file is too large to preview it now. " +
+                "Please contact us if you're having trouble downloading it.</h4>");
+            $("#notificationgoeshere").show();
         } else {
             $("#notificationgoeshere").hide();
         }
