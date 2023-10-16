@@ -54,6 +54,7 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.utils.WebServiceFetcher
 import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.webapp.rest.errors.Error
@@ -75,8 +76,6 @@ import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import javax.servlet.http.HttpServletResponse
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController extends CommonController {
@@ -618,6 +617,7 @@ class ModelController extends CommonController {
                 // handle exception here
                 ignored.printStackTrace()
             } finally {
+                println(array.toString())
                 httpClient.close()
             }
         } catch (ModelException ignored) {
@@ -722,38 +722,54 @@ class ModelController extends CommonController {
     }
 
     private void serveModelAsCombineArchive(RevisionTransportCommand revision, List<RFTC> files, def resp) {
+        if (revision.state == ModelState.PUBLISHED && deployTarget != "local") {
+            println "use case 2 and 4: public - regardless of its size"
+            serveModelAsCombineArchiveForPublished(revision)
+        } else {
+            println "use case 1 and 3: private - considering its size to serve instantly or later"
+            serveModelAsCombineArchiveForPrivate(files, resp)
+        }
+        return
+    }
+
+    private void serveModelAsCombineArchiveForPrivate(List<RepositoryFileTransportCommand> files, resp) {
+        // Revision is private, then considering the size of the request
+        long totalSize = files.collect { it.size }.sum() as long
+        boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
+        if (isLargeSubmission) {
+            // Use case 1: large and private
+            println "use case 1: large and private"
+            Map result = createCombineArchive() as Map
+            String filePath = result.get("location")
+            if (filePath) {
+                forward(filePath as Map)
+            } else {
+                forward(controller: "errors", action: "error413")
+            }
+        } else {
+            // Use case 3: small and private, then generate/create CombineArchive on the spot
+            println "use case 3: small and private"
+            serveModelAsCombineArchiveInstantly(files, resp)
+        }
+    }
+
+    private void serveModelAsCombineArchiveForPublished(RevisionTransportCommand revision) {
         String EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository"
         String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         // Use case 2 and 4: Revision is public regardless of its size
-        if (revision.state == ModelState.PUBLISHED) {
-            println "use case 2 and 4: public"
-            String url = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"
+        String url = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"
+        WebServiceFetcher wsf = new WebServiceFetcher(url)
+        if (wsf.isReachable()) {
             redirect(url: url)
-            return
+        } else {
+            // fallback
+            serveModelAsCombineArchiveForPrivate()
         }
-        // Revision is private, then considering the size of the request
-        long totalSize = files.collect { it.size }.sum()
-        boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
-        // Use case 1: large and private
-        if (isLargeSubmission) {
-            println "use case 1: large and private"
-            Map result = createCombineArchive()
-            filePath = result.get("location")
-            if (filePath) {
-                forward(filePath)
-            } else {
-                forward(controller: "errors", action: "error413")
-            }
-            return
-        }
-        // Use case 3: small and private, then generate/create CombineArchive on the spot
-        println "use case 3: small and private"
-        createInstantCombineArchive(files, resp)
     }
 
-    private void createInstantCombineArchive(List<RFTC> files, def resp) {
+    private void serveModelAsCombineArchiveInstantly(List<RFTC> files, def resp) {
         long time = System.nanoTime()
         String omexFileName = omexService.createCombineArchive(files, params.id)
         File omexFile = new File(omexFileName)
@@ -785,44 +801,51 @@ class ModelController extends CommonController {
         LOGGER.info("It took ${time}ms ~ ${timeInHHMMSS} to generate the OMEX file $omexFileName.")
     }
 
-    private void serveModelAsZip(List<RFTC> files, def resp) {
-        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
-        ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
-        files.each {
-            File file = new File(it.path)
-            zipFile.putNextEntry(new ZipEntry(file.getName()))
-            byte[] fileData = file.getBytes()
-            zipFile.write(fileData, 0, fileData.length)
-            zipFile.closeEntry()
+    private void serveModelAsFile(RevisionTransportCommand revision, RFTC rf, def resp, boolean inline,
+                                  boolean preview = false) {
+        if (preview) {
+            serveModelAsFileInstantly(rf, resp, inline, preview)
+            return
         }
-        zipFile.close()
-        resp.setContentType("application/zip")
-        resp.setHeader("Content-disposition", "attachment;filename=\"${params.id}.zip\"")
-        ByteArrayInputStream  stream = null
-        try {
-            stream = new ByteArrayInputStream(byteBuffer.toByteArray())
-            resp.outputStream << stream
-        } catch (IOException ioE) {
-            LOGGER.error("The client might have aborted their download request.", ioE)
-        } finally {
-            if (zipFile) {
-                LOGGER.debug("ZipFile ${zipFile.comment} has been flushed and closed.")
-                zipFile.flush()
-                zipFile.close()
-            }
-            if (byteBuffer) {
-                LOGGER.debug("byteBuffer (built from ${zipFile.comment}) has been flushed and closed.")
-                byteBuffer.flush()
-                byteBuffer.close()
-            }
-            if (stream) {
-                LOGGER.debug("OutputStream of the file has been flushed and closed.")
-                stream.close()
-            }
+
+        if (revision.state == ModelState.PUBLISHED && deployTarget != "local") {
+            // Use case 2 and 4: Revision is public regardless of its size
+            println "use case 2 and 4: public - regardless of its size"
+            serveModelAsFileForPublished(revision, rf, resp, inline, preview)
+        } else {
+            // Use case 1 and 3: Revision is private and large/small
+            println "use case 1 and 3: private - considering its size to serve instantly or later"
+            serveModelAsFileForPrivate(rf, resp, inline, preview)
+        }
+        return
+    }
+
+    private void serveModelAsFileForPublished(RevisionTransportCommand revision, RFTC rf, def resp,
+                                              boolean inline, boolean preview = false) {
+        String EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository"
+        String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
+        String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${rf.filename}"
+        String url = "${EBI_BM_FTP}/${modelParentFolder}/${filePath}"
+        WebServiceFetcher wsf = new WebServiceFetcher(url)
+        if (wsf.isReachable()) {
+            redirect(url: url)
+        } else {
+            // fallback
+            serveModelAsFileInstantly(rf, resp, inline, preview)
         }
     }
 
-    private void serveModelAsFile(RFTC rf, def resp, boolean inline, boolean preview = false) {
+    private void serveModelAsFileForPrivate(RFTC rf, def resp, boolean inline, boolean preview = false) {
+        boolean isLargeFile = rf.size >= BioModels.MAX_FILE_SIZE
+        if (isLargeFile) {
+            // send the FTP location of the requested file and expire it after an hour
+            LOGGER.info("We will implement this feature soon")
+        } else {
+            serveModelAsFileInstantly(rf, resp, inline, preview)
+        }
+    }
+
+    private void serveModelAsFileInstantly(RFTC rf, def resp, boolean inline, boolean preview = false) {
         File file = new File(rf.path)
         resp.setContentType(rf.mimeType)
         final String INLINE = inline ? "inline" : "attachment"
@@ -880,11 +903,11 @@ class ModelController extends CommonController {
                 } else {
                     RFTC requested = FILES.find {
                         !it.hidden && new File(it.path).getName() == fileName
-                    }
-                    boolean inline = params.inline == "true"
-                    boolean preview = params.preview == "true"
-                    if (requested) {
-                        serveModelAsFile(requested, response, inline, preview)
+                    } as RFTC
+                    boolean inline = params.getBoolean("inline", false)
+                    boolean preview = params.getBoolean("preview", false)
+                    if (requested.id != null) {
+                        serveModelAsFile(revision, requested, response, inline, preview)
                     } else {
                         response.status = HttpServletResponse.SC_BAD_REQUEST
                         def err = new Error("Invalid file name",
