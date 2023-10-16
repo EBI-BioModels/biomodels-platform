@@ -47,6 +47,7 @@ import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.util.ReactomeEnvironment
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand as CNTC
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand as TagTC
@@ -129,7 +130,7 @@ class ModelController extends CommonController {
                 // publish uses revision ids, annoyingly enough.
                 if (accessType.contains("publish")) {
                     def rev = modelDelegateService.getRevisionDetails(
-                                new RevisionTransportCommand(id: modelIdParam))
+                                new RTC(id: modelIdParam))
                     if (rev) {
                         modelId = rev.modelIdentifier()
                     }
@@ -181,7 +182,7 @@ class ModelController extends CommonController {
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     @Transactional
     def show() {
-        RevisionTransportCommand rev
+        RTC rev
         boolean isPrivateModel = false
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
@@ -226,7 +227,7 @@ class ModelController extends CommonController {
                     if (vcsId) {
                         modelParentFolder = vcsId.take(3)
                     }
-                    RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+                    RTC revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     boolean showPublishOption = modelDelegateService.canPublish(revision)
                     boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
                     boolean canCertify = modelDelegateService.canCertify(revision)
@@ -242,7 +243,7 @@ class ModelController extends CommonController {
                     long totalSize = repoFiles.collect { it.size }.sum() as long
                     boolean canCreateOmex = totalSize <= BioModels.MAX_FILE_SIZE // 500MB
                     repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
-                    List<RevisionTransportCommand> revs =
+                    List<RTC> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
                     List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId(PERENNIAL_ID)
                     CNTC curationNotes =
@@ -417,8 +418,8 @@ class ModelController extends CommonController {
     }
 
     def publish() {
-        RevisionTransportCommand rev
-        RevisionTransportCommand published
+        RTC rev
+        RTC published
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
             published = modelDelegateService.publishModelRevision(rev)
@@ -498,7 +499,7 @@ class ModelController extends CommonController {
     private Map buildModelInfo(Map initials) {
         Map modelInfo = new HashMap()
         boolean isUpdate = initials.get("isUpdate")
-        RevisionTransportCommand revisionTC = initials.get("RevisionTC")
+        RTC revisionTC = initials.get("RevisionTC")
         modelInfo.put("detectedName", isUpdate ? revisionTC?.name : "")
         modelInfo.put("detectedDescription", isUpdate ? revisionTC?.description : "")
 
@@ -544,7 +545,7 @@ class ModelController extends CommonController {
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))
 
         String submissionFolder = initials.get("submissionFolder")
-        RevisionTransportCommand revisionTC = initials.get("RevisionTC")
+        RTC revisionTC = initials.get("RevisionTC")
         Map submissionDataMap = ["latestModelDescription": revisionTC.description ?: ""]
         Operations.doRedisHSet(submissionFolder, submissionDataMap)
 
@@ -581,7 +582,7 @@ class ModelController extends CommonController {
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def createCombineArchive() {
-        RevisionTransportCommand revisionTC
+        RTC revisionTC
         String filePath = ""
         String modelId = ""
         Integer revisionNumber = 0
@@ -657,7 +658,7 @@ class ModelController extends CommonController {
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def getFileDetails() {
         try {
-            final RevisionTransportCommand REVISION =
+            final RTC REVISION =
                         modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
             def retval = modelDelegateService.getFileDetails(REVISION.id, params.filename)
             if (IS_DEBUG_ENABLED) {
@@ -721,7 +722,7 @@ class ModelController extends CommonController {
         }
     }
 
-    private void serveModelAsCombineArchive(RevisionTransportCommand revision, List<RFTC> files, def resp) {
+    private void serveModelAsCombineArchive(RTC revision, List<RFTC> files, def resp) {
         if (revision.state == ModelState.PUBLISHED && deployTarget != "local") {
             println "use case 2 and 4: public - regardless of its size"
             serveModelAsCombineArchiveForPublished(revision)
@@ -753,7 +754,7 @@ class ModelController extends CommonController {
         }
     }
 
-    private void serveModelAsCombineArchiveForPublished(RevisionTransportCommand revision) {
+    private void serveModelAsCombineArchiveForPublished(RTC revision) {
         String EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository"
         String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
@@ -801,7 +802,7 @@ class ModelController extends CommonController {
         LOGGER.info("It took ${time}ms ~ ${timeInHHMMSS} to generate the OMEX file $omexFileName.")
     }
 
-    private void serveModelAsFile(RevisionTransportCommand revision, RFTC rf, def resp, boolean inline,
+    private void serveModelAsFile(RTC revision, RFTC rf, def resp, boolean inline,
                                   boolean preview = false) {
         if (preview) {
             serveModelAsFileInstantly(rf, resp, inline, preview)
@@ -820,7 +821,7 @@ class ModelController extends CommonController {
         return
     }
 
-    private void serveModelAsFileForPublished(RevisionTransportCommand revision, RFTC rf, def resp,
+    private void serveModelAsFileForPublished(RTC revision, RFTC rf, def resp,
                                               boolean inline, boolean preview = false) {
         String EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository"
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
@@ -896,7 +897,7 @@ class ModelController extends CommonController {
                 if (Environment.isWarDeployed() && fileName != null) {
                     fileName = handleDlSpecialCharacters(fileName)
                 }
-                RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
+                RTC revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
                 final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revision)
                 if (!fileName) {
                     serveModelAsCombineArchive(revision, FILES, response)
@@ -949,7 +950,7 @@ class ModelController extends CommonController {
         boolean hasCuratorRole = userService.isLoggedInUserACurator()
         if (canUpdate && hasCuratorRole) {
             CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
-            RevisionTransportCommand revisionTC = modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
+            RTC revisionTC = modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
             Map result = [:]
             result["message"] = "Curation status has been updated successfully"
             result["publicationId"] = revisionTC.model.publicationId
@@ -1001,7 +1002,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
      * Display basic information about the model
      */
     def summary = {
-        RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
         [
             publication: modelDelegateService.getPublication(params.id),
             revision: rev,
@@ -1011,7 +1012,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
     }
 
     def overview = {
-        RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
         [
             reactions: sbmlService.getReactions(rev),
             rules: sbmlService.getRules(rev),
@@ -1029,7 +1030,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
     }
 
     def notes = {
-        RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
         [notes: sbmlService.getNotes(rev)]
     }
 
@@ -1037,7 +1038,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
      * Retrieve annotations and hand them over to the view
      */
     def annotations = {
-        RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
         [annotations: sbmlService.getAnnotations(rev)]
     }
 
@@ -1045,7 +1046,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
      * File download of the model file for a model by id
      */
     def downloadModelRevision = {
-        RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
         byte[] bytes = modelDelegateService.retrieveModelFiles(rev)
         response.setContentType("application/xml")
         // TODO: set a proper name for the model
@@ -1125,7 +1126,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         return true
     }
 
-    private String makeLinkToNewtEditor(final RevisionTransportCommand revision, final List<RFTC> repoFiles) {
+    private String makeLinkToNewtEditor(final RTC revision, final List<RFTC> repoFiles) {
         boolean published = ModelState.PUBLISHED == revision.state
         boolean isSBMLModel = "SBML" == revision.format.name
         String href = ""
