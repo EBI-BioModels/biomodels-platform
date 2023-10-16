@@ -68,7 +68,7 @@
         const previewLink = $(this).attr("data-preview-link");
         const showPreview = $(this).attr("data-preview");
         const isBigFile = $(this).attr("data-is-big-file") === "true";
-        if (showPreview) {
+        if (showPreview.toLowerCase() === "true") {
             $.ajax({
                 url: previewLink + "&preview=" + showPreview + "&inline=true",
                 dataType: "text",
