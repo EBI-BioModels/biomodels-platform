@@ -435,10 +435,12 @@
          * @returns {string|void}
          */
         function linkDownloadOmex() {
-            if (${canCreateOmex}) {
+            return $.jummp.openPage('${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}');
+
+            /*if (${canCreateOmex}) {
                 return $.jummp.openPage('${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}');
             } else if (${revision.state == ModelState.PUBLISHED && deployTarget != "local"}) {
-                const EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository";
+                const EBI_BM_FTP = "${BioModels.EBI_BMPROD_PUBLIC_FTP}/repository";
                 let filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${revision.model.submissionId}.omex";
                 let retURL = EBI_BM_FTP + "/${modelParentFolder}/" + filePath;
                 return retURL;
@@ -448,7 +450,7 @@
                 // Approach: generate the OMEX file in a background process and give the link to the requester. Also, set
                 // the file expired after 1 hour, for example, because it is a private one.
                 return $.jummp.openPage('${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}');
-                /**
+                /!**
                  * We can redirect users to the error507 page as below instead of returning a URL. However, we will
                  * encounter the other issue on the server side. The reason is that the actions in Errors controller
                  * is invoked in a specific context leading to the error where there has been an action occurred early.
@@ -457,8 +459,8 @@
                  *
                  * location.href = "${createLink(controller: 'errors', action: 'error507')}";
                  * return;
-                 */
-            }
+                 *!/
+            }*/
         }
 
         $(function () {

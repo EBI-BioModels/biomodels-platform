@@ -618,6 +618,7 @@ class ModelController extends CommonController {
                 // handle exception here
                 ignored.printStackTrace()
             } finally {
+                // TODO: remove the println
                 println(array.toString())
                 httpClient.close()
             }
@@ -756,7 +757,7 @@ class ModelController extends CommonController {
     }
 
     private void serveModelAsCombineArchiveForPublished(RTC revision) {
-        String EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository"
+        String EBI_BM_FTP = "${BioModels.EBI_BMPROD_PUBLIC_FTP}/repository"
         String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
@@ -826,7 +827,7 @@ class ModelController extends CommonController {
 
     private void serveModelAsFileForPublished(RTC revision, RFTC rf, def resp,
                                               boolean inline, boolean preview = false) {
-        String EBI_BM_FTP = "${BioModels.EBI_BM_PUBLIC_FTP}/repository"
+        String EBI_BM_FTP = "${BioModels.EBI_BMPROD_PUBLIC_FTP}/repository"
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${rf.filename}"
         String url = "${EBI_BM_FTP}/${modelParentFolder}/${filePath}"
@@ -845,6 +846,7 @@ class ModelController extends CommonController {
         if (isLargeFile) {
             // send the FTP location of the requested file and expire it after an hour
             LOGGER.info("We will implement this feature soon")
+            forward(controller: "errors", action: "error413")
         } else {
             serveModelAsFileInstantly(rf, resp, inline, preview)
         }
