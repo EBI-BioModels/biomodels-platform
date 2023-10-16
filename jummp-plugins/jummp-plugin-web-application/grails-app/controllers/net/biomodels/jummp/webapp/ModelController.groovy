@@ -726,12 +726,11 @@ class ModelController extends CommonController {
     private void serveModelAsCombineArchive(RTC revision, List<RFTC> files, def resp) {
         if (revision.state == ModelState.PUBLISHED && deployTarget != "local") {
             println "use case 2 and 4: public - regardless of its size"
-            serveModelAsCombineArchiveForPublished(revision)
+            serveModelAsCombineArchiveForPublished(revision, files, resp)
         } else {
             println "use case 1 and 3: private - considering its size to serve instantly or later"
             serveModelAsCombineArchiveForPrivate(files, resp)
         }
-        return
     }
 
     private void serveModelAsCombineArchiveForPrivate(List<RepositoryFileTransportCommand> files, resp) {
@@ -756,7 +755,7 @@ class ModelController extends CommonController {
         }
     }
 
-    private void serveModelAsCombineArchiveForPublished(RTC revision) {
+    private void serveModelAsCombineArchiveForPublished(RTC revision, List<RFTC> files, def resp) {
         String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
@@ -768,7 +767,7 @@ class ModelController extends CommonController {
             forward(url: url)
         } else {
             // fallback
-            serveModelAsCombineArchiveForPrivate()
+            serveModelAsCombineArchiveForPrivate(files, resp)
         }
     }
 
@@ -796,12 +795,12 @@ class ModelController extends CommonController {
                 stream.close()
             }
         }
-        time = (System.nanoTime() - time) / 1_000_000.0
-        long seconds = time / 1_000;
-        long HH = seconds / 3600;
-        long MM = (seconds % 3600) / 60;
-        long SS = seconds % 60;
-        String timeInHHMMSS = String.format("%02d:%02d:%02d", HH, MM, SS);
+        time = (long) ((System.nanoTime() - time) / 1_000_000.0)
+        long seconds = (long) (time / 1_000)
+        long HH = (long) (seconds / 3600)
+        long MM = (long) ((seconds % 3600) / 60)
+        long SS = seconds % 60
+        String timeInHHMMSS = String.format("%02d:%02d:%02d", HH, MM, SS)
         LOGGER.info("It took ${time}ms ~ ${timeInHHMMSS} to generate the OMEX file $omexFileName.")
     }
 
@@ -821,7 +820,6 @@ class ModelController extends CommonController {
             println "use case 1 and 3: private - considering its size to serve instantly or later"
             serveModelAsFileForPrivate(rf, resp, inline, preview)
         }
-        return
     }
 
     private void serveModelAsFileForPublished(RTC revision, RFTC rf, def resp,
