@@ -629,7 +629,7 @@ class ModelController extends CommonController {
         // TODO: email or notify the requester the location of the OMEX file so that they can download it later.
         // TODO: send the map of parameters below to the server to copy this file to FTP public (for the public ones)
         // and the location that will be expired within 1 hour (for the private ones)
-        render([modelId: modelId, revisionNumber: revisionNumber, location: filePath] as JSON)
+        [modelId: modelId, revisionNumber: revisionNumber, location: filePath]
     }
 
     def delete() {
@@ -742,7 +742,7 @@ class ModelController extends CommonController {
             Map result = createCombineArchive() as Map
             String filePath = result.get("location")
             if (filePath) {
-                forward(filePath as Map)
+                forward(url: filePath)
             } else {
                 forward(controller: "errors", action: "error413")
             }
