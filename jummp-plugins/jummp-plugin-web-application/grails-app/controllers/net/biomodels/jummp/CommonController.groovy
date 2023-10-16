@@ -70,7 +70,8 @@ class CommonController implements GrailsConfigurationAware {
             "manualURL": manualURL,
             "serverURL": serverURL,
             "theme": theme,
-            "deployTarget": deployTarget
+            "deployTarget": deployTarget,
+            "EBI_BM_FTP": EBI_BM_FTP
         ]
     }
 }
