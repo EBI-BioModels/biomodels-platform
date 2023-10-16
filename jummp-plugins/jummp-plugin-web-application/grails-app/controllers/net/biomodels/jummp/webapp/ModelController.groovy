@@ -593,7 +593,8 @@ class ModelController extends CommonController {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revisionTC)
             String parentDir = modelDelegateService.getVcsIdentifier(modelId)
             String modelExportsDir = grailsApplication.config.jummp.model.exportFolder
-            JSONArray array = modelDelegateService.buildJsonArray(deployTarget, parentDir, modelId, revisionNumber, FILES, modelExportsDir)
+            JSONArray array = modelDelegateService.buildJsonArray(deployTarget,
+                parentDir, modelId, revisionNumber, FILES, modelExportsDir, revisionTC.state.name())
 
             CloseableHttpClient httpClient = HttpClientBuilder.create().build()
             final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", "http://localhost:8090/api/v1.0")
