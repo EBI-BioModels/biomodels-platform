@@ -79,7 +79,7 @@ caused by ${conn.getErrorStream().inspect()}""")
      *
      * @return a boolean value indicating the URL is reachable or unreachable
      */
-    static boolean isReachable() {
+    boolean isReachable() {
         HttpURLConnection connection = null
         LOGGER.info("Checking the URL: ${requestUrl}")
         boolean result = true
