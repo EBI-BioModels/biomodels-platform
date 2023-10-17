@@ -613,7 +613,7 @@ if (!(jummpConfig.jummp.web.file.preview instanceof ConfigObject)) {
 	jummp.web.file.preview = Integer.parseInt(jummpConfig.jummp.web.file.preview)
 }
 else {
-	jummp.web.file.preview = 100 * 1024 //default preview size: 100 kb
+	jummp.web.file.preview = 500 * 1024 * 1024 // default preview size: 500 MB
 }
 
 // whether a user is allowed to change the password depends on the setting an if LDAP is used
