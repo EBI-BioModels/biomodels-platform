@@ -741,10 +741,10 @@ class ModelController extends CommonController {
             // Use case 1: large and private
             println "use case 1: large and private"
             Map result = createCombineArchive() as Map
-            String filePath = result.get("location")
-            if (filePath) {
-                LOGGER.info("Downloading COMBINEArchive file from FTP: ${filePath}")
-                forward(url: filePath)
+            String url = result.get("location")
+            if (url) {
+                LOGGER.info("Downloading COMBINEArchive file from FTP: ${url}")
+                redirect(url: url)
             } else {
                 forward(controller: "errors", action: "error413")
             }
@@ -764,7 +764,7 @@ class ModelController extends CommonController {
         //WebServiceFetcher wsf = new WebServiceFetcher(url)
         if (isReachable(url)) {
             LOGGER.info("Downloading COMBINEArchive file from FTP: ${url}")
-            forward(url: url)
+            redirect(url: url)
         } else {
             // fallback
             serveModelAsCombineArchiveForPrivate(files, resp)
@@ -804,14 +804,13 @@ class ModelController extends CommonController {
         LOGGER.info("It took ${time}ms ~ ${timeInHHMMSS} to generate the OMEX file $omexFileName.")
     }
 
-    private void serveModelAsFile(RTC revision, RFTC rf, def resp, boolean inline,
-                                  boolean preview = false) {
+    private void serveModelAsFile(RTC revision, RFTC rf, def resp, boolean inline, boolean preview = false) {
         if (preview) {
             serveModelAsFileInstantly(rf, resp, inline, preview)
             return
         }
 
-        if (revision.state == ModelState.PUBLISHED && deployTarget != "local") {
+        if (revision.state == ModelState.PUBLISHED) {
             // Use case 2 and 4: Revision is public regardless of its size
             println "use case 2 and 4: public - regardless of its size"
             serveModelAsFileForPublished(revision, rf, resp, inline, preview)
@@ -830,7 +829,7 @@ class ModelController extends CommonController {
 //        WebServiceFetcher wsf = new WebServiceFetcher(url)
         if (isReachable(url)) {
             LOGGER.info("Downloading from FTP: ${url}")
-            forward(url: url)
+            redirect(url: url)
         } else {
             // fallback
             serveModelAsFileInstantly(rf, resp, inline, preview)
