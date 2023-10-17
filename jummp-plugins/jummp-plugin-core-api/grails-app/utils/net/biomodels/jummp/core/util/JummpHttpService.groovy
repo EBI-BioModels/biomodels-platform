@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 
 class JummpHttpService implements InitializingBean {
-    private static final Logger logger = LoggerFactory.getLogger(JummpHttpService.class)
+    private static final Logger LOGGER = LoggerFactory.getLogger(JummpHttpService.class)
 
     def configurationService
 
@@ -62,7 +62,7 @@ class JummpHttpService implements InitializingBean {
             result = "-> Red <-\t" + "Wrong domain - Exception: " + e.getMessage()
 
         }
-        System.out.println(url + "\t\tStatus:" + result)
+        LOGGER.info(url + "\t\tStatus: " + result)
         result
     }
 
@@ -107,7 +107,7 @@ class JummpHttpService implements InitializingBean {
 
     static String getDataTypeAndAccession(String uri) {
         if (uri == null || uri.isEmpty()) {
-            logger.error("The URI given is null or empty");
+            LOGGER.error("The URI given is null or empty");
             return null;
         }
         if (uri.startsWith("http://")) {
@@ -115,6 +115,41 @@ class JummpHttpService implements InitializingBean {
         }
         String rest = uri.substring(("https://identifiers.org/").length());
         return rest;
+    }
+
+    /**
+     * Checks the returned code of an arbitrary URL.
+     *
+     * Simply put, a URL is reachable if the HTTP code is less than 400. Otherwise, we say that it is unreachable.
+     *
+     * @return a boolean value indicating the URL is reachable or unreachable
+     */
+    static boolean isReachable(final String requestUrl) {
+        HttpURLConnection connection = null
+        LOGGER.info("Checking the URL: ${requestUrl}")
+        boolean result = true
+        try {
+            URL url = new URL(requestUrl)
+            connection = (HttpURLConnection)url.openConnection()
+            connection.setRequestMethod("GET")
+            connection.connect()
+
+            int code = connection.getResponseCode()
+            LOGGER.info("When checking the URL '${requestUrl}' and getting the code: $code")
+            if (code < 400)  {
+                result = true
+            } else {
+                result = false
+            }
+        } catch(Exception e) {
+            result = false
+            LOGGER.error("When checking the URL '${requestUrl}' and getting the errors ${e.toString()}")
+        } finally {
+            if (connection) {
+                connection.disconnect()
+            }
+        }
+        return result
     }
 
     @Override

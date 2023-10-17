@@ -72,39 +72,6 @@ caused by ${conn.getErrorStream().inspect()}""")
         }
     }
 
-    /**
-     * Checks the returned code of an arbitrary URL.
-     *
-     * Simply put, a URL is reachable if the HTTP code is less than 400. Otherwise, we say that it is unreachable.
-     *
-     * @return a boolean value indicating the URL is reachable or unreachable
-     */
-    boolean isReachable() {
-        HttpURLConnection connection = null
-        LOGGER.info("Checking the URL: ${requestUrl}")
-        boolean result = true
-        try {
-            URL url = new URL(requestUrl)
-            connection = (HttpURLConnection)url.openConnection()
-            connection.setRequestMethod("GET")
-            connection.connect()
-
-            int code = connection.getResponseCode()
-            LOGGER.info("When checking the URL '${requestUrl}' and getting the code: $code")
-            if (code < 400)  {
-                result = true
-            } else {
-                result = false
-            }
-        } catch(Exception e) {
-            result = false
-            LOGGER.error("When checking the URL '${requestUrl}' and getting the errors ${e.toString()}")
-        } finally {
-            connection.disconnect()
-        }
-        return result
-    }
-
     @Override
     void afterPropertiesSet() throws Exception {
         proxy = configurationService.verifyHttpProxy()
