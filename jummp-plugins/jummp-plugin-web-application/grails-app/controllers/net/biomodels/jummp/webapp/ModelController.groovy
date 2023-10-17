@@ -761,8 +761,8 @@ class ModelController extends CommonController {
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         // Use case 2 and 4: Revision is public regardless of its size
         String url = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"
-        WebServiceFetcher wsf = new WebServiceFetcher(url)
-        if (wsf.isReachable()) {
+        //WebServiceFetcher wsf = new WebServiceFetcher(url)
+        if (isReachable(url)) {
             LOGGER.info("Downloading COMBINEArchive file from FTP: ${url}")
             forward(url: url)
         } else {
@@ -827,8 +827,8 @@ class ModelController extends CommonController {
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${rf.filename}"
         String url = "${EBI_BM_FTP}/${modelParentFolder}/${filePath}"
-        WebServiceFetcher wsf = new WebServiceFetcher(url)
-        if (wsf.isReachable()) {
+//        WebServiceFetcher wsf = new WebServiceFetcher(url)
+        if (isReachable(url)) {
             LOGGER.info("Downloading from FTP: ${url}")
             forward(url: url)
         } else {
@@ -1144,5 +1144,38 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
             }
         }
         return href
+    }
+
+    /**
+     * Checks the returned code of an arbitrary URL.
+     *
+     * Simply put, a URL is reachable if the HTTP code is less than 400. Otherwise, we say that it is unreachable.
+     *
+     * @return a boolean value indicating the URL is reachable or unreachable
+     */
+    private boolean isReachable(final String requestUrl) {
+        HttpURLConnection connection = null
+        LOGGER.info("Checking the URL: ${requestUrl}")
+        boolean result = true
+        try {
+            URL url = new URL(requestUrl)
+            connection = (HttpURLConnection)url.openConnection()
+            connection.setRequestMethod("GET")
+            connection.connect()
+
+            int code = connection.getResponseCode()
+            LOGGER.info("When checking the URL '${requestUrl}' and getting the code: $code")
+            if (code < 400)  {
+                result = true
+            } else {
+                result = false
+            }
+        } catch(Exception e) {
+            result = false
+            LOGGER.error("When checking the URL '${requestUrl}' and getting the errors ${e.toString()}")
+        } finally {
+            connection.disconnect()
+        }
+        return result
     }
 }
