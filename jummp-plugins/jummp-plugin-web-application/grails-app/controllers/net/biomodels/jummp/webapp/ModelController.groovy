@@ -1173,7 +1173,9 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
             result = false
             LOGGER.error("When checking the URL '${requestUrl}' and getting the errors ${e.toString()}")
         } finally {
-            connection.disconnect()
+            if (connection) {
+                connection.disconnect()
+            }
         }
         return result
     }
