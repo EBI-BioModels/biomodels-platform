@@ -350,7 +350,8 @@ class ModelController extends CommonController {
                 }
             }
             '*' {
-                render view: '/errors/error415', status: 415 }
+                render view: '/errors/error415', status: 415
+            }
         }
     }
 
@@ -582,6 +583,27 @@ class ModelController extends CommonController {
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def createCombineArchive() {
+        Map m = generateOmex()
+
+        withFormat {
+            html {
+                render(model: m)
+            }
+            json {
+                println "come here"
+                render m as JSON
+            }
+            xml {
+                println "come here"
+                render m as XML
+            }
+            '*' {
+                render(controller: "errors", action: "error404", view: '/errors/error404', status: 404)
+            }
+        }
+    }
+
+    private Map generateOmex() {
         RTC revisionTC
         String filePath = ""
         String modelId = ""
@@ -740,7 +762,7 @@ class ModelController extends CommonController {
         if (isLargeSubmission) {
             // Use case 1: large and private
             println "use case 1: large and private"
-            Map result = createCombineArchive() as Map
+            Map result = generateOmex() as Map
             String url = result.get("location")
             if (url) {
                 LOGGER.info("Downloading COMBINEArchive file from FTP: ${url}")
