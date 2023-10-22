@@ -10,7 +10,7 @@
         String previewLink = createLink(controller: 'model',
             action: 'download', params: [id: revision.identifier(), filename: file.filename])
         String downloadLink = previewLink
-        if (revision.state == ModelState.PUBLISHED && deployTarget != "local") {
+        if (deployTarget != "local") {
             // get download link from EBI BioModels public FTP
             /*String EBI_BM_FTP = "${BioModels.EBI_BMPROD_PUBLIC_FTP}/repository"
             String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${file.filename}"
