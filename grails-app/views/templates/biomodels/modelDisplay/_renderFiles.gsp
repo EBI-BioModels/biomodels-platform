@@ -16,7 +16,7 @@
             String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${file.filename}"
             downloadLink = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"*/
             String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${file.filename}"
-            downloadLink = "https://wwwdev.ebi.ac.uk/biomodels/services/download/get-files/${filePath}"
+            downloadLink = "${serverURL}/services/download/get-files/${filePath}"
         }
 
     %>
