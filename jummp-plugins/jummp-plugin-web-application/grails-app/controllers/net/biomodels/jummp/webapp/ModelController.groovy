@@ -613,7 +613,7 @@ class ModelController extends CommonController {
             modelId = revisionTC.model.submissionId
             revisionNumber = revisionTC.revisionNumber
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revisionTC)
-            String parentDir = modelDelegateService.getVcsIdentifier(modelId)
+            String parentDir = modelDelegateService.getVcsIdentifier(modelId)?.take(3)
             String modelExportsDir = grailsApplication.config.jummp.model.exportFolder
             JSONArray array = modelDelegateService.buildJsonArray(deployTarget,
                 parentDir, modelId, revisionNumber, FILES, modelExportsDir, revisionTC.state.name())
