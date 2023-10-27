@@ -619,9 +619,9 @@ class ModelController extends CommonController {
                 parentDir, modelId, revisionNumber, FILES, modelExportsDir, revisionTC.state.name())
 
             CloseableHttpClient httpClient = HttpClientBuilder.create().build()
-            final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", "http://localhost:8090/api/v1.0")
+            final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", "http://localhost:8090/biomodels/services/file-format/api/v1.0")
             try {
-                HttpPost request = new HttpPost("${FS_SVR_URL}/file-format/create-omex")
+                HttpPost request = new HttpPost("${FS_SVR_URL}/create-omex")
                 StringEntity params = new StringEntity(array.toString(), "UTF-8")
                 request.addHeader("content-type", "application/json")
                 request.setEntity(params)
