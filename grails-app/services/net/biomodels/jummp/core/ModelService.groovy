@@ -2584,6 +2584,10 @@ There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType})
             def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
                 revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
 
+            if (!attachedRevision) {
+                logger.debug("${revision.model.submissionId}.${revision.id} cannot be fetched from the database. Please run all post processes for this revision manually.")
+                return null
+            }
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision, latest: true)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             try {
