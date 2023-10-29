@@ -78,7 +78,7 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.13'
         // miriam lib required by sbml converters
         runtime('uk.ac.ebi.miriam:miriam-lib:1.1.3')// { transitive = false }
-        compile("org.sbml.jsbml:jsbml:1.5") {
+        compile("org.sbml.jsbml:jsbml:1.6.1") {
             // Java 1.6+ already has these classes
             excludes 'stax-api', 'slf4j-log4j12', 'log4j-slf4j-impl', 'log4j-core', 'log4j-api', 'log4j-1.2-api'
         }

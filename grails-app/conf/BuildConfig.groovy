@@ -72,6 +72,8 @@ grails.project.dependency.resolution = {
         mavenCentral()
         mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
         mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-release"
+        mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-snapshots"
         mavenRepo "https://repo.spring.io/milestone"
         mavenRepo "http://repo.grails.org/grails/core"
 
@@ -143,7 +145,7 @@ grails.project.dependency.resolution = {
         runtime "org.apache.camel:camel-exec:2.13.0"
 
         // DDMoRe Metadata Information Service uses jena 2.13
-        compile("org.mbine.co:libCombineArchive:0.3-SNAPSHOT") {
+        compile("org.mbine.co:libCombineArchive:0.3.1-SNAPSHOT") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
         }
         compile "de.uni-rostock.sbi:CombineExt:1.3.1"
