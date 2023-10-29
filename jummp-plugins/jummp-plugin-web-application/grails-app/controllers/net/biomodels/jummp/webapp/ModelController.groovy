@@ -593,11 +593,9 @@ class ModelController extends CommonController {
                 render(model: m)
             }
             json {
-                println "come here"
                 render m as JSON
             }
             xml {
-                println "come here"
                 render m as XML
             }
             '*' {
@@ -635,7 +633,6 @@ class ModelController extends CommonController {
                     if (entity != null) {
                         filePath = EntityUtils.toString(entity)
                     }
-
                 } finally {
                     response.close()
                 }
@@ -650,7 +647,7 @@ class ModelController extends CommonController {
         } catch (ModelException ignored) {
             ignored.printStackTrace()
         } finally {
-            LOGGER.info("File Path: $filePath")
+            LOGGER.info("File Path of the omex file: $filePath")
         }
         // asynchronous jobs have to be called here
         // TODO: email or notify the requester the location of the OMEX file so that they can download it later.
@@ -750,21 +747,21 @@ class ModelController extends CommonController {
 
     private void serveModelAsCombineArchive(RTC revision, List<RFTC> files, def resp) {
         if (revision.state == ModelState.PUBLISHED && deployTarget != "local") {
-            println "use case 2 and 4: public - regardless of its size"
+            println "${revision.modelIdentifier()}: download omex => use case 2 and 4: public - regardless of its size"
             serveModelAsCombineArchiveForPublished(revision, files, resp)
         } else {
-            println "use case 1 and 3: private - considering its size to serve instantly or later"
-            serveModelAsCombineArchiveForPrivate(files, resp)
+            println "${revision.modelIdentifier()}: download omex => use case 1 and 3: private - considering its size to serve instantly or later"
+            serveModelAsCombineArchiveForPrivate(revision, files, resp)
         }
     }
 
-    private void serveModelAsCombineArchiveForPrivate(List<RepositoryFileTransportCommand> files, resp) {
+    private void serveModelAsCombineArchiveForPrivate(RTC revision, List<RepositoryFileTransportCommand> files, resp) {
         // Revision is private, then considering the size of the request
         long totalSize = files.collect { it.size }.sum() as long
         boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
         if (isLargeSubmission) {
             // Use case 1: large and private
-            println "use case 1: large and private"
+            println "${revision.modelIdentifier()}: download omex => use case 1: large and private"
             Map result = generateOmex() as Map
             String url = result.get("location")
             if (url) {
@@ -775,7 +772,7 @@ class ModelController extends CommonController {
             }
         } else {
             // Use case 3: small and private, then generate/create CombineArchive on the spot
-            println "use case 3: small and private"
+            println "${revision.modelIdentifier()}: download omex => use case 3: small and private"
             serveModelAsCombineArchiveInstantly(files, resp)
         }
     }
