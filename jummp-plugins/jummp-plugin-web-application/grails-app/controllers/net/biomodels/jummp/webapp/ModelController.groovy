@@ -240,8 +240,11 @@ class ModelController extends CommonController {
                         flashMessage = flash.now["giveMessage"]
                     }
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
-                    long totalSize = repoFiles.collect { it.size }.sum() as long
-                    boolean canCreateOmex = totalSize <= BioModels.MAX_FILE_SIZE // 500MB
+                    boolean canCreateOmex = false
+                    if (repoFiles) {
+                        long totalSize = repoFiles.collect { it.size }.sum() as long
+                        canCreateOmex = totalSize <= BioModels.MAX_FILE_SIZE // 500MB
+                    }
                     repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
                     List<RTC> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
