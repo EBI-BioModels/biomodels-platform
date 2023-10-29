@@ -29,6 +29,7 @@ eventCompileStart = { msg ->
     def proc = cmd.execute()
     proc.waitFor()
     String txt = proc.in.text
+    txt = txt.trim()
     println "branch: $txt"
     int skip = 0
     if (txt == "k8sdev") {
