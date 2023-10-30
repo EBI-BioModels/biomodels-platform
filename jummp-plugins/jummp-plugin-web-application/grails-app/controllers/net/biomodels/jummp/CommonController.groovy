@@ -50,22 +50,21 @@ class CommonController implements GrailsConfigurationAware {
         manualURL = grailsApplication.config.jummp.context.help.root
         serverURL = grailsApplication.config.grails.serverURL
         deployTarget = "local"
-        EBI_BM_FTP = "local"
-        EBI_BM_FTP_REPO = "local"
+        EBI_BM_FTP = co.jummp.model.ftp.location
+
         if (serverURL.contains("wwwdev")) {
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
             deployTarget = "dev"
             EBI_BM_FTP = BioModels.EBI_BMDEV_PUBLIC_FTP
-            EBI_BM_FTP_REPO = EBI_BM_FTP + File.separator + "repository"
         } else if (Environment.current == Environment.PRODUCTION && !serverURL.contains("wwwdev")) {
             bmStaticAssetsURL = "${BioModels.BM_ROOT_URL}/static-assets"
             deployTarget = "prod"
             EBI_BM_FTP = BioModels.EBI_BMPROD_PUBLIC_FTP
-            EBI_BM_FTP_REPO = EBI_BM_FTP + File.separator + "repo"
         } else {
             // local or dev target
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
         }
+        EBI_BM_FTP_REPO = EBI_BM_FTP + File.separator + "repository"
         theme = grailsApplication.config.jummp.branding.style
         if (!theme) theme = "default"
         COMMON_PROPERTIES = [

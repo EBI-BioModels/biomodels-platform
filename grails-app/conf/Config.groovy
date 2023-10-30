@@ -960,3 +960,9 @@ if (!(jummpConfig.jummp.model.download.server instanceof ConfigObject)) {
 } else {
     jummp.model.download.server = "http://127.0.0.1:7000"
 }
+
+if (!(jummpConfig.jummp.model.ftp.location instanceof ConfigObject)) {
+    jummp.model.ftp.location = jummpConfig.jummp.model.ftp.location
+} else {
+    jummp.model.ftp.location = "ftp://127.0.0.1:9000"
+}
