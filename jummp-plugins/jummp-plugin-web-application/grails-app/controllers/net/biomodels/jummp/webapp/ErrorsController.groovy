@@ -37,7 +37,7 @@ class ErrorsController {
     def error400() {
         response.status = HttpServletResponse.SC_BAD_REQUEST
         withFormat {
-            html { [resource: request.forwardURI, errorDescription: params?.errorDescription, code: response.status] }
+            html { [resource: request.forwardURI, errorDescription: params?.errorDescription, code: 400] }
             '*' { respond getError("400", [request.forwardURI]) }
         }
     }
@@ -45,7 +45,7 @@ class ErrorsController {
     def error403() {
         response.setStatus HttpServletResponse.SC_FORBIDDEN
         withFormat {
-            html { [authenticated: springSecurityService.isLoggedIn(), code: response.status] }
+            html { [authenticated: springSecurityService.isLoggedIn(), code: 403] }
             '*' { respond getError("403") }
         }
     }
