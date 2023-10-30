@@ -25,24 +25,13 @@ includeTargets << new File("./scripts/WeceemExport.groovy")
  */
 eventCompileStart = { msg ->
     // the only way I could get Groovy to execute a command with an argument containing spaces
-    def cmd = ["git", "rev-parse", "--abbrev-ref", "HEAD"]
+    // the main command is to get the hash id of the last commit on the development branch
+    def cmd = ["git", "log", "-n", "1", "development",
+         "--pretty=format:<a href=\"//bitbucket.org/biomodels/jummp-biomodels/commits/all?search=%h\">%h</a> | %aD"]
     def proc = cmd.execute()
     proc.waitFor()
-    String txt = proc.in.text
-    txt = txt.trim()
-    println "branch: $txt"
-    int skip = 0
-    if (txt == "k8sdev") {
-        skip = 2
-    } else if ("k8sprod" == txt) {
-        skip = 3
-    }
-    cmd = ["git", "log", "-1", "--skip=${skip}",
-         "--pretty=format:<a href=\"//bitbucket.org/biomodels/jummp-biomodels/commits/all?search=%h\">%h</a> | %aD"]
-    proc = cmd.execute()
-    proc.waitFor()
     ant.mkdir(dir: "grails-app/views/templates/")
-    txt = proc.in.text
+    String txt = proc.in.text
     println "commit id: $txt"
     new FileOutputStream("grails-app/views/templates/_version.gsp", false) << txt
 
