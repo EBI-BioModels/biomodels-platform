@@ -954,3 +954,9 @@ if (!(jummpConfig.ws.client.pyapi.docs instanceof ConfigObject)) {
 } else {
     jummp.ws.client.pyapi.docs = "https://bitbucket.org/biomodels/biomodels-resftful-api-client/src/main/"
 }
+
+if (!(jummpConfig.jummp.model.download.server instanceof ConfigObject)) {
+    jummp.model.download.server = jummpConfig.jummp.model.download.server
+} else {
+    jummp.model.download.server = "http://127.0.0.1:7000"
+}
