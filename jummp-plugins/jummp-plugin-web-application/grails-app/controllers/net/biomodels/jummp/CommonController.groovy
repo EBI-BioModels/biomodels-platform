@@ -38,6 +38,7 @@ class CommonController implements GrailsConfigurationAware {
     static String theme
     static String deployTarget
     static String EBI_BM_FTP
+    static String EBI_BM_FTP_REPO
     static Map COMMON_PROPERTIES = [:]
 
     def grailsApplication
@@ -50,14 +51,17 @@ class CommonController implements GrailsConfigurationAware {
         serverURL = grailsApplication.config.grails.serverURL
         deployTarget = "local"
         EBI_BM_FTP = "local"
+        EBI_BM_FTP_REPO = "local"
         if (serverURL.contains("wwwdev")) {
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
             deployTarget = "dev"
             EBI_BM_FTP = BioModels.EBI_BMDEV_PUBLIC_FTP
+            EBI_BM_FTP_REPO = EBI_BM_FTP + File.separator + "repository"
         } else if (Environment.current == Environment.PRODUCTION && !serverURL.contains("wwwdev")) {
             bmStaticAssetsURL = "${BioModels.BM_ROOT_URL}/static-assets"
             deployTarget = "prod"
             EBI_BM_FTP = BioModels.EBI_BMPROD_PUBLIC_FTP
+            EBI_BM_FTP_REPO = EBI_BM_FTP + File.separator + "repo"
         } else {
             // local or dev target
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
@@ -71,7 +75,8 @@ class CommonController implements GrailsConfigurationAware {
             "serverURL": serverURL,
             "theme": theme,
             "deployTarget": deployTarget,
-            "EBI_BM_FTP": EBI_BM_FTP
+            "EBI_BM_FTP": EBI_BM_FTP,
+            "EBI_BM_FTP_REPO": EBI_BM_FTP_REPO
         ]
     }
 }

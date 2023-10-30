@@ -614,7 +614,7 @@ class ModelController extends CommonController {
             String modelId = rtc.model.submissionId
             String filePath = "${modelId}/${rtc.revisionNumber}/${modelId}.${rtc.revisionNumber}.omex"
             useCase = "Published|NotLocal"
-            link = EBI_BM_FTP + "/" + modelParentFolder +  "/" + filePath
+            link = EBI_BM_FTP_REPO + "/" + modelParentFolder +  "/" + filePath
         } else if (rtc.state != ModelState.PUBLISHED) {
             // Use case 2: private models
             if (canCreateOmex) {
@@ -821,7 +821,7 @@ class ModelController extends CommonController {
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         // Use case 2 and 4: Revision is public regardless of its size
-        String url = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"
+        String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/$filePath"
         if (JummpHttpService.isReachable(url)) {
             LOGGER.info("Downloading COMBINEArchive file from FTP: ${url}")
             redirect(url: url)
@@ -885,7 +885,7 @@ class ModelController extends CommonController {
                                               boolean inline, boolean preview = false) {
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${rf.filename}"
-        String url = "${EBI_BM_FTP}/${modelParentFolder}/${filePath}"
+        String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/${filePath}"
         if (JummpHttpService.isReachable(url)) {
             LOGGER.info("Downloading from FTP: ${url}")
             redirect(url: url)
