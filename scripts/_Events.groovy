@@ -33,9 +33,9 @@ eventCompileStart = { msg ->
     println "branch: $txt"
     int skip = 0
     if (txt == "k8sdev") {
-        skip = 1
-    } else if ("k8sprod" == txt) {
         skip = 2
+    } else if ("k8sprod" == txt) {
+        skip = 3
     }
     cmd = ["git", "log", "-1", "--skip=${skip}",
          "--pretty=format:<a href=\"//bitbucket.org/biomodels/jummp-biomodels/commits/all?search=%h\">%h</a> | %aD"]
