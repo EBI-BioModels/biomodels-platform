@@ -11,12 +11,10 @@
             action: 'download', params: [id: revision.identifier(), filename: file.filename])
         String downloadLink = previewLink
         if (deployTarget != "local") {
-            // get download link from EBI BioModels public FTP
-            /*String EBI_BM_FTP = "${BioModels.EBI_BMPROD_PUBLIC_FTP}/repository"
-            String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${file.filename}"
-            downloadLink = "${EBI_BM_FTP}/${modelParentFolder}/$filePath"*/
             String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${file.filename}"
             downloadLink = "${serverURL}/services/download/get-files/${filePath}"
+        } else {
+            // downloadLink = "";
         }
 
     %>
