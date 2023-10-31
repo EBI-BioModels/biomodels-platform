@@ -13,8 +13,8 @@ backup() {
   do
     dir="logs/$ns-$po"
     mkdir $dir
-    kubectl logs $po -n $ns > $dir/$pos.log 
-    kubectl cp $ns/$pos:/usr/local/tomcat/logs/ $dir/
+    kubectl logs $po -n $ns > $dir/$po.log 
+    kubectl cp $ns/$po:/usr/local/tomcat/logs/ $dir/
   done
 }
 
