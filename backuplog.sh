@@ -7,9 +7,8 @@ backup() {
   kubectl get po -n $ns| grep jummp | xargs -n 1|grep jummp > tmp/pos.txt
  
   file=tmp/pos.txt
-  pods_str=$(cat $file | tr "\n" " ")
-  pods=($pods_str)
-  for po in "${pods}"
+  pods=`cat $file`
+  for po in $pods
   do
     dir="logs/$ns-$po"
     mkdir -p $dir
