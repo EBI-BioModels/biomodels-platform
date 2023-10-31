@@ -81,8 +81,8 @@ please contact: Dr Rahuman Sheriff (sheriff AT ebi.ac.uk). The application is op
 <p>
 The field of antimicrobial drug discovery is of paramount importance, especially in the context of global health.
 Enhancing the visibility and accessibility of computational models in this domain can catalyze research,
-accelerating the discovery of novel medicines. The Ersilia Open Source Initiative is dedicated to developing AI/ML
-models in infectious disease research. Through the Ersilia Model Hub, we provide a repository AI/ML tools that
+accelerating the discovery of novel medicines. The <a href="https://ersilia.io" target="_blank">Ersilia Open Source Initiative</a> is
+dedicated to developing AI/ML models in infectious disease research. Through the Ersilia Model Hub, we provide a repository AI/ML tools that
 address pressing global health challenges.<br/>
 <br/>
 BioModels is a well-established resource offering a centralized platform for biologically relevant mathematical models.
@@ -100,7 +100,8 @@ combining the expertise of both entities to promote the adoption of AI/ML models
 
 <p><strong>Key Responsibilities</strong></p>
 <ul>
-    <li>Engage with BioModels and BioModelsML.</li>
+    <li>Engage with <a href="https://europepmc.org/article/MED/31701150" target="_blank">BioModels</a> and
+        <a href="https://www.biorxiv.org/content/10.1101/2023.05.22.540599v1" target="_blank">BioModelsML</a>.</li>
     <li>Curate and collect metadata for the existing models within the Ersilia Model Hub,
         ensuring alignment with BioModels' standards of quality and annotation.</li>
     <li>Contribute to the refinement of the BioModelsML curation workflow.</li>
