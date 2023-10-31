@@ -135,7 +135,7 @@ institutions leading the charge. Candidates are urged to forward their CV and a 
 aptitude and enthusiasm for the role.
 <br/><br/>
     Applications will be reviewed on a rolling basis. Please submit applications
-    via email to <a href="mailto:hello@ersilia.io">hello@ersilia.io</a> and <a href="sheriff@ebi.ac.uk">sheriff@ebi.ac.uk</a>.</p>
+    via email to <a href="mailto:hello@ersilia.io">hello@ersilia.io</a> and <a href="mailto:sheriff@ebi.ac.uk">sheriff@ebi.ac.uk</a>.</p>
 
 <!-- Second intern -->
 <h3 style="border-bottom: 1px solid grey">
