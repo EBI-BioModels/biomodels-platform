@@ -11,12 +11,11 @@ backup() {
   pods=($pods_str)
   for po in "${pods}"
   do
-    dir="logs/$ns-$pos"
+    dir="logs/$ns-$po"
     mkdir $dir
-    kubectl logs $po -n $ns > "$dir/$pos.log" 
-    kubectl cp $ns/$pos:/usr/local/tomcat/logs/ $dir/logs/
+    kubectl logs $po -n $ns > $dir/$pos.log 
+    kubectl cp $ns/$pos:/usr/local/tomcat/logs/ $dir/
   done
-
 }
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
