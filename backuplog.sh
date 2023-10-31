@@ -12,7 +12,7 @@ backup() {
   for po in "${pods}"
   do
     dir="logs/$ns-$po"
-    mkdir $dir
+    mkdir -p $dir
     kubectl logs $po -n $ns > $dir/$po.log 
     kubectl cp $ns/$po:/usr/local/tomcat/logs/ $dir/
   done
