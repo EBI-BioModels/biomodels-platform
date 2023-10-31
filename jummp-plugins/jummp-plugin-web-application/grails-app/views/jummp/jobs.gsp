@@ -30,6 +30,7 @@
 
 <h2>Internship opportunities</h2>
 
+<!--
 <h3 style="border-bottom: 1px solid grey">
     Curation internship: Literature curation of Genome-Scale metabolic models</h3>
 
@@ -68,6 +69,72 @@ selected candidate when required.
 </p>
 <p>For further enquiries or to make an application (with your CV and a cover letter),
 please contact: Dr Rahuman Sheriff (sheriff AT ebi.ac.uk). The application is open until filled.</p>
+-->
+
+
+<h3 style="border-bottom: 1px solid grey">
+    <em>Joint internship between EMBL-EBI and Ersilia</em><br/>
+    Curation of Metadata of AI/ML Models for Inclusion in the BioModels Database (EBI-EMBL)
+</h3>
+
+<p><strong>Background and Impact</strong></p>
+<p>
+The field of antimicrobial drug discovery is of paramount importance, especially in the context of global health.
+Enhancing the visibility and accessibility of computational models in this domain can catalyze research,
+accelerating the discovery of novel medicines. The Ersilia Open Source Initiative is dedicated to developing AI/ML
+models in infectious disease research. Through the Ersilia Model Hub, we provide a repository AI/ML tools that
+address pressing global health challenges.<br/>
+<br/>
+BioModels is a well-established resource offering a centralized platform for biologically relevant mathematical models.
+Prioritizing quality and annotation, it equips researchers with thousands of interoperable, curated models over a
+broad range of topics. Hosted at the EMBL-EBI, BioModels is an indispensable instrument in global computational biology
+research.<br/>
+<br/>
+By integrating models from the Ersilia Model Hub into BioModels, this collaboration aims to enhance the visibility
+and effectiveness of the antimicrobial drug discovery AI/ML models available within Ersilia.
+</p>
+
+<p><strong>Internship Details</strong></p>
+<p>This collaboration between EMBL-EBI and Ersilia entails a 4-month hybrid internship. The partnership focuses on
+combining the expertise of both entities to promote the adoption of AI/ML models in antimicrobial drug discovery.</p>
+
+<p><strong>Key Responsibilities</strong></p>
+<ul>
+    <li>Engage with BioModels and BioModelsML.</li>
+    <li>Curate and collect metadata for the existing models within the Ersilia Model Hub,
+        ensuring alignment with BioModels' standards of quality and annotation.</li>
+    <li>Contribute to the refinement of the BioModelsML curation workflow.</li>
+    <li>Collaborate with interdisciplinary teams from both EMBL-EBI and the Ersilia Open Source Initiative.</li>
+    <li>Aid in the incorporation of Ersilia's models into BioModels.</li>
+</ul>
+
+<p><strong>Requirements</strong></p>
+<ul>
+    <li>A foundation in biology, bioinformatics, or a similar discipline.</li>
+    <li>Broad comprehension of machine learning, with emphasis on its application to drug discovery.</li>
+    <li>Ability to work efficiently in a hybrid setup and collaborate within a team.</li>
+    <li>Strong written communication abilities.</li>
+</ul>
+
+<p><strong>Internship Benefits</strong></p>
+<ul>
+    <li>Joint Charity/Academic Institute setting.</li>
+    <li>Hybrid work pattern.</li>
+    <li>Daily interaction with the Ersilia community via Slack, GitHub and Online meetings.</li>
+    <li>Weekly meeting with Ersilia and/or EMBL-EBI supervisor.</li>
+    <li>Monthly stipend to support living expenses.</li>
+</ul>
+
+<p><strong>Internship timeline</strong></p>
+<ul>
+    <li>From as soon as possible, for four months.</li>
+</ul>
+<p>This internship presents a unique opportunity to delve into computational biology and collaborate with two recognized
+institutions leading the charge. Candidates are urged to forward their CV and a cover letter that speaks to their
+aptitude and enthusiasm for the role.
+<br/><br/>
+    Applications will be reviewed on a rolling basis. Please submit applications
+    via email to <a href="mailto:hello@ersilia.io">hello@ersilia.io</a> and <a href="sheriff@ebi.ac.uk">sheriff@ebi.ac.uk</a>.</p>
 
 <h3 style="border-bottom: 1px solid grey">
     EMBL-EBI - IITM Internship on Curation of Machine Learning Models in BioModels</h3>
