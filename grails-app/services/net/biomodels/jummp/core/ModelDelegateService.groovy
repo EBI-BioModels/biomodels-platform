@@ -275,7 +275,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             }
         }
 
-        ["vcsId": vcsId, "publishedRevs": publishedRevs, "privateRevs": privateRevs]
+        ["vcsId": vcsId, "publishedRevs": publishedRevs, "privateRevs": privateRevs, "submissionId": model.submissionId]
     }
 
     ModelTC uploadModel(List<File> modelFiles, ModelTC meta) throws
