@@ -179,7 +179,30 @@ class VcsService implements GrailsConfigurationAware {
         files
     }
 
-    public List<VcsFileDetails> getFileDetails(final Revision revision, String path)
+    /**
+     * Fix the inconsistency between the physical VCS commits hashes and the VCS values saved in the database.
+     * The correct values should be matched with the ones in the model directory controlled by VCS.
+     * @param model A {@link Model} object
+     * @return A {@link List} of full commit hashes ordered by the last commit as the first (e.g., zero order) item
+     * to the initial one as the biggest order in the list.
+     */
+    Map fixVcsIds(Model model) {
+        Map returned = new HashMap()
+        final File MODEL_FOLDER = new File(modelContainerRoot, model.vcsIdentifier)
+        List<String> commitHashes = vcsManager.getRevisions(MODEL_FOLDER)
+        if (model.revisions.size() != commitHashes.size()) {
+            String msg = "The number of commits and revisions aren't identical. Cannot fix VCS commits for the model ${model.submissionId}."
+            returned["success"] = false
+            returned["message"] = msg
+            log.debug(msg)
+        } else {
+            returned = updateVcsIds(model, commitHashes)
+        }
+
+        returned
+    }
+
+    List<VcsFileDetails> getFileDetails(final Revision revision, String path)
                 throws VcsException {
         if (!isValid()) {
             throw new VcsException("Version Control System is not valid")
@@ -191,5 +214,26 @@ class VcsService implements GrailsConfigurationAware {
     @Override
     void setConfiguration(ConfigObject co) {
         modelContainerRoot = fileSystemService.root.canonicalPath
+    }
+
+    private Map updateVcsIds(Model model, List<String> hashes) {
+        int index = 0
+        List<String> revHashes = hashes.reverse()
+        // sort the revisions ascending their ids
+        Set<Revision> revisions = model.revisions.sort { it.id }
+        for (String hash : revHashes) {
+            revisions[index++].vcsId = hash
+        }
+        boolean success
+        String msg
+        if (model.save(flush: true)) {
+            success = true
+            msg = "Saved the commit fixes for the revisions of model ${model.submissionId}."
+        } else {
+            success = false
+            msg = "There have been errors when trying to save the commit updates for the revisions of model ${model.submissionId}."
+        }
+
+        ["success": success, "message": msg] as Map
     }
 }
