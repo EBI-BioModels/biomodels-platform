@@ -138,6 +138,7 @@ aptitude and enthusiasm for the role.
     via email to <a href="mailto:hello@ersilia.io">hello@ersilia.io</a> and <a href="mailto:sheriff@ebi.ac.uk">sheriff@ebi.ac.uk</a>.</p>
 
 <!-- Second intern -->
+<!--
 <h3 style="border-bottom: 1px solid grey">
     EMBL-EBI - IITM Internship on Curation of Machine Learning Models in BioModels</h3>
 
@@ -171,6 +172,7 @@ Bosch Centre for Data Science and Artificial Intelligence</a> &
 <p>For further enquiries or to make an application (with your CV and a cover letter),
 please contact Prof. Karthik Raman (kraman AT iitm.ac.in) and or Dr Rahuman Sheriff (sheriff AT ebi.ac.uk).
 The application is open until filled.</p>
+-->
 
 <!--
 <h3 style="border-bottom: 1px solid grey">Curation internship: Literature curation of mechanistic models of disease pathways</h3>
