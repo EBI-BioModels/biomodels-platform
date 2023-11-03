@@ -102,7 +102,11 @@
 <g:javascript src="datatable/vfs_fonts.js" contextPath=""/>
 <g:javascript src="datatable/buttons.html5.min.js" contextPath=""/>
 
-<g:if test="${classifiedModels}">
+<%
+    println "Classified Models: ${classifiedModels?.dump()}"
+%>
+
+<g:if test="${classifiedModels != null }">
 <g:javascript>
     var json = $.parseJSON('${classifiedModels.toString().replace('\'', '\\\'')}');
 
