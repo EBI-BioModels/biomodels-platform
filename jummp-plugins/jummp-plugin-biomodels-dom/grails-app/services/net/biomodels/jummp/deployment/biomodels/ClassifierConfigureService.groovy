@@ -158,7 +158,7 @@ class ClassifierConfigureService implements InitializingBean {
         Map<String, String> modelDetails = RestUtils.exchange(request, HttpMethod.GET,
             new TypeReference<HashMap<String, String>>(){}, null, RETRY_CLASSIFY_TIMES)
         DLModelCommand dlModelCommand = new DLModelCommand()
-        dlModelCommand.setDlname(modelName)
+        dlModelCommand.setDlName(modelName)
         dlModelCommand.setBatchSize(Integer.parseInt(modelDetails['batch_size']))
         dlModelCommand.setTotalEpoch(Integer.parseInt(modelDetails['total_epoch']))
         dlModelCommand.setValPerEpoch(Integer.parseInt(modelDetails['val_per_epoch']))

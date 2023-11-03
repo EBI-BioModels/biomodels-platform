@@ -25,7 +25,7 @@
             <td class="name" width="25%">
                 <label for="dlname">${message(code: 'modelclassifier.dllmodel.details.name')}:</label>
             </td>
-            <td class="value ${hasErrors(bean: classifierCreator, field: 'dlname', 'errors')}">
+            <td class="value ${hasErrors(bean: classifierCreator, field: 'dlName', 'errors')}">
                 <input type="text" name="dlname" id="dlname"
                        style="width: 350px;"
                 />

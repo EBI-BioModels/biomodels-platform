@@ -149,7 +149,7 @@ class ClassifierConfigureController {
             }
             try {
                 classifierConfigureService.createDLModel(
-                    cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
+                    cmd.dlName, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
                 LOGGER.error("An exception occurred when creating a new deep learning model, {}", e)
@@ -239,9 +239,9 @@ class ClassifierConfigureController {
                 hiddenLayers = hiddenLayerRequest.split(",").collect{Integer.parseInt(it)}
             }
             try {
-                classifierConfigureService.deleteDLModel(cmd.dlname)
+                classifierConfigureService.deleteDLModel(cmd.dlName)
                 classifierConfigureService.createDLModel(
-                    cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
+                    cmd.dlName, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
                 LOGGER.error("An exception occurred when creating a new deep learning model, {}", e)
