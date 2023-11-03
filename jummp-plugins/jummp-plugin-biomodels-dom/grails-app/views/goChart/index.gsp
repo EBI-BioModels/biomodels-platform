@@ -23,7 +23,8 @@
     <title>Model GO Categories | BioModels</title>
     <meta name="layout" content="${session['branding.style']}/main" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css',
+                contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
     <style>
     path {
         stroke: #000;
@@ -101,10 +102,6 @@
 <g:javascript src="datatable/jszip.min.js" contextPath=""/>
 <g:javascript src="datatable/vfs_fonts.js" contextPath=""/>
 <g:javascript src="datatable/buttons.html5.min.js" contextPath=""/>
-
-<%
-    println "Classified Models: ${classifiedModels?.dump()}"
-%>
 
 <g:if test="${classifiedModels != null }">
 <g:javascript>

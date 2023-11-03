@@ -25,7 +25,6 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.ModelDetails
 import org.slf4j.Logger

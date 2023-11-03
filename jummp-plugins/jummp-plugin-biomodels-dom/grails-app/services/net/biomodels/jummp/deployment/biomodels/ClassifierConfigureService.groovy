@@ -33,6 +33,8 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.core.type.TypeReference
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -50,12 +52,10 @@ import org.springframework.web.util.UriComponentsBuilder
  * @author: Vu Tu <tvu@ebi.ac.uk>
  */
 class ClassifierConfigureService implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClassifierConfigureService.class)
 
     static transactional = false
 
-    /**
-     * Dependency Injection of GrailsApplication
-     */
     def grailsApplication
 
     /**
