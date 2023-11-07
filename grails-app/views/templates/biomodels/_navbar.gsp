@@ -130,7 +130,7 @@
             <li><a>Model of the Year</a>
                 <ul class="menu">
                     <li><a href="${grailsApplication.config.grails.serverURL}/competition/model-of-the-year-2023">MOY2023</a></li>
-                    <li><a href="${grailsApplication.config.grails.serverURL}/competition/model-of-the-year-2023">MOY2024</a></li>
+                    <li><a href="${grailsApplication.config.grails.serverURL}/competition/model-of-the-year-2024">MOY2024</a></li>
                 </ul>
             </li>
         </ul>
