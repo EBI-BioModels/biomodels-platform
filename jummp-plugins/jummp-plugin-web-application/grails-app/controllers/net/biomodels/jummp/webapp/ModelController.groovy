@@ -260,7 +260,7 @@ class ModelController extends CommonController {
                         metadataDelegateService.fetchModellingApproaches(rev)
                     boolean hasCuratorRole = userService.isLoggedInUserACurator()
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
-                    List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
+                    List<RFTC> convertedFilesTC = null //modelConversionService.getConvertedFiles(rev)
                     Set<TagTC> tags = metadataDelegateService.findTagsByModel(rev.model)
                     String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
                     String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
@@ -618,15 +618,16 @@ class ModelController extends CommonController {
         } else if (rtc.state != ModelState.PUBLISHED) {
             // Use case 2: private models
             if (canCreateOmex) {
-                // Use case 2.1: small or adequate size
+                // Use case 2.1: private models and small or adequate size
                 useCase = "Private|AdequateSize"
-                link = createLink(controller: 'model', action: 'download', id: rtc.identifier())
             } else {
-                // Use case 2.2: large size
-                Map map = generateOmex()
+                // Use case 2.2: private models and large size
+                // returns the file location using the download server URL
+                // Map map = generateOmex()
                 useCase = "Private|LargeSize"
-                link = map["location"]
+                // link = map["location"]
             }
+            link = createLink(controller: 'model', action: 'download', id: rtc.identifier())
         } else if (deployTarget == "local") {
             // Use case 3: local development
             // no need to check the boolean logic variable: canCreateOmex, using the download and upload server
