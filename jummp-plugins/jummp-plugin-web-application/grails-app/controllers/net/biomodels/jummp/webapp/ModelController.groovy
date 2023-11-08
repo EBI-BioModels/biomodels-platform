@@ -845,7 +845,7 @@ class ModelController extends CommonController {
                 moveOmexFile(newOmexFile, omexFile)
 
                 String msg = """You file might be big. It is being generated. Please be patient and check the download \
-link <a href='${url}'>${url}</a> after a few minutes. Thank you for your understanding!"""
+link <a href='${url}' target='_blank'>${url}</a> after a few minutes. Thank you for your understanding!"""
                 render(view: "download/inform", model: [message: msg])
             } else {
                 forward(controller: "errors", action: "error413")
@@ -854,7 +854,6 @@ link <a href='${url}'>${url}</a> after a few minutes. Thank you for your underst
             LOGGER.info("Downloading COMBINE Archive (OMEX) file from the model cache directory: ${filePath}")
             redirect(url: url)
         }
-        return
     }
 
     private void serveModelAsFile(RTC revision, RFTC rf, def resp, boolean inline, boolean preview = false) {

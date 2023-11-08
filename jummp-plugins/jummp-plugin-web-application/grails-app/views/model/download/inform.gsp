@@ -29,11 +29,11 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="layout" content="${session['branding.style']}/main" />
-    <title>Download Results | BioModels</title>
+    <title>Download Result | BioModels</title>
 </head>
 
 <body>
-    <h2>Results:</h2>
-    <p>${message}</p>
+    <h2 style="color: red">Result</h2>
+    <h4 style="color: #2aabd2">${message}</h4>
 </body>
 </html>
