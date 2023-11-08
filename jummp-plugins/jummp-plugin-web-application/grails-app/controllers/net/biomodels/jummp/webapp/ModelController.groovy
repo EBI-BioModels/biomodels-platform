@@ -938,7 +938,7 @@ link <a href='${url}'>${url}</a> after a few minutes. Thank you for your underst
         }
     }
 
-    private void moveOmexFile(final File source, final File target) {
+    private static Promise moveOmexFile(final File source, final File target) {
         Promise p = task {
             LOGGER.info("Moved the OMEX file: ${source}")
             println("Moved the OMEX file: ${source}")
@@ -956,7 +956,8 @@ link <a href='${url}'>${url}</a> after a few minutes. Thank you for your underst
             println "Promise returned $res"
         }
         // block until result is called
-        //p.get()
+        // p.get()
+        return p
     }
 
     /**
