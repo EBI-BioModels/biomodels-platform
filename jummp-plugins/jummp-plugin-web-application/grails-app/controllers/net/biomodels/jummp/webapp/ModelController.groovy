@@ -586,12 +586,12 @@ class ModelController extends CommonController {
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def createCombineArchive() {
-        String modelId = params.modelId
+        String modelId = params.id
         if (!modelId) {
             forward(controller: "errors", action: "error500")
             return
         }
-        Integer revisionId = params.getInt("revisionNumber")
+        Integer revisionId = params.getInt("revisionId")
         Map m = generateOmex(modelId, revisionId)
 
         withFormat {
