@@ -549,7 +549,7 @@ class ModelController extends CommonController {
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))
 
         String submissionFolder = initials.get("submissionFolder")
-        RTC revisionTC = initials.get("RevisionTC")
+        RTC revisionTC = initials.get("RevisionTC") as RTC
         Map submissionDataMap = ["latestModelDescription": revisionTC.description ?: ""]
         Operations.doRedisHSet(submissionFolder, submissionDataMap)
 
@@ -586,7 +586,12 @@ class ModelController extends CommonController {
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def createCombineArchive() {
-        Map m = generateOmex()
+        String modelId = params.modelId
+        if (!modelId) {
+            forward(controller: "errors", action: "error500")
+        }
+        Integer revisionId = params.getInt("revisionNumber")
+        Map m = generateOmex(modelId, revisionId)
 
         withFormat {
             html {
@@ -604,19 +609,17 @@ class ModelController extends CommonController {
         }
     }
 
-    private Map generateOmex() {
+    private Map generateOmex(String modelId, Integer revisionNumber) {
         RTC revisionTC
         String filePath = ""
-        String modelId = ""
-        Integer revisionNumber = 0
         try {
-            revisionTC = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+            revisionTC = modelDelegateService.getRevisionFromParams(modelId, revisionNumber as String)
             modelId = revisionTC.model.submissionId
             revisionNumber = revisionTC.revisionNumber
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revisionTC)
             String parentDir = modelDelegateService.getVcsIdentifier(modelId)?.take(3)
             String modelExportsDir = grailsApplication.config.jummp.model.exportFolder
-            JSONArray array = modelDelegateService.buildJsonArray(deployTarget,
+            JSONArray array = modelDelegateService.buildJsonArray(this.deployTarget,
                 parentDir, modelId, revisionNumber, FILES, modelExportsDir, revisionTC.state.name())
 
             CloseableHttpClient httpClient = HttpClientBuilder.create().build()
@@ -640,8 +643,6 @@ class ModelController extends CommonController {
                 // handle exception here
                 ignored.printStackTrace()
             } finally {
-                // TODO: remove the println
-                println(array.toString())
                 httpClient.close()
             }
         } catch (ModelException ignored) {
@@ -746,7 +747,7 @@ class ModelController extends CommonController {
     }
 
     private void serveModelAsCombineArchive(RTC revision, List<RFTC> files, def resp) {
-        if (revision.state == ModelState.PUBLISHED && deployTarget != "local") {
+        if (revision.state == ModelState.PUBLISHED) {
             println "${revision.modelIdentifier()}: download omex => use case 2 and 4: public - regardless of its size"
             serveModelAsCombineArchiveForPublished(revision, files, resp)
         } else {
@@ -913,8 +914,8 @@ class ModelController extends CommonController {
     def download() {
         try {
             if (params.containsKey("id")) {
-                def modelId = params.id
-                def revisionId = params.revisionId
+                String modelId = params.id
+                String revisionId = params.revisionId
                 String fileName = params.filename.decodeHTML()
                 if (Environment.isWarDeployed() && fileName != null) {
                     fileName = handleDlSpecialCharacters(fileName)
@@ -947,7 +948,7 @@ class ModelController extends CommonController {
             }
         } catch (Exception e ) {
             String errDesc = handleDlException(e)
-            render(status: 400, view: "/errors/error400", model: [errorDescription: errDesc])
+            render(status: 400, view: "/errors/error400", model: [code: 400, errorDescription: errDesc])
         } finally {
             // TODO: How to clean up the recently used resources to free the heap memory
             // In fact, the cleaning process is performed in the sub processes of this action,
