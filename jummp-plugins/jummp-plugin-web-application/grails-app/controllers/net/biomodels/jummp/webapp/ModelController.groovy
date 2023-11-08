@@ -589,6 +589,7 @@ class ModelController extends CommonController {
         String modelId = params.modelId
         if (!modelId) {
             forward(controller: "errors", action: "error500")
+            return
         }
         Integer revisionId = params.getInt("revisionNumber")
         Map m = generateOmex(modelId, revisionId)
