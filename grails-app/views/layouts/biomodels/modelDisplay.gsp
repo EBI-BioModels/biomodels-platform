@@ -435,13 +435,8 @@
          * @returns {string|void}
          */
         function linkServeOmex() {
-            const useCase = "${linkServeOmex[0]}";
-            const link = "${linkServeOmex[1]}";
-            if (useCase === "Private|LargeSize") {
-                alert("Your file will be available shortly. Please wait for a while and check it at " + link);
-            } else {
-                $.jummp.openPage(link);
-            }
+            const link = "${createLink(controller: 'model', action: 'download', id: revision.identifier())}";
+            $.jummp.openPage(link);
         }
 
         $(function () {

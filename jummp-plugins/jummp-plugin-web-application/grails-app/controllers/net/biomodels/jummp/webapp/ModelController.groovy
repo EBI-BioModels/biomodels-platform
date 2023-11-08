@@ -245,7 +245,6 @@ class ModelController extends CommonController {
                         long totalSize = repoFiles.collect { it.size }.sum() as long
                         canCreateOmex = totalSize <= BioModels.MAX_FILE_SIZE // 500MB
                     }
-                    String[] linkServeOmex = defineLinkServeOmex(canCreateOmex, rev, modelParentFolder)
                     repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
                     List<RTC> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
@@ -305,8 +304,7 @@ class ModelController extends CommonController {
                          canAskReviewerAccount  : canAskReviewerAccount,
                          canSeeCurationTab      : canSeeCurationTab,
                          modelParentFolder      : modelParentFolder,
-                         canCreateOmex          : canCreateOmex,
-                         linkServeOmex          : linkServeOmex
+                         canCreateOmex          : canCreateOmex
                     ]
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)
@@ -604,44 +602,6 @@ class ModelController extends CommonController {
                 render(controller: "errors", action: "error404", view: '/errors/error404', status: 404)
             }
         }
-    }
-
-    private String[] defineLinkServeOmex(boolean canCreateOmex, RTC rtc, String modelParentFolder) {
-        String useCase = "";
-        String link = ""
-        // Use case 1: published models and not local development - serve the file from EBI FTP public
-        if (rtc.state == ModelState.PUBLISHED && deployTarget != "local") {
-            String modelId = rtc.model.submissionId
-            String filePath = "${modelId}/${rtc.revisionNumber}/${modelId}.${rtc.revisionNumber}.omex"
-            useCase = "Published|NotLocal"
-            link = EBI_BM_FTP_REPO + "/" + modelParentFolder +  "/" + filePath
-        } else if (rtc.state != ModelState.PUBLISHED) {
-            // Use case 2: private models
-            if (canCreateOmex) {
-                // Use case 2.1: private models and small or adequate size
-                useCase = "Private|AdequateSize"
-            } else {
-                // Use case 2.2: private models and large size
-                // returns the file location using the download server URL
-                // Map map = generateOmex()
-                useCase = "Private|LargeSize"
-                // link = map["location"]
-            }
-            link = createLink(controller: 'model', action: 'download', id: rtc.identifier())
-        } else if (deployTarget == "local") {
-            // Use case 3: local development
-            // no need to check the boolean logic variable: canCreateOmex, using the download and upload server
-            useCase = "ForEveryone|Local"
-            String dlServer = grailsApplication.config.jummp.model.download.server
-            String modelId = rtc.model.submissionId
-            String filePath = "${modelId}/${rtc.revisionNumber}/${modelId}.${rtc.revisionNumber}.omex"
-            link = "${dlServer}/biomodels/services/download/get-files/$filePath"
-        } else {
-            useCase = "Forbidden"
-            link = createLink(controller: 'errors', action: 'error507')
-        }
-        LOGGER.info(useCase + "; " + link)
-        [useCase, link] as String[]
     }
 
     private Map generateOmex() {
