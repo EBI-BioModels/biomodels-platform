@@ -626,7 +626,7 @@ class ModelController extends CommonController {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revisionTC)
             String parentDir = modelDelegateService.getVcsIdentifier(modelId)?.take(3)
             String modelExportsDir = grailsApplication.config.jummp.model.exportFolder
-            JSONArray array = modelDelegateService.buildJsonArray(this.deployTarget,
+            JSONArray array = modelDelegateService.buildJsonArray(deployTarget,
                 parentDir, modelId, revisionNumber, FILES, modelExportsDir, revisionTC.state.name())
 
             CloseableHttpClient httpClient = HttpClientBuilder.create().build()
@@ -784,7 +784,7 @@ class ModelController extends CommonController {
         String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
         // Use case 2 and 4: Revision is public regardless of its size
-        if (this.deployTarget == "local") {
+        if (deployTarget == "local") {
             serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
         } else {
             String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
