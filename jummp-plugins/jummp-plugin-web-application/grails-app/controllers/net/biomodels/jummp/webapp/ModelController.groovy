@@ -844,8 +844,10 @@ class ModelController extends CommonController {
                 File newOmexFile = new File(omexLocation)
                 moveOmexFile(newOmexFile, omexFile)
 
-                String msg = """You file might be big. It is being generated. Please be patient and check the download \
-link <a href='${url}' target='_blank'>${url}</a> after a few minutes. Thank you for your understanding!"""
+                String msg = """Your file might be big. It is being generated. Please be patient and check the download \
+link <a href='${url}' target='_blank'>${url}</a> after a few minutes. If you have any trouble in downloading the file after \
+an hour, please feel free to <a href='mailto:${grailsApplication.config.jummp.model.curators.mailinglist}'>contact us</a>.
+<br/><br/>Thank you for your understanding!"""
                 render(view: "download/inform", model: [message: msg])
             } else {
                 forward(controller: "errors", action: "error413")
