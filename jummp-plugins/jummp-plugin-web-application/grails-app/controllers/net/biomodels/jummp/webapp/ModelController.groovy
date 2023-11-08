@@ -763,14 +763,9 @@ class ModelController extends CommonController {
         if (isLargeSubmission) {
             // Use case 1: large and private
             println "${revision.modelIdentifier()}: download omex => use case 1: large and private"
-            Map result = generateOmex() as Map
-            String url = result.get("location")
-            if (url) {
-                LOGGER.info("Downloading COMBINEArchive file from FTP: ${url}")
-                redirect(url: url)
-            } else {
-                forward(controller: "errors", action: "error413")
-            }
+            String filePath = "${revision.model.submissionId}${File.separator}${revision.revisionNumber}${File.separator}${revision.model.submissionId}.${revision.revisionNumber}.omex"
+            // the OMEX file could be created using the external FileService
+            serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
         } else {
             // Use case 3: small and private, then generate/create CombineArchive on the spot
             println "${revision.modelIdentifier()}: download omex => use case 3: small and private"
@@ -781,15 +776,19 @@ class ModelController extends CommonController {
     private void serveModelAsCombineArchiveForPublished(RTC revision, List<RFTC> files, def resp) {
         String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
         String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
-        String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         // Use case 2 and 4: Revision is public regardless of its size
-        String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/$filePath"
-        if (JummpHttpService.isReachable(url)) {
-            LOGGER.info("Downloading COMBINEArchive file from FTP: ${url}")
-            redirect(url: url)
+        if (this.deployTarget == "local") {
+            serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
         } else {
-            // fallback
-            serveModelAsCombineArchiveForPrivate(files, resp)
+            String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
+            String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/$filePath"
+            if (JummpHttpService.isReachable(url)) {
+                LOGGER.info("Downloading COMBINE Archive (OMEX) file from EBI FTP: ${url}")
+                redirect(url: url)
+            } else {
+                // fallback
+                serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
+            }
         }
     }
 
@@ -829,6 +828,7 @@ class ModelController extends CommonController {
     private void serveModelAsCombineArchiveWithCheckingAndFileService(final RTC revision, final String filePath) {
         final String MODEL_CACHE= grailsApplication.config.jummp.model.cache.dir
         File omexFile = new File(MODEL_CACHE, filePath)
+        final String DOWNLOAD_SERVER = grailsApplication.config.jummp.model.download.server
         String url = "${DOWNLOAD_SERVER}/biomodels/services/download/get-files/$filePath"
         if (!omexFile.exists()) {
             Map result = generateOmex(revision.model.submissionId, revision.revisionNumber) as Map
