@@ -34,6 +34,10 @@
 
 package net.biomodels.jummp.webapp
 
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+
 import static grails.async.Promises.*
 import grails.async.Promise
 import grails.converters.JSON
@@ -938,7 +942,9 @@ link <a href='${url}'>${url}</a> after a few minutes. Thank you for your underst
         Promise p = task {
             LOGGER.info("Moved the OMEX file: ${source}")
             println("Moved the OMEX file: ${source}")
-            target << source.text
+            Files.copy(Paths.get(source.absolutePath),
+                Paths.get(target.absolutePath), StandardCopyOption.REPLACE_EXISTING);
+
             //Thread.sleep 5000
         }
         p.onError { Throwable err ->
