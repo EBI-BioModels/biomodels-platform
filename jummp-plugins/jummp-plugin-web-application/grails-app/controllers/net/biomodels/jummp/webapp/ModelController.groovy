@@ -826,6 +826,29 @@ class ModelController extends CommonController {
         LOGGER.info("It took ${time}ms ~ ${timeInHHMMSS} to generate the OMEX file $omexFileName.")
     }
 
+    private void serveModelAsCombineArchiveWithCheckingAndFileService(final RTC revision, final String filePath) {
+        final String MODEL_CACHE= grailsApplication.config.jummp.model.cache.dir
+        File omexFile = new File(MODEL_CACHE, filePath)
+        String url = "${DOWNLOAD_SERVER}/biomodels/services/download/get-files/$filePath"
+        if (!omexFile.exists()) {
+            Map result = generateOmex(revision.model.submissionId, revision.revisionNumber) as Map
+            if (result.get("location")) {
+                String msg = """You file might be big. It is being generated. Please be patient and check the download \
+link ${url} after a few minutes. Thank you for your understanding!"""
+                render([message: msg] as JSON)
+            } else {
+                forward(controller: "errors", action: "error413")
+            }
+        } else {
+            LOGGER.info("Downloading COMBINE Archive (OMEX) file from the model cache directory: ${filePath}")
+            redirect(url: url)
+            if (this.deployTarget != "local" && revision.state == ModelState.PUBLISHED) {
+                // TODO: implement me: move the OMEX file to FTP if dev/prod env and published model
+            }
+        }
+        return
+    }
+
     private void serveModelAsFile(RTC revision, RFTC rf, def resp, boolean inline, boolean preview = false) {
         if (preview) {
             serveModelAsFileInstantly(rf, resp, inline, preview)
