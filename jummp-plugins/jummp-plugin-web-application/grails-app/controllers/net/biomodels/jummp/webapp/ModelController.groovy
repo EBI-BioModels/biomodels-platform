@@ -34,6 +34,8 @@
 
 package net.biomodels.jummp.webapp
 
+import static grails.async.Promises.*
+import grails.async.Promise
 import grails.converters.JSON
 import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
@@ -833,19 +835,20 @@ class ModelController extends CommonController {
         String url = "${DOWNLOAD_SERVER}/biomodels/services/download/get-files/$filePath"
         if (!omexFile.exists()) {
             Map result = generateOmex(revision.model.submissionId, revision.revisionNumber) as Map
-            if (result.get("location")) {
+            String omexLocation  = result.get("location")
+            if (omexLocation) {
+                File newOmexFile = new File(omexLocation)
+                moveOmexFile(newOmexFile, omexFile)
+
                 String msg = """You file might be big. It is being generated. Please be patient and check the download \
-link ${url} after a few minutes. Thank you for your understanding!"""
-                render([message: msg] as JSON)
+link <a href='${url}'>${url}</a> after a few minutes. Thank you for your understanding!"""
+                render(view: "download/inform", model: [message: msg])
             } else {
                 forward(controller: "errors", action: "error413")
             }
         } else {
             LOGGER.info("Downloading COMBINE Archive (OMEX) file from the model cache directory: ${filePath}")
             redirect(url: url)
-            if (this.deployTarget != "local" && revision.state == ModelState.PUBLISHED) {
-                // TODO: implement me: move the OMEX file to FTP if dev/prod env and published model
-            }
         }
         return
     }
@@ -929,6 +932,25 @@ link ${url} after a few minutes. Thank you for your understanding!"""
             }
             Arrays.fill(fileData, (byte)0)
         }
+    }
+
+    private void moveOmexFile(final File source, final File target) {
+        Promise p = task {
+            LOGGER.info("Moved the OMEX file: ${source}")
+            println("Moved the OMEX file: ${source}")
+            target << source.text
+            //Thread.sleep 5000
+        }
+        p.onError { Throwable err ->
+            String msg = "When moving ${source.name} to ${target.name},  an error occured ${err.message}"
+            LOGGER.debug(msg)
+            println msg
+        }
+        p.onComplete { res ->
+            println "Promise returned $res"
+        }
+        // block until result is called
+        //p.get()
     }
 
     /**
