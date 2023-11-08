@@ -956,8 +956,8 @@ an hour, please feel free to <a href='mailto:${grailsApplication.config.jummp.mo
         p.onComplete { res ->
             println "Promise returned $res"
         }
-        // block until result is called
-        // p.get()
+        // block until the result is called to prevent async execution error
+        p.get()
         return p
     }
 
