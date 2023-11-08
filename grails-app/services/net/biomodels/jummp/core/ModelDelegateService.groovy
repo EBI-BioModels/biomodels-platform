@@ -707,8 +707,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             json.put("state", state)
             array.put(json)
         }
-        System.out.println(array.toString())
-        LOGGER.info(array.toString())
+        /*System.out.println(array.toString())
+        LOGGER.info(array.toString())*/
         return array
     }
 }
