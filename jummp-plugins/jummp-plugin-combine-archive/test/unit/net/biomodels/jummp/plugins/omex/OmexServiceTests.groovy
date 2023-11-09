@@ -108,9 +108,9 @@ class OmexServiceTests {
 
     @Test
     void testCreateCombineArchive() {
-        String retOmexFileName = omexService.createCombineArchive([], "")
+        String retOmexFileName = omexService.createCombineArchive([], "", 0)
         assertTrue("" == retOmexFileName)
-        retOmexFileName = omexService.createCombineArchive([], "BIOMD0000001000")
+        retOmexFileName = omexService.createCombineArchive([], "BIOMD0000001000", 0)
         assertTrue("" == retOmexFileName)
 
         /* create a list of {link @RFTC} objects */
@@ -124,7 +124,7 @@ class OmexServiceTests {
             false, hidden: false, userSubmitted: true, filename: "curated.csv", size: 1000, description: "Main file",
             mimeType: "application/xml", revision: null)
         List repoFiles = [cmdMainFile, cmdAdditionalFile]
-        retOmexFileName = omexService.createCombineArchive(repoFiles, "dummy")
+        retOmexFileName = omexService.createCombineArchive(repoFiles, "dummy", 1)
         assertNotNull(retOmexFileName)
         /* clean up the newly created files during testing */
         if (retOmexFileName != null) {

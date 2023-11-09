@@ -778,7 +778,7 @@ class ModelController extends CommonController {
         } else {
             // Use case 3: small and private, then generate/create CombineArchive on the spot
             println "${revision.modelIdentifier()}: download omex => use case 3: small and private"
-            serveModelAsCombineArchiveInstantly(files, resp)
+            serveModelAsCombineArchiveInstantly(revision, files, resp)
         }
     }
 
@@ -801,9 +801,11 @@ class ModelController extends CommonController {
         }
     }
 
-    private void serveModelAsCombineArchiveInstantly(List<RFTC> files, def resp) {
+    private void serveModelAsCombineArchiveInstantly(RTC revision, List<RFTC> files, def resp) {
         long time = System.nanoTime()
-        String omexFileName = omexService.createCombineArchive(files, params.id)
+        final String modelId = revision.model.submissionId
+        final Integer revisionId = revision.revisionNumber
+        String omexFileName = omexService.createCombineArchive(files, modelId, revisionId, false)
         File omexFile = new File(omexFileName)
         String name = omexFile.name
         resp.setContentType("application/zip")

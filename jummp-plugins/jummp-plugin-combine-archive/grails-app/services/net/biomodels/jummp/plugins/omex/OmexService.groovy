@@ -186,16 +186,23 @@ class OmexService extends FileFormatServiceAdapter {
      * associated with an individual model given by the model submission identifier
      * @argument a list of RepositoryFileTransportCommand objects
      * @argument a (perennial) submission identifier
+     * @argument a boolean flag saying the file will be suffixed timestamp or not
+     *
      * @return a string indicates the absolute path of the combine archive file
      */
-    String createCombineArchive(List<RFTC> files, String modelId) {
+    String createCombineArchive(List<RFTC> files, String modelId, Integer revisionId, final addTimeStamp = true) {
         if (files?.empty || !modelId) {
             return ""
         }
-        String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
+        String namePrefix = modelId + "." + revisionId.toString()
+        String nameSuffix = ".omex"
+        if (addTimeStamp) {
+            String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
+            nameSuffix = "-" + dateTimeString + nameSuffix
+        }
         String TEMP_PATH = System.getProperty("java.io.tmpdir")
-        String namePrefix = modelId
-        String absoluteOmexFileName = Paths.get(TEMP_PATH, "$namePrefix-${dateTimeString}.omex").toString()
+        String omexFileName = "$namePrefix$nameSuffix"
+        String absoluteOmexFileName = Paths.get(TEMP_PATH, omexFileName).toString()
         ICombineArchive arch
         CombineArchiveFactory fact = new CombineArchiveFactory()
         arch = fact.openArchive(absoluteOmexFileName, true)
