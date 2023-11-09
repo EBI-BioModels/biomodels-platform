@@ -844,11 +844,22 @@ class ModelController extends CommonController {
         if (!omexFile.exists()) {
             Map result = generateOmex(revision.model.submissionId, revision.revisionNumber) as Map
             String omexLocation  = result.get("location")
-            if (omexLocation) {
+            if (omexLocation && revision.state != ModelState.PUBLISHED) {
                 String msg = """Your file might be big. It is being generated. Please be patient and check the download \
-link <a href='${url}' target='_blank'>${url}</a> after a few minutes. If you have any trouble in downloading the file after \
-an hour, please feel free to <a href='mailto:${grailsApplication.config.jummp.model.curators.mailinglist}'>contact us</a>.
+link <a href='${url}' target='_blank'>${url}</a> after a few seconds. If you have any trouble in downloading the file after \
+about a quarter of an hour, please feel free to <a href='mailto:${grailsApplication.config.jummp.model.curators.mailinglist}'>contact us</a>.\
 <br/><br/>Thank you for your understanding!"""
+                LOGGER.info(msg)
+                render(view: "download/inform", model: [message: msg])
+            } else if (omexLocation && revision.state == ModelState.PUBLISHED) {
+                String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
+                String ftpDownloadUrl = "${EBI_BM_FTP_REPO}/${modelParentFolder}/$filePath"
+                String msg = """Your file might be large and is being generated. It will be available shortly on \
+the public FTP at <a href='${ftpDownloadUrl}' target='_blank'>${ftpDownloadUrl}</a>. Please be patient and check it \
+after a few seconds. If you have any trouble in downloading the file after about a quarter of an hour, please feel free to \
+<a href='mailto:${grailsApplication.config.jummp.model.curators.mailinglist}'>contact us</a>.\
+<br/><br/>Thank you for your understanding!"""
+                LOGGER.info(msg)
                 render(view: "download/inform", model: [message: msg])
             } else {
                 forward(controller: "errors", action: "error413")
@@ -894,6 +905,7 @@ an hour, please feel free to <a href='mailto:${grailsApplication.config.jummp.mo
         boolean isLargeFile = rf.size >= BioModels.MAX_FILE_SIZE
         if (isLargeFile) {
             // send the FTP location of the requested file and expire it after an hour
+            // using downloader server to serve the file
             LOGGER.info("We will implement this feature soon")
             forward(controller: "errors", action: "error413")
         } else {
