@@ -387,7 +387,7 @@ class MetadataService {
             }
             cache(true)
         }
-        return result
+        return result as List
     }
 
     ModellingApproach getModellingApproach(String name) {

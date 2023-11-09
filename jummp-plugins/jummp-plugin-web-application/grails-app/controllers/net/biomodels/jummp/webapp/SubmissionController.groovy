@@ -33,6 +33,7 @@ package net.biomodels.jummp.webapp
 import grails.async.Promises
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
@@ -52,7 +53,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class SubmissionController implements InitializingBean {
+class SubmissionController extends CommonController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
     def fileSystemService
     def grailsApplication
@@ -99,6 +100,7 @@ class SubmissionController implements InitializingBean {
             }
             String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
             working.putAll(["modelId": modelId, "modelURL": modelURL])
+            working.put("site", deployTarget)
 
             // Method 1: synchronous approach
             submissionService.processPostSubmission(working)

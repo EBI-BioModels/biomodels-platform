@@ -569,7 +569,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
         perennialId = -1 == dot ? perennialId : perennialId.substring(0, dot)
 
         Set<String> idFields = getPerennialIdentifierTypes()
-        Model.withCriteria(uniqueResult: true) {
+        Model model = Model.withCriteria(uniqueResult: true) {
             or {
                 for (String f : idFields) {
                     eq(f, perennialId)
@@ -577,6 +577,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
             }
             cache true
         } as Model
+        return model
     }
 
     /**

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2023 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -136,7 +136,7 @@ class ModelController extends CommonController {
                 // publish uses revision ids, annoyingly enough.
                 if (accessType.contains("publish")) {
                     def rev = modelDelegateService.getRevisionDetails(
-                                new RTC(id: modelIdParam))
+                                new RTC(id: modelIdParam.toInteger()))
                     if (rev) {
                         modelId = rev.modelIdentifier()
                     }
@@ -509,12 +509,12 @@ class ModelController extends CommonController {
     private Map buildModelInfo(Map initials) {
         Map modelInfo = new HashMap()
         boolean isUpdate = initials.get("isUpdate")
-        RTC revisionTC = initials.get("RevisionTC")
+        RTC revisionTC = initials.get("RevisionTC") as RTC
         modelInfo.put("detectedName", isUpdate ? revisionTC?.name : "")
         modelInfo.put("detectedDescription", isUpdate ? revisionTC?.description : "")
 
         Map detectedModelFormat = [:]
-        detectedModelFormat.put("id", revisionTC?.format?.id.toString())
+        detectedModelFormat.put("id", revisionTC?.format?.id?.toString())
         detectedModelFormat.put("name", revisionTC?.format?.name)
         detectedModelFormat.put("readme", revisionTC?.readmeSubmission)
         modelInfo.put("detectedModelFormat", detectedModelFormat)
@@ -1043,7 +1043,7 @@ an hour, please feel free to <a href='mailto:${grailsApplication.config.jummp.mo
      * Example: MAMO_0000009: constraint-based model
      */
     @Secured(['IS_AUTHENTICATED_FULLY'])
-    @grails.transaction.Transactional
+    @Transactional
     def searchModellingApproach() {
         Integer request = params.getInt("request")
         String searchTerm = params.get("search")
