@@ -841,9 +841,6 @@ class ModelController extends CommonController {
             Map result = generateOmex(revision.model.submissionId, revision.revisionNumber) as Map
             String omexLocation  = result.get("location")
             if (omexLocation) {
-                File newOmexFile = new File(omexLocation)
-                moveOmexFile(newOmexFile, omexFile)
-
                 String msg = """Your file might be big. It is being generated. Please be patient and check the download \
 link <a href='${url}' target='_blank'>${url}</a> after a few minutes. If you have any trouble in downloading the file after \
 an hour, please feel free to <a href='mailto:${grailsApplication.config.jummp.model.curators.mailinglist}'>contact us</a>.
