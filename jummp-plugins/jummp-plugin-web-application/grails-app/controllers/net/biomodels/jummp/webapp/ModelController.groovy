@@ -839,11 +839,8 @@ class ModelController extends CommonController {
     private void serveModelAsCombineArchiveWithCheckingAndFileService(final RTC revision, final String filePath) {
         final String MODEL_CACHE= grailsApplication.config.jummp.model.cache.dir
         File omexFile = new File(MODEL_CACHE, filePath)
-        String DOWNLOAD_SERVER = grailsApplication.config.jummp.model.download.server
-        if (deployTarget != "local") {
-            DOWNLOAD_SERVER = serverURL
-        }
-        String url = "${DOWNLOAD_SERVER}/biomodels/services/download/get-files/$filePath"
+        String DOWNLOAD_SERVICE_URL = grailsApplication.config.jummp.model.download.server
+        String url = "${DOWNLOAD_SERVICE_URL}/get-files/$filePath"
         if (!omexFile.exists()) {
             Map result = generateOmex(revision.model.submissionId, revision.revisionNumber) as Map
             String omexLocation  = result.get("location")
