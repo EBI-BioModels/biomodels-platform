@@ -626,11 +626,13 @@ class ModelController extends CommonController {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revisionTC)
             String parentDir = modelDelegateService.getVcsIdentifier(modelId)?.take(3)
             String modelExportsDir = grailsApplication.config.jummp.model.exportFolder
+            final String MODEL_CACHE= grailsApplication.config.jummp.model.cache.dir
             JSONArray array = modelDelegateService.buildJsonArray(deployTarget,
-                parentDir, modelId, revisionNumber, FILES, modelExportsDir, revisionTC.state.name())
+                parentDir, modelId, revisionNumber, FILES, modelExportsDir, MODEL_CACHE, revisionTC.state.name())
 
             CloseableHttpClient httpClient = HttpClientBuilder.create().build()
-            final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", "http://localhost:8090/biomodels/services/file-format/api/v1.0")
+            final String DEFAULT_FS_SVR = "http://localhost:8090/biomodels/services/file-format/api/v1.0"
+            final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
             try {
                 HttpPost request = new HttpPost("${FS_SVR_URL}/create-omex")
                 StringEntity params = new StringEntity(array.toString(), "UTF-8")
