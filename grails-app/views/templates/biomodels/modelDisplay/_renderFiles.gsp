@@ -12,11 +12,8 @@
         String downloadLink = previewLink
         if (deployTarget != "local") {
             String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${file.filename}"
-            downloadLink = "${serverURL}/services/download/get-files/${filePath}"
-        } else {
-            // downloadLink = "";
+            downloadLink = "${grailsApplication.config.jummp.model.download.server}/get-files/${filePath}"
         }
-
     %>
     <tr>
         <td>${file.filename}</td>
