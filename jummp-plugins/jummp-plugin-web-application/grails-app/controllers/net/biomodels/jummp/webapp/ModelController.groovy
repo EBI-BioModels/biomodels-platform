@@ -772,7 +772,8 @@ class ModelController extends CommonController {
         if (isLargeSubmission) {
             // Use case 1: large and private
             println "${revision.modelIdentifier()}: download omex => use case 1: large and private"
-            String filePath = "${revision.model.submissionId}${File.separator}${revision.revisionNumber}${File.separator}${revision.model.submissionId}.${revision.revisionNumber}.omex"
+            String[] parts = defineMrPathAndFileNameForOmex(revision)
+            String filePath = parts[1]
             // the OMEX file could be created using the external FileService
             serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
         } else {
@@ -783,8 +784,8 @@ class ModelController extends CommonController {
     }
 
     private void serveModelAsCombineArchiveForPublished(RTC revision, List<RFTC> files, def resp) {
-        String omexName = "${revision.model.submissionId}.${revision.revisionNumber}.omex"
-        String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${omexName}"
+        String[] parts = defineMrPathAndFileNameForOmex(revision)
+        String filePath = parts[1]
         // Use case 2 and 4: Revision is public regardless of its size
         if (deployTarget == "local") {
             serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
@@ -890,7 +891,8 @@ after a few seconds. If you have any trouble in downloading the file after about
     private void serveModelAsFileForPublished(RTC revision, RFTC rf, def resp,
                                               boolean inline, boolean preview = false) {
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
-        String filePath = "${revision.model.submissionId}/${revision.revisionNumber}/${rf.filename}"
+        String[] parts = defineMrPathAndFileNameForOmex(revision)
+        String filePath = parts[1]
         String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/${filePath}"
         if (JummpHttpService.isReachable(url)) {
             LOGGER.info("Downloading from FTP: ${url}")
@@ -972,6 +974,15 @@ after a few seconds. If you have any trouble in downloading the file after about
         // block until the result is called to prevent async execution error
         p.get()
         return p
+    }
+
+    private static String[] defineMrPathAndFileNameForOmex(final RTC revision) {
+        final String modelId = revision.model.submissionId
+        final String revisionId = revision.revisionNumber.toString()
+        String omexFileName = "${modelId}.${revisionId}.omex"
+        // Model Revision File Path (mrFilePath): the path is made up model submission and revision number
+        String omexMrFilePath = "${modelId}${File.separator}${revisionId}${File.separator}${omexFileName}"
+        [omexFileName, omexMrFilePath].toArray()
     }
 
     /**
