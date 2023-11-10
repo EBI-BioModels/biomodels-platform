@@ -190,7 +190,7 @@ class OmexService extends FileFormatServiceAdapter {
      *
      * @return a string indicates the absolute path of the combine archive file
      */
-    String createCombineArchive(List<RFTC> files, String modelId, Integer revisionId, final addTimeStamp = true) {
+    String createCombineArchive(List<RFTC> files, String modelId, Integer revisionId, boolean addTimeStamp = true) {
         if (files?.empty || !modelId) {
             return ""
         }
