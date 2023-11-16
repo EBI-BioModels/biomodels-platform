@@ -177,7 +177,9 @@ class PublicationTransportCommand implements Serializable {
              * TODO: capture the fullName, then assign it to the pubAlias property when we create an instance of
              * PublicationPerson from PersonTransportCommand in PublicationService
              */
-            String userRealName = authorXml.fullName[0].text()
+            String firstName = authorXml.firstName[0].text()
+            String lastName = authorXml.lastName[0].text()
+            String userRealName = "$firstName $lastName"
             author.userRealName = userRealName
             log.debug("Author: ${author?.userRealName}")
             String affiliation = authorXml.affiliation[0].text()
