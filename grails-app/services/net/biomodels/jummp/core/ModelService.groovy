@@ -2706,8 +2706,8 @@ There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType})
         final def m = new ModelAdapter(model: model, latest: revision).toCommandObject()
         logger.error("""New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier \
 ${model.vcsIdentifier} added to VCS, but not stored in database""")
-        throw new ModelException(m, "Revision stored in VCS, but not in database")
         stopWatch.stop()
+        throw new ModelException(m, "Revision stored in VCS, but not in database")
     }
 
     private Revision doUpdateRevision(Revision revision, RevisionTransportCommand rev) {
