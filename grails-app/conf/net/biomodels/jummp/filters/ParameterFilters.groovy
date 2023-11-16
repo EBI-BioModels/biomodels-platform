@@ -22,7 +22,7 @@
 
 
 
-package net.biomodels.jummp.filters
+
 
 import net.biomodels.jummp.utils.InputParameterSanitizer
 import org.codehaus.groovy.grails.commons.GrailsClass

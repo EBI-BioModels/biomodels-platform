@@ -32,7 +32,7 @@
 
 
 
-package net.biomodels.jummp.filters
+
 
 import org.springframework.beans.factory.InitializingBean
 
