@@ -2426,7 +2426,7 @@ WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)"""
-        List revisions = Model.executeQuery(query, [mids: mids])
+        List revisions = Revision.executeQuery(query, [mids: mids])
 
         revisions.each { Revision revision ->
             List<File> files = retrieveFiles(revision)
