@@ -43,15 +43,10 @@ class JummpHttpService implements InitializingBean {
 
     static String getStatus(String url) throws IOException {
         String result = ""
-        int code = getStatusCode(url)
+        HttpURLConnection connection = null
         try {
-            URL siteURL = new URL(url)
-            HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection()
-            connection.setRequestMethod("GET")
-            connection.setConnectTimeout(3000)
-            connection.connect()
-
-            code = connection.getResponseCode()
+            connection = establishConnection(url)
+            int code = connection.getResponseCode()
             if (code == 200) {
                 result = "-> Green <-\t" + "Code: " + code
 
@@ -60,7 +55,8 @@ class JummpHttpService implements InitializingBean {
             }
         } catch (Exception e) {
             result = "-> Red <-\t" + "Wrong domain - Exception: " + e.getMessage()
-
+        } finally {
+            if (connection) { connection.disconnect() }
         }
         LOGGER.info(url + "\t\tStatus: " + result)
         result
@@ -68,24 +64,23 @@ class JummpHttpService implements InitializingBean {
 
     static int getStatusCode(String url) throws IOException {
         int code = 200
+        HttpURLConnection connection = null
         try {
-            URL siteURL = new URL(url)
-            HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection()
-            connection.setRequestMethod("GET")
-            connection.setConnectTimeout(3000)
-            connection.connect()
+            connection = establishConnection(url)
             code = connection.getResponseCode()
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             code = 404
+        } finally {
+            if (connection) { connection.disconnect() }
         }
         return code
     }
 
     static String jsonGetRequest(String urlQueryString) {
         String json = null
+        HttpURLConnection connection = null
         try {
             URL url = new URL(urlQueryString)
-            HttpURLConnection connection
             if (proxy) {
                 connection = (HttpURLConnection) url.openConnection(proxy)
             } else {
@@ -101,6 +96,8 @@ class JummpHttpService implements InitializingBean {
             json = streamToString(inStream) // input stream to string
         } catch (IOException ex) {
             ex.printStackTrace()
+        } finally {
+            if (connection) { connection.disconnect() }
         }
         return json
     }
@@ -125,28 +122,30 @@ class JummpHttpService implements InitializingBean {
      * @return a boolean value indicating the URL is reachable or unreachable
      */
     static boolean isReachable(final String requestUrl) {
-        HttpURLConnection connection = null
-        LOGGER.info("Checking the URL: ${requestUrl}")
         boolean result = true
-        try {
-            URL url = new URL(requestUrl)
-            connection = (HttpURLConnection)url.openConnection()
-            connection.setRequestMethod("GET")
-            connection.connect()
-
-            int code = connection.getResponseCode()
-            LOGGER.info("When checking the URL '${requestUrl}' and getting the code: $code")
-            if (code < 400)  {
-                result = true
-            } else {
-                result = false
+        if (requestUrl.startsWith("ftp")) {
+            try {
+                new URL(requestUrl).openStream().close()
+                return true
+            } catch (IOException ignored) {
+                LOGGER.debug("Error or resource {} non-exist", requestUrl)
+                return false
             }
-        } catch(Exception e) {
-            result = false
-            LOGGER.error("When checking the URL '${requestUrl}' and getting the errors ${e.toString()}")
-        } finally {
-            if (connection) {
-                connection.disconnect()
+        } else {
+            HttpURLConnection connection = null
+            LOGGER.info("Checking the URL: ${requestUrl}")
+            try {
+                connection = establishConnection(requestUrl)
+                int code = connection.getResponseCode()
+                LOGGER.info("When checking the URL '${requestUrl}' and getting the code: $code")
+                result = code < 400
+            } catch (Exception e) {
+                result = false
+                LOGGER.error("When checking the URL '${requestUrl}' and getting the errors ${e.toString()}")
+            } finally {
+                if (connection) {
+                    connection.disconnect()
+                }
             }
         }
         return result
@@ -160,5 +159,19 @@ class JummpHttpService implements InitializingBean {
     private static String streamToString(InputStream inputStream) {
         String text = new Scanner(inputStream, "UTF-8").useDelimiter("\\Z").next()
         return text
+    }
+
+    private static HttpURLConnection establishConnection(final String url) {
+        URL siteURL = new URL(url)
+        HttpURLConnection connection
+        if (proxy) {
+            connection = (HttpURLConnection) siteURL.openConnection(proxy)
+        } else {
+            connection = (HttpURLConnection) siteURL.openConnection()
+        }
+        connection.setRequestMethod("GET")
+        connection.setConnectTimeout(3000)
+        connection.connect()
+        connection
     }
 }
