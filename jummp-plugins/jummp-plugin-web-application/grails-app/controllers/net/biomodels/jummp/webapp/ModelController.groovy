@@ -871,7 +871,8 @@ after a few seconds. If you have any trouble in downloading the file after about
         }
     }
 
-    private void serveModelAsFile(RTC revision, RFTC rf, def resp, boolean inline, boolean preview = false) {
+    private void serveModelAsFile(RTC revision, RFTC rf, String fileName,
+                                  def resp, boolean inline, boolean preview = false) {
         if (preview) {
             serveModelAsFileInstantly(rf, resp, inline, preview)
             return
@@ -880,7 +881,7 @@ after a few seconds. If you have any trouble in downloading the file after about
         if (revision.state == ModelState.PUBLISHED) {
             // Use case 2 and 4: Revision is public regardless of its size
             println "use case 2 and 4: public - regardless of its size"
-            serveModelAsFileForPublished(revision, rf, resp, inline, preview)
+            serveModelAsFileForPublished(revision, rf, fileName, resp, inline, preview)
         } else {
             // Use case 1 and 3: Revision is private and large/small
             println "use case 1 and 3: private - considering its size to serve instantly or later"
@@ -888,12 +889,12 @@ after a few seconds. If you have any trouble in downloading the file after about
         }
     }
 
-    private void serveModelAsFileForPublished(RTC revision, RFTC rf, def resp,
+    private void serveModelAsFileForPublished(RTC revision, RFTC rf, String fileName, def resp,
                                               boolean inline, boolean preview = false) {
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         String[] parts = defineMrPathAndFileNameForOmex(revision)
-        String filePath = parts[1]
-        String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/${filePath}"
+        String mrPath = parts[2]
+        String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/${mrPath}/${fileName}"
         if (JummpHttpService.isReachable(url)) {
             LOGGER.info("Downloading from FTP: ${url}")
             redirect(url: url)
@@ -981,8 +982,9 @@ after a few seconds. If you have any trouble in downloading the file after about
         final String revisionId = revision.revisionNumber.toString()
         String omexFileName = "${modelId}.${revisionId}.omex"
         // Model Revision File Path (mrFilePath): the path is made up model submission and revision number
+        String mrPath = "${modelId}${File.separator}${revisionId}"
         String omexMrFilePath = "${modelId}${File.separator}${revisionId}${File.separator}${omexFileName}"
-        [omexFileName, omexMrFilePath].toArray()
+        [omexFileName, omexMrFilePath, mrPath].toArray()
     }
 
     /**
@@ -1009,7 +1011,7 @@ after a few seconds. If you have any trouble in downloading the file after about
                     boolean inline = params.getBoolean("inline", false)
                     boolean preview = params.getBoolean("preview", false)
                     if (requested.id != null) {
-                        serveModelAsFile(revision, requested, response, inline, preview)
+                        serveModelAsFile(revision, requested, fileName, response, inline, preview)
                     } else {
                         response.status = HttpServletResponse.SC_BAD_REQUEST
                         def err = new Error("Invalid file name",
