@@ -30,6 +30,7 @@ import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand as
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 
+import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 
 /**
@@ -76,7 +77,13 @@ class CurationNotesController {
             command.id = params.long("cnId")
         }
         if (curationNotes["curationImage"]) {
-            command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
+            String data = curationNotes["curationImage"]
+            String partSeparator = ","
+            if (data.contains(partSeparator)) {
+                data = data.split(partSeparator)[1]
+            }
+            byte[] decodedImg = Base64.decoder.decode(data.getBytes(StandardCharsets.UTF_8))
+            command.curationImage = decodedImg
             command.mimeType = curationNotes["mimeType"]
         }
         command
@@ -90,6 +97,7 @@ class CurationNotesController {
 
     @Secured(['IS_AUTHENTICATED_FULLY'])
     def doAddOrUpdate() {
+        Map result = [:]
         def curationNotes = params.curationNotes.decodeHTML()
         /**
          * {@link net.biomodels.jummp.filters.ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
@@ -105,20 +113,20 @@ class CurationNotesController {
         if (command.validate()) {
             CurationNotes update = curationNotesService.doAddOrUpdateCurationNotes(command)
             if (update) {
-                response['message'] = "Curation notes have been updated successfully"
-                response['cnId'] = update.id
+                result['message'] = "Curation notes have been updated successfully"
+                result['cnId'] = update.id
             } else {
-                response['message'] = "There is an error while trying to persist the curation notes into the database"
+                result['message'] = "There is an error while trying to persist the curation notes into the database"
             }
         } else {
             String defaultMessage = command.errors.getFieldError("comment")?.defaultMessage
             if (defaultMessage?.contains("cannot be blank")) {
-                response['message'] = "The comment cannot be blank"
+                result['message'] = "The comment cannot be blank"
             } else {
-                response['message'] = command.errors.allErrors.inspect()
+                result['message'] = command.errors.allErrors.inspect()
             }
         }
-        render(response as JSON)
+        render(result as JSON)
     }
 
     def reset() {

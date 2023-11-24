@@ -296,7 +296,7 @@
                 error: function(jqXHR, textStatus, errorThrown) {
                     // TODO: the error message doesn't show properly
                     toastr.clear();
-                    toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+                    toastr.error(jqXHR.status + " : " + errorThrown);
                 }
             });
         } else {
