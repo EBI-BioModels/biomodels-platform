@@ -35,8 +35,8 @@ class ParameterSearchService {
         String searchResults
         if (modelId) {
             searchResults = Operations.doRedisHGet("BP", modelId)
-            LOGGER.debug("Retrieving parameters for the model ${modelId} from Redis cache.")
-            println("Retrieving parameters for the model ${modelId} from Redis cache.")
+            LOGGER.debug("Retrieving parameters for ${modelId} from Redis cache.")
+            println("Retrieving parameters for ${modelId} from Redis cache.")
         }
         if (!searchResults)  {
             // fall back to the live search on EBI Search Server
@@ -191,8 +191,8 @@ due to "${ste.getMessage()}" with the query info wrapped in the command: ${comma
             Map map = [:]
             map.put(modelId, searchResults)
             Operations.doRedisHSet4BP("BP", map)
-            LOGGER.debug("Caching the parameters for ${modelId} on Redis.")
-            println("Caching the parameters for ${modelId} on Redis.")
+            LOGGER.debug("Caching the parameters for ${modelId} on Redis cache.")
+            println("Caching the parameters for ${modelId} on Redis cache.")
         }
     }
 }
