@@ -22,7 +22,9 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.plugins.rest.client.RestBuilder
 import grails.transaction.Transactional
+import grails.util.Holders
 import groovy.time.TimeCategory
+import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.statistic.OrganismData
@@ -34,11 +36,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.weceem.content.WcmContent
 import redis.clients.jedis.Jedis
-import redis.clients.jedis.JedisPool
-import redis.clients.jedis.JedisPoolConfig
 
 import java.text.SimpleDateFormat
-
 /**
  * @short Service responsible for retrieving necessary data to design front page and
  * other static pages.
@@ -50,10 +49,12 @@ import java.text.SimpleDateFormat
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
 @Transactional(readOnly = true)
-class DecorationService extends RedisService implements InitializingBean {
+class DecorationService implements InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(DecorationService.class)
 
     def grailsApplication
+    def configurationService
+    RedisService redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
 
     /*static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
@@ -69,6 +70,7 @@ class DecorationService extends RedisService implements InitializingBean {
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
         ACCESSED_MAX_RECORDS = grailsApplication.config.biomodels.homepage.recently.accessed.models.maxRecords as int
         PUBLISHED_MAX_RECORDS = grailsApplication.config.biomodels.homepage.recently.published.models.maxRecords as int
+        LOGGER.info("Finished the bean initialisation")
     }
 
     /**
@@ -127,7 +129,7 @@ GROUP BY rev.model
      * @return A {@link Map} of {@link net.biomodels.jummp.statistic.RecentlyPublishedModel} objects
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
-    private Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
+    private static Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
         String query = '''
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
@@ -179,8 +181,8 @@ ORDER BY model.firstPublished DESC'''
 
     private void addListOfRecentlyAccessedModelsToRedis(Map mapModels) {
         LOGGER.debug("Caching the list of recently ACCESSED models to Redis Server")
-        JedisPool pool = new JedisPool(new JedisPoolConfig(),
-                                REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        /*JedisPool pool = new JedisPool(new JedisPoolConfig(),
+            redisService.REDIS_SRV_HOST, redisService.REDIS_SRV_PORT, redisService.REDIS_SRV_TIMEOUT)
         Jedis jedis = null
         try {
             jedis = pool.getResource()
@@ -188,7 +190,8 @@ ORDER BY model.firstPublished DESC'''
         } finally {
             if (jedis) { jedis.close() }
         }
-        pool.close()
+        pool.close()*/
+        redisService.doRedisHSet("hp-recently-accessed-models", mapModels)
     }
 
     void refreshRecentlyPublishedModelsRedisCache() {
@@ -196,30 +199,29 @@ ORDER BY model.firstPublished DESC'''
         addRecentlyPublishedModelsToRedis(mapModels)
     }
 
-    private void addRecentlyPublishedModelsToRedis(Map mapModels) {
+    private void addRecentlyPublishedModelsToRedis(Map<String, RecentlyPublishedModel> mapModels) {
         LOGGER.debug("Caching the list of recently PUBLISHED models to Redis Server")
-        JedisPool pool = new JedisPool(new JedisPoolConfig(),
-                                REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         Jedis jedis = null
         try {
-            jedis = pool.getResource()
             String key = "hp-recently-published-models"
+            jedis = redisService.jedisPool.getResource()
             clearRedisCacheOfRecentlyPublishedModels(jedis, key)
 
-            Map models = [:]
+            Map<String, String> models = [:]
             for (Map.Entry<String, RecentlyPublishedModel> entry : mapModels) {
                 RecentlyPublishedModel m = entry.value
                 Map value = ["id": m.id, "title": m.title, "submitter": m.submitter,
                              "lastPublished": m.lastPublished, "pubTitle": m.pubTitle,
                              "pubJournal": m.pubJournal, "pubYear": m.pubYear ?: "Unpublished"]
-                jedis.hmset("$key-${m.id}" as String, value)
+                redisService.doRedisHSet("$key-${m.id}" as String, value)
                 models.put(m.id, m.title)
             }
-            jedis.hmset(key, models)
+            redisService.doRedisHSet(key, models)
+        } catch (Exception ignored) {
+            throw ignored
         } finally {
             if (jedis) { jedis.close() }
         }
-        pool.close()
     }
 
     void refreshModelOfTheMonthEntryRedisCache() {
@@ -229,15 +231,8 @@ ORDER BY model.firstPublished DESC'''
 
     private void addModelOfTheMonthEntryToRedis(final Map momEntry) {
         LOGGER.debug("Caching the Model of the Month entry to Redis")
-        JedisPool pool = new JedisPool(new JedisPoolConfig(),
-                                REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
-        pool.getResource().withCloseable { Jedis jedis ->
-            final String MOM_ENTRY_KEY = "the-latest-mom-entry"
-            for (Map.Entry<String, String> entry : momEntry) {
-                jedis.hset(MOM_ENTRY_KEY, entry.key, entry.value)
-            }
-        }
-        pool.close()
+        final String MOM_ENTRY_KEY = "the-latest-mom-entry"
+        redisService.doRedisHSet(MOM_ENTRY_KEY, momEntry)
     }
 
     /**
@@ -280,7 +275,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, String> fetchRecentlyAccessedModels() {
-        Map models = doRedisHGetAll("hp-recently-accessed-models")
+        Map models = redisService.doRedisHGetAll("hp-recently-accessed-models")
         if (!models) {
             // call the fallback
             LOGGER.debug("Falling back to build the list of Recently Accessed Models")
@@ -292,8 +287,8 @@ ORDER BY model.firstPublished DESC'''
 
     Map<String, RecentlyPublishedModel> fetchRecentlyPublishedModels() {
         final String key = "hp-recently-published-models"
-        Map models = doRedisHGetAll(key)
-        Map returnedMap = [:]
+        Map models = redisService.doRedisHGetAll(key)
+        Map<String, RecentlyPublishedModel> returnedMap = [:]
         if (!models) {
             // call the fallback
             LOGGER.debug("Falling back to build the list of Recently Published Models")
@@ -301,7 +296,7 @@ ORDER BY model.firstPublished DESC'''
             addRecentlyPublishedModelsToRedis(returnedMap)
         } else {
             for (String modelId in models.keySet()) {
-                Map rpm = doRedisHGetAll("$key-$modelId" as String)
+                Map rpm = redisService.doRedisHGetAll("$key-$modelId" as String)
                 RecentlyPublishedModel model =
                     new RecentlyPublishedModel(id: rpm.get("id"), submitter: rpm.get("submitter"),
                         lastPublished: rpm.get("lastPublished"),
@@ -314,7 +309,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, String> fetchMomEntry() {
-        Map momEntryMap = doRedisHGetAll("the-latest-mom-entry")
+        Map momEntryMap = redisService.doRedisHGetAll("the-latest-mom-entry")
         if (!momEntryMap) {
             // call the fallback
             LOGGER.debug("Falling back to build the Model of the Month entry")
@@ -325,14 +320,14 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, String> fetchDataNewsWidget() {
-        Map<String, String> news = doRedisHGetAll("hp-news-widget")
+        Map<String, String> news = redisService.doRedisHGetAll("hp-news-widget")
         if (!news) {
             // call the fallback
             LOGGER.debug("Falling back to build the News entry")
             news = buildDataForNewsWidget()
             // cache the data to Redis server
             LOGGER.debug("Caching the News entry to Redis server")
-            doRedisHSet("hp-news-widget", news)
+            redisService.doRedisHSet("hp-news-widget", news)
         } else {
             Map sortedNews = new LinkedHashMap()
             sortedNews = news.sort { n1, n2 ->
@@ -341,8 +336,8 @@ ORDER BY model.firstPublished DESC'''
                 Date date1 = new Date().parse("dd/MM/yyyy", strDate1)
                 Date date2 = new Date().parse("dd/MM/yyyy", strDate2)
                 return date2 <=> date1
-            }
-            news = sortedNews
+            } as Map<String, String>
+            news = sortedNews as Map<String, String>
         }
         return news
     }
@@ -351,7 +346,7 @@ ORDER BY model.firstPublished DESC'''
         // As of changing this line, we have less than 200 modelling approaches while 1000 is the allowed value
         // in the EBI Search to make sure we don't trap in NPEs.
         String query = "biomodels?query=*:*&size=0&facetfields=modellingapproach&facetcount=1000&format=json"
-        def response = hitRemoteService(EBI_SEARCH_RESTFUL_WS_URL, query)
+        def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         // the total hit count is always greater than the sum of these below values
         // because it includes private models.
         def totalFacets = response.json.facets[0].total
@@ -402,7 +397,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     void refreshDataForNewsWidgetRedisCache() {
         Map data = buildDataForNewsWidget()
-        doRedisHSet("hp-news-widget", data)
+        redisService.doRedisHSet("hp-news-widget", data)
     }
 
     void refreshStatisticsModellingApproachesRedisCache() {
@@ -413,7 +408,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     private addStatisticsModellingApproachesToRedis(Map modellingApproachesMap) {
         LOGGER.debug("Caching the statistics modelling approaches to Redis Server")
         Map approachesMap = convert2RedisMap(modellingApproachesMap)
-        doRedisHSet("hp-statistics-modelling-approaches", approachesMap)
+        redisService.doRedisHSet("hp-statistics-modelling-approaches", approachesMap)
     }
 
     void refreshStatisticsOrganismsRedisCache() {
@@ -429,7 +424,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
             taxons.put(it["Name"] as String, value)
         }
         LOGGER.info("Caching the statistics organism to Redis Server")
-        doRedisHSet("hp-statistics-organisms", taxons)
+        redisService.doRedisHSet("hp-statistics-organisms", taxons)
     }
 
     void refreshStatisticsJournalsRedisCache() {
@@ -440,7 +435,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     private void addStatisticsJournalsToRedis(Map pubsMap) {
         LOGGER.debug("Caching the statistics journals to Redis Server")
         Map pubsRedisMap = convert2RedisMap(pubsMap)
-        doRedisHSet("hp-statistics-journals", pubsRedisMap)
+        redisService.doRedisHSet("hp-statistics-journals", pubsRedisMap)
     }
 
     void refreshStatisticsDataForFeatures() {
@@ -451,7 +446,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         long totalAutoGenModels = retrieveTotalAutoGeneratedModelsFromEBISearchServer()
         long totalGoClasses = retrieveTotalGOClassesFromBioModels()
         long totalParametersEntries = retrieveTotalParametersEntriesFromEBISearchServer()
-        Map figuresRedisMap = [:]
+        Map<String, String> figuresRedisMap = [:]
         figuresRedisMap.put("total-submissions", totalSubmissions.toString())
         figuresRedisMap.put("total-individual-models", totalIndividualModels.toString())
         figuresRedisMap.put("total-curated-models", totalCuratedModels.toString())
@@ -459,7 +454,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         figuresRedisMap.put("total-auto-generated-models", totalAutoGenModels.toString())
         figuresRedisMap.put("total-go-classes", totalGoClasses.toString())
         figuresRedisMap.put("total-parameters-entries", totalParametersEntries.toString())
-        doRedisHSet("hp-statistics-total-figures", figuresRedisMap)
+        redisService.doRedisHSet("hp-statistics-total-figures", figuresRedisMap)
     }
 
     /**
@@ -490,16 +485,16 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     private clearRedisCacheOfRecentlyPublishedModels(final Jedis jedis, final String key) {
         // Use redis-cli: redis-cli KEYS "hp-recently-published-models*" | xargs redis-cli DEL
         // Get all recently published models
-        Map rpm  = doRedisHGetAll(key)
+        Map rpm  = redisService.doRedisHGetAll(key)
         // Iterate on the models to remove each of them (i.e. these caches look hp-recently-published-models-BIOMD...)
         for (String m in rpm.keySet()) {
-            deleteAllByPattern(jedis, "$key-$m")
+            redisService.deleteAllByPattern(jedis, "$key-$m")
         }
         // Delete the cache named as the key (i.e. hp-recently-published-models)
-        deleteAllByPattern(jedis, key)
+        redisService.deleteAllByPattern(jedis, key)
     }
 
-    private Map buildModelOfTheMonthEntry() {
+    private static Map buildModelOfTheMonthEntry() {
         final String query = "from ModelOfTheMonth order by publicationDate desc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
         if (!theLatestMoM) {
@@ -512,7 +507,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         def monthNumStr = new SimpleDateFormat("MM").format(theLatestPublicationDate)
         def monthString = new SimpleDateFormat("MMMMM").format(theLatestPublicationDate)
         def yearString = new SimpleDateFormat("YYYY").format(theLatestPublicationDate)
-        final String prefixLink = "${BM_SVR_URL}/content/model-of-the-month"
+        final String prefixLink = "${BioModels.BM_ROOT_URL}/content/model-of-the-month"
         def link = "${prefixLink}?year=${yearString}&month=${monthNumStr}"
         def linkAll = "${prefixLink}?all=yes"
         String titlePreviewImage = "Model of the month: ${monthString} ${yearString}"
@@ -541,7 +536,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      * @return a {@link Map} containing an element mapping "children" as the key and the value is a
      * {@link List} of customised map which the properties are Name, Count, and Taxonomy.
      */
-    private Map buildStatisticsOrganisms() {
+    private static Map buildStatisticsOrganisms() {
         List result = makeStatisticsOnOrganisms()
         Map returned = new HashMap()
         returned["children"] = result.collect { OrganismData d ->
@@ -555,9 +550,9 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a {@link List} of Organism objects
      */
-    private List makeStatisticsOnOrganisms() {
+    private static List makeStatisticsOnOrganisms() {
         String query = "biomodels?query=*:*&facetcount=1000&facetfields=TAXONOMY&format=json"
-        def response = hitRemoteService(EBI_SEARCH_RESTFUL_WS_URL, query)
+        def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         def taxons = response.json.facets[0].facetValues
         List<OrganismData> organismData = new ArrayList<OrganismData>()
         for (tax in taxons) {
@@ -581,7 +576,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     }
 
     private Map<String, Integer> fetchStatisticsDataFromRedisCache(final String key) {
-        Map<String, String> redisMap = doRedisHGetAll(key)
+        Map<String, String> redisMap = redisService.doRedisHGetAll(key)
         Map<String, Integer> returnedMap = new HashMap<>()
         if (!redisMap) {
             // call the fallback
@@ -604,7 +599,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     }
 
     private Map fetchStatisticsOrganismsFromRedisCache(final String key = "hp-statistics-organisms") {
-        doRedisHGetAll(key)
+        redisService.doRedisHGetAll(key)
     }
 
     private static Map<String, String> convert2RedisMap(final Map<String, Integer> inputMap) {
@@ -625,7 +620,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     Long fetchStatisticsTotalSubmissions() {
         // fetch the figure from Redis cache
-        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-submissions") as Long
+        Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-submissions") as Long
         if (!total) {
             // call the fall back
             total = retrieveTotalSubmissionsFromEBISearchServer()
@@ -635,7 +630,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     Long fetchStatisticsTotalIndividualModels () {
         // fetch the figure from Redis cache
-        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-individual-models") as Long
+        Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-individual-models") as Long
         if (!total) {
             // call the fall back
             total = retrieveTotalIndividualModelsFromEBISearchServer()
@@ -645,7 +640,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     Long fetchStatisticsTotalAutoGeneratedModels () {
         // fetch the figure from Redis cache
-        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-auto-generated-models") as Long
+        Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-auto-generated-models") as Long
         if (!total) {
             // call the fall back
             total = retrieveTotalAutoGeneratedModelsFromEBISearchServer()
@@ -655,7 +650,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     Long fetchStatisticsTotalGOClasses() {
         // fetch the figure from Redis cache
-        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-go-classes") as Long
+        Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-go-classes") as Long
         if (!total) {
             // call the fall back
             total = retrieveTotalGOClassesFromBioModels()
@@ -665,7 +660,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     Long fetchStatisticsTotalParametersEntries() {
         // fetch the figure from Redis cache
-        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-parameters-entries") as Long
+        Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-parameters-entries") as Long
         if (!total) {
             // call the fall back
             total = retrieveTotalParametersEntriesFromEBISearchServer()
@@ -678,9 +673,9 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total models
      */
-    private long retrieveTotalSubmissionsFromEBISearchServer() {
+    private static long retrieveTotalSubmissionsFromEBISearchServer() {
         String query = "biomodels_all?query=*:*&format=json"
-        def response = hitRemoteService(EBI_SEARCH_RESTFUL_WS_URL, query)
+        def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
     }
 
@@ -689,21 +684,21 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total models
      */
-    private long retrieveTotalIndividualModelsFromEBISearchServer() {
+    private static long retrieveTotalIndividualModelsFromEBISearchServer() {
         String query = "biomodels?query=*:*&format=json"
-        def response = hitRemoteService(EBI_SEARCH_RESTFUL_WS_URL, query)
+        def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
     }
 
-    private long retrieveTotalCuratedModelsFromEBISearchServer() {
+    private static long retrieveTotalCuratedModelsFromEBISearchServer() {
         String query = "biomodels?query=*:* AND curationstatus:'Manually curated'&format=json"
-        def response = hitRemoteService(EBI_SEARCH_RESTFUL_WS_URL, query)
+        def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
     }
 
-    private long retrieveTotalNonCuratedModelsFromEBISearchServer() {
+    private static long retrieveTotalNonCuratedModelsFromEBISearchServer() {
         String query = "biomodels?query=*:* AND curationstatus:'Non-curated'&format=json"
-        def response = hitRemoteService(EBI_SEARCH_RESTFUL_WS_URL, query)
+        def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
     }
 
@@ -712,9 +707,9 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total models
      */
-    private long retrieveTotalAutoGeneratedModelsFromEBISearchServer() {
+    private static long retrieveTotalAutoGeneratedModelsFromEBISearchServer() {
         String query = "biomodels_autogen?query=*:*&format=json"
-        def response = hitRemoteService(EBI_SEARCH_RESTFUL_WS_URL, query)
+        def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
     }
 
@@ -723,7 +718,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total classes
      */
-    private long retrieveTotalGOClassesFromBioModels() {
+    private static long retrieveTotalGOClassesFromBioModels() {
         // TODO: will be implemented soon once this call is ready in Model Classifier Service
         /*String query = "query?nb_classes&format=json"
         def response = hitRemoteService(CLASSIFIER_SVR_URL, query)
@@ -739,9 +734,9 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total entries
      */
-    private long retrieveTotalParametersEntriesFromEBISearchServer() {
+    private static long retrieveTotalParametersEntriesFromEBISearchServer() {
         String query = "biomodels_parameters?query=is_curated:false&size=1&fields=id&format=json"
-        def response = hitRemoteService(EBI_SEARCH_RESTFUL_WS_URL, query)
+        def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as long
     }
 
@@ -753,6 +748,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      * @return a JSON object
      */
     private def hitRemoteService(final String serverURL, final String query) {
+        Proxy proxy = configurationService.verifyHttpProxy()
         LOGGER.debug("HTTP PROXY: ${proxy?.dump()}")
         String queryURL = "${serverURL}/${query}"
         LOGGER.debug("Connecting to the service at $queryURL")
@@ -770,7 +766,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         response
     }
 
-    private List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
+    private static List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
         // Take into account the fact that the input list was sorted in descending order
         LOGGER.debug("Scaling the counts of Organisms")
         ArrayList<OrganismData> originalData = new ArrayList<OrganismData>(organismData)
@@ -790,11 +786,11 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         normalisedData.toList()
     }
 
-    private Integer scaleDelta(Integer normalisedCount, final Float d) {
+    private static Integer scaleDelta(Integer normalisedCount, final Float d) {
         if (d > 2.0) {
             // decrease the count the i_th element just time, for example, 80% - 90% of
             // the delta between it and the closest lower count
-            normalisedCount = normalisedCount / (d * 0.50)
+            normalisedCount = (Integer) (normalisedCount / (d * 0.50))
         } else if (normalisedCount == 1 || normalisedCount == 2) {
             normalisedCount = normalisedCount * 2
         }
@@ -803,7 +799,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     long fetchStatisticsCuratedModels() {
         // fetch the figure from Redis cache
-        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-curated-models") as Long
+        Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-curated-models") as Long
         if (!total) {
             // call the fall back
             total = retrieveTotalIndividualModelsFromEBISearchServer()
@@ -813,7 +809,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     long fetchStatisticsNonCuratedModels() {
         // fetch the figure from Redis cache
-        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-non-curated-models") as Long
+        Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-non-curated-models") as Long
         if (!total) {
             // call the fall back
             total = retrieveTotalIndividualModelsFromEBISearchServer()

@@ -63,7 +63,6 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.utils.redis.KeyCollection
-import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
@@ -102,6 +101,7 @@ class ModelController extends CommonController {
     def modelConversionService
     def userService
     def publishClientService
+    def redisService
 
     /**
      * The list of actions for which we should not automatically create an audit item.
@@ -557,7 +557,7 @@ class ModelController extends CommonController {
         String submissionFolder = initials.get("submissionFolder")
         RTC revisionTC = initials.get("RevisionTC") as RTC
         Map submissionDataMap = ["latestModelDescription": revisionTC.description ?: ""]
-        Operations.doRedisHSet(submissionFolder, submissionDataMap)
+        redisService.doRedisHSet(submissionFolder, submissionDataMap)
 
         render(view: "submit", model: initials)
     }

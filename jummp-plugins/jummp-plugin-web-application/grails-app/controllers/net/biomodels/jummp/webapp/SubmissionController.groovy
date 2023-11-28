@@ -43,7 +43,6 @@ import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.core.util.JummpHttpService
 import net.biomodels.jummp.utils.CollectionHelper
 import net.biomodels.jummp.utils.FileHelper
-import net.biomodels.jummp.utils.redis.Operations
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
@@ -63,6 +62,7 @@ class SubmissionController extends CommonController implements InitializingBean 
     def modelFileFormatService
     def modelDelegateService
     def publicationService
+    def redisService
     def submissionService
 
     private String EXCH_DIR
@@ -400,7 +400,7 @@ ${pubURIs?.join(";")}""")
         if (params.boolean("isUpdate")) {
             final String latestName = params.latestModelName.decodeHTML()
             final String submissionFolder = params.submissionFolder.decodeHTML()
-            final String latestDescription = Operations.doRedisHGet(submissionFolder, "latestModelDescription")
+            final String latestDescription = redisService.doRedisHGet(submissionFolder, "latestModelDescription")
             final String editedName = params.editedModelName.decodeHTML()
             final String editedDescription = params.editedModelDescription.decodeHTML()
             if (latestName != editedName) {
@@ -520,7 +520,7 @@ ${pubURIs?.join(";")}""")
         if (isUpdate) {
             revision = modelDelegateService.getLatestRevision(modelId, false)
             final String submissionFolder = working.get("submissionFolder")
-            final String latestDescription = Operations.doRedisHGet(submissionFolder, "latestModelDescription")
+            final String latestDescription = redisService.doRedisHGet(submissionFolder, "latestModelDescription")
             working.putAll(["latestModelName": params.latestModelName.decodeHTML(),
                             "latestModelDescription": latestDescription])
         }

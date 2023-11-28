@@ -21,6 +21,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
+import grails.util.Holders
 import net.biomodels.jummp.scms.CmsContent
 import net.biomodels.jummp.utils.redis.RedisService
 import org.slf4j.Logger
@@ -28,11 +29,10 @@ import org.slf4j.LoggerFactory
 import org.weceem.content.WcmContent
 
 @Transactional
-class FeatureService extends RedisService {
+class FeatureService {
     private final Logger LOGGER = LoggerFactory.getLogger(FeatureService.class)
 
-    def redisService
-
+    RedisService redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
     def groovyPageRenderer
 
     /**
@@ -89,7 +89,7 @@ order by createdOn desc"""
     String getSvgAgedBrain() {
         final String SVG_AGED_BRAIN = "svg-aged-brain"
         // load the SVG content from Redis cache
-        String svgAgedBrain = doRedisGet(SVG_AGED_BRAIN)
+        String svgAgedBrain = redisService.doRedisGet(SVG_AGED_BRAIN)
         if (!svgAgedBrain) {
             println("Rendering the AgedBrain page directly")
             LOGGER.debug("Rendering the AgedBrain page directly")
@@ -99,7 +99,7 @@ order by createdOn desc"""
             if (svgAgedBrain) {
                 println("Caching the AgedBrain page on Redis cache")
                 LOGGER.debug("Caching the AgedBrain page on Redis cache")
-                doRedisSet(SVG_AGED_BRAIN, svgAgedBrain)
+                redisService.doRedisSet(SVG_AGED_BRAIN, svgAgedBrain)
             } else {
                 svgAgedBrain = "There has been an error when trying to load the Model space in neurodegeneration - model landscape map."
             }

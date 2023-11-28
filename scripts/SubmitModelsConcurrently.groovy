@@ -29,7 +29,7 @@ import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.utils.ModelSubmissionHelper
 import net.biomodels.jummp.utils.RunScriptHelper
-import net.biomodels.jummp.utils.redis.Operations
+import net.biomodels.jummp.utils.redis.RedisService
 import org.apache.camel.CamelContext
 import org.springframework.security.core.Authentication
 
@@ -50,8 +50,10 @@ class ConcurrentModelSubmitter {
     static final String adminUsername = System.getenv("ADMIN_USER")
     // auth token for admin account; used by worker threads to publish models
     static final Authentication adminAuth = RunScriptHelper.createTokenForUser(adminUsername)
+    RedisService redisService
 
     void init() {
+        redisService = ctx.getBean('redisService', RedisService)
         camelContext = ctx.getBean('camelContext', CamelContext)
         helper = new ModelSubmissionHelper(ctx: ctx, camelContext: camelContext)
     }
@@ -168,7 +170,7 @@ disp(ar_st_titles);
             // sleep for 1 second
             println("Waiting 1 second...")
             Thread.sleep(1000)
-            running = Operations.doRedisGet("run-batch-submission").toBoolean()
+            running = redisService.doRedisGet("run-batch-submission").toBoolean()
         }
         // ready to go
         runBatchSubmission()

@@ -7,13 +7,13 @@ import groovyx.gpars.GParsPool
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand as ParamSC
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults as ParamSR
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.utils.redis.Operations
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class ParameterSearchService {
     static transactional = false
     def static configurationService
+    def static redisService
 
     static final Logger LOGGER = LoggerFactory.getLogger(ParameterSearchService.class)
     static List<String> columnNames = ["entity", "entity_id", "initial concentration/amount", "reaction with entity labels", "reaction with entity ids",
@@ -32,9 +32,9 @@ class ParameterSearchService {
     }
 
     ParamSR getJSONData(ParamSC command, String modelId = null) {
-        String searchResults
+        String searchResults = ""
         if (modelId) {
-            searchResults = Operations.doRedisHGet("BP", modelId)
+            searchResults = redisService.doRedisHGet("BP", modelId)
             LOGGER.debug("Retrieving parameters for ${modelId} from Redis cache.")
             println("Retrieving parameters for ${modelId} from Redis cache.")
         }
@@ -186,11 +186,11 @@ due to "${ste.getMessage()}" with the query info wrapped in the command: ${comma
         }
     }
 
-    private void doCacheSearchResultsOnRedis(String searchResults, String modelId) {
+    private static void doCacheSearchResultsOnRedis(String searchResults, String modelId) {
         if (searchResults && modelId) {
             Map map = [:]
             map.put(modelId, searchResults)
-            Operations.doRedisHSet4BP("BP", map)
+            redisService.doRedisHSet4BP("BP", map)
             LOGGER.debug("Caching the parameters for ${modelId} on Redis cache.")
             println("Caching the parameters for ${modelId} on Redis cache.")
         }

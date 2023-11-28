@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.utils.redis
 
+import grails.util.Holders
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.Jedis
@@ -32,10 +33,11 @@ import redis.clients.jedis.Jedis
  */
 class PublishClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    def redisService = Holders.grailsApplication.mainContext.getBean("redisService")
 
     synchronized void publish(String channel, String message){
         LOGGER.debug("> Publish > channel: $channel  > Message sent: $message")
-        Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
+        redisService.jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.publish(channel, message)
         }
     }
@@ -43,7 +45,7 @@ class PublishClient {
     synchronized void close(String channel) {
         LOGGER.debug(">>> PUBLISH End > Channel: $channel > Message:quit")
         // The message publisher stops sending by sending a "quit" message
-        Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
+        redisService.jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.publish(channel, "quit")
         }
     }

@@ -21,7 +21,6 @@
 package net.biomodels.jummp.core.subscribers
 
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator as VDAD
-import net.biomodels.jummp.utils.redis.Operations
 import redis.clients.jedis.JedisPubSub
 
 /**

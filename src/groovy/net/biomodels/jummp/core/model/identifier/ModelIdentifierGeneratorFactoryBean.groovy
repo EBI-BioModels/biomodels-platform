@@ -20,13 +20,14 @@
 
 package net.biomodels.jummp.core.model.identifier
 
+import grails.util.Holders
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator as DMIG
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierGeneratorInitializer as MIGI
-import net.biomodels.jummp.utils.redis.Operations
+import net.biomodels.jummp.utils.redis.RedisService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeansException
@@ -65,7 +66,7 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
     ApplicationContext applicationContext
     String initializerBeanName
     boolean shouldComputeRegex
-
+    RedisService redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
     /**
      * The configuration settings for this model identifier generator
      */
@@ -108,10 +109,10 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
             }
             // get the last used value from the database
             String seed = Objects.requireNonNull(initializer).lastUsedValue
-            String cachedSeed = Operations.doRedisGet(initializer.redisKeyForLastUsedValue)
+            String cachedSeed = redisService.doRedisGet(initializer.redisKeyForLastUsedValue)
             String type
             if (!cachedSeed && seed) {
-                Operations.doRedisSet(initializer.redisKeyForLastUsedValue, seed)
+                redisService.doRedisSet(initializer.redisKeyForLastUsedValue, seed)
                 type = "from database"
             } else if (cachedSeed) {
                 seed = cachedSeed
