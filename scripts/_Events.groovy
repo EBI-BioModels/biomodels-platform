@@ -24,6 +24,8 @@
  * Script to write the git id of the build into _version.gsp
  */
 eventCompileStart = { msg ->
+    println "${new Date().format("yyyy-MM-dd HH:mm:ss")} STARTING THE APP..."
+
     // the only way I could get Groovy to execute a command with an argument containing spaces
     // the main command is to get the hash id of the last commit on the development branch
     def cmd = ["git", "log", "-n", "1", "development",
