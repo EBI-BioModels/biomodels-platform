@@ -78,8 +78,7 @@ class HomePageController extends CommonController {
      * Updates the list of recently accessed models on Redis Cache
      */
     def updateRecentlyAccessedModels() {
-        decorationService.refreshRecentlyAccessedModelsRedisCache()
-        Map<String, String> models = decorationService.doRedisHGetAll("hp-recently-accessed-models")
+        Map<String, String> models = decorationService.refreshRecentlyAccessedModelsRedisCache()
         String title = "${PRE_TITLE} recently accessed models | BioModels"
         render(view: "update-recently-accessed-models",
             model: [models: models, title: title, layout: layout])
@@ -89,8 +88,7 @@ class HomePageController extends CommonController {
      * Updates the list of recently published models on Redis Cache
      */
     def updateRecentlyPublishedModels() {
-        decorationService.refreshRecentlyPublishedModelsRedisCache()
-        Map<String, String> models = decorationService.doRedisHGetAll("hp-recently-published-models")
+        Map<String, String> models = decorationService.refreshRecentlyPublishedModelsRedisCache()
         String title = "${PRE_TITLE} recently published models | BioModels"
         render(view: "update-recently-published-models",
             model: [models: models, title: title, layout: layout])
