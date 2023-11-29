@@ -32,15 +32,25 @@
 import grails.persistence.Entity
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
+import net.biomodels.jummp.core.MaintenanceBean
+import net.biomodels.jummp.core.ModelFileFormatConfig
+import net.biomodels.jummp.core.ReferenceTracker
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
+import net.biomodels.jummp.core.events.PostLoggingAdvice
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorFactoryBean
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryFactory
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
+import net.biomodels.jummp.plugins.bives.RevisionCreatedListener
+import net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler
+import net.biomodels.jummp.search.OmicsdiBasedSearch
+import net.biomodels.jummp.search.SolrBasedSearch
+import net.biomodels.jummp.search.SolrServerHolder
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
+import org.perf4j.log4j.aop.TimingAspect
 import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.beans.factory.config.ObjectFactoryCreatingFactoryBean
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
@@ -61,35 +71,34 @@ beans = {
         pointcut(id: "postLoggingPointcut", expression: "@annotation(net.biomodels.jummp.core.events.PostLogging)")
         advisor('pointcut-ref': "postLoggingPointcut", 'advice-ref': "postLogging")
     }
-    postLogging(net.biomodels.jummp.core.events.PostLoggingAdvice)
+    postLogging(PostLoggingAdvice)
 
-    referenceTracker(net.biomodels.jummp.core.ReferenceTracker) { bean ->
+    referenceTracker(ReferenceTracker) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
     }
-    maintenanceMode(net.biomodels.jummp.core.MaintenanceBean) { bean ->
+    maintenanceMode(MaintenanceBean) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
     }
-    modelFileFormatConfig(net.biomodels.jummp.core.ModelFileFormatConfig) { bean ->
+    modelFileFormatConfig(ModelFileFormatConfig) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
     }
 
     if (Environment.isDevelopmentMode()) {
-        timingAspect(org.perf4j.log4j.aop.TimingAspect)
+        timingAspect(TimingAspect)
     }
 
     def searchStrategy = application.config.jummp.search.strategy
-    println("INFO\tUsing $searchStrategy as current model search strategy")
     if (searchStrategy == "solr") {
-        solrServerHolder(net.biomodels.jummp.search.SolrServerHolder) { bean ->
+        solrServerHolder(SolrServerHolder) { bean ->
             bean.scope = "singleton"
             bean.autowire = "byName"
             bean.initMethod = "init"
             bean.destroyMethod = "destroy"
         }
-        solrBasedSearch(net.biomodels.jummp.search.SolrBasedSearch) { bean ->
+        solrBasedSearch(SolrBasedSearch) { bean ->
             bean.scope = "singleton"
             bean.autowire = "byName"
             bean.singleton = true
@@ -103,7 +112,7 @@ beans = {
             aclUtilService = ref("aclUtilService")
         }
     } else {
-        omicsdiBasedSearch(net.biomodels.jummp.search.OmicsdiBasedSearch) { bean ->
+        omicsdiBasedSearch(OmicsdiBasedSearch) { bean ->
             bean.scope = "singleton"
             bean.autowire = "byName"
             bean.singleton = true
@@ -118,7 +127,7 @@ beans = {
         }
     }
 
-    revisionCreatedListener(net.biomodels.jummp.plugins.bives.RevisionCreatedListener) { bean ->
+    revisionCreatedListener(RevisionCreatedListener) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
     }
@@ -127,7 +136,7 @@ beans = {
         it.initMethod = "init"
     }
 
-    authenticationSuccessHandler(net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler) {
+    authenticationSuccessHandler(BioModelsAuthSuccessHandler) {
         /* Reusing the security configuration */
         def conf = SpringSecurityUtils.securityConfig
         /* Configuring the bean */

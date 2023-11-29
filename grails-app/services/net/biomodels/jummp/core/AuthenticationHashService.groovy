@@ -89,7 +89,7 @@ class AuthenticationHashService implements IAuthenticationHashService {
 
     Authentication retrieveAuthentication(String hash) throws AuthenticationHashNotFoundException {
         if (hash == "anonymous") {
-            return AuthenticationHashService.ANONYMOUS_AUTH
+            return ANONYMOUS_AUTH
         }
         if (authentications.containsKey(hash)) {
             AuthenticationHashEntry entry = authentications[hash]
