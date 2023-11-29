@@ -42,11 +42,11 @@ grails.project.fork = [
     //test: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, daemon: true],
     test: false,
     // configure settings for the run-app JVM
-    run: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
+    run: [maxMemory: 4098, minMemory: 64, debug: false, maxPerm: 1024, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the run-war JVM
     war: [maxMemory: 8192, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the Console UI JVM
-    console: [maxMemory: 1024, minMemory: 64, debug: false, maxPerm: 256, jvmArgs: customJvmArgs]
+    console: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 256, jvmArgs: customJvmArgs]
 ]
 
 grails.project.dependency.resolution = {
