@@ -27,6 +27,7 @@ import groovy.time.TimeCategory
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.scms.CmsContent
 import net.biomodels.jummp.statistic.OrganismData
 import net.biomodels.jummp.statistic.RecentlyPublishedModel
 import net.biomodels.jummp.utils.redis.RedisService
@@ -34,10 +35,10 @@ import org.perf4j.aop.Profiled
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
-import org.weceem.content.WcmContent
 import redis.clients.jedis.Jedis
 
 import java.text.SimpleDateFormat
+
 /**
  * @short Service responsible for retrieving necessary data to design front page and
  * other static pages.
@@ -129,7 +130,7 @@ GROUP BY rev.model
      * @return A {@link Map} of {@link net.biomodels.jummp.statistic.RecentlyPublishedModel} objects
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
-    private static Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
+    private Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
         String query = '''
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
@@ -174,47 +175,41 @@ ORDER BY model.firstPublished DESC'''
         returnedModels
     }
 
-    void refreshRecentlyAccessedModelsRedisCache() {
+    Map<String, String> refreshRecentlyAccessedModelsRedisCache() {
         Map<String, String> mapModels = buildListOfRecentlyAccessedModels()
         addListOfRecentlyAccessedModelsToRedis(mapModels)
+        mapModels
     }
 
     private void addListOfRecentlyAccessedModelsToRedis(Map mapModels) {
         LOGGER.debug("Caching the list of recently ACCESSED models to Redis Server")
-        /*JedisPool pool = new JedisPool(new JedisPoolConfig(),
-            redisService.REDIS_SRV_HOST, redisService.REDIS_SRV_PORT, redisService.REDIS_SRV_TIMEOUT)
-        Jedis jedis = null
-        try {
-            jedis = pool.getResource()
-            jedis.hmset("hp-recently-accessed-models", mapModels)
-        } finally {
-            if (jedis) { jedis.close() }
-        }
-        pool.close()*/
         redisService.doRedisHSet("hp-recently-accessed-models", mapModels)
     }
 
-    void refreshRecentlyPublishedModelsRedisCache() {
+    Map<String, String> refreshRecentlyPublishedModelsRedisCache() {
         Map<String, RecentlyPublishedModel> mapModels = buildListOfRecentlyPublishedModels()
-        addRecentlyPublishedModelsToRedis(mapModels)
+        Map<String, String> models = addRecentlyPublishedModelsToRedis(mapModels)
+        models
     }
 
-    private void addRecentlyPublishedModelsToRedis(Map<String, RecentlyPublishedModel> mapModels) {
+    private Map<String, String> addRecentlyPublishedModelsToRedis(Map<String, RecentlyPublishedModel> mapModels) {
         LOGGER.debug("Caching the list of recently PUBLISHED models to Redis Server")
         Jedis jedis = null
+        Map<String, String> models = [:]
         try {
             String key = "hp-recently-published-models"
             jedis = redisService.jedisPool.getResource()
             clearRedisCacheOfRecentlyPublishedModels(jedis, key)
 
-            Map<String, String> models = [:]
             for (Map.Entry<String, RecentlyPublishedModel> entry : mapModels) {
                 RecentlyPublishedModel m = entry.value
                 Map value = ["id": m.id, "title": m.title, "submitter": m.submitter,
                              "lastPublished": m.lastPublished, "pubTitle": m.pubTitle,
                              "pubJournal": m.pubJournal, "pubYear": m.pubYear ?: "Unpublished"]
                 redisService.doRedisHSet("$key-${m.id}" as String, value)
-                models.put(m.id, m.title)
+                models.put(m.id, """${m.title}<br/>Submitted by: ${m.submitter}; \
+Last published date: ${m.lastPublished};<br/>\
+Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}.""" as String)
             }
             redisService.doRedisHSet(key, models)
         } catch (Exception ignored) {
@@ -222,6 +217,7 @@ ORDER BY model.firstPublished DESC'''
         } finally {
             if (jedis) { jedis.close() }
         }
+        models
     }
 
     void refreshModelOfTheMonthEntryRedisCache() {
@@ -385,8 +381,8 @@ GROUP BY p.journal
     Map buildDataForNewsWidget() {
         // only select the published News items and ignore ones under the other statuses
         def newsQuery = """\
-from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order by publishFrom desc"""
-        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400], [max: 10])
+from CmsContent where parent.aliasURI = :aliasuri and status.code = :code order by publishFrom desc"""
+        def newsEntries = CmsContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400], [max: 10])
         Map<String, String> data = [:]
         for (def entry : newsEntries) {
             data.put(entry.aliasURI,
@@ -494,7 +490,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         redisService.deleteAllByPattern(jedis, key)
     }
 
-    private static Map buildModelOfTheMonthEntry() {
+    private Map buildModelOfTheMonthEntry() {
         final String query = "from ModelOfTheMonth order by publicationDate desc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
         if (!theLatestMoM) {
@@ -536,7 +532,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      * @return a {@link Map} containing an element mapping "children" as the key and the value is a
      * {@link List} of customised map which the properties are Name, Count, and Taxonomy.
      */
-    private static Map buildStatisticsOrganisms() {
+    private Map buildStatisticsOrganisms() {
         List result = makeStatisticsOnOrganisms()
         Map returned = new HashMap()
         returned["children"] = result.collect { OrganismData d ->
@@ -550,7 +546,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a {@link List} of Organism objects
      */
-    private static List makeStatisticsOnOrganisms() {
+    private List makeStatisticsOnOrganisms() {
         String query = "biomodels?query=*:*&facetcount=1000&facetfields=TAXONOMY&format=json"
         def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         def taxons = response.json.facets[0].facetValues
@@ -602,7 +598,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         redisService.doRedisHGetAll(key)
     }
 
-    private static Map<String, String> convert2RedisMap(final Map<String, Integer> inputMap) {
+    private Map<String, String> convert2RedisMap(final Map<String, Integer> inputMap) {
         Map<String, String> returnedMap = new HashMap<>()
         for (entry in inputMap) {
             returnedMap.put(entry.key, Integer.toString(entry.value))
@@ -610,7 +606,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         returnedMap
     }
 
-    private static Map<String, Integer> convertFromRedisMap(final Map<String, String> inputMap) {
+    private Map<String, Integer> convertFromRedisMap(final Map<String, String> inputMap) {
         Map<String, Integer> returnedMap = new HashMap<>()
         for (entry in inputMap) {
             returnedMap.put(entry.key, Integer.parseInt(entry.value))
@@ -673,7 +669,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total models
      */
-    private static long retrieveTotalSubmissionsFromEBISearchServer() {
+    private long retrieveTotalSubmissionsFromEBISearchServer() {
         String query = "biomodels_all?query=*:*&format=json"
         def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
@@ -684,19 +680,19 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total models
      */
-    private static long retrieveTotalIndividualModelsFromEBISearchServer() {
+    private long retrieveTotalIndividualModelsFromEBISearchServer() {
         String query = "biomodels?query=*:*&format=json"
         def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
     }
 
-    private static long retrieveTotalCuratedModelsFromEBISearchServer() {
+    private long retrieveTotalCuratedModelsFromEBISearchServer() {
         String query = "biomodels?query=*:* AND curationstatus:'Manually curated'&format=json"
         def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
     }
 
-    private static long retrieveTotalNonCuratedModelsFromEBISearchServer() {
+    private long retrieveTotalNonCuratedModelsFromEBISearchServer() {
         String query = "biomodels?query=*:* AND curationstatus:'Non-curated'&format=json"
         def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
@@ -707,7 +703,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total models
      */
-    private static long retrieveTotalAutoGeneratedModelsFromEBISearchServer() {
+    private long retrieveTotalAutoGeneratedModelsFromEBISearchServer() {
         String query = "biomodels_autogen?query=*:*&format=json"
         def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as Long
@@ -718,7 +714,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total classes
      */
-    private static long retrieveTotalGOClassesFromBioModels() {
+    private long retrieveTotalGOClassesFromBioModels() {
         // TODO: will be implemented soon once this call is ready in Model Classifier Service
         /*String query = "query?nb_classes&format=json"
         def response = hitRemoteService(CLASSIFIER_SVR_URL, query)
@@ -734,7 +730,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      *
      * @return a long number as the total entries
      */
-    private static long retrieveTotalParametersEntriesFromEBISearchServer() {
+    private long retrieveTotalParametersEntriesFromEBISearchServer() {
         String query = "biomodels_parameters?query=is_curated:false&size=1&fields=id&format=json"
         def response = hitRemoteService(BioModels.EBI_SEARCH_RESTFUL_WS_URL, query)
         return response.json.hitCount as long
@@ -766,7 +762,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         response
     }
 
-    private static List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
+    private List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
         // Take into account the fact that the input list was sorted in descending order
         LOGGER.debug("Scaling the counts of Organisms")
         ArrayList<OrganismData> originalData = new ArrayList<OrganismData>(organismData)
@@ -786,7 +782,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         normalisedData.toList()
     }
 
-    private static Integer scaleDelta(Integer normalisedCount, final Float d) {
+    private Integer scaleDelta(Integer normalisedCount, final Float d) {
         if (d > 2.0) {
             // decrease the count the i_th element just time, for example, 80% - 90% of
             // the delta between it and the closest lower count

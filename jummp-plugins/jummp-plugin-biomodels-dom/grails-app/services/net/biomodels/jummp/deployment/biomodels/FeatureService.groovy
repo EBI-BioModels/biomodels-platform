@@ -26,8 +26,14 @@ import net.biomodels.jummp.scms.CmsContent
 import net.biomodels.jummp.utils.redis.RedisService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.weceem.content.WcmContent
 
+/**
+ * @short Service responsible for creating and managing feature pages.
+ *
+ * <p>This service class is used for creating and managing some special pages using the simple CMS.</p>
+ *
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ */
 @Transactional
 class FeatureService {
     private final Logger LOGGER = LoggerFactory.getLogger(FeatureService.class)
@@ -38,30 +44,30 @@ class FeatureService {
     /**
      * Retrieves the content of the COVID-19 page under Browse menu
      *
-     * <p>Temporarily, we store the content of this page as a News item. Using WcmContent domain class, it can be
+     * <p>Temporarily, we store the content of this page as a News item. Using CmsContent domain class, it can be
      * retrieved by running the query. That News item has been set status Reviewed and had to keep the aliasuri as
      * covid-19 to make sure the related service still working.
      *
      * @return A String representing the content of the page
      */
     String getCovid19PageContent() {
-        def newsQuery = """from WcmContent where aliasURI = :aliasuri and status.code = :code \
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri and status.code = :code \
 order by createdOn desc"""
-        def newsItem = WcmContent.executeQuery(newsQuery, [aliasuri: 'covid-19', code: 200], [max: 1])
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'covid-19', code: 200], [max: 1])
         newsItem[0]?.content
     }
 
     String getContentForReproducibilityPage() {
-        def newsQuery = """from WcmContent where aliasURI = :aliasuri and status.code = :code \
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri and status.code = :code \
 order by createdOn desc"""
-        def newsItem = WcmContent.executeQuery(newsQuery, [aliasuri: 'reproducibility', code: 200], [max: 1])
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'reproducibility', code: 200], [max: 1])
         newsItem[0]?.content
     }
 
     String getContentForFROGPage() {
-        def newsQuery = """from WcmContent where aliasURI = :aliasuri and status.code = :code \
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri and status.code = :code \
 order by createdOn desc"""
-        def newsItem = WcmContent.executeQuery(newsQuery, [aliasuri: 'fbc', code: 200], [max: 1])
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'fbc', code: 200], [max: 1])
         newsItem[0]?.content
     }
 
