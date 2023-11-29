@@ -201,7 +201,6 @@ grails.project.dependency.resolution = {
         runtime ":database-migration:1.4.1"
         runtime ":hibernate4:4.3.10"
         runtime ":console:1.5.8"
-        runtime ":cors:1.3.0"
     }
 }
 
