@@ -32,13 +32,13 @@
 
 
 
-package net.biomodels.jummp.filters
+package net.biomodels.jummp.plugins.security
 
 import grails.test.mixin.Mock
 import spock.lang.Specification
 
-@Mock(ParameterFilters)
-class ParameterFiltersSpec extends Specification {
+@Mock(ContributorFilters)
+class ContributorFiltersSpec extends Specification {
 
     def setup() {
     }
@@ -47,7 +47,5 @@ class ParameterFiltersSpec extends Specification {
     }
 
     void "test something"() {
-        expect: "this is true -- a dummy case to pass the test"
-            1 == 1
     }
 }

@@ -6,13 +6,12 @@ import net.biomodels.jummp.core.ModelDelegateService
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PermissionTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.filters.ParameterFilters
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.webapp.ModelController
 import spock.lang.Specification
 
 @TestFor(ModelController)
-@Mock([Revision, ParameterFilters])
+@Mock([Revision])
 class ModelControllerSpec extends Specification {
     def setup() {
     }

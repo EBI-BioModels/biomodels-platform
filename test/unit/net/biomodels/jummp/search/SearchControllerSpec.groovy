@@ -6,13 +6,12 @@ import net.biomodels.jummp.core.SearchService
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.SearchController
 import spock.lang.Specification
-import net.biomodels.jummp.filters.ParameterFilters
 
 /**
  * Created by tnguyen on 09/11/16.
  */
 @TestFor(SearchController)
-@Mock([ParameterFilters, User])
+@Mock([User])
 class SearchControllerSpec extends Specification {
     void setup() {
 
