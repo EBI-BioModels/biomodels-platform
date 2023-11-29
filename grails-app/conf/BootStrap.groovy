@@ -53,7 +53,6 @@ class BootStrap {
     private final Logger LOGGER = LoggerFactory.getLogger(BootStrap.class)
     def contributorService
     def springSecurityService
-    def wcmSecurityService
     def grailsApplication
     def modelFileFormatService
     def idGeneratorRegistryFactoryBean
@@ -200,34 +199,6 @@ class BootStrap {
         }
     }
 
-    void doCustomiseMappingForWeceem() {
-        // custom mapping for weceem as it fails to work with an LDAPUserDetailsImpl
-        wcmSecurityService.securityDelegate = [
-            getUserName : { ->
-                def principal = springSecurityService.getPrincipal()
-                if (principal instanceof String) {
-                    return null
-                } else {
-                    return principal?.username
-                }
-            },
-            getUserEmail : { ->
-                def principal = springSecurityService.getPrincipal()
-                if (principal instanceof String) {
-                    return null
-                } else {
-                    return principal?.username
-                }
-            },
-            getUserRoles : { ->
-                springSecurityService.authentication.authorities*.authority ?: ['ROLE_ANONYMOUS']
-            },
-            getUserPrincipal : { ->
-                springSecurityService.principal
-            }
-        ]
-    }
-
     void doCustomiseRestBuilderConstructor() {
         // Below is the provisional solution as suggested at
         // https://github.com/grails-plugins/grails-rest-client-builder/issues/40
@@ -263,7 +234,6 @@ class BootStrap {
         doInitialisePublicationLinkProvider()
         doInitialiseSomeUsersAndRoles()
         doInitialiseSomeContributionRoles()
-        doCustomiseMappingForWeceem()
         doCustomiseRestBuilderConstructor()
         doSubscribeRedisChannelsRelated2ModelIdentifierGeneration()
 

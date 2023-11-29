@@ -198,10 +198,6 @@ grails.project.dependency.resolution = {
             excludes "spring-data-redis"
         }
 
-        runtime (":weceem:1.4") {
-            /* feeds plugin clashes with rome api rendering Model of The Month RSS feed */
-            excludes "feeds"
-        }
         runtime ":database-migration:1.4.1"
         runtime ":hibernate4:4.3.10"
         runtime ":console:1.5.8"

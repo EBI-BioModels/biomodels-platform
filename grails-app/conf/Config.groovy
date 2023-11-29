@@ -275,8 +275,6 @@ log4j.main = {
         'org.codehaus.groovy.grails.orm.hibernate', // hibernate integration
         'org.springframework',
         'org.hibernate',
-        'net.sf.ehcache.hibernate',
-        'org.weceem',
         'net.biomodels.jummp.plugins.configuration'
     ], additivity: false
 
@@ -391,24 +389,12 @@ jummp.controllerAnnotations = [
     '/role/**':                 ['ROLE_ADMIN'],
     '/securityinfo/**':         ['ROLE_ADMIN'],
     '/user/**':                 ['ROLE_ADMIN'],
-    '/wcm-tools/**':            ['ROLE_ADMIN'],
-    '/ck/**':                   ['ROLE_ADMIN'],
-    "/wcmEditor/**":            ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
-    "/wcmPortal/**":            ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
-    "/wcmRepository/**":        ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
-    "/wcmSpace/**":             ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
-    "/wcmSynchronization/**":   ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
-    "/wcmVersion/**":           ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
-    "/wcm*/**":                 ["permitAll"],
-    "/WeceemFiles/**":          ["permitAll"],
     "/css/**":                  ["permitAll"],
     "/images/**":               ["permitAll"],
     "/js/**":                   ["permitAll"],
     "/plugins/jquery*/**":      ["permitAll"],
     "/plugins/navigation*/**":  ["permitAll"],
     "/plugins/blueprint*/**":   ["permitAll"],
-    "/plugins/ckeditor*/**":    ["permitAll"],
-    "/plugins/weceem*/**":      ["permitAll"],
     "/api-docs/**":             ["permitAll"],
     "/console/**":              ["ROLE_ADMIN"],
     "/plugins/console*/**":     ['ROLE_ADMIN'],
@@ -712,20 +698,6 @@ if (jummpConfig.jummp.firstRun instanceof ConfigObject || !Boolean.parseBoolean(
     }
 }
 
-if (!(jummpConfig.jummp.security.cms.policy instanceof ConfigObject)) {
-    jummp.security.cms.policy = jummpConfig.jummp.security.cms.policy
-} else if (System.getenv("JUMMP_SECURITY_CMS_POLICY") != null) {
-    jummp.security.cms.policy = System.getenv("JUMMP_SECURITY_CMS_POLICY")
-} else {
-    jummp.security.cms.policy = null
-}
-
-if (jummp.security.cms.policy != null) {
-    println "INFO\tUsing ${jummp.security.cms.policy} to configure Weceem permissions."
-} else {
-    println "WARN\tUsing Weceem's default permissions."
-}
-
 grails.plugin.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations
 if (!"jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
     jms.disabled = true
@@ -734,31 +706,6 @@ if (!"jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
 if (pluginsToExclude) {
     grails.plugin.excludes = pluginsToExclude
 }
-
-//platform-core 1.0RC5, used by weceem
-plugin.platformCore.events.catchFlushExceptions = true
-// weceem
-grails.mime.file.extensions = false
-weceem.content.prefix = 'content'
-weceem.tools.prefix = 'wcm-tools'
-weceem.admin.prefix = 'wcm-admin'
-weceem.create.default.space = true
-weceem.default.space.template = "classpath:/weceem-jummp-default-space.zip"
-weceem.security.policy.path = jummp.security.cms.policy
-//grails.resources.adhoc.excludes=["/content/*"]
-
-//weceem.springsecurity.details.mapper = { ->
-//    [ // Stuff required by weceem spring security
-//      username: username,
-//      password: password,
-//      enabled: enabled,
-//      authorities: Holders.applicationContext.getBean("springSecurityService").authentication?.authorities ?: GrailsAnonymousAuthenticationToken.ROLES,
-//      // optional stuff we add
-//      email: email,
-//      firstName: person.userRealName,
-//      id: id
-//    ]
-//}
 
 grails.mails.props=[:]
 if (!(jummpConfig.jummp.security.mailer.host instanceof ConfigObject)) {
@@ -849,14 +796,6 @@ if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigOb
         Models described from literature are manually curated and enriched with cross-references.
         """
 }
-
-// elasticsearch settings for weceem
-elasticSearch.datastoreImpl = 'hibernateDatastore'
-elasticSearch.bulkIndexOnStartup = false
-elasticSearch.disableAutoIndex = true
-elasticSearch.client.mode = 'local'
-elasticSearch.index.store.type = 'simplefs' // store local node in memory and not on disk
-elasticSearch.maxBulkRequest = 10
 
 def dateFormats = ["yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss", 'MMddyyyy', 'yyyy-MM-dd HH:mm:ss.S', "yyyy-MM-dd'T'hh:mm:ss'Z'" ]
 grails.databinding.dateFormats = dateFormats

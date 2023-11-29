@@ -18,7 +18,7 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
-includeTargets << new File("./scripts/WeceemExport.groovy")
+//includeTargets << new File("./scripts/AppStatus.groovy")
 
 /**
  * Script to write the git id of the build into _version.gsp
@@ -41,5 +41,4 @@ eventCompileStart = { msg ->
 }
 
 eventCompileEnd = {
-    weceem()
 }

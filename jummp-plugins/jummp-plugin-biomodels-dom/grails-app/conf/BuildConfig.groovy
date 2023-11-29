@@ -53,10 +53,6 @@ grails.project.dependency.resolution = {
         compile":rest-client-builder:2.1.1"
         compile ":cache:1.1.8"
         compile ":cache-ehcache:1.0.5"
-        runtime (":weceem:1.4") {
-            /* feeds plugin clashes with rome api rendering Model of The Month RSS feed */
-            excludes "feeds", "jquery"
-        }
     }
 }
 grails.plugin.location.'jummp-plugin-core-api' = "../jummp-plugin-core-api"
