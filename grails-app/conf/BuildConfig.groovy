@@ -57,7 +57,7 @@ grails.project.dependency.resolution = {
         excludes 'javassist'
         excludes 'grails-plugin-logging', 'grails-plugin-log4j', 'log4j'
     }
-    log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
+    log "verbose" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     legacyResolve false // whether to do a secondary resolve on plugin installation, not advised and here for backwards compatibility
     repositories {
         inherits true //inherit repo definitions from plugins
