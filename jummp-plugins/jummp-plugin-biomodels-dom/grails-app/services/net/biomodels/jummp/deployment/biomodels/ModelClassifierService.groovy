@@ -87,6 +87,7 @@ class ModelClassifierService implements InitializingBean {
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
         trainProgress = cacheService.getCache(PROGRESS_CACHE_NAME)
         trainProgress = (trainProgress == null) ? new Progress(1, 0) : trainProgress
+        LOGGER.info("Finished the bean initialisation")
     }
 
     /**

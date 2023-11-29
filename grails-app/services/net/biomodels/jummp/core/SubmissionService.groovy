@@ -56,6 +56,7 @@ import org.perf4j.aop.Profiled
 import org.apache.commons.io.FilenameUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Service that provides model building functionality to a wizard-style model
@@ -69,7 +70,7 @@ import org.slf4j.LoggerFactory
  * @date 20160216
  */
 @CompileStatic
-class SubmissionService {
+class SubmissionService implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionService.class)
 
     // concrete strategies for the submission state machine
@@ -95,8 +96,11 @@ class SubmissionService {
      */
     transient SessionFactory sessionFactory
 
-
-    /**
+    @Override
+    void afterPropertiesSet() throws Exception {
+        logger.info("Finished the bean initialisation")
+    }
+/**
      * Abstract state machine strategy, to be extended by the two concrete
      * strategy implementations
      */

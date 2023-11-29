@@ -73,6 +73,7 @@ class RepositoryFileService implements GrailsConfigurationAware {
 
         // the hostname of the server running FTP Data Mover service
         srvFtpDataMover = co.jummp.revision.ftpdatamover.srv
+        logger.info("Finished the bean initialisation")
     }
 
     /**

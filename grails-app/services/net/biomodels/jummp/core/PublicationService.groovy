@@ -71,7 +71,7 @@ class PublicationService implements IPublicationService, InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
-
+        log.info("Finished the bean initialisation")
     }
 
     List<PubTC> getAll() {

@@ -52,6 +52,7 @@ import org.mbine.co.archive.ICombineArchive
 import org.mbine.co.archive.ManifestManager
 import org.mbine.co.archive.MetadataManager
 import org.perf4j.aop.Profiled
+import org.springframework.beans.factory.InitializingBean
 
 import java.nio.file.*
 
@@ -61,7 +62,7 @@ import java.nio.file.*
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class OmexService extends FileFormatServiceAdapter {
+class OmexService extends FileFormatServiceAdapter implements InitializingBean {
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
 
@@ -240,5 +241,10 @@ This model was downloaded from BioModels (${BioModels.BM_ROOT_URL}/) on ${timeSt
 
         arch.close()
         return absoluteOmexFileName
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

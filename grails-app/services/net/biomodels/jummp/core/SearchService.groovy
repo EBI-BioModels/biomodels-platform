@@ -41,6 +41,7 @@ import net.biomodels.jummp.search.SortOrder
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
@@ -59,7 +60,7 @@ import java.util.concurrent.atomic.AtomicReference
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @date   20160710
  */
-class SearchService {
+class SearchService implements InitializingBean {
     /**
      * The class logger.
      */
@@ -294,6 +295,11 @@ class SearchService {
         facets << facet
 
         facets
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }
 

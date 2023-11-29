@@ -25,8 +25,9 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.qcinfo.FlagLevel
 import net.biomodels.jummp.qcinfo.QcInfo
+import org.springframework.beans.factory.InitializingBean
 
-class QcInfoDelegateService {
+class QcInfoDelegateService implements InitializingBean {
     def qcInfoService
     def modelService
 
@@ -43,4 +44,8 @@ class QcInfoDelegateService {
         return qcInfoService.createQcInfo(flagLevel, comment)
     }
 
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
+    }
 }

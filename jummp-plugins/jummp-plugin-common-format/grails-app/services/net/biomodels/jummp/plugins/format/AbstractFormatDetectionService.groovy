@@ -25,6 +25,7 @@ import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import org.apache.tika.Tika
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * <p>Abstract class for handling multiple format services sharing many common methods</p>
@@ -34,7 +35,7 @@ import org.slf4j.LoggerFactory
  *   <li>Tung Nguyen&nbsp;<a href="mailto:tung.nguyen@ebi.ac.uk">tung.nguyen@ebi.ac.uk</a></li>
  *  </ul>
  */
-abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
+abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter implements InitializingBean {
     static transactional = false
     public static final String EXPECTED_FORMAT_REQUIRED = "Please set expectedFormat before calling this method"
     protected final Logger logger = LoggerFactory.getLogger(this.getClass())
@@ -42,6 +43,11 @@ abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
 
     AbstractFormatDetectionService(CommonFormat expectedFormat) {
         this.expectedFormat = expectedFormat
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        logger.info("Finished the bean initialisation")
     }
 
     /**

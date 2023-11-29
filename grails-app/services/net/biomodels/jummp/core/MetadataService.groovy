@@ -42,6 +42,7 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.commons.validator.UrlValidator
 import org.perf4j.aop.Profiled
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.transaction.annotation.Isolation
 
 /**
@@ -53,7 +54,7 @@ import org.springframework.transaction.annotation.Isolation
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 @Transactional(readOnly = true)
-class MetadataService {
+class MetadataService implements InitializingBean {
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     static final String DEFAULT_PHARMML_NAMESPACE = "http://www.pharmml.org/2013/10/PharmMLMetadata"
@@ -491,5 +492,10 @@ attempt to save any of its children"""
             }
             return existing
         }
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

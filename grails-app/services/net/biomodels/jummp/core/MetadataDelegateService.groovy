@@ -44,6 +44,7 @@ import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Simple delegate for metadataService.
@@ -57,7 +58,7 @@ import org.perf4j.aop.Profiled
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class MetadataDelegateService implements IMetadataService {
+class MetadataDelegateService implements IMetadataService, InitializingBean {
     private final Log log = LogFactory.getLog(getClass())
     private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     static transactional = false
@@ -310,5 +311,10 @@ class MetadataDelegateService implements IMetadataService {
             it.statement
         }
         statements
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

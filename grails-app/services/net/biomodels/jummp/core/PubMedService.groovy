@@ -38,6 +38,7 @@ import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.springframework.beans.factory.InitializingBean
 import org.xml.sax.SAXParseException
 
 /**
@@ -52,7 +53,7 @@ import org.xml.sax.SAXParseException
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class PubMedService extends AbstractPubDataFetchStrategy {
+class PubMedService extends AbstractPubDataFetchStrategy implements InitializingBean {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
@@ -178,5 +179,10 @@ class PubMedService extends AbstractPubDataFetchStrategy {
             log.error("The proxy setting cannot be null")
         }
         return null
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

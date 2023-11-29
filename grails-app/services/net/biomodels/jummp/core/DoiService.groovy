@@ -32,6 +32,7 @@ import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * @short Singleton-scoped facade for fetching publication metadata via DOI.
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory
  * @author <a href="mailto:tungnguyenvn@pm.me">tungnguyenvn@pm.me</a>
  * @date   2021-01-17
  */
-class DoiService extends AbstractPubDataFetchStrategy {
+class DoiService extends AbstractPubDataFetchStrategy implements InitializingBean {
     static transactional = false
     private static final Logger logger = LoggerFactory.getLogger(DoiService.class)
 
@@ -173,5 +174,10 @@ class DoiService extends AbstractPubDataFetchStrategy {
                 break
         }
         retVal as String
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        logger.info("Finished the bean initialisation")
     }
 }

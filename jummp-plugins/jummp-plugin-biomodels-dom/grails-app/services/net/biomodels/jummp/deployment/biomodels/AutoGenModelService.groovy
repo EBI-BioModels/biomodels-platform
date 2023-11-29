@@ -21,6 +21,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Abstract class to be used to handle services concerning auto generated models
@@ -28,7 +29,12 @@ import grails.transaction.Transactional
  * @author: Tung Nguyen <tnguyen@ebi.ac.uk>
  */
 @Transactional
-abstract class AutoGenModelService {
+abstract class AutoGenModelService implements InitializingBean {
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
+    }
+
     Map getRepresentatives(List<String> missingIds) {
         List list = findRepresentatives(missingIds)
         Map representatives = [:]

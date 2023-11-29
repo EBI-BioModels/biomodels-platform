@@ -85,6 +85,7 @@ class MiriamService implements IMiriamService, InitializingBean {
     void afterPropertiesSet() {
         String folderPath = grailsApplication.config.jummp.vcs.workingDirectory
         registryExport = new File(folderPath, EXPORT_FILE_NAME)
+        log.info("Finished the bean initialisation")
     }
 
     @Profiled(tag="MiriamService.updateMiriamResources")

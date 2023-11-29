@@ -41,6 +41,7 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelHistoryItem
 import net.biomodels.jummp.plugins.security.User
 import org.perf4j.aop.Profiled
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.transaction.annotation.Propagation
 
 /**
@@ -61,7 +62,7 @@ import org.springframework.transaction.annotation.Propagation
  * @see ModelHistoryItem
  */
 @Transactional
-class ModelHistoryService {
+class ModelHistoryService implements InitializingBean {
     /**
      * Dependency Injection of Spring Security Service
      */
@@ -180,5 +181,10 @@ class ModelHistoryService {
 
     private ModelTransportCommand turnModelToCommandObject(Model m, boolean toHistory = true) {
         new ModelAdapter(model: m).toCommandObject(toHistory)
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

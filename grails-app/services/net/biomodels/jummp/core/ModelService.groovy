@@ -63,6 +63,7 @@ import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.ObjectFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
@@ -117,7 +118,7 @@ import java.util.concurrent.locks.ReentrantLock
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
-class ModelService {
+class ModelService implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(ModelService.class)
     def springSecurityService
     def aclUtilService
@@ -2834,5 +2835,10 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
             }
         }
         results
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        logger.info("Finished the bean initialisation: -- def repositoryFileService")
     }
 }

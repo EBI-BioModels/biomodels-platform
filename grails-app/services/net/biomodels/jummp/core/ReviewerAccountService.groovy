@@ -40,6 +40,7 @@ import net.biomodels.jummp.plugins.security.UserRole
 import net.biomodels.jummp.utils.MathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Simple script to create a reviewer account for a set of models.
@@ -53,7 +54,7 @@ import org.slf4j.LoggerFactory
  * @date 20180626
  */
 
-class ReviewerAccountService extends UserService {
+class ReviewerAccountService extends UserService implements InitializingBean {
     static private final Logger LOGGER = LoggerFactory.getLogger(ReviewerAccountService.class)
     def ms = Holders.grailsApplication.mainContext.modelService
     def sss = Holders.grailsApplication.mainContext.springSecurityService
@@ -138,8 +139,13 @@ ${serverURL}/${modelsToReview}</a></p>
         result.toString()
     }
 
-    private List<String> parseCommaSeparatedModelIdList(String ids) {
+    private static List<String> parseCommaSeparatedModelIdList(String ids) {
         ids?.split(',')?.collect { it?.trim() }
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }
 

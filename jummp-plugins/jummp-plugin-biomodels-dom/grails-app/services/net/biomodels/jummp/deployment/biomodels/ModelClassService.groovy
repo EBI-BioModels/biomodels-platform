@@ -37,12 +37,13 @@ import net.biomodels.jummp.models.ModelClassStatus
 import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * @short: Service responsible for management model class ground truth data
  * @author: Vu Tu <tvu@ebi.ac.uk>
  */
-class ModelClassService {
+class ModelClassService implements InitializingBean {
 
     static transactional = false
 
@@ -83,5 +84,10 @@ class ModelClassService {
         if (modelClass) {
             modelClass.delete(flush: true)
         }
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

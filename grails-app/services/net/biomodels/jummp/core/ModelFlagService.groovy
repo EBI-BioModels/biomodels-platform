@@ -30,6 +30,7 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFlag
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * @short   Simple representation of a model flag
@@ -40,7 +41,7 @@ import org.apache.commons.logging.LogFactory
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional
-class ModelFlagService {
+class ModelFlagService implements InitializingBean {
     /**
      * The class logger.
      */
@@ -113,5 +114,10 @@ class ModelFlagService {
             log.debug("Flag ${flag} exists.")
         }
         return existingFlag
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

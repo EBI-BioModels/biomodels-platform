@@ -20,6 +20,7 @@
 
 
 import grails.util.Environment
+import net.biomodels.jummp.plugins.configuration.ConfigurationService
 
 import java.util.regex.Pattern
 
@@ -44,7 +45,8 @@ grails.plugin.springsecurity.fii.rejectPublicInvocations = false
 
 Properties jummpProperties = new Properties()
 try {
-	def service = new net.biomodels.jummp.plugins.configuration.ConfigurationService()
+    println "${new Date().format("yyyy-MM-dd HH:mm:ss")} ${this.getClass().name} LOADING THE EXTERNAL CONFIG FILE..."
+	def service = new ConfigurationService()
     String pathToConfig = service.getConfigFilePath()
     if (pathToConfig) {
     	jummpProperties.load(new FileInputStream(pathToConfig))

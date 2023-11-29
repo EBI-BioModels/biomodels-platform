@@ -44,6 +44,7 @@ import net.biomodels.jummp.utils.MathUtils
 import org.perf4j.aop.Profiled
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.mail.MailAuthenticationException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
@@ -65,7 +66,7 @@ import javax.mail.AuthenticationFailedException
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class UserService implements IUserService {
+class UserService implements IUserService, InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class)
     def springSecurityService
     def mailService
@@ -720,6 +721,11 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         }
         addRoleToUser(user.id, userRole.id)
         return true
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 
     static interface UpdateOrcidStrategy {

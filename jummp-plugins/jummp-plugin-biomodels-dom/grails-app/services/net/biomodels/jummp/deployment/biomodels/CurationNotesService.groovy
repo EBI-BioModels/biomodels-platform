@@ -30,6 +30,7 @@ import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.lang.math.NumberUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.springframework.beans.factory.InitializingBean
 
 import java.text.SimpleDateFormat
 
@@ -40,7 +41,7 @@ import java.text.SimpleDateFormat
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional
-class CurationNotesService {
+class CurationNotesService implements InitializingBean {
     static final Log log = LogFactory.getLog(this.getClass())
     /**
      * Flag indicating the logger's verbosity threshold.
@@ -169,5 +170,10 @@ There is an error when trying to persist curate image into database: ${cn.errors
 There are errors when trying to persist curation notes of the model $modelId into database: ${cn.errors.allErrors.inspect()}""")
             return null
         }
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

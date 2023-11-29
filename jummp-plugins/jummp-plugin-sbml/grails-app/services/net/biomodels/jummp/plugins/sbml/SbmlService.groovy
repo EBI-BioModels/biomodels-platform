@@ -122,6 +122,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             // FIXME: fails the startup of Tomcat server
             //sbml2BioPaxConverter()
         }
+        log.info("Finished the bean initialisation")
     }
 
     void checkConsistency(RevisionTC revision, final List<String> errors) {

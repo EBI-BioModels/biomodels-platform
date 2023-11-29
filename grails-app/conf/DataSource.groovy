@@ -19,10 +19,12 @@
 **/
 
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import net.biomodels.jummp.plugins.configuration.ConfigurationService
 
 Properties dbProps = new Properties()
 try {
-    def service = new net.biomodels.jummp.plugins.configuration.ConfigurationService()
+    println "${new Date().format("yyyy-MM-dd HH:mm:ss")} ${this.getClass().name} LOADING THE EXTERNAL CONFIG FILE..."
+    def service = new ConfigurationService()
     String pathToConfig = service.getConfigFilePath()
     if (!pathToConfig) {
         throw new Exception("No config file available, using defaults")

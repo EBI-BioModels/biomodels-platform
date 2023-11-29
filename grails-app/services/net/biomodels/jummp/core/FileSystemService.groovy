@@ -128,6 +128,7 @@ class FileSystemService implements IFileSystemService, InitializingBean {
         else {
             log.error("Root for FileSystemService was not configured!")
         }
+        log.info("Finished the bean initialisation")
     }
 
     /**

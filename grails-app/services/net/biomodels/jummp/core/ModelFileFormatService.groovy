@@ -49,6 +49,7 @@ import org.perf4j.aop.Profiled
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * @short Service to handle Model files.
@@ -69,7 +70,7 @@ import org.slf4j.LoggerFactory
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * Last modified date: 14/04/2016
  */
-class ModelFileFormatService {
+class ModelFileFormatService implements InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelFileFormatService.class)
 
     static transactional = true
@@ -411,5 +412,10 @@ class ModelFileFormatService {
 
     private Map<String,String> getControllers() {
         grailsApplication.mainContext.getBean("modelFileFormatConfig").getControllers()
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

@@ -41,6 +41,9 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.access.prepost.PreAuthorize
 
 /**
@@ -56,7 +59,7 @@ import org.springframework.security.access.prepost.PreAuthorize
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-class VcsService implements GrailsConfigurationAware {
+class VcsService implements GrailsConfigurationAware, InitializingBean {
     @SuppressWarnings('GrailsStatelessService')
     VcsManager vcsManager
     @SuppressWarnings('GrailsStatelessService')
@@ -64,6 +67,7 @@ class VcsService implements GrailsConfigurationAware {
     def fileSystemService
     String modelContainerRoot
 
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     /**
      * Checks whether the Version Control System is configured properly
      * @return @c true if the vcs system is configured properly, @c false otherwise
@@ -213,6 +217,7 @@ class VcsService implements GrailsConfigurationAware {
 
     @Override
     void setConfiguration(ConfigObject co) {
+        LOGGER.debug("Model Container Root: $modelContainerRoot")
         modelContainerRoot = fileSystemService.root.canonicalPath
     }
 
@@ -235,5 +240,10 @@ class VcsService implements GrailsConfigurationAware {
         }
 
         ["success": success, "message": msg] as Map
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

@@ -25,6 +25,7 @@ import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Service for handling CRUD operations on tags/labels being used in BioModels
@@ -32,7 +33,7 @@ import org.slf4j.LoggerFactory
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional
-class TagService {
+class TagService implements InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(TagService.class)
     def springSecurityService
 
@@ -103,5 +104,10 @@ There have been errors while persisting the tag (${tag.name}) into the database
 because of ${tag.errors.allErrors.inspect()}""")
         }
         saved
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

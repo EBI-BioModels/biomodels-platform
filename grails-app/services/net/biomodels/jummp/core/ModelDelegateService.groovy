@@ -59,6 +59,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.transaction.support.TransactionSynchronizationManager
 
@@ -77,7 +78,7 @@ import java.util.zip.ZipOutputStream
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  */
 @Transactional
-class ModelDelegateService implements IModelService {
+class ModelDelegateService implements IModelService, InitializingBean {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     def curationNotesService
     def modelService
@@ -711,5 +712,10 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         /*System.out.println(array.toString())
         LOGGER.info(array.toString())*/
         return array
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

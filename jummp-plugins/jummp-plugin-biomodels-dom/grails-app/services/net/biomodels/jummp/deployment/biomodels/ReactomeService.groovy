@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 
@@ -32,7 +33,7 @@ import org.springframework.context.ApplicationContextAware
  * @author mglont on 05/12/2019.
  * @see {@link net.biomodels.jummp.models.ReactomeServiceFactoryBean}
  */
-class ReactomeService implements ApplicationContextAware {
+class ReactomeService implements ApplicationContextAware, InitializingBean {
     ApplicationContext applicationContext
     Map<String, List<String>> modelPathwayMapping
 
@@ -42,5 +43,10 @@ class ReactomeService implements ApplicationContextAware {
 
     List<String> getPathwaysForModelId(String modelId) {
         modelPathwayMapping.get(modelId)
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

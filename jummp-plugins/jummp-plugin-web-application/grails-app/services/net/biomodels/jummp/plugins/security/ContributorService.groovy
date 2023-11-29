@@ -30,6 +30,7 @@ import net.biomodels.jummp.model.ContributionRole
 import net.biomodels.jummp.model.Revision
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * A class for handling services connecting to model contributors
@@ -37,7 +38,7 @@ import org.slf4j.LoggerFactory
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional
-class ContributorService {
+class ContributorService implements InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContributorService.class)
     def grailsLinkGenerator
     static List<String> roles
@@ -221,5 +222,10 @@ class ContributorService {
         }
         ci.merge(flush: true)
         return ci
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

@@ -35,6 +35,7 @@
 package net.biomodels.jummp.plugins.bives
 
 import net.biomodels.jummp.core.bives.DiffNotExistingException
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Provides the data from the DiffDataProvider for the view and creates a new thread
@@ -43,7 +44,7 @@ import net.biomodels.jummp.core.bives.DiffNotExistingException
  * @date 05.07.2011
  * @year 2011
  */
-public class DiffDataService {
+class DiffDataService implements InitializingBean {
     static transactional = true
 
     /**
@@ -70,5 +71,10 @@ public class DiffDataService {
      */
     Map generateDiffData(long modelId, int previousRevision, int recentRevision) throws DiffNotExistingException {
         return [:]
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

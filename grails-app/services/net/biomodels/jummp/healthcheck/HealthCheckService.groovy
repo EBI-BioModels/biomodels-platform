@@ -22,9 +22,10 @@ package net.biomodels.jummp.healthcheck
 
 import grails.transaction.Transactional
 import groovy.transform.CompileStatic
+import org.springframework.beans.factory.InitializingBean
 
 @CompileStatic
-class HealthCheckService {
+class HealthCheckService implements InitializingBean {
 
     @Transactional(readOnly = true)
     HealthCheck[] getStatus() {
@@ -33,5 +34,8 @@ class HealthCheckService {
         status
     }
 
-
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
+    }
 }

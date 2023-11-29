@@ -47,6 +47,7 @@ import net.biomodels.jummp.webapp.NotificationTypePreferences as NTPs
 import net.biomodels.jummp.webapp.NotificationUser as NU
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.i18n.LocaleContextHolder as LCH
 import org.springframework.security.access.prepost.PreAuthorize
 
@@ -60,7 +61,7 @@ import org.springframework.security.access.prepost.PreAuthorize
  * @date 20160330
  */
 @Transactional
-class NotificationService {
+class NotificationService implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(NotificationService.class)
     def grailsApplication
     def mailService
@@ -383,5 +384,10 @@ class NotificationService {
         String notifBody = "notification.jummp.feedback.body"
         useGenericNotificationStructure(notifTitle, [body.star] as String[], notifBody,
             [body.star, body.email, body.comment] as String[], NT.FEEDBACK_ARRIVED, user, watchers, null)
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        logger.info("Finished the bean initialisation")
     }
 }

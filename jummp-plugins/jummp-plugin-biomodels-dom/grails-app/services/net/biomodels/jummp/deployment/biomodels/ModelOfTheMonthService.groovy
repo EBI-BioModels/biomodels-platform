@@ -31,6 +31,7 @@ import net.biomodels.jummp.model.Model
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * @short Service responsible for retrieving BioModels ModelOfTheMonth entries.
@@ -39,7 +40,7 @@ import org.apache.commons.logging.LogFactory
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional(readOnly = true)
-class ModelOfTheMonthService {
+class ModelOfTheMonthService implements InitializingBean {
     /**
      * The class logger.
      */
@@ -233,6 +234,11 @@ Every month, a scientist from the BioModels Database team selects a model to fur
         entryDescription.setValue(escapedDescription)
         entry.setDescription(entryDescription)
         entry
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }
 

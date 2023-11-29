@@ -29,6 +29,7 @@ import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.transaction.TransactionDefinition
 
 /**
@@ -37,7 +38,7 @@ import org.springframework.transaction.TransactionDefinition
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional
-class ModelTagService {
+class ModelTagService implements InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelTagService.class)
 
     private static final int POOL_SIZE = 8
@@ -321,5 +322,10 @@ There have been errors while trying to persist tag: '${name}' for the model '${m
             tagObj.save(flush: true)
         }
         tagObj
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

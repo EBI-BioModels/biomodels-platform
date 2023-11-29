@@ -71,6 +71,7 @@ class ClassifierConfigureService implements InitializingBean {
 
     void afterPropertiesSet() throws Exception {
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
+        LOGGER.info("Finished the bean initialisation")
     }
 
     /**
