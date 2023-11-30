@@ -77,7 +77,7 @@ class ParameterSearchService {
     }
 
     String assembleSearchResultsUsingGPars(ParamSC command, int total, int MAX_RECORDS) {
-        final int batchCount = Math.floor(total / MAX_RECORDS)
+        final int batchCount = (int) Math.floor(total / MAX_RECORDS)
         def searchResults = null
         GParsPool.withPool(100) {
             searchResults = (0..batchCount).collectParallel { int page ->

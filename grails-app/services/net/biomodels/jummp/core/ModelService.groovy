@@ -2810,7 +2810,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
         if (nbModels > 0) {
             Integer fetchSize = 100
             String searchAllUrl = "$query&size=$fetchSize"
-            Integer times = Math.ceil((double) nbModels / fetchSize)
+            Integer times = (Integer) Math.ceil((double) nbModels / fetchSize)
             Long offset = 0
             for (int index = 1; index <= times; ++index) {
                 String searchUrl = "$searchAllUrl&start=$offset"
