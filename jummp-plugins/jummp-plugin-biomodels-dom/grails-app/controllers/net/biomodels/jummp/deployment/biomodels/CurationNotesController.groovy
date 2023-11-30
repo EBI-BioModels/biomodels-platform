@@ -100,7 +100,7 @@ class CurationNotesController {
         Map result = [:]
         def curationNotes = params.curationNotes.decodeHTML()
         /**
-         * {@link net.biomodels.jummp.filters.ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
+         * {@link ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
          */
         String model = params.model.decodeHTML()
         CNTC command = parseCuratioNotes(curationNotes, model)

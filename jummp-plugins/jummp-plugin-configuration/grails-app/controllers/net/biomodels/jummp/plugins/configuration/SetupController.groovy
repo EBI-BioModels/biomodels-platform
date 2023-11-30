@@ -38,7 +38,7 @@ import net.biomodels.jummp.core.user.UserCommand
  * The SetupFilters takes care to redirect all requests to the currently required
  * flow and blocks all access to this controller as soon as the application instance
  * is configured.
- * @see net.biomodels.jummp.filters.SetupFilters
+ * @see {@link SetupFilters}
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @date 20130705
