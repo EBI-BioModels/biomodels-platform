@@ -462,7 +462,9 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
                     boolean result = modelService.addPublicationAsAnnotation(revision, pub)
                     if (!result) {
                         logger.error("""\
-There has been error while adding ${pub.link} (${pub.linkProvider.linkType}) to the model main file of the ${revision.identifier()}. Otherwise, BioModels only supports to add a PubMed or DOI publication as an annotation to SBML document.""")
+There has been error while adding ${pub.link} (${pub.linkProvider.linkType}) to the model main file of \
+the ${revision.identifier()}. Otherwise, BioModels only supports to add a PubMed or DOI publication as \
+an annotation to SBML document.""")
                     }
                 }
             }

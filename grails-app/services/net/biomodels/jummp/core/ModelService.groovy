@@ -680,7 +680,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostFilter("hasPermission(filterObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllRevisions")
-    public List<Revision> getAllRevisions(Model model) {
+    List<Revision> getAllRevisions(Model model) {
         /*if (model.deleted) {
             return []
         }*/
@@ -2537,7 +2537,9 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             boolean result = sbmlService.addPublicationAsAnnotation(revisionTC, pubTC)
             if (!result) {
                 logger.error("""\
-There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType}) to the model main file of the ${revisionTC.identifier()}. Otherwise, BioModels only supports to add a PubMed or DOI publication as an annotation to SBML document.""")
+There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType}) to the model main file of \
+the ${revisionTC.identifier()}. Otherwise, BioModels only supports to add a PubMed or DOI publication as \
+an annotation to SBML document.""")
             }
         }
     }
