@@ -190,7 +190,7 @@ due to "${ste.getMessage()}" with the query info wrapped in the command: ${comma
         if (searchResults && modelId) {
             Map map = [:]
             map.put(modelId, searchResults)
-            redisService.doRedisHSet4BP("BP", map)
+            redisService.doRedisHSet("BP", map)
             LOGGER.debug("Caching the parameters for ${modelId} on Redis cache.")
             println("Caching the parameters for ${modelId} on Redis cache.")
         }

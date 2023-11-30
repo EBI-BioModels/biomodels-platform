@@ -145,12 +145,6 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         }
     }
 
-    synchronized static void doRedisHSet4BP(final String key, Map<String, String> data) {
-        jedisPool.getResource().withCloseable { Jedis jedis ->
-            jedis.hmset(key, data)
-        }
-    }
-
     /**
      * This method mainly aims to remove the keys which the prefix is "spring:session:sessions:" created by
      * spring-session. This package is used to ensure session-based login worked as expected.
