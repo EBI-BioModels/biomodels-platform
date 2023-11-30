@@ -305,7 +305,7 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
     }
 
     Map<String, String> fetchMomEntry() {
-        Map momEntryMap = redisService.doRedisHGetAll("the-latest-mom-entry")
+        Map<String, String> momEntryMap = redisService.doRedisHGetAll("the-latest-mom-entry")
         if (!momEntryMap) {
             // call the fallback
             LOGGER.debug("Falling back to build the Model of the Month entry")
@@ -490,7 +490,7 @@ from CmsContent where parent.aliasURI = :aliasuri and status.code = :code order 
         redisService.deleteAllByPattern(jedis, key)
     }
 
-    private Map buildModelOfTheMonthEntry() {
+    private Map<String, String> buildModelOfTheMonthEntry() {
         final String query = "from ModelOfTheMonth order by publicationDate desc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
         if (!theLatestMoM) {
@@ -503,14 +503,14 @@ from CmsContent where parent.aliasURI = :aliasuri and status.code = :code order 
         def monthNumStr = new SimpleDateFormat("MM").format(theLatestPublicationDate)
         def monthString = new SimpleDateFormat("MMMMM").format(theLatestPublicationDate)
         def yearString = new SimpleDateFormat("YYYY").format(theLatestPublicationDate)
-        final String prefixLink = "${BioModels.BM_ROOT_URL}/content/model-of-the-month"
-        def link = "${prefixLink}?year=${yearString}&month=${monthNumStr}"
-        def linkAll = "${prefixLink}?all=yes"
-        String titlePreviewImage = "Model of the month: ${monthString} ${yearString}"
+        final String prefixLink = "${BioModels.BM_ROOT_URL}/content/model-of-the-month".toString()
+        def link = "${prefixLink}?year=${yearString}&month=${monthNumStr}".toString()
+        def linkAll = "${prefixLink}?all=yes".toString()
+        String titlePreviewImage = "Model of the month: ${monthString} ${yearString}".toString()
         String lastUpdatedBy = theLatestMoM.authors
         Set models = theLatestMoM.models
         String modelIds = models.collect { it.publicationId ?: it.submissionId }.join(";")
-        Map momEntry = [:]
+        Map<String, String> momEntry = [:]
         momEntry.put("id", Long.toString(theLatestMoM.id))
         momEntry.put("entryTitle", entryTitle)
         momEntry.put("shortDescription", shortDescription)
@@ -523,7 +523,7 @@ from CmsContent where parent.aliasURI = :aliasuri and status.code = :code order 
         momEntry.put("titlePreviewImage", titlePreviewImage)
         momEntry.put("lastUpdatedBy", lastUpdatedBy)
         momEntry.put("models", modelIds)
-        return momEntry
+        momEntry
     }
 
     /**
