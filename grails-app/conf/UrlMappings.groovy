@@ -125,6 +125,13 @@ class UrlMappings {
         "/competition/model-of-the-year-2023"(controller: "competition", action: "modelOfTheYear2023")
         "/competition/model-of-the-year-2024"(controller: "competition", action: "modelOfTheYear2024")
 
+        "/content/model-of-the-month"(
+            controller: "content", action: "showModelOfTheMonth"
+        )
+        "/content/news/$slug"(
+            controller: "content", action: "showNewsItem"
+        )
+
         def cmsPrefix = "/cms"
         "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
         "$cmsPrefix/editor/edit/$id?"(controller: "cmsEditor", action: "edit")

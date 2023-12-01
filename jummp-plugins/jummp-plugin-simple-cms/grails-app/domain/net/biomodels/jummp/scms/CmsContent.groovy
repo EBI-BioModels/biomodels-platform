@@ -33,7 +33,6 @@ import net.biomodels.jummp.plugins.security.User
 @Entity
 @Validateable
 class CmsContent implements Serializable {
-    private static final long serialVersionUID = 1L
     static MAX_CONTENT_SIZE = 500_000
 
     String title
@@ -47,7 +46,7 @@ class CmsContent implements Serializable {
     Date lastChangedOn
 
     static constraints = {
-        content(nullable: true, maxSize: CmsContent.MAX_CONTENT_SIZE)
+        content(nullable: true, maxSize: MAX_CONTENT_SIZE)
         parent(nullable: true, lazy: true)
         aliasURI(nullable: false, blank: false, unique: true)
         title(unique: true)

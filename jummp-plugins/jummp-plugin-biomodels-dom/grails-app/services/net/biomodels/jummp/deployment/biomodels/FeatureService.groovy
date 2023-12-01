@@ -51,23 +51,22 @@ class FeatureService {
      * @return A String representing the content of the page
      */
     String getCovid19PageContent() {
-        def newsQuery = """from CmsContent where aliasURI = :aliasuri and status.code = :code \
-order by createdOn desc"""
-        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'covid-19', code: 200], [max: 1])
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'covid-19'], [max: 1])
         newsItem[0]?.content
     }
 
     String getContentForReproducibilityPage() {
-        def newsQuery = """from CmsContent where aliasURI = :aliasuri and status.code = :code \
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri \
 order by createdOn desc"""
-        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'reproducibility', code: 200], [max: 1])
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'reproducibility'], [max: 1])
         newsItem[0]?.content
     }
 
     String getContentForFROGPage() {
-        def newsQuery = """from CmsContent where aliasURI = :aliasuri and status.code = :code \
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri \
 order by createdOn desc"""
-        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'fbc', code: 200], [max: 1])
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'fbc'], [max: 1])
         newsItem[0]?.content
     }
 
