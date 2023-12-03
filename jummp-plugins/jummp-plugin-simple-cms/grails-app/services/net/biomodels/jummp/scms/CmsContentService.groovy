@@ -129,6 +129,9 @@ class CmsContentService {
     Map loadContentByAliasURI(final String aliasURI, final String parentAliasURI) {
         CmsContent parent = CmsContent.findByAliasURI(parentAliasURI)
         CmsContent cnt = CmsContent.findByAliasURIAndParent(aliasURI, parent)
+        if (!cnt) {
+            return [:]
+        }
         CCTC content = CCTC.toCommandObject(cnt)
         Map map = toMap(content)
         map
