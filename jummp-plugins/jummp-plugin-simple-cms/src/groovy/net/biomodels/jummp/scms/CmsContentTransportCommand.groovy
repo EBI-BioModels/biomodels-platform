@@ -39,15 +39,89 @@ class CmsContentTransportCommand implements Serializable {
     Date createdOn
     String lastChangedBy
     Date lastChangedOn
+    String parentAliasURI
 
     static constraint = {
         //importFrom(CmsContent)
         id nullable: true
+        parentAliasURI nullable: true
+    }
+
+    Long getId() {
+        return id
+    }
+
+    void setId(Long id) {
+        this.id = id
+    }
+
+    String getTitle() {
+        return title
+    }
+
+    void setTitle(String title) {
+        this.title = title
+    }
+
+    String getDescription() {
+        return description
+    }
+
+    void setDescription(String description) {
+        this.description = description
+    }
+
+    String getContent() {
+        return content
+    }
+
+    void setContent(String content) {
+        this.content = content
+    }
+
+    String getAliasURI() {
+        return aliasURI
+    }
+
+    void setAliasURI(String aliasURI) {
+        this.aliasURI = aliasURI
+    }
+
+    String getCreatedBy() {
+        return createdBy
+    }
+
+    void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy
+    }
+
+    Date getCreatedOn() {
+        return createdOn
+    }
+
+    void setCreatedOn(Date createdOn) {
+        this.createdOn = createdOn
+    }
+
+    String getLastChangedBy() {
+        return lastChangedBy
+    }
+
+    void setLastChangedBy(String lastChangedBy) {
+        this.lastChangedBy = lastChangedBy
+    }
+
+    Date getLastChangedOn() {
+        return lastChangedOn
+    }
+
+    void setLastChangedOn(Date lastChangedOn) {
+        this.lastChangedOn = lastChangedOn
     }
 
     static CmsContentTransportCommand toCommandObject(CmsContent obj) {
         new CmsContentTransportCommand(id: obj.id, title: obj.title, description: obj.description,
-            content: obj.content, aliasURI: obj.aliasURI,
+            content: obj.content, aliasURI: obj.aliasURI, parentAliasURI: obj.parent?.aliasURI,
             createdBy: obj.createdBy.username, createdOn: obj.createdOn,
             lastChangedBy: obj.lastChangedBy.username, lastChangedOn: obj.lastChangedOn)
     }

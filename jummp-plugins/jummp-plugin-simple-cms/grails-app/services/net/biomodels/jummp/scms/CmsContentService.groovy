@@ -20,12 +20,17 @@
 
 package net.biomodels.jummp.scms
 
+
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.transaction.Transactional
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.scms.CmsContentTransportCommand as CCTC
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import java.text.SimpleDateFormat
 
 @Transactional
@@ -119,5 +124,46 @@ class CmsContentService {
         if (!isLoggedIn) { return false }
         boolean hasAdminOrCuratorRole = userService.isLoggedInUserACurator() || userService.isLoggedInUserAAdmin()
         hasAdminOrCuratorRole
+    }
+
+    Map loadContentByAliasURI(final String aliasURI, final String parentAliasURI) {
+        CmsContent parent = CmsContent.findByAliasURI(parentAliasURI)
+        CmsContent cnt = CmsContent.findByAliasURIAndParent(aliasURI, parent)
+        CCTC content = CCTC.toCommandObject(cnt)
+        Map map = toMap(content)
+        map
+    }
+
+    private static Map toMap(final CCTC cnt) {
+        Map<String, Object> map = [:]
+        map.put("id", cnt.id)
+        map.put("aliasURI", cnt.aliasURI)
+        map.put("content", cnt.content)
+        map.put("description", cnt.description)
+        map.put("title", cnt.title)
+        map.put("createdBy", cnt.createdBy)
+        map.put("createdOn", cnt.createdOn)
+        map.put("lastChangedBy", cnt.lastChangedBy)
+        map.put("lastChangedOn", cnt.lastChangedOn)
+        map.put("parentAliasURI", cnt.parentAliasURI)
+        map
+    }
+
+    private static Map toMapWithReflection(final CCTC cnt) {
+        Map<String, Object> myObjectAsDict = new HashMap<>()
+        Field[] allFields = CmsContentTransportCommand.class.getDeclaredFields().findAll {
+            Modifier.isPublic(it.modifiers)
+        }
+        for (Field field : allFields) {
+            Object value = field.get(cnt)
+            myObjectAsDict.put(field.getName(), value)
+        }
+        myObjectAsDict
+    }
+
+    private static Map toMapWithJackson(final CCTC cnt) {
+        ObjectMapper mapper = new ObjectMapper()
+        Map<String, Object> map = mapper.convertValue(cnt, new TypeReference<Object>() {})
+        map
     }
 }
