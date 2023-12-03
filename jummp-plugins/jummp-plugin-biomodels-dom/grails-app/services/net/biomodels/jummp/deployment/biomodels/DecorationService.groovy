@@ -65,12 +65,14 @@ class DecorationService implements InitializingBean {
     static String HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
     static int ACCESSED_MAX_RECORDS
     static int PUBLISHED_MAX_RECORDS
+    static String SVR_URL
 
     @Override
     void afterPropertiesSet() throws Exception {
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
         ACCESSED_MAX_RECORDS = grailsApplication.config.biomodels.homepage.recently.accessed.models.maxRecords as int
         PUBLISHED_MAX_RECORDS = grailsApplication.config.biomodels.homepage.recently.published.models.maxRecords as int
+        SVR_URL = grailsApplication.config.grails.serverURL
         LOGGER.info("Finished the bean initialisation")
     }
 
@@ -503,7 +505,7 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         def monthNumStr = new SimpleDateFormat("MM").format(theLatestPublicationDate)
         def monthString = new SimpleDateFormat("MMMMM").format(theLatestPublicationDate)
         def yearString = new SimpleDateFormat("YYYY").format(theLatestPublicationDate)
-        final String prefixLink = "${BioModels.BM_ROOT_URL}/content/model-of-the-month".toString()
+        final String prefixLink = "${SVR_URL}/content/model-of-the-month".toString()
         def link = "${prefixLink}?year=${yearString}&month=${monthNumStr}".toString()
         def linkAll = "${prefixLink}?all=yes".toString()
         String titlePreviewImage = "Model of the month: ${monthString} ${yearString}".toString()
