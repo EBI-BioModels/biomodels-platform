@@ -26,6 +26,7 @@ import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.statistic.RecentlyPublishedModel
+import net.biomodels.jummp.deployment.biomodels.ModelOfTheMonthTransportCommand as MOMTC
 
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
@@ -243,7 +244,7 @@ class BioModelsTagLib {
     }
 
     def renderConvertedFiles = { attrs ->
-        List<RFTC> convertedFilesTC = attrs.convertedFilesTC
+        List<RFTC> convertedFilesTC = attrs.convertedFilesTC as List<RFTC>
         out << "<ul>"
         out << render(plugin: "jummp-plugin-web-application",
             template: "/templates/model/convert/convertedFileShow",
@@ -252,15 +253,15 @@ class BioModelsTagLib {
     }
 
     def renderAllMoMEntriesPage = {
-        Map sortedEntries = modelOfTheMonthService.buildAllEntries()
-        DateFormatSymbols dfs = new java.text.DateFormatSymbols()
+        Map<String, Set<MOMTC>> sortedEntries = modelOfTheMonthService.buildAllEntries()
+        DateFormatSymbols dfs = new DateFormatSymbols()
         out << render(template: "/templates/momIntroAllEntriesPage", plugin: "jummp-plugin-biomodels-dom",
             model: ['years': sortedEntries.keySet()])
-        sortedEntries.each { String year, Set values ->
+        sortedEntries.each { String year, Set<MOMTC> values ->
             out << render(template: "/templates/momYearTitleInAllEntriesPage", plugin: "jummp-plugin-biomodels-dom",
                 model:['year': year])
             out << "<ul>"
-            values.each { ModelOfTheMonthTransportCommand cmd ->
+            values.each { MOMTC cmd ->
                 int month = cmd.publicationMonth
                 String monthName = dfs.months[month]
                 String links = cmd.associatedModelMap.values().collect { String id ->

@@ -27,11 +27,11 @@ class AppStatus {
         }
     }
 
-    void row(final String label, final value) {
+    static void row(final String label, final value) {
         println label.padRight(18) + ' : ' + value.toString().padLeft(8)
     }
 
-    void header(final String title) {
+    static void header(final String title) {
         final int length = 29
         println '-' * length
         println title.center(length)

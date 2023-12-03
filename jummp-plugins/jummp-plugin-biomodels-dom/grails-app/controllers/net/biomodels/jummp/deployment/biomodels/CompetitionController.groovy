@@ -29,7 +29,7 @@ class CompetitionController {
 
     def modelOfTheYear2022() {
         List result = featureService.getContentForModelOfTheYear2022CompetitionPage()
-        Long id = result[0] ?: null
+        Long id = result[0] ?: null as Long
         String content = result[1] ?: ""
         boolean canEdit = cmsContentService.canEdit()
         String titlePage = "Model Of The Year 2022 Competition | BioModels"
@@ -39,7 +39,7 @@ class CompetitionController {
 
     def modelOfTheYear2023() {
         List result = featureService.getContentForModelOfTheYear2023CompetitionPage()
-        Long id = result[0] ?: null
+        Long id = result[0] ?: null as Long
         String content = result[1] ?: ""
         boolean canEdit = cmsContentService.canEdit()
         String titlePage = "Model Of The Year 2023 Competition | BioModels"
@@ -49,7 +49,7 @@ class CompetitionController {
 
     def modelOfTheYear2024() {
         List result = featureService.getContentForModelOfTheYear2024CompetitionPage()
-        Long id = result[0] ?: null
+        Long id = result[0] ?: null as Long
         String content = result[1] ?: ""
         boolean canEdit = cmsContentService.canEdit()
         String titlePage = "Model Of The Year 2024 Competition | BioModels"

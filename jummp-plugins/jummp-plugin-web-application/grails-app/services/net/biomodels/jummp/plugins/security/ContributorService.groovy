@@ -44,7 +44,7 @@ class ContributorService implements InitializingBean {
     static List<String> roles
 
     void init() {
-        this.roles = CR.getAll().collect { it.name }.sort { it }
+        roles = CR.getAll().collect { it.name }.sort { it }
     }
 
     Map createFirstContributors(final Revision revision) {

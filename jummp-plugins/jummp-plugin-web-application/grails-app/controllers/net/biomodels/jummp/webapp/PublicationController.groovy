@@ -3,11 +3,10 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.adapters.PublicationAdapter
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
-import net.biomodels.jummp.model.PublicationLinkProvider as PLP
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.Publication
+import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.utils.CollectionHelper
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.slf4j.Logger

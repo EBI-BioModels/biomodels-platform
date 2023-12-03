@@ -67,7 +67,7 @@ class CmsContentController {
         Long id = -1
         if (cmd?.validate()) {
             Map contentMap = cmsContentService.fromCommandObject(cmd)
-            CmsContent content = contentMap.get("content")
+            CmsContent content = contentMap.get("content") as CmsContent
             message = contentMap.get("message")
             if (message == "Success") {
                 status = "Succeeded"
