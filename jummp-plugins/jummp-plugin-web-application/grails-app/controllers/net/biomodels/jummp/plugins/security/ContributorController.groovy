@@ -32,9 +32,10 @@ import net.biomodels.jummp.CommonController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.OptimisticLockingFailureException
+import org.springframework.security.access.AccessDeniedException
 
 /**
- * @short Controller class for interacting with user.
+ * @short Controller class for handling the list of contributors.
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
@@ -44,14 +45,6 @@ class ContributorController extends CommonController {
 
     static allowedMethods = [update: "POST"]
 
-    /**
-     * Dependency Injection of Spring Security Service
-     */
-    def springSecurityService
-    /**
-     * Dependency Injection of Team Service
-     */
-    def teamService
     def userService
     def modelService
     def mailService
@@ -96,12 +89,35 @@ class ContributorController extends CommonController {
     }
 
     def manage() {
-        String modelId = params.get("id").decodeHTML()
-        String revisionNumber = params.get("format").decodeHTML()
-        Model model = modelService.getModel("$modelId.$revisionNumber")
-        Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
+        String id = params.get("id").decodeHTML()
+        String username = userService?.username
+
+        Model model = null
+        try {
+            // this method has already handled the dot (.) between the model id and revision number
+            model = modelService.getModel(id)
+        } catch (AccessDeniedException adException) {
+            LOGGER.debug("Tried to access $id but got this exception: ${adException.getMessage()}")
+            forward(controller: "errors", action: "error403")
+            return
+        } finally {
+            LOGGER.info("$username has accessed $id to manage contributors.")
+        }
+
+        if (!model) {
+            LOGGER.debug("An error has happened when accessing $id to manage contributors by $username.")
+            forward(controller: "errors", action: "error500")
+            return
+        }
+
+        // Handle the id param to split the model and revision id
+        Map map = doAnalyseAndExtractParameters(id, model)
+        String modelId = map["modelId"] as String
+        Integer revisionNumber = map['revisionNumber'] as Integer
+        Revision revision = map["revision"] as Revision
+
         String message = ""
-        Map<String, CTC> contributors = getContributors(modelId, revisionNumber)
+        Map<String, CTC> contributors = getContributors(revision)
         List contributorEmailList = contributors.values().collect { it.user.email }
         String currentUserEmail = userService.getEmailAddress()
         String currentUsername = userService.username
@@ -117,20 +133,53 @@ class ContributorController extends CommonController {
         render(view: "manage", model: retMap)
     }
 
-    private Map getContributors(String modelId, String revisionNumber) {
-        Model model = modelService.getModel("$modelId.$revisionNumber")
+    private Map<String, Object> doAnalyseAndExtractParameters(final String id, final Model model) {
+        Map<String, Object> map = [:]
+        String modelId = id
+        Integer revisionNumber = 0
+        if (id.indexOf(".") > 0) {
+            // having the revision number
+            modelId = id.substring(0, id.indexOf("."))
+            String revisionId = id.substring(id.lastIndexOf(".") + 1)
+            revisionNumber  = revisionId.toInteger()
+        }
+
+        Set<Revision> revisions = model.revisions
+        ArrayList<Integer> revisionNumbers = revisions.sort { r1, r2 ->
+                r2.revisionNumber <=> r1.revisionNumber }*.revisionNumber
+        if (revisionNumber == 0) {
+            // Get the latest revision
+            // Sort the revisions descending by the revision number
+            revisionNumber = revisionNumbers[0]
+        } else {
+            // Get the revision which revision number equals revisionNumber
+            // do nothing
+        }
+
+        // TODO: handle 1 <= revisionNumer <= max
+        map["modelId"] = modelId
+        map["revisionNumber"] = revisionNumber
+
+        Revision revision = revisions.find { it.revisionNumber == revisionNumber }
+        map["revision"] = revision
+        return map
+    }
+
+    private static Map<String, CTC> getContributors(Revision revision) {
+
+        Model model = revision.model
         if (!model) { return null }
-        Map contributorMap = [:]
-        CTC ctc
+        Map<String, CTC> contributorMap = [:]
         List revisions = model.revisions.toList()
-        Revision revision = revisions.find { revisionNumber == it.revisionNumber.toString() }
-        Set authors = revisions*.owner?.collect { it.username }.toSet()
+
+        Set authors = revisions*.owner?.collect { it.username }?.toSet()
+
         List details = CD.findAllByRevision(revision)
         for (CD detail: details) {
             String username = detail.contributor.username
             boolean locked = username in authors
-            ctc = new CTC(user: detail.contributor, role: detail.role,
-                                person: detail.contributor.person, locked: locked)
+            CTC ctc = new CTC(user: detail.contributor,
+                role: detail.role, person: detail.contributor.person, locked: locked)
             contributorMap.put(username, ctc)
         }
 
@@ -139,7 +188,7 @@ class ContributorController extends CommonController {
 
     def add() {
         String modelId = params["modelId"]?.decodeHTML()
-        int revisionNumber = params.getInt("revisionNumber")
+        Integer revisionNumber = params.getInt("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
         if (!model) { return null }
         String email = params["email"]?.decodeHTML()
@@ -233,7 +282,6 @@ class ContributorController extends CommonController {
 
         String msg = ""
         String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${roleName.toLowerCase()}"
-        String emailHeading = "You are invited!"
         String howtoAction = "Send"
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
@@ -286,9 +334,9 @@ class ContributorController extends CommonController {
                 message = "An error has happened while trying to update the role for this contributor."
             }
         } catch (OptimisticLockingFailureException exception) {
-            throw exception
-            LOGGER.error(message, exception)
             println "$message: ${exception.toString()}"
+            LOGGER.error(message, exception)
+            throw exception
         }
         result.put("message", message)
         render(result as JSON)
@@ -345,7 +393,7 @@ from the model ${revisionIdentifier}."""
         Model model = modelService.getModel("$modelId.$revisionNumber")
         Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
 
-        [contributor: contributor, revision: revision, modelId: modelId, revisionNumber: revisionNumber,
-         revisionIdentifier: "$modelId.$revisionNumber"]
+        [contributor: contributor, revision: revision, modelId: modelId,
+         revisionNumber: revisionNumber, revisionIdentifier: "$modelId.$revisionNumber"]
     }
 }

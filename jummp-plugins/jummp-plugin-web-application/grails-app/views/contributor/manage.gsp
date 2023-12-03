@@ -241,7 +241,7 @@
         let data = new FormData();
         data.append("serverURL", "${serverURL}");
         data.append("modelId", "${modelId}");
-        data.append("revisionNumber", ${revisionNumber});
+        data.append("revisionNumber", "${revisionNumber}");
         data.append("inviterUsername", "${currentUsername}");
         data.append("inviterEmail", "${currentUserEmail}");
         data.append("inviterName", "${currentUserRealName}");
@@ -295,7 +295,7 @@
         let data = new FormData();
         data.append("usernameAndEmail", usernameAndEmail);
         data.append("modelId", "${modelId}");
-        data.append("revisionNumber", ${revisionNumber});
+        data.append("revisionNumber", "${revisionNumber}");
         data.append("newRole", currentRole);
         fetch(urlPost, {
             method: "POST",
@@ -337,7 +337,7 @@
         data.append("usernameAndEmail", usernameAndEmail);
         data.append("userRealName", userRealName);
         data.append("modelId", "${modelId}");
-        data.append("revisionNumber", ${revisionNumber});
+        data.append("revisionNumber", "${revisionNumber}");
         //data.append("newRole", currentRole);
         fetch(urlPost, {
             method: "POST",
@@ -371,7 +371,7 @@
         const urlPost = $.jummp.createLink("contributor", "init");
         let data = new FormData();
         data.append("modelId", "${modelId}");
-        data.append("revisionNumber", ${revisionNumber});
+        data.append("revisionNumber", "${revisionNumber}");
         let message = "";
         fetch(urlPost, {
             method: "POST",
