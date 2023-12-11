@@ -591,11 +591,6 @@ class ModelController extends CommonController {
     def doAddOrRemoveGalaxyLink() {
         String modelId = params.get("modelId")
         String flag = params.get("flag")
-        boolean result = modelDelegateService.doAddOrRemoveGalaxyLink(modelId, flag)
-        Map m = [success: result]
-        /*String taglibFQN = 'net.biomodels.jummp.deployment.biomodels.BioModelsTagLib'
-        def biomd = grailsApplication.mainContext.getBean(taglibFQN)
-        biomd.renderGalaxyLink([modelId: modelId, flag: flag])*/
 
         if (flag == "Yes") {
             String href = "https://usegalaxy.eu/root?tool_id=biomodels_${modelId?.toLowerCase()}"

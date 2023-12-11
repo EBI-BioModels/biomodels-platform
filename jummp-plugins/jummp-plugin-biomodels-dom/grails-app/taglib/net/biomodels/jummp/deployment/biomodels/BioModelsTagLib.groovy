@@ -393,19 +393,4 @@ class BioModelsTagLib {
                 existed             : existed
             ] as Map)
     }
-
-    def renderGalaxyLink(Map attrs) {
-        if (attrs.flag == "Yes") {
-            String href = "https://usegalaxy.eu/root?tool_id=biomodels_${attrs?.modelId?.toLowerCase()}"
-            out << render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU_RenderLink",
-                model: [
-                    externalLink        : href,
-                    linkTitle           : "Click here to run this model in Galaxy EU",
-                    externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
-                    shortDescription    : "Model Simulation in Galaxy EU"
-                ] as Map)
-        } else {
-            out << render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU)_AddButton")
-        }
-    }
 }

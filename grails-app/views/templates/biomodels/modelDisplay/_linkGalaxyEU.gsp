@@ -27,13 +27,6 @@
 }
 </style>
 <script>
-    /*$("#galaxy-link-placeholder").on("click", function(event) {
-        console.log(event.target);
-        if (event.target.id === "btn-add-galaxy-link") {
-            $("#galaxy-link-placeholder").html("<h3>Tung Nguyen</h3>");
-        }
-    });*/
-
     $("#galaxy-link-placeholder").on("click", function(event) {
         if (event.target.id === "btn-add-galaxy-link") {
             console.log("Adding...");
