@@ -605,6 +605,7 @@ class ModelController extends CommonController {
         } else {
             render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU_AddButton")
         }
+        modelDelegateService.doAddOrRemoveGalaxyLink(modelId, flag)
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
