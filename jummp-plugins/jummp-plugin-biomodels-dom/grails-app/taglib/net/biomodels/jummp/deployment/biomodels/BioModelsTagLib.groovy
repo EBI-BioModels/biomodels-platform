@@ -383,14 +383,15 @@ class BioModelsTagLib {
     def doRenderOrAddGalaxyLink = { Map attrs ->
         String modelId = attrs?.modelId as String
         String href = "https://usegalaxy.eu/root?tool_id=biomodels_${modelId?.toLowerCase()}"
-        boolean existed = modelDelegateService.retrieveGalaxyLink modelId
+        boolean existed = attrs.hasGalaxyLink
         out << render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU",
             model: [
                 externalLink        : href,
                 linkTitle           : "Click here to run this model in Galaxy EU",
                 externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
                 shortDescription    : "Model Simulation in Galaxy EU",
-                existed             : existed
+                existed             : existed,
+                canAddGalaxyLink    : attrs.canAddGalaxyLink
             ] as Map)
     }
 }

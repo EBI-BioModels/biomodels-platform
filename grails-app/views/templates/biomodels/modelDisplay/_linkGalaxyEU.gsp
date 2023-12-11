@@ -2,8 +2,11 @@
     <g:if test="${existed}">
         <g:render template="/templates/biomodels/modelDisplay/linkGalaxyEU_RenderLink" />
     </g:if>
-    <g:else>
+    <g:elseif test="${canAddGalaxyLink}">
         <g:render template="/templates/biomodels/modelDisplay/linkGalaxyEU_AddButton" />
+    </g:elseif>
+    <g:else>
+        <p>&nbsp;</p>
     </g:else>
 </div>
 <style>

@@ -313,7 +313,8 @@ class ModelController extends CommonController {
                          canSeeCurationTab      : canSeeCurationTab,
                          modelParentFolder      : modelParentFolder,
                          canCreateOmex          : canCreateOmex,
-                         hasGalaxyLink          : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID)
+                         hasGalaxyLink          : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID),
+                         canAddGalaxyLink       : hasCuratorRole || hasAdminRole
                     ]
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)
