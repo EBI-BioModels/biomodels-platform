@@ -849,6 +849,10 @@
                             <biomd:renderLinkToNewtEditor serverURL="${serverURL}"
                                                           hrefLinkToNewtEditor="${hrefLinkToNewtEditor}"/>
                             </g:if>
+                            <g:if test="${hasGalaxyLink}">
+                            <biomd:doRenderOrAddGalaxyLink serverURL="${serverURL}" modelId="${revision.modelIdentifier()}"
+                                                           hasCuratorRole="${hasCuratorRole}" hasAdminRole="${hasAdminRole}"/>
+                            </g:if>
 
                             %{--<div class='row'>
                                 <div class="medium-3 columns">Validation Status</div>

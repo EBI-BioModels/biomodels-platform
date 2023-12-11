@@ -46,6 +46,7 @@ class BioModelsTagLib {
     def grailsApplication
     def grailsLinkGenerator
     def decorationService
+    def modelDelegateService
     def modelOfTheMonthService
     def tagService
     def p2mService
@@ -375,5 +376,32 @@ class BioModelsTagLib {
     def renderLinkToNewtEditor = { Map attrs ->
         out << render(template: "/templates/biomodels/modelDisplay/linkNewtEditor",
             model: [hrefLinkToNewtEditor: attrs.hrefLinkToNewtEditor, serverURL: attrs.serverURL])
+    def doRenderOrAddGalaxyLink = { Map attrs ->
+        String modelId = attrs?.modelId as String
+        String href = "https://usegalaxy.eu/root?tool_id=biomodels_${modelId?.toLowerCase()}"
+        boolean existed = modelDelegateService.retrieveGalaxyLink modelId
+        out << render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU",
+            model: [
+                externalLink        : href,
+                linkTitle           : "Click here to run this model in Galaxy EU",
+                externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
+                shortDescription    : "Model Simulation in Galaxy EU",
+                existed             : existed
+            ] as Map)
+    }
+
+    def renderGalaxyLink(Map attrs) {
+        if (attrs.flag == "Yes") {
+            String href = "https://usegalaxy.eu/root?tool_id=biomodels_${attrs?.modelId?.toLowerCase()}"
+            out << render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU_RenderLink",
+                model: [
+                    externalLink        : href,
+                    linkTitle           : "Click here to run this model in Galaxy EU",
+                    externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
+                    shortDescription    : "Model Simulation in Galaxy EU"
+                ] as Map)
+        } else {
+            out << render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU)_AddButton")
+        }
     }
 }
