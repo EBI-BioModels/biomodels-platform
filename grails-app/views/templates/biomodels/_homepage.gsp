@@ -95,7 +95,7 @@
             <!-- Open the application -->
             <h3 style="color: white; font-weight: bolder">Submit your model to enter
                 <a href="${SVR_URL}/competition/model-of-the-year-2024"
-                   target="_blank">"Model of the year" Competition 2024</a>. Deadline 31<sup>st</sup> December 2024.</h3>
+                   target="_blank">"Model of the year" Competition 2024</a>. Deadline 20<sup>th</sup> January 2024.</h3>
             <!-- Closed the application
             <h3 style="color: white; font-weight: bolder">Application closed for <a href="${SVR_URL}/competition/model-of-the-year-2024"
                target="_blank">"Model of the year" Competition 2024</a>. Evaluation under progress!</h3>
