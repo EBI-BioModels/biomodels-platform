@@ -109,7 +109,7 @@ class ModelController extends CommonController {
     final List<String> AUDIT_EXCEPTIONS = ['showWithMessage',
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
-                                           'identifiers', 'createCombineArchive']
+                                           'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -264,6 +264,7 @@ class ModelController extends CommonController {
                     Map<String, String> modellingApproaches =
                         metadataDelegateService.fetchModellingApproaches(rev)
                     boolean hasCuratorRole = userService.isLoggedInUserACurator()
+                    boolean hasAdminRole = userService.isLoggedInUserAAdmin()
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                     List<RFTC> convertedFilesTC = null //modelConversionService.getConvertedFiles(rev)
                     Set<TagTC> tags = metadataDelegateService.findTagsByModel(rev.model)
@@ -303,6 +304,7 @@ class ModelController extends CommonController {
                          curationNotes          : curationNotes,
                          modelLevelAnnotations  : modelLevelAnnotations,
                          originalModels         : originalModels,
+                         hasAdminRole           : hasAdminRole,
                          hasCuratorRole         : hasCuratorRole,
                          supportedForConversion : supportedForConversion,
                          convertedFilesTC       : convertedFilesTC,
@@ -310,7 +312,8 @@ class ModelController extends CommonController {
                          canAskReviewerAccount  : canAskReviewerAccount,
                          canSeeCurationTab      : canSeeCurationTab,
                          modelParentFolder      : modelParentFolder,
-                         canCreateOmex          : canCreateOmex
+                         canCreateOmex          : canCreateOmex,
+                         hasGalaxyLink          : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID)
                     ]
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)
@@ -583,6 +586,29 @@ class ModelController extends CommonController {
             returned.putAll([message: "Uploaded files unsuccessfully", status: "Failed"])
         }
         render(returned as JSON)
+    }
+
+    def doAddOrRemoveGalaxyLink() {
+        String modelId = params.get("modelId")
+        String flag = params.get("flag")
+        boolean result = modelDelegateService.doAddOrRemoveGalaxyLink(modelId, flag)
+        Map m = [success: result]
+        /*String taglibFQN = 'net.biomodels.jummp.deployment.biomodels.BioModelsTagLib'
+        def biomd = grailsApplication.mainContext.getBean(taglibFQN)
+        biomd.renderGalaxyLink([modelId: modelId, flag: flag])*/
+
+        if (flag == "Yes") {
+            String href = "https://usegalaxy.eu/root?tool_id=biomodels_${modelId?.toLowerCase()}"
+            render(template: "/templates/biomodels/modelDisplay/ExtResLink",
+                model: [
+                    externalLink        : href,
+                    linkTitle           : "Click here to run this model in Galaxy EU",
+                    externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
+                    shortDescription    : "Model Simulation in Galaxy EU"
+                ] as Map)
+        } else {
+            render(template: "/templates/biomodels/modelDisplay/ExtResAddButton")
+        }
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])

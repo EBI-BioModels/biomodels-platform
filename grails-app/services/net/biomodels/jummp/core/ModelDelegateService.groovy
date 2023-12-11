@@ -87,6 +87,7 @@ class ModelDelegateService implements IModelService, InitializingBean {
     def modelFlagService
     def referenceTracker
     def userService
+    def redisService
 
     @NotTransactional
     String getPluginForFormat(MFTC format) {
@@ -712,6 +713,17 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         /*System.out.println(array.toString())
         LOGGER.info(array.toString())*/
         return array
+    }
+
+    boolean retrieveGalaxyLink(String modelId) {
+        String value = redisService.doRedisHGet(modelId, "galaxyLink")
+        value == "Yes"
+    }
+
+    boolean doAddOrRemoveGalaxyLink(String modelId, String value) {
+        LOGGER.info("Adding or removing GALAXY link $modelId -- $value")
+        redisService.doRedisHSet(modelId, ["galaxyLink": value] as Map)
+        redisService.doRedisHGet(modelId, "galaxyLink")
     }
 
     @Override
