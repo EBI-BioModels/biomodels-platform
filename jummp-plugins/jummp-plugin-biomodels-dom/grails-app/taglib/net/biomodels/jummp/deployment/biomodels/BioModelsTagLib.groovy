@@ -305,12 +305,12 @@ class BioModelsTagLib {
     }
 
     def showTags = { attrs ->
-        Set<TagTransportCommand> bmTags = attrs.bmTags
+        Set<TagTransportCommand> bmTags = attrs.bmTags as Set<TagTransportCommand>
         out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['bmTags': bmTags])
     }
 
     def showEditableTags = { attrs ->
-        Set<TagTransportCommand> bmTags = attrs.bmTags
+        Set<TagTransportCommand> bmTags = attrs.bmTags as Set<TagTransportCommand>
         Set<Integer> tagIdSet = bmTags.collect { it.id }
         Set<TagTransportCommand> allTags = tagService.all.toSet()
         Set<TagTransportCommand> unTags = allTags.findAll { !tagIdSet.contains(it.id) }
@@ -326,7 +326,7 @@ class BioModelsTagLib {
     }
 
     def renderGridViewForPath2ModelsCategory = { attrs ->
-        Set categories = attrs.categories
+        Set categories = attrs.categories as Set
         int size = categories?.size()
         int nCol = 6
         int nElePerCol = (int) Math.ceil((double)size / 6)
@@ -354,10 +354,10 @@ class BioModelsTagLib {
     }
 
     def renderPdgsmmDiseasesInTwoColumnsLayout = { attrs ->
-        Map m = attrs.categories
+        Map m = attrs.categories as Map
         Map leftColumn = new TreeMap<String, TreeSet>()
         Map rightColumn = new TreeMap<String, TreeSet>()
-        int nbElePerCol = m.size() / 2
+        int nbElePerCol = (int) (m.size() / 2)
         m.eachWithIndex { e, int i ->
             if (i <= nbElePerCol) {
                 leftColumn.put(e.key, e.value)

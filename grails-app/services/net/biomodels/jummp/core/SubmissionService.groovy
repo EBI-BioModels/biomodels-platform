@@ -121,7 +121,7 @@ class SubmissionService implements InitializingBean {
             final String submitterEmail = userService.getEmailAddress()
             final String username = userService.getUsername()
             workingMemory.put("submitterInfo", "[$username, $submitterEmail]")
-            List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
+            List<ModelFormat> sortedModelFormats = ModelFormat.list().sort { it.name }
             workingMemory.put("sorted_model_formats", sortedModelFormats)
             List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
             List definedModellingApproachNames = definedModellingApproaches.collect { it.name }

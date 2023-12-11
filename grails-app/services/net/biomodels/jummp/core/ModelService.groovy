@@ -828,7 +828,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                          final List<RFTC> deleteFiles,
                          final RevisionTransportCommand rev) throws ModelException {
         logger.debug("Amending the revision: ${rev.dump()}")
-        Revision revision
+        Revision revision = null
         def txDefinition = [
             // this tx will use a different session than the current one
             propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW
@@ -839,7 +839,6 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         }
         Revision attachedRevision = doPostPersistRevision(revision)
         return attachedRevision ?: revision
-        return revision
     }
     /**
      * Persists a new model revision in the database and upload the repository files in VCS.

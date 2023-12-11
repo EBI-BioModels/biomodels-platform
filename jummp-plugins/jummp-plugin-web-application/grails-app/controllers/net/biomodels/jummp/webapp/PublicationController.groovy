@@ -20,8 +20,7 @@ class PublicationController implements GrailsConfigurationAware {
     String serverUrl
 
     def index() {
-        List<PubTC> publications = new ArrayList<>()
-        publications = publicationService.getAll()
+        List<PubTC> publications = publicationService.getAll()
         [publications: publications, title: "List of all publications | BioModels", style: style, serverUrl: serverUrl]
     }
 

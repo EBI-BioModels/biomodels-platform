@@ -19,7 +19,7 @@
     </script>
     <g:javascript contextPath="" src="toastr.min.js" />
     <link rel="stylesheet"
-          href="${resource(dir: 'css', file: 'toastr.min.css', contextPath: "${serverURL}")}" />
+          href="${resource(contextPath: "${serverURL}", dir: 'css', file: 'toastr.min.css')}" />
     <style>
         .contributor-header {
             font-size: x-large;
@@ -379,7 +379,7 @@
         }).then((result) => {
             if (200 !== result.status) {
                 message = "Bad Server Response";
-                if (403 == result.status) {
+                if (403 === result.status) {
                     message = "You are not allowed to perform this operation."
                 }
                 showNotification(message);

@@ -244,7 +244,7 @@
         var curationImage = $('#curaImageHolder').attr('src');
         var re = new RegExp('data:image\/');
         var isCurationImageAvailable = re.exec(curationImage);
-        // allow the curation figure to be empty but it will be populated a dummy figure later
+        // allow the curation figure to be empty, however it will have to be populated a dummy figure later
         isCurationImageAvailable = true;
         /* combine with the built-in validation check */
         var isValid = $('#curationNotesForm')[0].checkValidity() && isCurationImageAvailable;

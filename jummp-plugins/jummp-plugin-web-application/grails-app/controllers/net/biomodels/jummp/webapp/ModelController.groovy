@@ -791,7 +791,7 @@ class ModelController extends CommonController {
         }
     }
 
-    private void serveModelAsCombineArchiveForPrivate(RTC revision, List<RepositoryFileTransportCommand> files, resp) {
+    private void serveModelAsCombineArchiveForPrivate(RTC revision, List<RFTC> files, resp) {
         // Revision is private, then considering the size of the request
         long totalSize = files.collect { it.size }.sum() as long
         boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
@@ -1246,7 +1246,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         return remainingFiles.isEmpty()
     }
 
-    private boolean isPositiveNumber(String value) {
+    private static boolean isPositiveNumber(String value) {
         for (char c in value.toCharArray()) {
             if (!Character.isDigit(c)) {
                 return false

@@ -173,7 +173,7 @@
                 modal: true,
                 buttons: {
                     Confirm: function() {
-                        var url = "${g.createLink(controller: 'sbml',
+                        const url = "${g.createLink(controller: 'sbml',
                                         action: 'checkConsistency',
                                         id: revision.identifier())}";
                         $.jummp.openPage(url);
