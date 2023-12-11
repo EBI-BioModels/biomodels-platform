@@ -119,8 +119,8 @@ class JummpController extends CommonController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def curators() {
         Map model = COMMON_PROPERTIES
-        model.put("titleCode", "jummp.jobs.${theme}.title")
-        model
+        model.put("titleCode", "jummp.curators.${theme}.title")
+        render(view: "list-curators", model: model)
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])

@@ -127,6 +127,7 @@
             <li><a href="${grailsApplication.config.grails.serverURL}/content/news">News</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'acknowledgements')}">Acknowledgements</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'curators')}">Curators</a></li>
             <li><a>Model of the Year</a>
                 <ul class="menu">
                     <li><a href="${grailsApplication.config.grails.serverURL}/competition/model-of-the-year-2023">MOY2023</a></li>
