@@ -1,5 +1,8 @@
+<%@ page import="grails.util.Holders"%>
 <%@ page import="net.biomodels.jummp.core.constants.BioModels"%>
-
+<%
+    final String SVR_URL = Holders.grailsApplication.config.grails.serverURL
+%>
 <style type="text/css">
     .welcome-message {
         text-align: justify;
@@ -85,15 +88,20 @@
 </script>
 <div id="hp-intro" class="row text-center top-widget-area">
     <!-- Announcement area -->
-    <!--
+
     <div class="columns small-12 medium-12 large-12">
         <div id="announcement"
              style="padding: 0px; background-color: #ff9800; margin-bottom: 15px; font-size: large">
-            <h3 style="color: white; font-weight: bolder">Application closed for <a href="${BioModels.BM_ROOT_URL}/competition/model-of-the-year-2023"
-               target="_blank">"Model of the year" Competition 2023</a>. Evaluation under progress!</h3>
+            <!-- Open the application -->
+            <h3 style="color: white; font-weight: bolder">Submit your model to enter
+                <a href="${SVR_URL}/competition/model-of-the-year-2024"
+                   target="_blank">"Model of the year" Competition 2024</a>. Deadline 31<sup>st</sup> December 2024.</h3>
+            <!-- Closed the application
+            <h3 style="color: white; font-weight: bolder">Application closed for <a href="${SVR_URL}/competition/model-of-the-year-2024"
+               target="_blank">"Model of the year" Competition 2024</a>. Evaluation under progress!</h3>
+            -->
         </div>
     </div>
-    -->
     <div class="large-12 medium-12 small-12 columns">
     <p class="welcome-message" style="margin-top: 0.5em;">
         BioModels is a repository of mathematical models of biological and biomedical systems.
