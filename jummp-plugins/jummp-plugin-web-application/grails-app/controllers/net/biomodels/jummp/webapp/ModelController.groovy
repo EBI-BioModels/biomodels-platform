@@ -595,7 +595,7 @@ class ModelController extends CommonController {
 
         if (flag == "Yes") {
             String href = "https://usegalaxy.eu/root?tool_id=biomodels_${modelId?.toLowerCase()}"
-            render(template: "/templates/biomodels/modelDisplay/ExtResLink",
+            render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU_RenderLink",
                 model: [
                     externalLink        : href,
                     linkTitle           : "Click here to run this model in Galaxy EU",
@@ -603,7 +603,7 @@ class ModelController extends CommonController {
                     shortDescription    : "Model Simulation in Galaxy EU"
                 ] as Map)
         } else {
-            render(template: "/templates/biomodels/modelDisplay/ExtResAddButton")
+            render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU_AddButton")
         }
     }
 
