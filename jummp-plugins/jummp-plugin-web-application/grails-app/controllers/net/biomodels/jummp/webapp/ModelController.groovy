@@ -109,7 +109,7 @@ class ModelController extends CommonController {
     final List<String> AUDIT_EXCEPTIONS = ['showWithMessage',
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
-                                           'identifiers', 'createCombineArchive']
+                                           'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
