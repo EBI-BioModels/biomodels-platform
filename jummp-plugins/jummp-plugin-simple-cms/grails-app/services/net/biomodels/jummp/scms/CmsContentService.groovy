@@ -59,6 +59,11 @@ class CmsContentService {
             content.createdOn = cmd.createdOn
             content.lastChangedBy = lastChangedBy
             content.lastChangedOn = cmd.lastChangedOn
+            // if both are the same, it means that the user hasn't clicked on this field on the form.
+            // So we get the current time as the last changed date.
+            if (cmd.lastChangedOn == content.lastChangedOn) {
+                content.lastChangedOn = new Date()
+            }
         } else {
             // create a new content which the parent property is set null as a default
             content = new CmsContent(aliasURI: cmd.aliasURI,

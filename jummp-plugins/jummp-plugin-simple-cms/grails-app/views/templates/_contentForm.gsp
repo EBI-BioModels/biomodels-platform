@@ -23,6 +23,10 @@
                 <input type="text" placeholder="Customise the slug for this content"
                        id="aliasURI" name="aliasURI" value="${content?.aliasURI}">
             </label>
+            <label>Alias URI or Slug of the parent<span style="color: red">(*)</span>
+                <input type="text" placeholder="The alias URI or Slug of the parent node"
+                       id="parentAliasURI" name="parentAliasURI" value="${content?.parentAliasURI}">
+            </label>
         </div>
     </div>
 

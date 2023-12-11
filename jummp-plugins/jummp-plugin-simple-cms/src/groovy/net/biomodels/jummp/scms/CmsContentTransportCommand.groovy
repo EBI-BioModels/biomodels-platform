@@ -21,7 +21,6 @@
 package net.biomodels.jummp.scms
 
 import grails.validation.Validateable
-import net.biomodels.jummp.plugins.security.User
 
 /**
  * @short Data Transfer Object (DTO) for the instance of the {@link CmsContent} domain class.
@@ -44,7 +43,7 @@ class CmsContentTransportCommand implements Serializable {
     static constraint = {
         //importFrom(CmsContent)
         id nullable: true
-        parentAliasURI nullable: true
+        parentAliasURI(nullable: true)
     }
 
     Long getId() {
@@ -121,7 +120,7 @@ class CmsContentTransportCommand implements Serializable {
 
     static CmsContentTransportCommand toCommandObject(CmsContent obj) {
         new CmsContentTransportCommand(id: obj.id, title: obj.title, description: obj.description,
-            content: obj.content, aliasURI: obj.aliasURI, parentAliasURI: obj.parent?.aliasURI,
+            content: obj.content, aliasURI: obj.aliasURI, parentAliasURI: obj.parent?.aliasURI ?: null,
             createdBy: obj.createdBy.username, createdOn: obj.createdOn,
             lastChangedBy: obj.lastChangedBy.username, lastChangedOn: obj.lastChangedOn)
     }
