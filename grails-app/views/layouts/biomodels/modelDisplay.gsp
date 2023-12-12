@@ -835,7 +835,7 @@
                             <biomd:displayDisclaimer revision="${revision}"/>
                             <biomd:insertSectionSeparator/>
                             <div class="row rounded-header"><h4 style="color: #ffffee">Connected external resources</h4></div>
-                            <div class='row'>
+                            <div class="row align-middle">
                                 <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
                                     <!-- This empty holder is used to show the model rosette rendered
                                     automatically in omicsdi.service.js via the function createRosette() called
@@ -852,7 +852,6 @@
                             <biomd:doRenderOrAddGalaxyLink hasGalaxyLink="${hasGalaxyLink}" serverURL="${serverURL}"
                                                            modelId="${revision.modelIdentifier()}"
                                                            canAddGalaxyLink="${canAddGalaxyLink}"/>
-
                             %{--<div class='row'>
                                 <div class="medium-3 columns">Validation Status</div>
                                 <div class="medium-9 columns">${validationLevel}</div>

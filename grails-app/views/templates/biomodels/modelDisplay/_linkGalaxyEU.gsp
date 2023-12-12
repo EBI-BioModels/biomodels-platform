@@ -1,4 +1,4 @@
-<div id="galaxy-link-placeholder" style="padding-top:1em">
+<div id="galaxy-link-placeholder">
     <g:if test="${existed}">
         <g:render template="/templates/biomodels/modelDisplay/linkGalaxyEU_RenderLink" />
     </g:if>
@@ -11,19 +11,19 @@
 </div>
 <style>
 #btn-remove-galaxy-link {
-    /*position: relative;
+    position: relative;
     width: 50px;
     height: 50px;
     border-radius: 25px;
     border: 2px solid rgb(231, 50, 50);
-    background-color: #fff;
+    background-color: grey;
     cursor: pointer;
     box-shadow: 0 0 10px #333;
     overflow: hidden;
-    transition: .3s;*/
+    transition: .3s;
 }
 #btn-remove-galaxy-link:hover {
-    background-color: rgb(245, 207, 207);
+    background-color: rgb(215, 23, 23);
     transform: scale(1.2);
     box-shadow: 0 0 4px #111;
     transition: .3s;
