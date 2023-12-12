@@ -599,10 +599,10 @@ class ModelController extends CommonController {
             render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU_RenderLink",
                 model: [
                     externalLink        : href,
-                    linkTitle           : "Click here to run this model in Galaxy EU",
+                    linkTitle           : "Click here to run the model in the European Galaxy server",
                     externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
-                    shortDescription    : "Model Simulation in Galaxy EU",
-                    canRemoveGalaxyLink: true
+                    shortDescription    : "Run the model in the European Galaxy server",
+                    canRemoveGalaxyLink : true
                 ] as Map)
         } else {
             render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU_AddButton")

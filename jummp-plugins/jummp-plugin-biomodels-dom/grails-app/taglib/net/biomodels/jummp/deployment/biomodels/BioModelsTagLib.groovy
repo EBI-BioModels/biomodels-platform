@@ -376,9 +376,9 @@ class BioModelsTagLib {
         out << render(template: "/templates/biomodels/modelDisplay/linkGalaxyEU",
             model: [
                 externalLink        : href,
-                linkTitle           : "Click here to run this model in Galaxy EU",
+                linkTitle           : "Click here to run the model in the European Galaxy server",
                 externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
-                shortDescription    : "Model Simulation in Galaxy EU",
+                shortDescription    : "Run the model in the European Galaxy server",
                 existed             : existed,
                 canAddGalaxyLink    : attrs.canAddGalaxyLink,
                 canRemoveGalaxyLink : attrs.canAddGalaxyLink
