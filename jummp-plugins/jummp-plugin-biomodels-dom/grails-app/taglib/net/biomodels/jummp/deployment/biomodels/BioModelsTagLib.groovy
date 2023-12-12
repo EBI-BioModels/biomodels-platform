@@ -391,7 +391,8 @@ class BioModelsTagLib {
                 externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
                 shortDescription    : "Model Simulation in Galaxy EU",
                 existed             : existed,
-                canAddGalaxyLink    : attrs.canAddGalaxyLink
+                canAddGalaxyLink    : attrs.canAddGalaxyLink,
+                canRemoveGalaxyLink : attrs.canAddGalaxyLink
             ] as Map)
     }
 }
