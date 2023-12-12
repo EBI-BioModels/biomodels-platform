@@ -783,7 +783,7 @@
                             <div class="row rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
                             <g:pageProperty name="page.genericAnnotations"/>
                             <g:if test="${curationState}">
-                            <biomd:insertSeparator/>
+                            <biomd:insertSectionSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Curation status</div>
                                 <div class="small-12 medium-6 large-8 columns">
@@ -809,7 +809,7 @@
                                 </div>
                             </div></g:if>
                             <g:if test="${modellingApproaches}">
-                            <biomd:insertSeparator/>
+                            <biomd:insertSectionSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Modelling approach(es)</div>
                                 <div class="small-12 medium-6 large-8 columns">
@@ -817,14 +817,14 @@
                                 </div>
                             </div></g:if>
                             <g:if test="${originalModels}">
-                            <biomd:insertSeparator/>
+                            <biomd:insertSectionSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Original model(s)</div>
                                 <div class="small-12 medium-6 large-8 columns">
                                     <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
                             <!-- Show all tags assigned to the model -->
-                            <biomd:insertSeparator/>
+                            <biomd:insertSectionSeparator/>
                             <g:if test="${canUpdate && hasCuratorRole}">
                                 <biomd:showEditableTags bmTags="${bmTags}"/>
                             </g:if>

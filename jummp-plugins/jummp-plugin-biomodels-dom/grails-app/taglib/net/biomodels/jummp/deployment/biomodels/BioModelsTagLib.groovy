@@ -317,12 +317,8 @@ class BioModelsTagLib {
         out << render(template: "/templates/showEditableTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': bmTags, 'unTags': unTags])
     }
 
-    def insertSeparator = {
-        out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
-    }
-
     def insertSectionSeparator = {
-        out << render(template: "/templates/sectionSeparator", plugin: "jummp-plugin-biomodels-dom")
+        out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
     }
 
     def renderGridViewForPath2ModelsCategory = { attrs ->
