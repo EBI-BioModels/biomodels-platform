@@ -53,6 +53,7 @@ import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.Flag
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
 import org.json.JSONArray
@@ -724,6 +725,17 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         LOGGER.info("Adding or removing GALAXY link $modelId -- $value")
         redisService.doRedisHSet(modelId, ["galaxyLink": value] as Map)
         redisService.doRedisHGet(modelId, "galaxyLink")
+    }
+
+    boolean shouldDisplayDisclaimer(final RevisionTC revision) {
+        boolean isPublic = revision.state == ModelState.PUBLISHED
+        boolean published = revision.model?.firstPublished != null
+        String manualLabel = PubLP.LinkType.MANUAL_LABEL
+        String linkType = revision.model.publication?.linkProvider?.linkType
+        boolean manualPubEntry = linkType == manualLabel
+        boolean withoutPublication = revision.model?.publication == null
+        boolean retVal = isPublic && published && (manualPubEntry || withoutPublication)
+        retVal
     }
 
     @Override

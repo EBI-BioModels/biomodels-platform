@@ -314,7 +314,8 @@ class ModelController extends CommonController {
                          modelParentFolder      : modelParentFolder,
                          canCreateOmex          : canCreateOmex,
                          hasGalaxyLink          : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID),
-                         canAddGalaxyLink       : hasCuratorRole || hasAdminRole
+                         canAddGalaxyLink       : hasCuratorRole || hasAdminRole,
+                         shouldDisplayDisclaimer: modelDelegateService.shouldDisplayDisclaimer(revision)
                     ]
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)

@@ -824,17 +824,18 @@
                                     <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
                             <!-- Show all tags assigned to the model -->
+                            <g:if test="${bmTags}">
                             <biomd:insertSectionSeparator/>
                             <g:if test="${canUpdate && hasCuratorRole}">
                                 <biomd:showEditableTags bmTags="${bmTags}"/>
                             </g:if>
                             <g:else>
                                 <biomd:showTags bmTags="${bmTags}"/>
-                            </g:else>
+                            </g:else></g:if>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
-                            <biomd:displayDisclaimer revision="${revision}"/>
-                            <biomd:insertSectionSeparator/>
-                            <div class="row rounded-header"><h4 style="color: #ffffee">Connected external resources</h4></div>
+                            <g:if test="${shouldDisplayDisclaimer}">
+                                <biomd:displayDisclaimer revision="${revision}"/></g:if>
+                            <div class="row rounded-header" style="margin-top: 1.0em"><h4 style="color: #ffffee">Connected external resources</h4></div>
                             <div class="row align-middle">
                                 <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
                                     <!-- This empty holder is used to show the model rosette rendered

@@ -285,23 +285,16 @@ class BioModelsTagLib {
 
     def displayDisclaimer = { attrs ->
         def revision = attrs.revision
-        boolean isPublic = revision.state == ModelState.PUBLISHED
-        boolean published = revision.model?.firstPublished != null
-        String manualLabel = PublicationLinkProvider.LinkType.MANUAL_LABEL
-        String linkType = revision.model.publication?.linkProvider?.linkType
-        boolean manualPubEntry = linkType == manualLabel
         boolean withoutPublication = revision.model?.publication == null
-        if (isPublic && published && (manualPubEntry || withoutPublication)) {
-            out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
-            String message = ""
-            if (withoutPublication) {
-                message = "This model has been pre-published upon author's request without reference publication."
-            } else {
-                message = "This model has been published without a web link to the reference publication."
-            }
-            out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom",
-                model: ['message': message])
+        out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
+        String message = ""
+        if (withoutPublication) {
+            message = "This model has been pre-published upon author's request without reference publication."
+        } else {
+            message = "This model has been published without a web link to the reference publication."
         }
+        out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom",
+            model: ['message': message])
     }
 
     def showTags = { attrs ->
