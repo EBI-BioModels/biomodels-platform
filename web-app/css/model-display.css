@@ -54,7 +54,8 @@
     border-top-right-radius: 5px;
     line-height: inherit;
     margin: 0;
-    padding: 0;
+    padding-left: 0.5em;
+    padding-top: 0.5em;
 }
 #toolbarList li .ui-button-text {
     font-size: 0.75em;
