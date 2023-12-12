@@ -464,6 +464,7 @@ class GitManager implements VcsManager {
                     // need to checkout in a temporary branch
                     branchName = UUID.randomUUID()
                     if (!initedRepositories.get(modelDirectory).status().call().clean) {
+                        LOGGER.debug("Revision: $revision, model directory: ${modelDirectory.name}, is unclean.")
                         initedRepositories.get(modelDirectory).stashCreate().call()
                     }
                     initedRepositories.get(modelDirectory).
