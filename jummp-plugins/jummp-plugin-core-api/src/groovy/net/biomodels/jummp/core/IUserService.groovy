@@ -121,6 +121,19 @@ interface IUserService {
      * @return List of Users ordered by Id
      */
     List<User> getAllUsers(Integer offset, Integer count)
+
+    /**
+     * Retrieves all users based on the given role
+     * @param role {@link Role} instance denoting the role
+     * @return {@link List} of {@link User} objects having the given role
+     */
+    List<User> getAllUsersByRole(Role role, Integer offset, Integer count)
+
+    List<User> getAllUsersByRole(String authority, Integer offset, Integer count)
+
+    Integer countUsersByRole(Role role)
+
+    Integer countUsersByRole(String authority)
     /**
      * Enables/Disables the user identified by @p userId
      * @param userId The unique id of the user

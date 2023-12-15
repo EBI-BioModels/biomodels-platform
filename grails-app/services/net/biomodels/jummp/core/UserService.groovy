@@ -309,6 +309,37 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         return User.list([offset: offset, max: Math.min(count, 100)])
     }
 
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="userService.getAllUsersByRole")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    List<User> getAllUsersByRole(Role role, Integer offset = 0, Integer count = 10) {
+        String query = """SELECT ur.user FROM UserRole as ur WHERE ur.role.id = ${role.id}"""
+        Map namedParams = [:]
+        Map metaParams = [offset: Math.min(count, 100), max: count]
+        List<User> users = User.executeQuery(query, namedParams, metaParams)
+        return users
+    }
+
+    List<User> getAllUsersByRole(String authority, Integer offset = 0, Integer count = 10) {
+        if (!authority) { return null }
+        Role role = Role.findByAuthority(authority)
+        if (!role) { return null }
+        getAllUsersByRole(role)
+    }
+
+    Integer countUsersByRole(Role role) {
+        String query = """SELECT ur.user FROM UserRole as ur WHERE ur.role.id = ${role.id}"""
+        List<User> users = User.executeQuery(query)
+        users?.size()
+    }
+
+    Integer countUsersByRole(String authority) {
+        if (!authority) { return 0 }
+        Role role = Role.findByAuthority(authority)
+        if (!role) { return 0 }
+        countUsersByRole(role)
+    }
+
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="userService.enableUser")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
