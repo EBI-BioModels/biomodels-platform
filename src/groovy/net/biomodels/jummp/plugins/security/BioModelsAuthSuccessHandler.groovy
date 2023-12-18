@@ -55,10 +55,8 @@ class BioModelsAuthSuccessHandler extends AAASH {
         if (isUnpublishedModel) {
             String username = request.getParameter("username")
             LOGGER.debug("The user '${username}' has logged in to access this unpublished model $preURL.")
-            return preURL
-        } else {
-            return super.determineTargetUrl(request, response)
         }
+        return preURL
     }
 
     @Override
