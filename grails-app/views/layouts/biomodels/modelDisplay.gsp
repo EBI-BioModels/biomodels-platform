@@ -834,18 +834,10 @@
                             </g:else></g:if>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <g:if test="${shouldDisplayDisclaimer}">
-                                <biomd:displayDisclaimer revision="${revision}"/></g:if>
+                            <biomd:displayDisclaimer revision="${revision}"/></g:if>
                             <div class="row rounded-header" style="margin-top: 1.0em"><h4 style="color: #ffffee">Connected external resources</h4></div>
-                            <div class="row align-middle">
-                                <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
-                                    <!-- This empty holder is used to show the model rosette rendered
-                                    automatically in omicsdi.service.js via the function createRosette() called
-                                    from the ready block of this page -->
-                                </div>
-                                <div class="small-12 medium-9 large-9 columns">
-                                    <p class="ext-rsc-text" style="display: none">OmicsDI Impact Metrics</p>
-                                </div>
-                            </div>
+                            <g:if test="${true}">
+                            <biomd:renderLinkOmicsDiRosette /></g:if>
                             <g:if test="${hrefLinkToNewtEditor}">
                             <biomd:renderLinkToNewtEditor serverURL="${serverURL}"
                                                           hrefLinkToNewtEditor="${hrefLinkToNewtEditor}"/>

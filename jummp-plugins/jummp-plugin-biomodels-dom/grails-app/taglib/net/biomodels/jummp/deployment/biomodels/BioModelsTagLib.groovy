@@ -362,6 +362,11 @@ class BioModelsTagLib {
         out << '</div>'
     }
 
+    def renderLinkOmicsDiRosette = {
+        out << render(template: "/templates/biomodels/modelDisplay/linkOmicsDiRosette",
+            model: [:] as Map)
+    }
+
     def renderLinkToNewtEditor = { Map attrs ->
         out << '<div id="newt-editor-link-placeholder" style="padding-top:1em">'
         out << render(template: "/templates/biomodels/modelDisplay/linkNewtEditor",
