@@ -600,7 +600,7 @@ class ModelController extends CommonController {
                 model: [
                     externalLink        : href,
                     linkTitle           : "Click here to run the model in the European Galaxy server",
-                    externalResourceIcon: "https://galaxyproject.org/images/galaxy-logos/galaxy_logo_25percent_transparent.png"/*"${attrs.serverURL}/images/biomodels/galaxy.png"*/,
+                    externalResourceIcon: "${serverURL}/images/biomodels/galaxy-eu-logo.png",
                     shortDescription    : "Run the model in the European Galaxy server",
                     canRemoveGalaxyLink : true
                 ] as Map)
