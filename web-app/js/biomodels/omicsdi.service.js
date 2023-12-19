@@ -19,10 +19,10 @@ function requestData(datasetId) {
         async: false,
         success: function (data) {
             omicsData = data;
-            console.log(omicsData);
+            //console.log(omicsData);
         },
         error: function (xhr) {
-            console.log("An error occurred: " + xhr.status + " " + xhr.statusText);
+            //console.log("An error occurred: " + xhr.status + " " + xhr.statusText);
         }
     });
     return omicsData;
@@ -162,7 +162,7 @@ function svg_linear_gradient_direction(angle) {
 
 function createRosette(datasetId) {
     const data = this.convertData(datasetId);
-    console.log(data);
+    //console.log(data);
     // body.style('position', 'relative');
     const _title = 'Rosette chart is a feature that shows multiple different normalized metrics of it’s dataset,' +
         ' including Reanalyses, Citations, Views, Downloads and Connections. Click here to see the Rosette chart' + ' of this model via OmicsDI service.'
