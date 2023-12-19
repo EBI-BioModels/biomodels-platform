@@ -365,7 +365,11 @@ class BioModelsTagLib {
     def renderLinkToNewtEditor = { Map attrs ->
         out << '<div id="newt-editor-link-placeholder" style="padding-top:1em">'
         out << render(template: "/templates/biomodels/modelDisplay/linkNewtEditor",
-            model: [hrefLinkToNewtEditor: attrs.hrefLinkToNewtEditor, serverURL: attrs.serverURL])
+            model: [
+                hrefLinkToNewtEditor: attrs.hrefLinkToNewtEditor,
+                serverURL: attrs.serverURL,
+                externalResourceIcon: "${attrs.serverURL}/images/biomodels/sbgn-logo.png"
+            ] as Map)
         out << '</div>'
     }
 
