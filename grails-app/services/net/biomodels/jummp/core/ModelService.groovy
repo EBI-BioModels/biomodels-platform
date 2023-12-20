@@ -1782,25 +1782,27 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     }
 
     /**
-    * Transfers the ownership of the @p model to @p collaborator.
-    *
-    * The ownership can only be transferred from a user having the right to grant
-    * read/write access and the @p model is not yet under curation or published.
-    * The @p collaborator has to have read access to future revisions of the model.
-    *
-    * All Model specific rights are revoked from the owner and granted to the @p collaborator.
-    * This includes:
-    * @li Write access to the @p model
-    * @li Read access to future revisions of the @p model
-    * @li Start of curation
-    * @li Grant/Revoke read/write access to the @p model
-    * @param model The Model for which the ownership should be transferred.
-    * @param collaborator The User who becomes the new owner
-    **/
+     * Transfers the ownership of the @p model to @p contributor.
+     *
+     * The ownership can only be transferred from a user having the right to grant
+     * read/write access and the @p model is not yet under curation or published.
+     * The @p contributor has to have read access to future revisions of the model.
+     *
+     * All Model specific rights are revoked from the owner and granted to the @p contributor.
+     * This includes:
+     * @li Write access to the @p model
+     * @li Read access to future revisions of the @p model
+     * @li Start of curation
+     * @li Grant/Revoke read/write access to the @p model
+     * @param model The Model for which the ownership should be transferred.
+     * In the first implementation, we suppose that all revisions are submitted by the same submitter/owner.
+     *
+     * @param contributor The User who becomes the new owner
+     */
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
-    @Profiled(tag="modelService.transferOwnerShip")
-    public void transferOwnerShip(Model model, User collaborator) {
+    @Profiled(tag="modelService.transferOwnership")
+    void transferOwnership(Model model, User contributor) {
         // TODO: implement me
     }
 

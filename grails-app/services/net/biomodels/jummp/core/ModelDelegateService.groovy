@@ -508,7 +508,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     void transferOwnerShip(String modelId, User collaborator) {
-        modelService.transferOwnerShip(modelService.findByPerennialIdentifier(modelId),
+        modelService.transferOwnership(modelService.findByPerennialIdentifier(modelId),
                     User.get(collaborator.id))
     }
 
