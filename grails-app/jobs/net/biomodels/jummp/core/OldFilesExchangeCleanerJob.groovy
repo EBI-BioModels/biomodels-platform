@@ -36,12 +36,13 @@ package net.biomodels.jummp.core
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import redis.clients.jedis.Jedis
 
 /**
  * @short Job for cleaning the exchange directory after RTCs if they have been in the
- * exchange for a long time. This can happen if the GC based cleaner doesnt clean up
+ * exchange for a long time. This can happen if the GC based cleaner doesn't clean up
  * the files in the first place (which could be because the program ended before GC ran,
- * or the GC decided theres lots of memory so it doesnt need to run.
+ * or the GC decided there is a lot of memory so it doesn't need to run.
  *
  * @created Raza Ali <raza.ali@ebi.ac.uk>
  * @created Tung Nguyen <nvntung@gmail.com>
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory
 class OldFilesExchangeCleanerJob {
     private static final Logger LOGGER = LoggerFactory.getLogger(OldFilesExchangeCleanerJob.class)
     def grailsApplication
+    def redisService
     def veryOld = ( new Date() ).time - 1000*60*60*6 // remove six hour old files
 
     static triggers = {
@@ -73,6 +75,27 @@ ${lastModified.format('yyyy-MM-dd HH:mm:ss z')}"""
                 }
             }
         })
+
+        /**
+         * clean the `submissionFolder` keys on the Redis Cache. See {@link ModelController.update()}
+         */
+        try {
+            redisService.jedisPool.getResource().withCloseable { Jedis jedis ->
+                Set<String> keys = jedis.keys("*")
+                /**
+                 * the `submissionFolder` key has 36 characters in length
+                 * For example: jedis.expire("ce6372f1-61b2-4be3-8f81-61682c58da48", 1)
+                 * See {@link SubmissionService.StateMachineStrategy.initialise()}
+                 */
+                keys.each {
+                    if (it.length() == 36) {
+                        jedis.expire(it, 1)
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            LOGGER.debug("An error has occurred when cleaning the submission directories as the Redis keys.")
+        }
     }
 
 }
