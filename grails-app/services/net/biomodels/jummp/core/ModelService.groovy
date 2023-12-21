@@ -1803,6 +1803,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.transferOwnership")
     void transferOwnership(Model model, User contributor) {
+        // this doesn't work: aclUtilService.changeOwner(model, contributor.username)
         Set<Revision> revisions = model.revisions.sort { r1, r2 ->
             r1.revisionNumber <=> r2.revisionNumber
         }
@@ -1829,12 +1830,15 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.READ)
             aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.WRITE)
         }
-        // aclUtilService.changeOwner(model, contributor.username)
+
+        // step 4: remapping contribution details for the new contributor on the model
         boolean succeeded = changeContributionDetails(revisions, contributor)
         if (succeeded) {
-            logger.info("Changing contribution details successfully")
+            logger.info("""Remapping contribution details for ${contributor.username} \
+on ${model.submissionId}  successfully.""")
         } else {
-            logger.info("Errors have occurred when chaning contribution details. Please manually complete the task.")
+            logger.info("""Errors have occurred when remapping contribution details for \
+${contributor.username} on ${model.submissionId}. Please manually complete the task.""")
         }
     }
 
