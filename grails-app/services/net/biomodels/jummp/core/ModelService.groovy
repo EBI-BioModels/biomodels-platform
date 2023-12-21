@@ -1830,11 +1830,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             // step 3.1: remove all relationships in ContributionDetails
             List<CD> cDetails = CD.findAllByContributorAndRevision(currentOwner, rev)
             cDetails.each { ContributionDetails cd ->
-                cd.contributor = contributor
-                boolean r = cd.save(flush: true)
-                if (!r) {
-                    logger.error("Cannot change the contributor due to ${cd.getErrors().toString()}")
-                }
+                CD.executeUpdate("""UPDATE ContributionDetails CD \
+SET CD.contributor.id=:newContributorId WHERE CD.contributor.id=:oldContributorId""",
+                    [newContributorId: contributor.id, oldContributorId: cd.contributor.id])
             }
         }
         logger.debug("Finished changing contributors mapping...")
