@@ -1827,15 +1827,33 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.ADMINISTRATION)
             aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.READ)
             aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.WRITE)
-            // step 3.1: remove all relationships in ContributionDetails
-            List<CD> cDetails = CD.findAllByContributorAndRevision(currentOwner, rev)
-            cDetails.each { ContributionDetails cd ->
-                CD.executeUpdate("""UPDATE ContributionDetails CD \
-SET CD.contributor.id=:newContributorId WHERE CD.contributor.id=:oldContributorId""",
-                    [newContributorId: contributor.id, oldContributorId: cd.contributor.id])
+        }
+        // aclUtilService.changeOwner(model, contributor.username)
+        boolean succeeded = changeContributionDetails(revisions, contributor)
+        if (succeeded) {
+            logger.info("Changing contribution details successfully")
+        } else {
+            logger.info("Errors have occurred when chaning contribution details. Please manually complete the task.")
+        }
+    }
+
+    private boolean changeContributionDetails(final Set<Revision> revisions, final User contributor) {
+        for (Revision revision: revisions) {
+            List<CD> details = CD.findAllByRevision(revision)
+            details.each { CD cd ->
+                CD.executeUpdate("""UPDATE ContributionDetails cd \
+SET cd.contributor.id=:newContributorId \
+WHERE cd.contributor.id=:oldContributorId AND cd.revision.id=:oldRevisionId AND cd.role.id=:oldRoleId""",
+                    [newContributorId: contributor.id,
+                     oldContributorId: cd.contributor.id,
+                     oldRevisionId: cd.revision.id,
+                     oldRoleId: cd.role.id])
             }
         }
-        logger.debug("Finished changing contributors mapping...")
+        // check the result
+        //List<CD> details = CD.findAllByRevisionAndContributor(contributor)
+        //details?.size() == revisions.size()
+        true
     }
 
     /**
