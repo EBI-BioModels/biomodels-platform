@@ -1668,35 +1668,47 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         }
         boolean isCurator = userService.isCurator(collaborator)
         Set<Revision> revisions = model.revisions
-
-        aclUtilService.deletePermission(model, principal, BasePermission.READ)
-        aclUtilService.deletePermission(model, principal, BasePermission.WRITE)
-        if (isCurator) {
-            aclUtilService.deletePermission(model, principal, BasePermission.ADMINISTRATION)
-            revisions.each { Revision r ->
-                aclUtilService.deletePermission(r, principal, BasePermission.ADMINISTRATION)
-                aclUtilService.deletePermission(r, principal, BasePermission.READ)
+        try {
+            boolean check = hasPermission(model, BasePermission.READ)
+            if (check) {
+                aclUtilService.deletePermission(model, principal, BasePermission.READ)
             }
-        } else {
-            boolean adminToModel = hasAdminPermission(model, principal)
-            if (adminToModel) {
+            check = hasPermission(model, BasePermission.WRITE)
+            if (check) {
+                aclUtilService.deletePermission(model, principal, BasePermission.WRITE)
+            }
+            if (isCurator) {
                 aclUtilService.deletePermission(model, principal, BasePermission.ADMINISTRATION)
-            }
-            final boolean isAdmin = SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')
-            for (Revision revision in revisions) {
-                boolean canRead = aclUtilService.hasPermission(
-                        springSecurityService.authentication, revision, BasePermission.READ)
-                if (canRead || isAdmin) {
-                    try {
-                        aclUtilService.deletePermission(revision, principal, BasePermission.READ)
-                    } catch(Exception e) {
-                        logger.error e.message, e
-                        return false
+                revisions.each { Revision r ->
+                    aclUtilService.deletePermission(r, principal, BasePermission.ADMINISTRATION)
+                    aclUtilService.deletePermission(r, principal, BasePermission.READ)
+                }
+            } else {
+                boolean adminToModel = hasAdminPermission(model, principal)
+                if (adminToModel) {
+                    check = hasPermission(model, BasePermission.ADMINISTRATION)
+                    if (check) {
+                        aclUtilService.deletePermission(model, principal, BasePermission.ADMINISTRATION)
+                    }
+                }
+                final boolean isAdmin = SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')
+                for (Revision revision in revisions) {
+                    boolean canRead = hasPermission(revision, BasePermission.READ)
+                    if (canRead || isAdmin) {
+                        try {
+                            aclUtilService.deletePermission(revision, principal, BasePermission.READ)
+                        } catch (Exception e) {
+                            logger.error e.message, e
+                            return false
+                        }
                     }
                 }
             }
+            return true
+        } catch (org.springframework.security.acls.model.NotFoundException notFoundException) {
+            logger.error("An error has occurred when trying to revoke non-exist permission... The error details could be found below.")
+            notFoundException.printStackTrace()
         }
-        return true
     }
 
     /*
@@ -1744,10 +1756,15 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 sid = null
             }
             boolean value = ace.permission == perm && currentUsernameOrRole == usernameOrRole
-            boolean doesItHasPermission = sid == null ? false : value
-            return doesItHasPermission
+            boolean doesItHavePermission = sid == null ? false : value
+            return doesItHavePermission
         }
     }
+
+    boolean hasPermission(def domainObject, final BasePermission perm) {
+        aclUtilService.hasPermission(springSecurityService.authentication, domainObject, perm)
+    }
+
     /**
     * Revokes write access for @p model from @p collaborator.
     *
