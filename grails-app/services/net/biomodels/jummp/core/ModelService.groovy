@@ -1852,30 +1852,42 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         boolean succeeded = changeContributionDetails(revisions, contributor)
         if (succeeded) {
             logger.info("""Remapping contribution details for ${contributor.username} \
-on ${model.submissionId}  successfully.""")
+on ${model.submissionId} completed successfully.""")
         } else {
             logger.info("""Errors have occurred when remapping contribution details for \
-${contributor.username} on ${model.submissionId}. Please manually complete the task.""")
+${contributor.username} on ${model.submissionId}. Please check the data and complete the task manually.""")
         }
     }
 
     private boolean changeContributionDetails(final Set<Revision> revisions, final User contributor) {
+        Integer count = 0
+        List<Integer> result = new ArrayList<>()
         for (Revision revision: revisions) {
             List<CD> details = CD.findAllByRevision(revision)
             details.each { CD cd ->
-                CD.executeUpdate("""UPDATE ContributionDetails cd \
+                try {
+                    Integer r = CD.executeUpdate("""UPDATE ContributionDetails cd \
 SET cd.contributor.id=:newContributorId \
-WHERE cd.contributor.id=:oldContributorId AND cd.revision.id=:oldRevisionId AND cd.role.id=:oldRoleId""",
-                    [newContributorId: contributor.id,
-                     oldContributorId: cd.contributor.id,
-                     oldRevisionId: cd.revision.id,
-                     oldRoleId: cd.role.id])
+WHERE cd.contributor.id=:oldContributorId
+AND cd.revision.id=:oldRevisionId AND cd.role.id=:oldRoleId""",
+                        [newContributorId: contributor.id,
+                         oldContributorId: cd.contributor.id,
+                         oldRevisionId   : cd.revision.id,
+                         oldRoleId       : cd.role.id] as Map)
+                    if (1 == r) {
+                        result.add(r)
+                    }
+                } catch (Exception exception) {
+                    logger.error("""An error has occurred when remapping contribution for ${contributor.username} \
+on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
+                    exception.printStackTrace()
+                } finally {
+                    count++
+                }
             }
         }
         // check the result
-        //List<CD> details = CD.findAllByRevisionAndContributor(contributor)
-        //details?.size() == revisions.size()
-        true
+        result?.size() == count
     }
 
     /**
