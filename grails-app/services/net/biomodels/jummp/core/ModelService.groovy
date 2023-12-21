@@ -1810,6 +1810,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         // step 1: replace the current owner with the contributor
         for (Revision revision in revisions) {
             revision.owner = contributor
+            revision.save(flush: true)
         }
 
         // step 2: give the new owner full permission to the model and all revisions
