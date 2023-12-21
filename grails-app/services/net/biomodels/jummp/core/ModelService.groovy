@@ -1803,7 +1803,41 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.transferOwnership")
     void transferOwnership(Model model, User contributor) {
-        // TODO: implement me
+        Set<Revision> revisions = model.revisions.sort { r1, r2 ->
+            r1.revisionNumber <=> r2.revisionNumber
+        }
+        User currentOwner = revisions.first().owner
+        // step 1: replace the current owner with the contributor
+        for (Revision revision in revisions) {
+            revision.owner = contributor
+        }
+
+        // step 2: give the new owner full permission to the model and all revisions
+        grantWriteAccess(model, contributor)
+        revisions.each { Revision rev ->
+            aclUtilService.addPermission(rev, contributor.username, BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(rev, contributor.username, BasePermission.READ)
+            aclUtilService.addPermission(rev, contributor.username, BasePermission.WRITE)
+        }
+
+        // step 3: revoke all permissions granted to the former owner
+        revokeReadAccess(model, currentOwner)
+        revokeWriteAccess(model, currentOwner)
+        revisions.each { Revision rev ->
+            aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.ADMINISTRATION)
+            aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.READ)
+            aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.WRITE)
+            // step 3.1: remove all relationships in ContributionDetails
+            List<CD> cDetails = CD.findAllByContributorAndRevision(currentOwner, rev)
+            cDetails.each { ContributionDetails cd ->
+                cd.contributor = contributor
+                boolean r = cd.save(flush: true)
+                if (!r) {
+                    logger.error("Cannot change the contributor due to ${cd.getErrors().toString()}")
+                }
+            }
+        }
+        logger.debug("Finished changing contributors mapping...")
     }
 
     /**
