@@ -36,6 +36,7 @@ package net.biomodels.jummp.webapp.administration
 
 import grails.plugin.springsecurity.annotation.Secured
 import grails.converters.JSON
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.core.user.RoleNotFoundException
@@ -52,7 +53,7 @@ import net.biomodels.jummp.webapp.EditUserCommand
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
 @Secured('ROLE_ADMIN')
-class UserAdministrationController {
+class UserAdministrationController extends CommonController {
     /**
      * Dependency Injection of RemoteUserService
      */
