@@ -31,11 +31,10 @@
         <meta name="layout" content="${session['branding.style']}/main" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css"/>
 
-        <title>Configuration - ${title}</title>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
+        <title>Configuration - ${title} | BioModels</title>
+        <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
     </head>
     <body>
-        <g:javascript contextPath="" src="toastr.min.js"/>
         <g:hasErrors>
             <div class="errors">
                 <g:renderErrors/>

@@ -17,9 +17,7 @@
             contributorEmails.push(v);
         });
     </script>
-    <g:javascript contextPath="" src="toastr.min.js" />
-    <link rel="stylesheet"
-          href="${resource(contextPath: "${serverURL}", dir: 'css', file: 'toastr.min.css')}" />
+    <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
     <style>
         .contributor-header {
             font-size: x-large;

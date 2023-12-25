@@ -33,9 +33,7 @@
     <title>Configuration - ${title}</title>
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css"/>
-    <link rel="stylesheet"
-          href="${resource(dir: 'css', file: 'toastr.min.css',
-                        contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
+    <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
     <link rel="stylesheet"
           href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css',
                         contextPath: "${grailsApplication.config.grails.serverURL}")}"
@@ -56,7 +54,6 @@
           type="text/css">
 </head>
 <body>
-<g:javascript contextPath="" src="toastr.min.js"/>
 <g:hasErrors>
     <div class="errors">
         <g:renderErrors/>

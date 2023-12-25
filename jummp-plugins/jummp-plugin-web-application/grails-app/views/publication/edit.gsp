@@ -33,11 +33,8 @@
     <title>${title}</title>
     <link rel="stylesheet"
           href="${resource(contextPath: "${serverUrl}", dir: "css/${style}", file: 'publicationPageStyle.css')}" />
-    <link rel="stylesheet"
-          href="${resource(contextPath: "${serverUrl}", dir: "css", file: 'toastr.min.css')}"/>
-
+    <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
     <g:javascript src="helpers.js" contextPath=""/>
-    <g:javascript src="toastr.min.js" contextPath=""/>
     <g:javascript>
         // Indeed, we don't need to check whether the authors is null or not because if case of the model has
         // no publication yet, we always create an empty PersonTransportCommand to maintain authors

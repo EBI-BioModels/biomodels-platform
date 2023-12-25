@@ -33,6 +33,7 @@
         <title><g:message code="user.administration.ui.heading.user"/></title>
         <meta name="layout" content="${session['branding.style']}/main" />
         <g:javascript contextPath="" src="useradministration.js"/>
+        <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
         <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
      </head>
     <body>
