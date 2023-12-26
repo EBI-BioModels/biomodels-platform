@@ -31,12 +31,12 @@
 <html>
     <head>
         <title>User Administration</title>
-        <meta name="layout" content="${session['branding.style']}/main" />
+        <meta name="layout" content="${theme}/main" />
         <g:javascript contextPath="" src="useradministration.js"/>
         <g:javascript contextPath="" src="jquery/jquery.dataTables.min.js"/>
         <g:javascript contextPath="" src="jquery/dataTables.responsive.min.js"/>
         <link rel="stylesheet"
-              href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}",
+              href="${resource(contextPath: "${serverURL}",
                   dir: '/css', file: 'jquery.dataTables.min.css')}" />
     </head>
     <body>
@@ -46,7 +46,7 @@
                     <span>
                         Add new user
                         <img style="width:20px;float:none;margin-left:5px"
-                             src="${grailsApplication.config.grails.serverURL}/images/user_add.png"/>
+                             src="${serverURL}/images/user_add.png" alt="Add a new user"/>
                     </span>
                 </a>
                 <div class="view-content rown column">

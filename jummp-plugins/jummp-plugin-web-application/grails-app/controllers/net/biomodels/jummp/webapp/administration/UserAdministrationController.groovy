@@ -66,7 +66,8 @@ class UserAdministrationController extends CommonController {
     /**
      * Default action showing the DataTable markup
      */
-    def index = {
+    def index() {
+        COMMON_PROPERTIES
     }
 
     /**
@@ -154,14 +155,16 @@ class UserAdministrationController extends CommonController {
     /**
      * Action to edit an user
      */
-    def show = {
+    def show() {
         /*if (!springSecurityService.isAjax(request)) {
             render(template: "/templates/page", model: [link: g.createLink(action: "show", id: params.id), callback: "loadAdminUserCallback"])
             return
         }*/
-        [user: userService.getUser(params.id as Long),
+        Map data = [user: userService.getUser(params.id as Long),
          roles: userService.getAllRoles(),
-         userRoles: userService.getRolesForUser(params.id as Long)]
+         userRoles: userService.getRolesForUser(params.id as Long)] as Map
+        data.putAll(COMMON_PROPERTIES)
+        return data
     }
 
     /**
@@ -207,7 +210,8 @@ class UserAdministrationController extends CommonController {
     /**
      * Action to render the view to register a new user as admin
      */
-    def register = {
+    def register() {
+        COMMON_PROPERTIES
     }
 
     /**
