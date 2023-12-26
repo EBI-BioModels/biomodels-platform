@@ -311,7 +311,7 @@ log4j.main = {
     rollingFile name: "hibernateAppender", file: "${logsDir}/jummp-hibernate.log",
         threshold: Level.WARN, additivity: false
     rollingFile name: "cronJobAppender", file: "${logsDir}/jummp-cronjob.log",
-        threshold: org.apache.log4j.Level.DEBUG, additivity: false
+        threshold: Level.DEBUG, additivity: false
 
     debug debugAppender: [
         'net.biomodels.jummp',
@@ -332,7 +332,10 @@ log4j.main = {
         'net.biomodels.jummp.security',
         'net.biomodels.jummp.utils.redis',
         'net.biomodels.jummp.webapp',
-        'grails.app.conf.BootStrap'
+        'grails.app.conf.BootStrap',
+        "grails.plugin.springsecurity",
+        "org.springframework.security",
+        "org.pac4j"
     ], additivity: false
 
     debug irreproducibleAppender: [
