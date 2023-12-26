@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.webapp.administration
 
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import grails.converters.JSON
 import net.biomodels.jummp.CommonController
@@ -292,6 +293,20 @@ class UserAdministrationController extends CommonController {
             }
         }
         return null
+    }
+
+    def about() {
+        Map map = ["description": "This is user administration."]
+        withFormat {
+            json { render map as JSON }
+            xml { render map as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
+    }
+
+    def list(Integer max) {
+        params.max = Math.min(max ?: 10, 100)
+        respond User.list(params), [formats:['xml', 'json']]
     }
 }
 
