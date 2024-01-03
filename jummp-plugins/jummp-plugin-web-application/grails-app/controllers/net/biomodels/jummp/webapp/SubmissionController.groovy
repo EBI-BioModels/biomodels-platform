@@ -552,11 +552,12 @@ ${pubURIs?.join(";")}""")
                                         HashMap<String, Object> working) {
         List<RFTC> rftcList = new ArrayList<>()
         JSONElement mf = JSON.parse(paramModelFile)
-        RFTC mfRFTC = createRFTC(mf["submissionFolder"], mf["filename"], true, mf["description"])
+        RFTC mfRFTC = createRFTC(mf["submissionFolder"] as String, mf["filename"] as String, true, mf["description"] as String)
         rftcList.add(mfRFTC)
         def afs = JSON.parse(paramAdditionalFiles)
         for (def file : afs) {
-            mfRFTC = createRFTC(file["submissionFolder"] as String, file["filename"], false, file["description"])
+            mfRFTC = createRFTC(file["submissionFolder"] as String,
+                file["filename"] as String, false, file["description"] as String)
             rftcList.add(mfRFTC)
         }
         working.put("repository_files", rftcList)

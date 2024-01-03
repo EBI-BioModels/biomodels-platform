@@ -1088,7 +1088,7 @@ an annotation to SBML document.""")
         @Profiled(tag = "submissionService.NewRevisionStateMachine.completeSubmission")
         @TypeChecked(TypeCheckingMode.SKIP)
         HashSet<String> completeSubmission(Map<String, Object> workingMemory) {
-            HashSet<String> changes = workingMemory['changesMade']
+            HashSet<String> changes = workingMemory['changesMade'] as HashSet<String>
             RTC revision = workingMemory.get("RevisionTC") as RTC
             List<RFTC> repoFiles = getRepFiles(workingMemory)
             List<RFTC> deleteFiles = getRepFiles(workingMemory, "removeFromVCS")
