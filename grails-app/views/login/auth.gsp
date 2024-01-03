@@ -74,7 +74,7 @@
             });
             $("#loginForm input").on("keyup", function(event) {
             // magic value 13 is entered
-            if (event.which == 13) {
+            if (event.which === 13) {
                 $("#loginForm").submit();
                 }
             });
