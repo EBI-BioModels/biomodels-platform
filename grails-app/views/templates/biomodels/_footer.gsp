@@ -125,6 +125,7 @@
 <g:javascript src="common.js"></g:javascript>
 <!-- end scripts-->
 
+<g:if test="${!grails.util.Environment.developmentMode}">
 <!-- Google Analytics details... -->
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-39747892-1"></script>
@@ -135,7 +136,7 @@
 
     gtag('config', 'UA-39747892-1');
 </script>
-
+</g:if>
 
 <!-- JS -->
 <script src="https://assets.emblstatic.net/vf/v2.5.13/scripts/scripts.js"></script>
