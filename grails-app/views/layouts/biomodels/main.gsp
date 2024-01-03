@@ -255,5 +255,6 @@
         </div>
     </g:if>
 </div>
+<g:render template="/templates/${styleName}/loadjs"/>
 </body>
 </html>
