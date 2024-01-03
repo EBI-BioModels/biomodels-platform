@@ -124,10 +124,10 @@
                             if (shouldShown) {
                                 $(message).insertBefore('#flashMessage');
                             }
-                            $('.closetbn').click(function() {
+                            $('.closetbn').on("click", function() {
                                 $(this).slideUp();
                             });
-                            $('.alert').click(function() {
+                            $('.alert').on("click", function() {
                                 $(this).slideUp();
                             });
                         }
@@ -172,7 +172,7 @@
                                     }
                                 }
                             });
-                            $('#checkAll').click(function() {
+                            $('#checkAll').on("click", function() {
                                 selectedModels = [];
                                 var operation = $(this).text();
                                 if (operation === "Select all") {
@@ -195,8 +195,8 @@
                                 }
                             });
                             var link = "";
-                            $('#btnDownload').click(function() {
-                                if (typeof selectedModels != undefined && selectedModels.length > 0) {
+                            $('#btnDownload').on("click", function() {
+                                if (typeof selectedModels !== undefined && selectedModels.length > 0) {
                                     link = "${g.createLink(controller: "search", action: "download", params: ['models': ''])}";
                                     link += selectedModels.join();
                                     // if the browser sees the response type of 'link' to be binary, then it will download
