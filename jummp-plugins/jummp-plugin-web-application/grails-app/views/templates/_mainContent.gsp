@@ -1,4 +1,4 @@
-<%@ page import="net.biomodels.jummp.core.model.ModelState" %>
+<%@ page import="net.biomodels.jummp.webapp.Preferences; net.biomodels.jummp.core.model.ModelState" %>
 <%
     def totalCount
     if (matches) {
@@ -8,8 +8,7 @@
         totalCount = modelsAvailable
     }
     def imagePath = "/images"
-    def resultOptions = net.biomodels.jummp.webapp.Preferences.getOptions("numResults")
-    resultOptions = resultOptions.reverse()
+    def resultOptions = Preferences.getOptions("numResults")
     if (!params.sort) {
         params.sort = "relevance-desc"
     }
@@ -21,14 +20,14 @@
 %>
 <div class="content">
     <g:if test="${models}">
-        <div id="inline-list" class="row" style="margin-top: 10px;">
-            <div class="small-12 medium-12 large-6 columns" id="sorting">
+        <div class="row" style="margin-top: 10px;">
+            <div class="small-12 medium-12 large-6 columns" id="sorting" style="padding: 0">
                 <!-- Show Sort by box on the search page only for now-->
                 <g:if test="${action == "search"}">
                     <g:render template="/templates/sorting" />
                 </g:if>
             </div>
-            <div class="small-12 medium-12 large-6 columns">
+            <div class="small-12 medium-12 large-6 columns" style="padding: 0">
                 <g:render template="/templates/pageSize"
                           model="[resultOptions: resultOptions, length: length,
                                   action: action, query: query, domain: domain]"/>
@@ -95,6 +94,7 @@
                         <div class="small-1 medium-1 large-1 columns" id="download">
                             <g:if test="${model.state == ModelState.PUBLISHED}">
                                 <g:if test="${action == 'search'}">
+                                    <label for="chkDownload"></label>
                                     <input id="chkDownload" type="checkbox" value="${id}"
                                            style="float: right; margin-top: 10px">
                                 </g:if>
@@ -211,8 +211,7 @@
                             // show all models ~ reset the current search ==> start a new search
                             var query = "${queryString}";
                             if (query !== "*:*") {
-                                var url = "${createLink(controller: 'search', action: "${action}",
-                                                    params: [query: "*:*"])}";
+                                const url = "${createLink(controller: 'search', action: "${action}", params: [query: "*:*"])}";
                                 $('#resetSearch').html('<a href="' + url + '" title="Clear the current search">Reset</a>');
                             }
                         }
@@ -224,12 +223,12 @@
         <%
             int currentPage = 1
             if (offset != 0) {
-                currentPage = Math.ceil((double) (offset + 1) / (double) length)
+                currentPage = (int) Math.ceil((double) (offset + 1) / (double) length)
             }
             int modelStart = 1 + (currentPage - 1)*length
             int modelEnd = length < models.size() ? length : models.size()
             modelEnd += modelStart - 1
-            int numPages = Math.ceil((double) totalCount / (double) length)
+            int numPages = (int) Math.ceil((double) totalCount / (double) length)
             int stepPagination = 5 // the number of pages would be displayed
             if (numPages < stepPagination) {
                 stepPagination = numPages
