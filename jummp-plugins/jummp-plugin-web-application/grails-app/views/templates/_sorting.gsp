@@ -1,4 +1,4 @@
-<label style="display: inline-block; float: left; padding-right: 4px; width: 100%">Sort by
+<p><label style="display: inline-block; float: left; padding-right: 4px; width: 100%"><strong>Sort by</strong>
     <select name="sortBy"
             style="display: inline-block; width: 50%; font-size: 85%;
             height: 35px !important; margin: 0 0 0.125em;">
@@ -13,3 +13,4 @@
         <option value="publication_year-desc">Publication year: newest first</option>
     </select>
 </label>
+</p>
