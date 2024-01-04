@@ -141,12 +141,12 @@
                             $('#local-searchbox').val(query);
                             $('#searchString').text(query);
                             if ("${params.sort}") {
-                                $('div#sorting > label > select').val("${params.sort}");
+                                $("select[name='sortBy']").val("${params.sort}");
                             }
                         });
 
                         if (${action == 'search'}) {
-                            $('div#sorting > label > select').change(function() {
+                            $("select[name='sortBy']").on("change", function() {
                                 const selectedValue = $(this).val();
                                 let url = "${createLink(controller: 'search', action: "${action}",
                             params: [query: "${query}"])}";
@@ -178,11 +178,9 @@
                                 if (operation === "Select all") {
                                     const downloadCheckbox = $('.chk-download > input');
                                     if (downloadCheckbox.length > 0) {
-                                        //console.log(downloadCheckbox.length);
                                         downloadCheckbox.prop('checked', true);
                                         $(this).text("Deselect all");
                                         downloadCheckbox.each(function() {
-                                            //console.log($(this).val());
                                             selectedModels.push($(this).val());
                                         });
                                     } else {
