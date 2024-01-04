@@ -80,7 +80,7 @@
                             newParams["sort"] = params.sort
                         }
                     %>
-                    <input type="checkbox" id="choosenFacetValue"
+                    <input type="checkbox"
                            value="${fv.value}" title="${fv.value}"
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <g:link controller="search" action="${actionName}" params="${newParams}" class="facetLabel">

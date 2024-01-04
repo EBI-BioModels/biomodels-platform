@@ -91,11 +91,11 @@
                                 </span>
                             </h4>
                         </div>
-                        <div class="small-1 medium-1 large-1 columns" id="download">
+                        <div class="small-1 medium-1 large-1 columns chk-download">
                             <g:if test="${model.state == ModelState.PUBLISHED}">
                                 <g:if test="${action == 'search'}">
-                                    <label for="chkDownload"></label>
-                                    <input id="chkDownload" type="checkbox" value="${id}"
+%{--                                    <label for="chkDownload"></label>--}%
+                                    <input type="checkbox" value="${id}"
                                            style="float: right; margin-top: 10px">
                                 </g:if>
                                 <g:else>
@@ -160,9 +160,9 @@
                                 window.location.href = url;
                             });
                             var selectedModels = [];
-                            $('div#download > input').click(function() {
-                                var isChecked = $(this).is(':checked');
-                                var checkedValue = $(this).val();
+                            $('div.chk-download > input').on("click", function() {
+                                const isChecked = $(this).is(':checked');
+                                const checkedValue = $(this).val();
                                 if (isChecked)
                                     selectedModels.push(checkedValue);
                                 else {
@@ -176,7 +176,7 @@
                                 selectedModels = [];
                                 var operation = $(this).text();
                                 if (operation === "Select all") {
-                                    var downloadCheckbox = $('#download > input');
+                                    const downloadCheckbox = $('.chk-download > input');
                                     if (downloadCheckbox.length > 0) {
                                         console.log(downloadCheckbox.length);
                                         downloadCheckbox.prop('checked', true);
@@ -190,7 +190,7 @@
                                         showFlashMessage(htmlMessage);
                                     }
                                 } else {
-                                    $('#download > input').prop('checked', false);
+                                    $('.chk-download > input').prop('checked', false);
                                     $(this).text("Select all");
                                 }
                             });
