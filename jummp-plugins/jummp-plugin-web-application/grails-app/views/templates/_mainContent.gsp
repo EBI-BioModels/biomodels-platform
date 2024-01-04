@@ -120,7 +120,7 @@
                         }
 
                         function showFlashMessage(message) {
-                            var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
+                            const shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
                             if (shouldShown) {
                                 $(message).insertBefore('#flashMessage');
                             }
@@ -137,7 +137,7 @@
                         // show the query string on local search box and string query division
                         // at the top of main content division
                         $(document).ready(function() {
-                            var query = "${queryString}";
+                            const query = "${queryString}";
                             $('#local-searchbox').val(query);
                             $('#searchString').text(query);
                             if ("${params.sort}") {
@@ -147,8 +147,8 @@
 
                         if (${action == 'search'}) {
                             $('div#sorting > label > select').change(function() {
-                                var selectedValue = $(this).val();
-                                var url = "${createLink(controller: 'search', action: "${action}",
+                                const selectedValue = $(this).val();
+                                let url = "${createLink(controller: 'search', action: "${action}",
                             params: [query: "${query}"])}";
                                 if ("${params.offset}") {
                                     url += "&offset=${params.offset}";
@@ -166,7 +166,7 @@
                                 if (isChecked)
                                     selectedModels.push(checkedValue);
                                 else {
-                                    var index = selectedModels.indexOf(checkedValue);
+                                    const index = selectedModels.indexOf(checkedValue);
                                     if (index > -1) {
                                         selectedModels.splice(index, 1);
                                     }
@@ -174,19 +174,19 @@
                             });
                             $('#checkAll').on("click", function() {
                                 selectedModels = [];
-                                var operation = $(this).text();
+                                const operation = $(this).text();
                                 if (operation === "Select all") {
                                     const downloadCheckbox = $('.chk-download > input');
                                     if (downloadCheckbox.length > 0) {
-                                        console.log(downloadCheckbox.length);
+                                        //console.log(downloadCheckbox.length);
                                         downloadCheckbox.prop('checked', true);
                                         $(this).text("Deselect all");
                                         downloadCheckbox.each(function() {
-                                            console.log($(this).val());
+                                            //console.log($(this).val());
                                             selectedModels.push($(this).val());
                                         });
                                     } else {
-                                        var htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.unavailable")}");
+                                        const htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.unavailable")}");
                                         showFlashMessage(htmlMessage);
                                     }
                                 } else {
@@ -204,12 +204,12 @@
                                     // the controller method
                                     window.location = link;
                                 } else {
-                                    var htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.checkOne")}");
+                                    const htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.checkOne")}");
                                     showFlashMessage(htmlMessage);
                                 }
                             });
                             // show all models ~ reset the current search ==> start a new search
-                            var query = "${queryString}";
+                            const query = "${queryString}";
                             if (query !== "*:*") {
                                 const url = "${createLink(controller: 'search', action: "${action}", params: [query: "*:*"])}";
                                 $('#resetSearch').html('<a href="' + url + '" title="Clear the current search">Reset</a>');
