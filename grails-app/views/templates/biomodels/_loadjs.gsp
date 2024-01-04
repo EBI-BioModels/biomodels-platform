@@ -25,6 +25,3 @@
         gtag('config', 'UA-39747892-1');
     </script>
 </g:if>
-
-<!-- JS -->
-<script src="https://assets.emblstatic.net/vf/v2.5.13/scripts/scripts.js"></script>
