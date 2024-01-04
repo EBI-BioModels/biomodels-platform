@@ -204,4 +204,16 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         }
         ttl
     }
+
+    synchronized Boolean exists(final String key) {
+        jedisPool.getResource().withCloseable {
+            return it.exists(key)
+        }
+    }
+
+    synchronized Boolean hexists(final String key, final String field) {
+        jedisPool.getResource().withCloseable {
+            return it.hexists(key, field)
+        }
+    }
 }
