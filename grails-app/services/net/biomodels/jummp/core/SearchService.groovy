@@ -26,15 +26,17 @@ package net.biomodels.jummp.core
 
 import grails.async.Promise
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.adapters.RevisionAdapter
+import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.search.OmicsdiBasedSearch
+import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SolrBasedSearch
 import net.biomodels.jummp.search.SortOrder
@@ -88,7 +90,7 @@ class SearchService implements InitializingBean {
     /*
      * Dependency injection of grailsApplication
      */
-    def grailsApplication
+    def redisService
 
     ModelSearchStrategy strategy
 
@@ -188,8 +190,33 @@ class SearchService implements InitializingBean {
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
-                                Map<String, Integer> paginationCriteria) {
+                                       Map<String, Integer> paginationCriteria) {
         return strategy.searchModels(query, domain, sortOrder, paginationCriteria)
+    }
+
+    Map extractSearchModels(SearchResponse response) {
+        Integer totalCount = (Integer) response.totalCount
+        ArrayList<ModelTransportCommand> results = response.results
+        List<ModelTransportCommand> models = []
+        List<Facet> facets = []
+        if (results?.size() > 0) {
+            results.each {
+                models.add(it)
+            }
+        }
+        LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
+        if (respondedFacets?.size() > 0) {
+            respondedFacets.each {
+                facets.add(it.value.facet)
+            }
+        }
+        log.info("Found: ${results?.size() ?: 0} records, ${respondedFacets?.size() ?: 0} facets.")
+        JsonBuilder builder = new JsonBuilder(facets)
+        String facetStats = builder.toString()
+
+        doUpdateCachedSearchAll(totalCount, models, facets, facetStats)
+
+        [totalCount: totalCount, models: models, facets: facets, facetStats: facetStats]
     }
 
     /*
@@ -212,6 +239,68 @@ class SearchService implements InitializingBean {
 
     String[] getSearchFields() {
         strategy.getSortFields()
+    }
+
+    Map retrieveCachedSearchAllResult() {
+        if (!redisService.exists("search-result:all")) {
+            return [:]
+        }
+        Map result = redisService.doRedisHGetAll("search-result:all")
+        Integer matches = result.get("totalCount") as Integer
+        String facetStats = result.get("facetStats")
+        List<ModelTransportCommand> models = convert2MTC(result.get("models"))
+        List<Facet> facets = convert2Facet(result.get("facets"))
+
+        [matches: matches, models: models, facets: facets, facetStats: facetStats]
+    }
+
+    private void doUpdateCachedSearchAll(Integer totalCount, List<ModelTransportCommand> models,
+                                         List<Facet> facets, String facetStats) {
+        Map<String, String> data = ["totalCount": Integer.toString(totalCount), facetStats: facetStats]
+
+        StringBuilder str = new StringBuilder()
+        for (ModelTC model : models) {
+            str.append strMTC(model)
+        }
+        data.put("models", str.toString())
+
+        str = new StringBuilder()
+        for (Facet facet : facets) {
+            str.append(strFacet(facet))
+        }
+        data.put("facets", str.toString())
+
+        redisService.doRedisHSet("search-result:all", data)
+    }
+
+    private static String strFacet(Facet facet) {
+        // TODO: correct me
+        facet.id + "|" + facet.label
+    }
+
+    private static String strMTC(ModelTC model) {
+        // TODO: correct me
+        model.id + "|" + model.name
+    }
+
+    private static Facet toFacet(final String input) {
+        // TODO: implement me
+        null
+    }
+
+    private static ModelTC toMTC(final String input) {
+        // TODO: implement me
+        null
+    }
+
+
+    private static List<ModelTC> convert2MTC(Object o) {
+        // TODO: implement me
+        null
+    }
+
+    private static List<Facet> convert2Facet(Object o) {
+        null
     }
 
     List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {

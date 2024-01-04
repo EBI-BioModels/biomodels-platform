@@ -33,14 +33,12 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
-import groovy.json.JsonBuilder
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SortOrder
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
@@ -319,52 +317,63 @@ under the format: ${response.format}"""
     }
 
     private Map searchCore(String query, String domain, String sortBy,
-                           String sortDirection, int offset, int length) {
+                           String sortDirection, int offset = 0, int length = 10) {
+
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
+
+        if (query == "*:*") {
+            Map cached = searchService.retrieveCachedSearchAllResult()
+            if (cached["models"]) {
+                return [query : query, offset: offset, length: length,
+                        sortBy: sortBy, sortDirection: sortDirection, models: cached["models"],
+                        facets: cached["facets"], facetStats: cached["facetStats"], matches: cached["matches"]
+                ]
+            } else {
+                doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy, sortDirection)
+            }
+        } else {
+            doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy, sortDirection)
+        }
+    }
+
+    private Map doSearch(String query, String domain,
+                         Map<String, Integer> paginationCriteria, Integer offset,
+                         Integer length, SortOrder sortOrder, String sortBy, String sortDirection) {
+        Integer totalCount = 0
         List<MTC> models = []
         List<Facet> facets = []
-        int totalCount = 0
+        String facetStats = ""
         if (query?.trim()) {
             SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
-            ArrayList<MTC> res = response.results
-            totalCount = (int) response.totalCount
-            if (res?.size() > 0) {
-                res.each {
-                    models.add(it)
-                }
+            Map extractedSearchModels = searchService.extractSearchModels(response)
+            totalCount = extractedSearchModels["totalCount"] as Integer
+            models = extractedSearchModels["models"] as List<MTC>
+            facets = extractedSearchModels["facets"] as List<Facet>
+            facetStats = extractedSearchModels["facetStats"]
+            if (offset > 0 && offset < models?.size()) {
+                models = models[offset..-1]
+            } else {
+                // reset the offset to the default value
+                offset = 0
             }
-            LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
-            if (respondedFacets?.size() > 0) {
-                respondedFacets.each {
-                    facets.add(it.value.facet)
-                }
+            if (models?.size() > length) {
+                models = models[0..length - 1]
             }
-            LOGGER.info("Found: ${res?.size() ?: 0} records, ${respondedFacets?.size() ?: 0} facets.")
-        }
-        JsonBuilder builder = new JsonBuilder(facets)
-
-        if (offset > 0 && offset < models?.size()) {
-            models = models[offset..-1]
+            /**
+             * By default, the query was encoded as HTML due to security vulnerability until here.
+             * After using encoded query into search modules, we should decode it into the original
+             * value that helps displaying it in a human readable form. Pay attention to the fact that
+             * the query has been decoded in searchService.searchModels.
+             */
+            query = query.decodeHTML()
         } else {
-            offset = 0
-        }
-        if (models?.size() > length) {
-            models = models[0..length-1]
+            LOGGER.info("Cannot find anything due to the empty query string.")
         }
 
-        /**
-         * By default, the query was encoded as HTML due to security vulnerability until here.
-         * After using encoded query into search modules, we should decode it into the original
-         * value that helps displaying it in a human readable form. Pay attention to the fact that
-         * the query has been decoded in searchService.searchModels.
-         */
-        query = query.decodeHTML()
-        return [models: models, facets: facets, matches: totalCount,
-                offset: paginationCriteria['start'],
-                length: paginationCriteria['length'],
-                sortBy: sortBy, sortDirection: sortDirection,
-                query: query, facetStats: builder.toString()]
+        return [models: models, facets: facets, matches: totalCount, facetStats: facetStats,
+                offset: offset, query: query, length: length,
+                sortBy: sortBy, sortDirection: sortDirection]
     }
 
     private def archiveCore(String sortBy, String sortDirection, int offset, int length) {
