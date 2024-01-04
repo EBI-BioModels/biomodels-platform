@@ -19,16 +19,6 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-
-
-
-
-
-
-
-
-
-
 <footer id="local-footer" class="local-footer">
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
     <div  id="footer" class="row">
@@ -109,34 +99,3 @@
      <g:render template="/templates/biomodels/searchTips" />
      <g:render template="/templates/biomodels/domainSwitcherExplanation" />
 </footer>
-</div> <!--! end of #mainframe -->
-
-<!-- JavaScript at the bottom for fast page loading -->
-<script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/script.js"></script>
-<!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-
-<!-- The Foundation theme JavaScript -->
-<script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/libraries/foundation-6/js/foundation.js"></script>
-<script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/foundationExtendEBI.js"></script>
-<script type="text/JavaScript">$(document).foundation();</script>
-<script type="text/JavaScript">$(document).foundationExtendEBI();</script>
-
-<!-- customised scripts -->
-<g:javascript src="common.js"></g:javascript>
-<!-- end scripts-->
-
-<!-- Google Analytics details... -->
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-39747892-1"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'UA-39747892-1');
-</script>
-
-
-<!-- JS -->
-<script src="https://assets.emblstatic.net/vf/v2.5.13/scripts/scripts.js"></script>
-

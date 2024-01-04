@@ -43,7 +43,7 @@
         <g:render template="/templates/listRightSidebar" />
     </content>
     <content tag="facetsearch">
-        <!-- show facets search on the left side bar -->
+        <!-- show facets search on the left sidebar -->
         <g:render template="/templates/leftSidebar" />
     </content>
     <content tag="mymodels">

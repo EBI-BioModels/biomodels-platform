@@ -11,10 +11,7 @@
     <title>Tag show: ${tag.name} | BioModels</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
-    <link rel="stylesheet"
-          href="${resource(dir: 'css', file: 'toastr.min.css',
-              contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
-    <g:javascript contextPath="" src="toastr.min.js"/>
+    <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
 </head>
 
 <body>

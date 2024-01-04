@@ -43,11 +43,11 @@ import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SortOrder
-import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.security.access.AccessDeniedException
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
@@ -115,14 +115,14 @@ class SearchController extends CommonController {
     }
 
     private int numResults() {
-        final int MAXRESULTS = 100
-        final int MINRESULTS = 10
+        final int MAX_RESULTS = 100
+        final int MIN_RESULTS = 10
         User user
         String username = springSecurityService?.principal?.username
         if (!(username == GrailsAnonymousAuthenticationToken.USERNAME) && !username) {
             user = User.findByUsername(username)
         }
-        Preferences prefs
+        Preferences prefs = null
         if (user) {
             prefs = Preferences.findByUser(user)
         }
@@ -131,11 +131,11 @@ class SearchController extends CommonController {
         }
         if (integerCheck(params.numResults, true, -1)) {
             prefs.numResults = params.int("numResults")
-            if (prefs.numResults > MAXRESULTS ) {
-                prefs.numResults = MAXRESULTS
+            if (prefs.numResults > MAX_RESULTS ) {
+                prefs.numResults = MAX_RESULTS
             }
-            else if (prefs.numResults < MINRESULTS ) {
-                prefs.numResults = MINRESULTS
+            else if (prefs.numResults < MIN_RESULTS ) {
+                prefs.numResults = MIN_RESULTS
             }
             if (user) {
                 prefs.setUser(user)
@@ -220,6 +220,7 @@ under the format: ${response.format}"""
         Map results = searchCore(params.query as String,
             params.domain as String, params.sortBy as String,
             params.sortDir as String, params.offset as int, params.numResults as int)
+        results.putAll(COMMON_PROPERTIES)
         if (response.format == "html") {
             return results
         }
@@ -228,14 +229,14 @@ under the format: ${response.format}"""
 
     @Secured(['ROLE_ADMIN'])
     def regen() {
-        render(view: "regen")
+        render(view: "regen", model: COMMON_PROPERTIES)
     }
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def reindex() {
         def models = params.models.split(",")
         Map<String, String> msgMap = [:]
-        models.each { String model ->
+        models.each { def model ->
             String message = ""
             model = model.trim()
             if (model == null) {
@@ -247,8 +248,8 @@ under the format: ${response.format}"""
                 // display the successful message about reindexing the model revision
                 RTC revision = null
                 try {
-                    revision = modelDelegateService.getRevisionFromParams(model)
-                } catch (org.springframework.security.access.AccessDeniedException ade) {
+                    revision = modelDelegateService.getRevisionFromParams(model as String)
+                } catch (AccessDeniedException ignored) {
                     message = "Unable to access the model"
                 }
                 if (revision) {
@@ -323,11 +324,11 @@ under the format: ${response.format}"""
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         List<MTC> models = []
         List<Facet> facets = []
-        int totalCount
+        int totalCount = 0
         if (query?.trim()) {
             SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
             ArrayList<MTC> res = response.results
-            totalCount = response.totalCount
+            totalCount = (int) response.totalCount
             if (res?.size() > 0) {
                 res.each {
                     models.add(it)
@@ -392,7 +393,7 @@ under the format: ${response.format}"""
                 sortDirection: sortDirection, offset: offset, length: length, query: filter]
     }
 
-    private ModelListSorting inferSortedColumn(final String sortBy) {
+    private static ModelListSorting inferSortedColumn(final String sortBy) {
         ModelListSorting sort
         switch (sortBy) {
             case "name":

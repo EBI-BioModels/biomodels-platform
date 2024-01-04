@@ -17,15 +17,13 @@
     <title>${title}</title>
     <link rel="stylesheet"
           href="${resource(contextPath: "${serverUrl}", dir: "/css/${style}", file: 'publicationPageStyle.css')}" />
-    <link rel="stylesheet"
-          href="${resource(contextPath: "${serverUrl}", dir: "css", file: 'toastr.min.css')}"/>
+    <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
 
     <g:javascript>
         let authorMap = {"authors": []};
         let authorList = [];
     </g:javascript>
     <g:javascript contextPath="" src="${style}/publicationSubmission.js"/>
-    <g:javascript src="toastr.min.js" contextPath=""/>
     <g:javascript src="helpers.js" contextPath=""/>
 </head>
 

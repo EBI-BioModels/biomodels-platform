@@ -29,7 +29,7 @@
 <body>
 
 <h2>Internship opportunities</h2>
-
+<h3>Currently, all internship adverts are closed. Please come back later.</h3>
 <!--
 <h3 style="border-bottom: 1px solid grey">
     Curation internship: Literature curation of Genome-Scale metabolic models</h3>
@@ -72,6 +72,7 @@ please contact: Dr Rahuman Sheriff (sheriff AT ebi.ac.uk). The application is op
 -->
 
 <!-- First intern -->
+<!--
 <h3 style="border-bottom: 1px solid grey">
     <em>Joint internship between EMBL-EBI and Ersilia</em><br/>
     Curation of Metadata of AI/ML Models for Inclusion in the BioModels Database (EBI-EMBL)
@@ -136,6 +137,7 @@ aptitude and enthusiasm for the role.
 <br/><br/>
     Applications will be reviewed on a rolling basis. Please submit applications
     via email to <a href="mailto:hello@ersilia.io">hello@ersilia.io</a> and <a href="mailto:sheriff@ebi.ac.uk">sheriff@ebi.ac.uk</a>.</p>
+-->
 
 <!-- Second intern -->
 <!--

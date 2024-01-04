@@ -89,6 +89,9 @@ $.jummp.userAdministration.editUser = function () {
             url: "../" + action + "/" + id + "?userId=" + userId,
             dataType: 'json',
             cache: 'false',
+            beforeSend: function(jqXHR) {
+
+            },
             success: function (data) {
                 if (data.error) {
                     $.jummp.errorMessage(data.error);
@@ -108,10 +111,17 @@ $.jummp.userAdministration.editUser = function () {
                     tableRow.detach();
                     tableRow.appendTo($("table tbody", $(divInsertId)));
                 }
+            },
+            error: (jqXHR) => {
+                console.log("An error occured: " + jqXHR.status + " " + jqXHR.statusText);
+            },
+            complete: (jqXHR, status) => {
+                console.log("The user update has completed " + status);
             }
         });
     });
     $("#edit-user-form").submit(function (event) {
+        let msg = "";
         event.preventDefault();
         hideNow();
         $.ajax({
@@ -128,10 +138,22 @@ $.jummp.userAdministration.editUser = function () {
             },
             success: function (data) {
                 if (data.error) {
-                	showNotification("User could not be updated. Please check the values provided and try again")
+                    msg = "User could not be updated. Please check the values provided and try again";
                 } else if (data.success) {
-                	showNotification("User details updated")
+                    msg = "User details updated";
                 }
+                showNotification(msg);
+                toastr.success(msg);
+            },
+            error: (jqXHR) => {
+                msg = "An error occurred: " + jqXHR.status + " " + jqXHR.statusText;
+                console.log(msg);
+                toastr.error(msg);
+            },
+            complete: (jqXHR, status) => {
+                msg = "The user update has completed " + status;
+                console.log(msg);
+                toastr.info(msg);
             }
         });
     });
