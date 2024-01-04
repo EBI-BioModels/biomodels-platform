@@ -382,6 +382,15 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
 
             // update the name of SBML model file of the revision
             SBMLDocument sbmlDocument = getFromCache(revision)
+            if (!sbmlDocument) {
+                File file = fetchMainFileFromRevision(revision)
+                sbmlDocument = new SBMLReader().readSBML(file)
+                if (!sbmlDocument) {
+                    log.error("""Cannot update the model name for the main model file of the revision: ${revision.dump()} \
+because the SBML document cannot find from the cache.""")
+                    return false
+                }
+            }
             Model sbmlModel = sbmlDocument.getModel()
             if (!sbmlModel) {
                 log.error("Cannot update the model name for the main model file of the revision: ${revision.dump()}")
