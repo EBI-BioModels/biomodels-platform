@@ -38,7 +38,7 @@
                   plugin="jummp-plugin-web-application" />
         <div id="login" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
+                <form action="${postUrl}" method="post" id="loginForm" class="cssform" autocomplete="on">
                     <div class="row column log-in-form">
                         <h3 class="text-center">Log in to your account</h3>
                         <label><g:message code="login.form.label"/>

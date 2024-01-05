@@ -32,6 +32,7 @@ package net.biomodels.jummp.security
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
+import net.biomodels.jummp.CommonController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.annotation.Secured
@@ -47,7 +48,7 @@ import org.springframework.security.web.WebAttributes
  * See http://burtbeckwith.github.com/grails-spring-security-core/
  */
 @Secured('permitAll')
-class LoginController {
+class LoginController extends CommonController {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class)
     /**
      * Dependency injection for the authenticationTrustResolver.
@@ -58,6 +59,8 @@ class LoginController {
      * Dependency injection for the springSecurityService.
      */
     def springSecurityService
+
+    def grailsApplication
 
     /**
      * Default action; redirects to 'defaultTargetUrl' if logged in, /login/auth otherwise.
@@ -85,7 +88,7 @@ class LoginController {
         String previousURL = request.getHeader("referer")
         String j_previousURL = request.getHeader("referer")
         String view = 'auth'
-        String postUrl = "${request.contextPath}${config.apf.filterProcessesUrl}"
+        String postUrl = "${serverURL}${config.apf.filterProcessesUrl}"
         render view: view, model: [postUrl: postUrl, previousURL: previousURL, j_previousURL: j_previousURL,
                                    rememberMeParameter: config.rememberMe.parameter,
                                    flashMessage: flash.flashMessage?:""]
@@ -107,9 +110,9 @@ class LoginController {
      */
     def full() {
         def config = SpringSecurityUtils.securityConfig
+        def postUrl = "${serverURL}${config.apf.filterProcessesUrl}"
         render view: 'auth', params: params,
-            model: [hasCookie: authenticationTrustResolver.isRememberMe(SCH.context?.authentication),
-                    postUrl: "${request.contextPath}${config.apf.filterProcessesUrl}"]
+            model: [hasCookie: authenticationTrustResolver.isRememberMe(SCH.context?.authentication), postUrl: postUrl]
     }
 
     /**
