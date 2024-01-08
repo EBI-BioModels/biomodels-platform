@@ -50,9 +50,9 @@
 </style>
 <form id="local-search" name="local-search"
       action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
-    <fieldset>
+    <fieldset><div class="row">
         <div class="input-group margin-bottom-none margin-top-large padding-bottom-medium">
-            <div class="input-group-field" style="vertical-align: text-top">
+            <div class="input-group-field columns large-3 medium-3 small-12" style="vertical-align: text-top">
                 <select class="margin-bottom-none align-self-top" id="domain_switcher" name="domain_switcher">
                     <option value="biomodels_all"><g:message code="net.biomodels.jummp.domain.name.BioModelsAll"/></option>
                     <option value="biomodels"><g:message code="net.biomodels.jummp.domain.name.BioModels"/></option>
@@ -66,7 +66,7 @@
                        style="display: none" value="biomodels"/>
             </div>
 
-            <div class="input-group-field">
+            <div class="input-group-field columns large-8 medium-8 small-12">
                 <input type="text" name="search_block_form" id="local-searchbox"
                    placeholder="Search..." class="input-group-field search_box_style clearable"
                    title="Search"
@@ -87,12 +87,12 @@
                     <a title="Search tips/tricks" data-open="searchTipsBox"
                        class="secondary label label-floating-right">Search tips</a>
                 </p></div>
-            <div class="input-group-button">
+            <div class="input-group-button columns large-1 medium-2 small-12" style="float: left">
                 <input id="search_submit" class="button icon icon-functional" tabindex="2"
                        type="submit" name="searchSubmit" value="1" />
             </div>
         </div>
-    </fieldset>
+    </div></fieldset>
 </form>
 <script type="text/javascript">
     $(document).ready(function () {
