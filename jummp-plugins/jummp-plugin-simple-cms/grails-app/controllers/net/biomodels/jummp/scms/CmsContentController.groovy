@@ -65,7 +65,6 @@ class CmsContentController {
         String message = ""
         String status = ""
         Long id = -1
-        cmd.parentAliasURI = "dummy"
         if (cmd?.validate()) {
             Map contentMap = cmsContentService.fromCommandObject(cmd)
             CmsContent content = contentMap.get("content") as CmsContent

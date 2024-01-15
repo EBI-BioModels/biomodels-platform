@@ -41,6 +41,7 @@ class CmsContentService {
     def userService
 
     Map fromCommandObject(CCTC cmd) {
+        LOGGER.info("Saving {} into the database.", cmd.toString())
         cmd.content = cmd.content.decodeHTML()
         User createdBy = User.findByUsername(cmd.createdBy)
         User lastChangedBy = User.findByUsername(cmd.lastChangedBy)
@@ -52,8 +53,7 @@ class CmsContentService {
             content.description = cmd.description
             content.content = cmd.content
 
-            // TODO: correct this property later when building the contents browser
-            content.parent = content
+            content.parent = CmsContent.findByAliasURI(cmd.parentAliasURI)
 
             content.createdBy = createdBy
             content.createdOn = cmd.createdOn

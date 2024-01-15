@@ -325,6 +325,7 @@
         const createdOn = $('#createdOn').val();
         const lastChangedBy = $('#lastChangedBy').val();
         const lastChangedOn = $('#lastChangedOn').val();
+        const parentAliasURI = $('#parentAliasURI').val();
 
         const cmsContentTC = {
             'id': id,
@@ -335,7 +336,8 @@
             'createdBy': createdBy,
             'createdOn': createdOn,
             'lastChangedBy': lastChangedBy,
-            'lastChangedOn': lastChangedOn
+            'lastChangedOn': lastChangedOn,
+            'parentAliasURI': parentAliasURI
         }
         return cmsContentTC;
     }
