@@ -21,6 +21,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.util.Holders
+import grails.validation.Validateable
 
 /**
  * @short Data transfer object (DTO) for ModelOfTheMonth domain class.
@@ -28,7 +29,7 @@ import grails.util.Holders
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@grails.validation.Validateable
+@Validateable
 class ModelOfTheMonthTransportCommand implements Serializable {
     static final class ReverseMonthComparator implements
         Comparator<ModelOfTheMonthTransportCommand> {
@@ -79,7 +80,8 @@ class ModelOfTheMonthTransportCommand implements Serializable {
         id nullable: true
         mimeType nullable: true
         models blank: false, validator: { String ids, ModelOfTheMonthTransportCommand cmd ->
-            def modelIdList = Arrays.asList(ids.split(', '))
+            ids = ids.replace(" ", "")
+            def modelIdList = Arrays.asList(ids.split(','))
             def associationMap = cmd.modelDelegateService.findModelsByPerennialId(modelIdList)
             if (modelIdList.size() == associationMap?.size()) {
                 cmd.associatedModelMap = associationMap
