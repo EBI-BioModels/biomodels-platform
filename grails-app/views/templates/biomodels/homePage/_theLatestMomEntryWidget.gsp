@@ -15,9 +15,18 @@
             <h5 class="text-left"><strong>${entryTitle}</strong></h5>
         </g:else>
         <p class="widget-body-text" style="text-align: left">${shortDescription}</p>
+        <%
+            List ids = models?.split(";") as List<String>
+            int nbModels = ids?.size()
+        %>
         <p class="text-left">Model(s) associated with this Model of the Month:
-            <g:each in="${models?.split(";")}" var="id">
-                <a href="${createLink(controller: "model", action: "show", id: id)}">${id}</a>&nbsp;
+            <g:each in="${ids}" var="id" status="i">
+                <g:if test="${i == nbModels-1}">
+                    <a href="${createLink(controller: "model", action: "show", id: id)}">${id}</a>.
+                </g:if>
+                <g:else>
+                    <a href="${createLink(controller: "model", action: "show", id: id)}">${id}</a>, &nbsp;
+                </g:else>
             </g:each>
         </p>
         <p class="text-left">Last updated by: ${lastUpdatedBy}</p>
