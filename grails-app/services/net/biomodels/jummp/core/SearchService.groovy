@@ -119,9 +119,15 @@ class SearchService implements InitializingBean {
     @Secured(['ROLE_ADMIN'])
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="searchService.clearIndex")
-    void clearIndex() {
-        strategy.clearIndex()
-        clearAnnotationStatementsFromDatabase()
+    void clearIndex(RevisionTransportCommand revision = null) {
+        if (revision) {
+            log.info("Clearing the indexes of the ${revision.identifier()}.")
+            strategy.clearIndex(revision)
+        } else {
+            log.info("Clearing all indexes from the database.")
+            strategy.clearIndex()
+            clearAnnotationStatementsFromDatabase()
+        }
     }
 
     /**
