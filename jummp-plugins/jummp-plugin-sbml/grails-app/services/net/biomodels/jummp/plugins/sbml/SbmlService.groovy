@@ -186,6 +186,14 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         String rID = Objects.requireNonNull(revision).identifier()
         Model model = Objects.requireNonNull(document).model
 
+        List<String> tobeAdded = filterIdentifiersToBeAdded(model, qualifier, identifiers)
+        if (tobeAdded?.isEmpty()) {
+            LOGGER.info("{} resource references already exist in the model revision {}.", identifiers, revision.identifier())
+            return false
+        } else {
+            identifiers = tobeAdded.toArray()
+        }
+
         boolean retVal = false
         switch (typeAnno) {
             case TypeAnno.MODEL_IDENTIFIER:
@@ -206,6 +214,35 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         }
 
         return retVal
+    }
+
+    private static List<String> filterIdentifiersToBeAdded(Model model, Qualifier qualifier, String... identifiers) {
+        List<String> listIdentifiers = Arrays.asList(identifiers)
+        // we sure that identifiers are based on identifiers.org syntax ether old or compact form
+        List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+        List<String> listResources = new ArrayList<>()
+        cVTerms.each { CVTerm term ->
+            listResources.addAll(term.resources)
+        }
+        Map<String, Set<String>> data = [:]
+        listResources.each {
+            String dt = ResourceHelper.getDataTypeFromUri(it)
+            String accession = ResourceHelper.getAccessionFromUri(it)
+            if (data.containsKey(dt)) {
+                data.get(dt).add(accession)
+            } else {
+                data.put(dt, [accession] as Set)
+            }
+        }
+        List<String> tobeAdded = new ArrayList()
+        listIdentifiers.each {
+            String dt = ResourceHelper.getDataTypeFromUri(it)
+            String accession = ResourceHelper.getAccessionFromUri(it)
+            if (!data.containsKey(dt) || !data.get(dt)?.contains(accession)) {
+                tobeAdded.add(it)
+            }
+        }
+        tobeAdded
     }
 
     private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
@@ -1257,18 +1294,19 @@ the user has attempted to update an blank value for the name attribute.""")
 
         boolean needsUpdating = addAnnotationsIfNeeded(typeAnno, revision, document, qualifier, accessionPattern, identifiers)
         if (!needsUpdating) {
+            LOGGER.info("No need to add {} to the main SBML file {} of the model {}.", identifiers, document.name, revision.identifier())
             return false
         }
 
         writeModelMainFile(document, revision, rID, identifiers)
     }
 
-    private boolean doAddAnnotations(Model model,
-                                     RevisionTC revision,
-                                     String rID,
-                                     Qualifier qualifier,
-                                     String accessionPattern,
-                                     String...identifiers) {
+    private static boolean doAddAnnotations(Model model,
+                                            RevisionTC revision,
+                                            String rID,
+                                            Qualifier qualifier,
+                                            String accessionPattern,
+                                            String... identifiers) {
         // resources with this pattern should be removed
         Pattern targetAccessionPattern = Pattern.compile(accessionPattern)
 
@@ -1358,3 +1396,91 @@ due to an issue with JSBML"""
     }
 }
 
+class ResourceHelper {
+    private static final Logger LOGGER = LoggerFactory.getLogger(this)
+    private static final String DELIMITER = "/"
+
+    static String getDataTypeFromUri(String uri) {
+        String rest = getDataTypeAndAccession(uri);
+        if (rest.startsWith("doi:") || rest.startsWith("doi/")) {
+            return "doi";
+        }
+        int baseUriIdx = rest.indexOf(DELIMITER);
+        if (-1 == baseUriIdx) {
+            LOGGER.debug("{} looks like the compact form of identifiers.org", uri);
+            if (rest.startsWith("mamo:MAMO_")) {
+                return "mamo";
+            } else if (rest.startsWith("doi:")) {
+                return "doi";
+            } else if (rest.contains(":")) {
+                return rest.substring(0, rest.indexOf(":")).toLowerCase();
+            } else {
+                return "unknown";
+            }
+        } else {
+            int accessionIdx = rest.indexOf(DELIMITER);
+            return rest.substring(0, accessionIdx);
+        }
+    }
+
+    static String getAccessionFromUri(String uri) {
+        String rest = getDataTypeAndAccession(uri);
+
+        String accession = "";
+        if (rest.startsWith("doi:") || rest.startsWith("doi/")) {
+            accession = rest.substring(4);
+            return accession;
+        }
+        int idx = rest.indexOf(DELIMITER);
+        if (idx <= 0) {
+            LOGGER.debug("{} looks like the compact form of identifiers.org", uri);
+            if (rest.startsWith("mamo:MAMO_")) {
+                accession = rest.substring(5);
+                return accession;
+            } else if (rest.startsWith("doi:")) {
+                accession = rest.substring(4);
+                return accession;
+            }
+            try {
+                /*String json = RemoteDataFetcher.fetch("https://resolver.api.identifiers.org/" + rest);
+                JSONObject jsonObject = new JSONObject(json);
+                JSONObject parsedCI = jsonObject.getJSONObject("payload").getJSONObject("parsedCompactIdentifier");
+                String localId = parsedCI.getString("localId");
+                String namespace = parsedCI.getString("namespace");
+                accession = localId;*/
+                accession = rest.substring(rest.indexOf(":") + 1);
+            } catch (Exception exception) {
+                LOGGER.error("An error occurred when getting the accession from the URI {}. See the cause below {}.",
+                    uri, exception.getCause().toString());
+            }
+        } else {
+            LOGGER.debug("{} looks like the old form of identifiers.org", uri);
+            idx = rest.indexOf(DELIMITER);
+            if (idx == -1) {
+                LOGGER.error("Cannot find the accession for {}", uri);
+                return null;
+            }
+            accession = rest.substring(idx + 1);
+        }
+        return accession;
+    }
+
+    static String getDataTypeAndAccession(String uri) {
+        if (uri == null || uri.isEmpty()) {
+            LOGGER.error("The URI given is null or empty.");
+            return "";
+        }
+        String result;
+        if (uri.startsWith("http://") || uri.startsWith("https://")) {
+            LOGGER.info("{} is an URL.", uri);
+            result = uri.substring(uri.indexOf("://identifiers.org/") + "://identifiers.org/".length());
+        } else if (uri.startsWith("urn:miriam:")) {
+            LOGGER.info("{} is an URN.", uri);
+            result = uri.substring(uri.indexOf("urn:miriam:") + "urn:miriam:".length());
+        } else {
+            LOGGER.debug("The indexer doesn't support annotations like {}.", uri);
+            result = "";
+        }
+        return result;
+    }
+}
