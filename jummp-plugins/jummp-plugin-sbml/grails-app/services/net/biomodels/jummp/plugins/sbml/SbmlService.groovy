@@ -48,8 +48,6 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.model.ModellingApproach as MA
 import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.apache.commons.io.FileUtils
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.codecs.URLCodec
 import org.jdom.Document
 import org.jdom.Element
@@ -61,6 +59,8 @@ import org.jdom.xpath.XPath
 import org.perf4j.aop.Profiled
 import org.sbml.jsbml.*
 import org.sbml.jsbml.CVTerm.Qualifier
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 
 import javax.xml.stream.XMLInputFactory
@@ -85,8 +85,8 @@ import java.util.regex.Pattern
 class SbmlService extends FileFormatServiceAdapter implements ISbmlService, InitializingBean {
     static transactional = true
     def bpToModelDisplayService
-    private static final Log log = LogFactory.getLog(this)
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final Logger LOGGER = LoggerFactory.getLogger(this)
+    private static final boolean IS_INFO_ENABLED = LOGGER.isInfoEnabled()
     /**
      * Dependency Injection of MiriamService
      */
@@ -122,7 +122,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             // FIXME: fails the startup of Tomcat server
             //sbml2BioPaxConverter()
         }
-        log.info("Finished the bean initialisation")
+        LOGGER.info("Finished the bean initialisation")
     }
 
     void checkConsistency(RevisionTC revision, final List<String> errors) {
@@ -132,7 +132,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         if (!mainFileTC) {
             String modelSubmissionId = revision.model.submissionId
             String error = "SBMLModel with the identifier ${modelSubmissionId} has no a main file"
-            log.debug(error)
+            LOGGER.debug(error)
             errors.add(error)
         } else {
             File sbmlFile = new File(mainFileTC.path)
@@ -170,7 +170,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             accessionPattern = doiPattern
             namespace = "doi"
         } else {
-            log.debug("BioModels only supports to add an annotation to SBML file for PubMed and DOI.")
+            LOGGER.debug("BioModels only supports to add an annotation to SBML file for PubMed and DOI.")
             return false
         }
         String[] identifiers = ["http://identifiers.org/$namespace:$publication.link"] as String[]
@@ -218,14 +218,14 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         } catch (XMLStreamException | NullPointerException e) {
             e.printStackTrace()
             errorMsg = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
-            log.error(errorMsg)
+            LOGGER.error(errorMsg)
             errors.add(errorMsg)
             return null
         }
         if (doc == null) {
             // although the API documentation states that an Exception is thrown for incorrect files, it seems that null is returned
             errorMsg = "SBMLDocument is not valid for file ${model.name}"
-            log.error(errorMsg)
+            LOGGER.error(errorMsg)
             errors.add(errorMsg)
             return null
         }
@@ -239,7 +239,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             errorMsg = """Your file exceeds the maximum upload size limit that our system currently supports. \
 The consistency check for your model is being ignored."""
             errors.add(errorMsg)
-            log.debug(errorMsg)
+            LOGGER.debug(errorMsg)
             return doc
         }
 
@@ -251,7 +251,7 @@ The consistency check for your model is being ignored."""
 to validate the file ${doc.inspect()}\t${doc.properties}. \
 The system has tried to call the fallback to the SBML offline validator..."""
                     println(errorMsg)
-                    log.error(errorMsg)
+                    LOGGER.error(errorMsg)
                     CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
                 }
                 if (CONSISTENCY_ERRORS > 0) {
@@ -260,7 +260,7 @@ The system has tried to call the fallback to the SBML offline validator..."""
                         if (error.isFatal() || error.isInternal() || error.isSystem() || error.isXML() || error.isError()) {
                             errorMsg = error.getMessage()
                             println(errorMsg)
-                            log.debug(errorMsg)
+                            LOGGER.debug(errorMsg)
                             errors.add(errorMsg)
                             doc = null
                             break
@@ -269,7 +269,7 @@ The system has tried to call the fallback to the SBML offline validator..."""
                 }
                 return doc
             } catch (ConversionException e) {
-                log.error(e.getMessage(), e)
+                LOGGER.error(e.getMessage(), e)
                 return null
             }
         }
@@ -316,7 +316,7 @@ The system has tried to call the fallback to the SBML offline validator..."""
                 def msg = new StringBuffer("""\
 Could not check if SBML files ${files.inspect()} are valid or not.""")
                 msg.append(" Encountered $ex while reading line $currentLine of file ${files[iFiles]}")
-                log.error(msg.toString())
+                LOGGER.error(msg.toString())
                 return false
             } finally {
                 reader?.close()
@@ -335,7 +335,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
                     retval = doc
                 }
             } catch(Exception e) {
-                log.error(e.message, e)
+                LOGGER.error(e.message, e)
             }
         }
         return retval
@@ -344,7 +344,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
     @Profiled(tag="SbmlService.validate")
     boolean validate(final List<File> model, final List<String> errors) {
         if (!grailsApplication.config.jummp.plugins.sbml.validation) {
-            log.info("Validation for ${model.inspect()} skipped due to configuration option")
+            LOGGER.info("Validation for ${model.inspect()} skipped due to configuration option")
             return true
         }
         if (getDocumentFromFiles(model, errors)) {
@@ -386,14 +386,14 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
                 File file = fetchMainFileFromRevision(revision)
                 sbmlDocument = new SBMLReader().readSBML(file)
                 if (!sbmlDocument) {
-                    log.error("""Cannot update the model name for the main model file of the revision: ${revision.dump()} \
+                    LOGGER.error("""Cannot update the model name for the main model file of the revision: ${revision.dump()} \
 because the SBML document cannot find from the cache.""")
                     return false
                 }
             }
             Model sbmlModel = sbmlDocument.getModel()
             if (!sbmlModel) {
-                log.error("Cannot update the model name for the main model file of the revision: ${revision.dump()}")
+                LOGGER.error("Cannot update the model name for the main model file of the revision: ${revision.dump()}")
                 return false
             }
             sbmlModel.setName(name)
@@ -402,7 +402,7 @@ because the SBML document cannot find from the cache.""")
             sbmlWriter.writeSBML(sbmlDocument, sbmlFile)
             return true
         } else {
-            log.warn("""\
+            LOGGER.warn("""\
 Revision ${revision.id} of the model ${revision.model.submissionId} is null or
 the user has attempted to update an blank value for the name attribute.""")
             return false
@@ -423,7 +423,7 @@ the user has attempted to update an blank value for the name attribute.""")
     String extractDescription(final List<File> model) {
         if (!model) {
             String errMsg = "Cannot extract the description from undefined file ${model.properties}"
-            log.warn(errMsg)
+            LOGGER.warn(errMsg)
             return ""
         }
         def description = new StringBuffer()
@@ -456,11 +456,11 @@ the user has attempted to update an blank value for the name attribute.""")
             }
         } catch (JDOMException e) {
             String errMsg ="Exception encountered while extracting description from ${model.inspect()}: ${e.message}"
-            log.error(errMsg, e)
+            LOGGER.error(errMsg, e)
             return ""
         } catch (IOException e) {
             String errMsg = "IOException encountered while extracting description from ${model.inspect()}: ${e.message}"
-            log.error(errMsg, e)
+            LOGGER.error(errMsg, e)
             return ""
         }
         return description.toString()
@@ -1052,14 +1052,14 @@ the user has attempted to update an blank value for the name attribute.""")
     private File fetchMainFileFromRevision(RevisionTC revision) {
         final String mainFileLocation = revision?.files?.find {it.mainFile}?.path
         if (!mainFileLocation) {
-            log.error "The main file of revision ${revision.properties} is undefined."
+            LOGGER.error "The main file of revision ${revision.properties} is undefined."
             return null
         }
         File mainFile = new File(mainFileLocation)
         if (!mainFile || !mainFile.canRead()) {
             def errMsg = new StringBuilder("None of the files ").append(revision?.files?.inspect()).
                         append(" of revision ").append(revision.properties).append("is a main file.")
-            log.error errMsg.toString()
+            LOGGER.error errMsg.toString()
             return null
         }
         return mainFile
@@ -1075,7 +1075,7 @@ the user has attempted to update an blank value for the name attribute.""")
         if (IS_INFO_ENABLED) {
             def info = new StringBuilder("Extracting attribute ").append(attributeName).
                         append(" of element ").append(elementName).append(" from ").append(model.properties)
-            log.info(info.toString())
+            LOGGER.info(info.toString())
         }
         String theResult
         def fileReader = new FileReader(model)
@@ -1101,7 +1101,7 @@ the user has attempted to update an blank value for the name attribute.""")
             def errorMsg = new StringBuilder("Error while extracting property ").append(elementName).
                         append(".").append(attributeName).append(" from ").append(model.properties)
             errorMsg.append(". The offending file caused ${e.message}.\n")
-            log.error (errorMsg.toString(), e)
+            LOGGER.error (errorMsg.toString(), e)
         } finally {
             xmlReader?.close()
             fileReader?.close()
@@ -1130,7 +1130,7 @@ the user has attempted to update an blank value for the name attribute.""")
         } catch (NumberFormatException e) {
             def errMsg = new StringBuilder("Error extracting model attribute from ").append(mainFile.properties).
                         append(". ").append(name). append(" ").append(value).append(" is not a number.")
-            log.error errMsg.toString(), e
+            LOGGER.error errMsg.toString(), e
         } finally {
             return level
         }
@@ -1189,7 +1189,7 @@ the user has attempted to update an blank value for the name attribute.""")
 
     private MA guessModellingApproachFromSBMLDocument(final SBMLDocument document, final String rID) {
         if (null == document) {
-            log.error("Cannot extract modelling approach from $rID as we could not parse its main files")
+            LOGGER.error("Cannot extract modelling approach from $rID as we could not parse its main files")
             return null
         } else {
             Model model = document.model
@@ -1207,21 +1207,21 @@ the user has attempted to update an blank value for the name attribute.""")
                 }
             }
             if (mamoTerms.isEmpty()) {
-                log.info("No modelling approach MAMO terms found in $rID")
+                LOGGER.info("No modelling approach MAMO terms found in $rID")
                 return null
             }
             def first = mamoTerms.find { it != null && !it?.isEmpty() }
             if (!first) {
-                log.warn("Expected to have MAMO terms. Bug in JSBML filterCVTerms")
+                LOGGER.warn("Expected to have MAMO terms. Bug in JSBML filterCVTerms")
                 return null
             }
             String[] parts = first.split("/mamo/")
             if (!parts[0] || parts.length != 2) {
-                log.warn("Revision $rID has invalid modelling approach '$first'")
+                LOGGER.warn("Revision $rID has invalid modelling approach '$first'")
                 return null
             }
             MA approach = MA.findByResourceOrAccession(first, parts[1])
-            log.info("Revision $rID declares modelling approach ${approach?.name}")
+            LOGGER.info("Revision $rID declares modelling approach ${approach?.name}")
             return approach
         }
     }
@@ -1251,7 +1251,7 @@ the user has attempted to update an blank value for the name attribute.""")
         SBMLDocument document = getFromCache(revision)
         String rID = revision.identifier() ? "the revision ${revision.identifier()}" : "the provisional revision in the new submission"
         if (!document) {
-            log.error("Cannot add $identifiers to the main files of $rID as we could not parse its main files")
+            LOGGER.error("Cannot add $identifiers to the main files of $rID as we could not parse its main files")
             return false
         }
 
@@ -1346,7 +1346,7 @@ the user has attempted to update an blank value for the name attribute.""")
             def fn = sbmlFile.name
             def msg = """Failed to add model annotations $identifiers to file $fn of $rID \
 due to an issue with JSBML"""
-            log.error "$msg: $e"
+            LOGGER.error "$msg: $e"
             throw new ModelException(revision.model, msg)
         } finally {
             return result
