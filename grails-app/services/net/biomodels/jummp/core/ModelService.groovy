@@ -814,7 +814,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         ]
         Revision.withTransaction(txDefinition) {
             // the returned revision is detached from the Hibernate session
-            revision = persistRevision(repoFiles, deleteFiles, rev)
+            revision = doPersistRevision(repoFiles, deleteFiles, rev)
         }
         Revision attachedRevision = doPostPersistRevision(revision)
         return attachedRevision ?: revision
@@ -854,10 +854,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * @throws ModelException if there is no model associated with @p rev, if its model has
      * been deleted or if the comment is null.
      */
-    Revision persistRevision(List<RFTC> repoFiles,
-                             List<RFTC> deleteFiles,
-                             RevisionTransportCommand rev) throws ModelException {
-        StopWatch stopWatch = new Log4JStopWatch("modelService.persistRevision")
+    Revision doPersistRevision(List<RFTC> repoFiles,
+                               List<RFTC> deleteFiles,
+                               RevisionTransportCommand rev) throws ModelException {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doPersistRevision")
         // TODO: the method should be thread safe, add a lock
         validateModelRevision(rev)
         List<File> modelFiles = repositoryFileService.getFilesFromRF(repoFiles)
