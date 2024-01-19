@@ -875,7 +875,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                     readmeSubmission: rev.readmeSubmission)
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
 
-        putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, false)
+        revision = putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, false)
 
         // calculate the new revision number - accessing the revisions directly to circumvent ACL
         revision.revisionNumber = model.revisions.sort {it.revisionNumber}.last().revisionNumber + 1
@@ -914,7 +914,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         doUpdateRevision(revision, rev)
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
 
-        putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, true)
+        revision = putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, true)
 
         if (revision.validate()) {
             doUpdateModelMetadata(model, rev)
