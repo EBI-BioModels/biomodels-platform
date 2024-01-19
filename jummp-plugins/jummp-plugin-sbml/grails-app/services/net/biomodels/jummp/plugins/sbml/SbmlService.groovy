@@ -1401,86 +1401,80 @@ class ResourceHelper {
     private static final String DELIMITER = "/"
 
     static String getDataTypeFromUri(String uri) {
-        String rest = getDataTypeAndAccession(uri);
+        String rest = getDataTypeAndAccession(uri)
         if (rest.startsWith("doi:") || rest.startsWith("doi/")) {
-            return "doi";
+            return "doi"
         }
         int baseUriIdx = rest.indexOf(DELIMITER);
         if (-1 == baseUriIdx) {
             LOGGER.debug("{} looks like the compact form of identifiers.org", uri);
             if (rest.startsWith("mamo:MAMO_")) {
-                return "mamo";
+                return "mamo"
             } else if (rest.startsWith("doi:")) {
-                return "doi";
+                return "doi"
             } else if (rest.contains(":")) {
-                return rest.substring(0, rest.indexOf(":")).toLowerCase();
+                return rest.substring(0, rest.indexOf(":")).toLowerCase()
             } else {
-                return "unknown";
+                return "unknown"
             }
         } else {
-            int accessionIdx = rest.indexOf(DELIMITER);
-            return rest.substring(0, accessionIdx);
+            int accessionIdx = rest.indexOf(DELIMITER)
+            return rest.substring(0, accessionIdx)
         }
     }
 
     static String getAccessionFromUri(String uri) {
-        String rest = getDataTypeAndAccession(uri);
+        String rest = getDataTypeAndAccession(uri)
 
-        String accession = "";
+        String accession = ""
         if (rest.startsWith("doi:") || rest.startsWith("doi/")) {
-            accession = rest.substring(4);
-            return accession;
+            accession = rest.substring(4)
+            return accession
         }
-        int idx = rest.indexOf(DELIMITER);
+        int idx = rest.indexOf(DELIMITER)
         if (idx <= 0) {
-            LOGGER.debug("{} looks like the compact form of identifiers.org", uri);
+            LOGGER.debug("{} looks like the compact form of identifiers.org", uri)
             if (rest.startsWith("mamo:MAMO_")) {
-                accession = rest.substring(5);
-                return accession;
+                accession = rest.substring(5)
+                return accession
             } else if (rest.startsWith("doi:")) {
-                accession = rest.substring(4);
-                return accession;
+                accession = rest.substring(4)
+                return accession
             }
             try {
-                /*String json = RemoteDataFetcher.fetch("https://resolver.api.identifiers.org/" + rest);
-                JSONObject jsonObject = new JSONObject(json);
-                JSONObject parsedCI = jsonObject.getJSONObject("payload").getJSONObject("parsedCompactIdentifier");
-                String localId = parsedCI.getString("localId");
-                String namespace = parsedCI.getString("namespace");
-                accession = localId;*/
-                accession = rest.substring(rest.indexOf(":") + 1);
+                accession = rest.substring(rest.indexOf(":") + 1)
             } catch (Exception exception) {
                 LOGGER.error("An error occurred when getting the accession from the URI {}. See the cause below {}.",
-                    uri, exception.getCause().toString());
+                    uri, exception.getCause().toString())
             }
         } else {
-            LOGGER.debug("{} looks like the old form of identifiers.org", uri);
-            idx = rest.indexOf(DELIMITER);
+            LOGGER.debug("{} looks like the old form of identifiers.org.", uri)
+            idx = rest.indexOf(DELIMITER)
             if (idx == -1) {
-                LOGGER.error("Cannot find the accession for {}", uri);
-                return null;
+                LOGGER.error("Cannot find the accession for {}.", uri)
+                return null
             }
-            accession = rest.substring(idx + 1);
+            accession = rest.substring(idx + 1)
         }
-        return accession;
+        return accession
     }
 
     static String getDataTypeAndAccession(String uri) {
         if (uri == null || uri.isEmpty()) {
-            LOGGER.error("The URI given is null or empty.");
-            return "";
+            LOGGER.error("The URI given is null or empty.")
+            return ""
         }
-        String result;
+        String result
         if (uri.startsWith("http://") || uri.startsWith("https://")) {
-            LOGGER.info("{} is an URL.", uri);
-            result = uri.substring(uri.indexOf("://identifiers.org/") + "://identifiers.org/".length());
+            LOGGER.info("{} is an URL.", uri)
+            result = uri.substring(uri.indexOf("://identifiers.org/") + "://identifiers.org/".length())
         } else if (uri.startsWith("urn:miriam:")) {
-            LOGGER.info("{} is an URN.", uri);
-            result = uri.substring(uri.indexOf("urn:miriam:") + "urn:miriam:".length());
+            LOGGER.info("{} is an URN.", uri)
+            result = uri.substring(uri.indexOf("urn:miriam:") + "urn:miriam:".length())
         } else {
-            LOGGER.debug("The indexer doesn't support annotations like {}.", uri);
-            result = "";
+            LOGGER.debug("The indexer doesn't support annotations like {}.", uri)
+            result = ""
         }
-        return result;
+        return result
     }
 }
