@@ -143,9 +143,9 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
     @Override
     boolean addModelIdentifiersAsAnnotation(RevisionTC revision, String... identifiers)
             throws ModelException {
-        Qualifier qualifier = Qualifier.BQM_IS
+        Qualifier bqmIs = Qualifier.BQM_IS
         String accessionPattern = "biomodels.db[/:](BIOMD|MODEL)[0-9]{10}"
-        addAnnotations2Model(TypeAnno.MODEL_IDENTIFIER, revision, qualifier, accessionPattern, identifiers)
+        addAnnotations2Model(TypeAnno.MODEL_IDENTIFIER, revision, bqmIs, accessionPattern, identifiers)
     }
 
     @Override
@@ -186,7 +186,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         String rID = Objects.requireNonNull(revision).identifier()
         Model model = Objects.requireNonNull(document).model
 
-        List<String> tobeAdded = filterIdentifiersToBeAdded(model, qualifier, identifiers)
+        List<String> tobeAdded = filterIdentifiersToBeAdded(document, model, qualifier, accessionPattern, identifiers)
         if (tobeAdded?.isEmpty()) {
             LOGGER.info("{} resource references already exist in the model revision {}.", identifiers, revision.identifier())
             return false
@@ -197,26 +197,27 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         boolean retVal = false
         switch (typeAnno) {
             case TypeAnno.MODEL_IDENTIFIER:
-                retVal = doAddAnnotations(model, revision, rID, qualifier, accessionPattern, identifiers)
+                retVal = doAddAnnotations(typeAnno, model, revision, rID, qualifier, accessionPattern, identifiers)
                 break
             case TypeAnno.MODELLING_APPROACH:
                 MA ma = revision.model.modellingApproach
                 if (ma?.accession?.toLowerCase() != "other") {
-                    retVal = doAddAnnotations(model, revision, rID, qualifier, accessionPattern, identifiers)
+                    retVal = doAddAnnotations(typeAnno, model, revision, rID, qualifier, accessionPattern, identifiers)
                 } else {
                     // remove the former modelling approach if we are in the update process
                     retVal = doRemoveAnnotation(model, revision, qualifier, rID)
                 }
                 break
             case TypeAnno.PUBLICATION:
-                retVal = doAddAnnotations(model, revision, rID, qualifier, accessionPattern, identifiers)
+                retVal = doAddAnnotations(typeAnno, model, revision, rID, qualifier, accessionPattern, identifiers)
                 break
         }
 
         return retVal
     }
 
-    private static List<String> filterIdentifiersToBeAdded(Model model, Qualifier qualifier, String... identifiers) {
+    private static List<String> filterIdentifiersToBeAdded(SBMLDocument document, Model model, Qualifier qualifier,
+                                                           String accessionPattern, String... identifiers) {
         List<String> listIdentifiers = Arrays.asList(identifiers)
         // we sure that identifiers are based on identifiers.org syntax ether old or compact form
         List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
@@ -857,11 +858,18 @@ the user has attempted to update an blank value for the name attribute.""")
         if (document) {
             return document
         }
-        //SBMLDocument document=null;
+        // SBMLDocument document=null;
         // we do not have a document, so retrieve first the file
-        //List<RepoFTC> files = grailsApplication.mainContext.getBean("modelDelegateService").retrieveModelFiles(revision)
+        // List<RepoFTC> files = grailsApplication.mainContext.getBean("modelDelegateService").retrieveModelFiles(revision)
+        document = getSBMLFileFromRevision(revision)
+
+        return document
+    }
+
+    private SBMLDocument getSBMLFileFromRevision(RevisionTC revision) throws XMLStreamException {
         List<RepoFTC> files = revision.files
         files = files.findAll { it.mainFile }
+        SBMLDocument document
 
         files.each {
             try {
@@ -869,13 +877,13 @@ the user has attempted to update an blank value for the name attribute.""")
                 def reader = new SBMLReader()
                 document = reader.readSBML(file)
                 if (document) {
-                  cache.put(revision.id, document)
-                  //break
+                    cache.put(revision.id, document)
+                    //break
                 }
             } catch(Exception ignore) {
-                ignore.printStackTrace();
+                ignore.printStackTrace()
             } finally {
-
+                LOGGER.info("Finished getting SBML file {} from the revision {}.", document?.locationURI, revision.toString())
             }
         }
         return document
@@ -1285,7 +1293,7 @@ the user has attempted to update an blank value for the name attribute.""")
             String msg = """The revision ${revision?.id} has some errors or the annotation identifers are invalid."""
             throw new IllegalArgumentException(msg)
         }
-        SBMLDocument document = getFromCache(revision)
+        SBMLDocument document = getSBMLFileFromRevision(revision)
         String rID = revision.identifier() ? "the revision ${revision.identifier()}" : "the provisional revision in the new submission"
         if (!document) {
             LOGGER.error("Cannot add $identifiers to the main files of $rID as we could not parse its main files")
@@ -1301,7 +1309,8 @@ the user has attempted to update an blank value for the name attribute.""")
         writeModelMainFile(document, revision, rID, identifiers)
     }
 
-    private static boolean doAddAnnotations(Model model,
+    private static boolean doAddAnnotations(TypeAnno typeAnno,
+                                            Model model,
                                             RevisionTC revision,
                                             String rID,
                                             Qualifier qualifier,
@@ -1323,7 +1332,7 @@ the user has attempted to update an blank value for the name attribute.""")
         // find the set of resources that should be kept
         List filteredAnnotations = cVTerms.collect { CVTerm t ->
             t.getResources().findAll { String xref ->
-                if (!targetAccessionPattern.matcher(xref).find()) {
+                if (!targetAccessionPattern.matcher(xref).find() || typeAnno == TypeAnno.MODEL_IDENTIFIER) {
                     return true
                 }
                 return false

@@ -866,6 +866,9 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
         final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
         Model model = getModel(PERENNIAL_ID)
+        if (rev.format.identifier == "SBML") {
+            addModelIdentifiersAsAnnotation(rev)
+        }
         // initialise a new revision
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
                     comment: rev.comment, uploadDate: new Date(), owner: currentUser,
@@ -910,6 +913,9 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         Model model = getModel(PERENNIAL_ID)
         // fetch the current revision from the database
         Revision revision = Revision.get(rev.id)
+        if (rev.format.identifier == "SBML") {
+            addModelIdentifiersAsAnnotation(rev)
+        }
         // update the revision with the potential updates populated in the rev argument
         doUpdateRevision(revision, rev)
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
@@ -2327,21 +2333,20 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
 
         // TODO move out of here and invoke via e.g. grailsApplication.mainContext.publishEvent()
         String format = revision.format.identifier
-        if ("SBML".equals(format)) {
+        if ("SBML" == format) {
             RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
-            def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
             // TODO externalise generation of canonical model URIs?
             String[] idXRefs = [revision.model.submissionId, publicationId].collect { String id ->
                 "http://identifiers.org/biomodels.db/$id".toString()
             } as String[]
-            boolean revisionUpdated = sbmlService.addModelIdentifiersAsAnnotation(revisionTC, idXRefs)
+            boolean revisionUpdated = addModelIdentifiersAsAnnotation(revisionTC, idXRefs)
 
             if (!revisionUpdated) {
                 return revision // nothing else to do
             }
             revisionTC.minorRevision = true
             revisionTC.comment = "Automatically added model identifier $publicationId"
-            Revision toPublish = persistRevision(revisionTC.files, [], revisionTC)
+            Revision toPublish = doPersistRevision(revisionTC.files, [], revisionTC)
             RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
             indexModelRevision(toPublishTC)
             shareRevision2FellowCurators(toPublishTC)
@@ -2607,6 +2612,14 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
             logger.error("""\
 There has been error while adding $approach to the model ${revisionTC.identifier()}""")
         }
+    }
+
+    boolean addModelIdentifiersAsAnnotation(RevisionTC revisionTC, String... xRefs = null) {
+        def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+        if (!xRefs) {
+            xRefs = ["http://identifiers.org/biomodels.db:${revisionTC.model.submissionId}"] as String[]
+        }
+        sbmlService.addModelIdentifiersAsAnnotation(revisionTC, xRefs)
     }
 
     /**
