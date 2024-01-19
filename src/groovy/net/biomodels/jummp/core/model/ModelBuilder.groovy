@@ -25,11 +25,7 @@ import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsException
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.model.RepositoryFile
-import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.model.*
 import net.biomodels.jummp.plugins.security.User
 import org.perf4j.StopWatch
 import org.perf4j.log4j.Log4JStopWatch
@@ -41,7 +37,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantLock
-
 /**
  * Builds a ModelUpload object from a RevisionTransportCommand object and the list
  * of RepositoryFile ones
@@ -109,6 +104,7 @@ class ModelBuilder {
     ModelBuilder build() {
         ModelBuilder modelBuilder = this
             .generateModelIdentifier()
+            .addSubmissionIdAsBioModelsAnnotation()
             .createVcsIdentifier()
             .addModelInfo()
             .addPublication()
@@ -163,6 +159,22 @@ class ModelBuilder {
         String submissionId = getSubmissionIdGenerator().generate()
         this.model.submissionId = submissionId
         logger.debug("Newly created submission id: ${this.model.submissionId}")
+        return this
+    }
+
+    /**
+     * The submission identifier is created immediately after users click the Complete submission.
+     * Therefore, we have to add the submission identifier to the model main file at this stage.
+     */
+    private ModelBuilder addSubmissionIdAsBioModelsAnnotation() {
+        if (this.revisionTC.format.identifier.toLowerCase() == "sbml") {
+            def modelService = grailsApplication.mainContext.getBean("modelService")
+            String[] xref = ["http://identifiers.org/biomodels.db:${this.model.submissionId}"] as String[]
+            boolean r = modelService.addModelIdentifiersAsAnnotation(this.revisionTC, xref)
+            if (!r) {
+                logger.debug("Cannot add BM_IS annotation built in with the submission id as an BioModels annotation to the model revision {}", revisionTC.identifier())
+            }
+        }
         return this
     }
 
