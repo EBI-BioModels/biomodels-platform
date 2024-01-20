@@ -20,10 +20,18 @@
 
 package net.biomodels.jummp.utils
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class FileHelper {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileHelper.class)
+
     private static final Pattern acceptableCharactersInFileName = ~/^[a-zA-Z0-9\s_\.\+-]+\.[\w]+$/
 
     static boolean isFileNameAcceptable(final String filename) {
@@ -31,5 +39,33 @@ class FileHelper {
         Matcher matcher = filename =~ acceptableCharactersInFileName
         boolean retVal = matcher.matches()
         retVal
+    }
+
+    static void writeUsingFiles(String data, String absFilePath) {
+        try {
+            Files.write(Paths.get(absFilePath), data.getBytes())
+        } catch (IOException e) {
+            LOGGER.error("Errors occurred when writing {} to the file {} due to the cause: {}.", data, absFilePath, e.getMessage())
+        }
+    }
+
+    static File createFile(String parentDir, String filename) {
+        Path dirPath = Paths.get(parentDir)
+        if (!Files.exists(dirPath)) {
+            Files.createDirectories(dirPath)
+        }
+
+        Path filePath = dirPath.resolve(filename);
+        if (!Files.exists(filePath)) {
+            Files.createFile(filePath)
+        }
+
+        File file = new File(parentDir, filename);
+        if (file.exists()) {
+            LOGGER.info("File {} has been created.", file.absolutePath)
+        } else {
+            LOGGER.info("Errors occurred when creating the file {}.", file.absolutePath)
+        }
+        file
     }
 }

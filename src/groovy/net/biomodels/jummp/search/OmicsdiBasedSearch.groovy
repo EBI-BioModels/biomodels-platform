@@ -42,6 +42,7 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.utils.EbiSearchHelper
+import net.biomodels.jummp.utils.FileHelper
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware as GCA
@@ -347,7 +348,7 @@ The root cause is ${e.toString()}""")
         Revision.withSession {
             def partialData = buildPartialData(revision)
 
-            String exchangeFolder = new File(revision?.files?.first().path).getParent()
+            String exchangeFolder = grailsApplication.config.jummp.vcs.exchangeDirectory
             String registryExport = miriamService.registryExport.canonicalPath
             def dsConfig = grailsApplication.config.dataSource
             def searchStrategy = grailsApplication.config.jummp.search.strategy
@@ -366,8 +367,16 @@ The root cause is ${e.toString()}""")
                 'miriamExportFile': registryExport,
                 'searchStrategy': searchStrategy,
                 'database': dbSettings)
-            File indexingData = new File(exchangeFolder, "indexData.json")
-            indexingData.setText(builder.toPrettyString())
+            String sep = File.separator
+
+            String indexingFolder = "$exchangeFolder${sep}indexing${sep}${revision.identifier()}"
+            File indexingData = FileHelper.createFile(indexingFolder, "indexData.json")
+            if (indexingData) {
+                indexingData.setText(builder.toPrettyString())
+            } else {
+                log.info("Cannot create indexData.json to index the model {}.", revision.identifier())
+                throw new RuntimeException("Cannot create indexData.json to index the model ${revision.identifier()}.")
+            }
 
             String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
             def argsMap = [jarPath: jarPath, jsonPath: indexingData.absolutePath]
