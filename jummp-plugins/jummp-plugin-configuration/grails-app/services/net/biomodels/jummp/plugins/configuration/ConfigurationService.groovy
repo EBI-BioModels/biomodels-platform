@@ -110,6 +110,30 @@ class ConfigurationService implements InitializingBean {
         }
     }
 
+    static Map configureProxySettings() {
+        Map argsMap = [:]
+        String httpProxy = System.getProperty("http.proxyHost")
+
+        if (httpProxy) {
+            String proxyPort = System.getProperty("http.proxyPort") ?: '80'
+            String nonProxyHosts = "'${System.getProperty("http.nonProxyHosts")}'"
+            StringBuilder proxySettings = new StringBuilder()
+            proxySettings
+                .append(" -Dhttp.proxyHost=")
+                .append(httpProxy)
+                .append(" -Dhttp.proxyPort=")
+                .append(proxyPort)
+                .append(" -Dhttp.nonProxyHosts=")
+                .append(nonProxyHosts)
+            argsMap['proxySettings'] = proxySettings.toString()
+            logger.info("Proxy settings for the indexer are $proxySettings")
+        } else {
+            argsMap['proxySettings'] = ""
+            logger.info("No Proxy Settings detected.")
+        }
+        argsMap
+    }
+
     /**
      * Simple class to sort the properties map to make the resulting config file
      * easier to read.

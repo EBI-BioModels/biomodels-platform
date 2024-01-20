@@ -371,23 +371,8 @@ The root cause is ${e.toString()}""")
 
             String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
             def argsMap = [jarPath: jarPath, jsonPath: indexingData.absolutePath]
+            argsMap.putAll(configurationService.configureProxySettings() as Map<? extends String, ? extends String>)
 
-
-            String httpProxy = System.getProperty("http.proxyHost")
-            if (httpProxy) {
-                String proxyPort = System.getProperty("http.proxyPort") ?: '80'
-                String nonProxyHosts = "'${System.getProperty("http.nonProxyHosts")}'"
-                StringBuilder proxySettings = new StringBuilder()
-                proxySettings.append(" -Dhttp.proxyHost=").append(httpProxy).append(
-                    " -Dhttp.proxyPort=").append(proxyPort).append(" -Dhttp.nonProxyHosts=").append(
-                    nonProxyHosts)
-                argsMap['proxySettings'] = proxySettings.toString()
-                if (IS_INFO_ENABLED) {
-                    log.info("Proxy settings for the indexer are $proxySettings")
-                }
-            } else {
-                argsMap['proxySettings'] = ""
-            }
             try {
                 producerTemplate.sendBody("seda:exec", argsMap)
             } catch (Exception e) {
