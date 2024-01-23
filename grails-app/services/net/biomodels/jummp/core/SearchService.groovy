@@ -152,7 +152,7 @@ class SearchService implements InitializingBean {
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="searchService.regenerateIndices")
     void regenerateIndices() {
-        strategy.clearIndex()
+        clearIndex()
         List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
             new RevisionAdapter(revision: r).toCommandObject()
         }

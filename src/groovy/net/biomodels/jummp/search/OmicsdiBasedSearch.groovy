@@ -403,7 +403,6 @@ The root cause is ${e.toString()}""")
         List revisionAnnotationRecords = RevisionAnnotation.findAll {
             revision.id == revisionTC.id
         }
-        List listElementAnnotation = revisionAnnotationRecords*.elementAnnotation
 
         // delete RevisionAnnotation
         List statements = new ArrayList<>()
@@ -414,13 +413,13 @@ The root cause is ${e.toString()}""")
 
         // delete ElementAnnotation
         // it's unnecessary
+        // List listElementAnnotation = revisionAnnotationRecords*.elementAnnotation
         /*listElementAnnotation.each {
             it.delete(flush: true)
         }*/
 
         // delete Statement and ResourceReference
         statements.each { def stmt ->
-
             List rs = ElementAnnotation.findAllByStatement(stmt as Statement)
             if (!rs?.size()) {
                 ResourceReference rr = stmt.object as ResourceReference
