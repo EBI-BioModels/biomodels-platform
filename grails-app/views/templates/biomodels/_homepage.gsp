@@ -95,7 +95,7 @@
             <!-- Open the application -->
             <h3 style="color: white; font-weight: bolder">Submit your model to enter
                 <a href="${SVR_URL}/competition/model-of-the-year-2024"
-                   target="_blank">"Model of the year" Competition 2024</a>. Deadline 20<sup>th</sup> January 2024.</h3>
+                   target="_blank">"Model of the year" Competition 2024</a>. Deadline: 29<sup>th</sup> February 2024.</h3>
             <!-- Closed the application
             <h3 style="color: white; font-weight: bolder">Application closed for <a href="${SVR_URL}/competition/model-of-the-year-2024"
                target="_blank">"Model of the year" Competition 2024</a>. Evaluation under progress!</h3>
@@ -108,7 +108,7 @@
         It hosts a vast selection of existing literature-based physiologically and pharmaceutically
         relevant mechanistic models in standard formats. Our mission  is to provide the systems
         modelling community with reproducible, high-quality,
-        <a href="http://creativecommons.org/publicdomain/zero/1.0/" target="_blank">freely-accessible</a>
+        <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">freely-accessible</a>
         models published in the scientific literature. More information about using BioModels such as <a
         href="faq#submit-model"
         class="tag">model submission</a>, <a href="faq#update-existing-model"
