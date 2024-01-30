@@ -496,7 +496,9 @@ ${pubURIs?.join(";")}""")
         /* The following statements aim at saving the new submission or updates */
         Map working = new HashMap<String, Object>()
         working.put("submitterInfo", params.get("submitterInfo").decodeHTML())
-        working.put("submissionFolder", params.get("submissionFolder"))
+        String submissionFolder = params.get("submissionFolder").decodeHTML() as String
+        working.put("submissionFolder", submissionFolder)
+
         // 1. Rebuild the uploaded files
         List<RFTC> rftcList = new ArrayList<RFTC>()
         rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
@@ -519,7 +521,6 @@ ${pubURIs?.join(";")}""")
         working.put("modelId", modelId)
         if (isUpdate) {
             revision = modelDelegateService.getLatestRevision(modelId, false)
-            final String submissionFolder = working.get("submissionFolder")
             final String latestDescription = redisService.doRedisHGet(submissionFolder, "latestModelDescription")
             working.putAll(["latestModelName": params.latestModelName.decodeHTML(),
                             "latestModelDescription": latestDescription])
