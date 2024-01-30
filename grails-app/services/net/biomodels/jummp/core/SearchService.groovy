@@ -26,6 +26,7 @@ package net.biomodels.jummp.core
 
 import grails.async.Promise
 import grails.plugin.springsecurity.annotation.Secured
+import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
@@ -35,14 +36,10 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.search.OmicsdiBasedSearch
-import net.biomodels.jummp.search.OrderedFacet
-import net.biomodels.jummp.search.SearchResponse
-import net.biomodels.jummp.search.SolrBasedSearch
-import net.biomodels.jummp.search.SortOrder
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import net.biomodels.jummp.search.*
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
@@ -66,15 +63,15 @@ class SearchService implements InitializingBean {
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(SearchService.class)
+    static final Logger LOGGER = LoggerFactory.getLogger(SearchService.class)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    static final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    static final boolean IS_INFO_ENABLED = LOGGER.isInfoEnabled()
     /**
      * Disable default transactional behaviour.
      */
@@ -99,11 +96,11 @@ class SearchService implements InitializingBean {
     }
 
     private void loadSearchStrategy() {
-        String strategySetting = grails.util.Holders.grailsApplication.config.jummp.search.strategy
+        String strategySetting = Holders.grailsApplication.config.jummp.search.strategy
         if (!strategySetting) {
-            log.error "Cannot load the setting model search strategy."
+            LOGGER.error "Cannot load the setting model search strategy."
             strategySetting = "solr"
-            log.error "... using the default value: ${strategySetting}"
+            LOGGER.error "... using the default value: ${strategySetting}"
         }
         strategy = strategySetting.equalsIgnoreCase("omicsdi") ? new OmicsdiBasedSearch() : new SolrBasedSearch()
         //setSearchStrategy("omicsdi") // For testing immediately without changing .jummp.properties
@@ -121,10 +118,10 @@ class SearchService implements InitializingBean {
     @Profiled(tag="searchService.clearIndex")
     void clearIndex(RevisionTransportCommand revision = null) {
         if (revision) {
-            log.info("Clearing the indexes of the ${revision.identifier()}.")
+            LOGGER.info("Clearing the indexes of the ${revision.identifier()}.")
             strategy.clearIndex(revision)
         } else {
-            log.info("Clearing all indexes from the database.")
+            LOGGER.info("Clearing all indexes from the database.")
             strategy.clearIndex()
             clearAnnotationStatementsFromDatabase()
         }
@@ -157,7 +154,7 @@ class SearchService implements InitializingBean {
             new RevisionAdapter(revision: r).toCommandObject()
         }
         if (IS_DEBUG_ENABLED) {
-            log.debug "Indexing ${revisions.size()} revisions."
+            LOGGER.debug "Indexing ${revisions.size()} revisions."
         }
         Authentication auth = springSecurityService.authentication
         AtomicReference<Authentication> authRef = new AtomicReference<>(auth)
@@ -170,19 +167,19 @@ class SearchService implements InitializingBean {
                     updateIndex(revision)
                 }
                 catch(Exception e) {
-                    log.error("Exception thrown while indexing ${revision.properties} ${e.getMessage()}", e)
+                    LOGGER.error("Exception thrown while indexing ${revision.properties} ${e.getMessage()}", e)
                 } finally {
-                    log.info "Revision ${revision.id} has been indexed. Iteration ${index.incrementAndGet()} of $revisionCount."
+                    LOGGER.info "Revision ${revision.id} has been indexed. Iteration ${index.incrementAndGet()} of $revisionCount."
                 }
             }
         }
         p.onComplete {
             if (IS_INFO_ENABLED) {
-                log.info "Finished regenerating the index."
+                LOGGER.info "Finished regenerating the index."
             }
         }
         p.onError { Throwable e ->
-            log.error("Error regenerating the index: ${e.message}", e)
+            LOGGER.error("Error regenerating the index: ${e.message}", e)
         }
     }
 
@@ -216,7 +213,7 @@ class SearchService implements InitializingBean {
                 facets.add(it.value.facet)
             }
         }
-        log.info("Found: ${results?.size() ?: 0} records, ${respondedFacets?.size() ?: 0} facets.")
+        LOGGER.info("Found: ${results?.size() ?: 0} records, ${respondedFacets?.size() ?: 0} facets.")
         JsonBuilder builder = new JsonBuilder(facets)
         String facetStats = builder.toString()
 
@@ -233,10 +230,10 @@ class SearchService implements InitializingBean {
      */
     @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
     void clearAnnotationStatementsFromDatabase() {
-        log.debug("Begin cleaning annotation statements from database")
+        LOGGER.debug("Begin cleaning annotation statements from database")
         Revision.executeUpdate("delete ElementAnnotation")
         Revision.executeUpdate("delete Statement")
-        log.debug("Finished cleaning annotation statements from database")
+        LOGGER.debug("Finished cleaning annotation statements from database")
     }
 
     Map checkIndexedData() {
@@ -394,7 +391,7 @@ class SearchService implements InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
-        log.info("Finished the bean initialisation")
+        LOGGER.info("Finished the bean initialisation")
     }
 }
 
