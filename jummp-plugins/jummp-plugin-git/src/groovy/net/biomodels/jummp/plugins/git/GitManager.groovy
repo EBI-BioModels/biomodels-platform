@@ -249,7 +249,6 @@ class GitManager implements VcsManager {
     private void initRepository(File modelDirectory) {
         if (initedRepositories.containsKey(modelDirectory)) {
             throw new VcsAlreadyInitedException()
-            return
         }
         if (exchangeDirectory == null) {
             throw new VcsException("Exchange directory cannot be null!")
@@ -351,7 +350,7 @@ class GitManager implements VcsManager {
             FileRepositoryBuilder builder = new FileRepositoryBuilder()
             Repository repository
             repository = builder
-                .setGitDir(new File(".git", modelDirectory))
+                .setGitDir(new File(".git", modelDirectory.name))
                 .readEnvironment()
                 .findGitDir().build()
 
