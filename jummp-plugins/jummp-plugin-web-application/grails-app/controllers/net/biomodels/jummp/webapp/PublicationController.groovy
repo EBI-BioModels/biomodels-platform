@@ -2,6 +2,7 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
@@ -200,13 +201,13 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
 
 
     def renderPublicationDetails() {
-        if (!params.pubDetails) {
+        if (params.pubDetails.decodeHTML() == "\"\"" || params.pubDetails.decodeHTML() == "{}") {
             render("No publication provided")
         } else {
             // this action is often called to display the publication which has been validated
             // so we don't need to handle exception
             PubTC tempPTC = new PubTC()//pubContext.publication
-            def pubDetails = JSON.parse(params.pubDetails.decodeHTML())
+            def pubDetails = new JsonSlurper().parseText(params.pubDetails.decodeHTML() as String)
             bindData(tempPTC, pubDetails, [exclude: ['authors']])
             publicationService.assembleAuthors(tempPTC, pubDetails.authors)
             render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])

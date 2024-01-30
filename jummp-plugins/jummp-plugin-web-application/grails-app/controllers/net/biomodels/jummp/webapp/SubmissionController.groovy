@@ -530,7 +530,9 @@ ${pubURIs?.join(";")}""")
         rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
 
         // populate publication details
-        populatePublication(params.publication?.decodeHTML(), model)
+        if (params.publication?.decodeHTML() != "\"\"" && params.publication.decodeHTML() != "{}") {
+            populatePublication(params.publication?.decodeHTML(), model)
+        }
 
         // populate the data on the revision
         String revisionComments = params.revisionComments?.decodeHTML() as String
@@ -583,7 +585,7 @@ ${pubURIs?.join(";")}""")
     }
 
     private void populatePublication(def paramPublication, MTC model) {
-        if (paramPublication) {
+        if (paramPublication != "{}" && paramPublication != null) {
             Map publicationData = publicationService.buildPublicationFromJSONData(paramPublication)
             model.publication = publicationData["publication"]
         } else {
