@@ -824,14 +824,20 @@
                                     <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
                             <!-- Show all tags assigned to the model -->
-                            <g:if test="${bmTags}">
                             <biomd:insertSectionSeparator/>
-                            <g:if test="${canUpdate && hasCuratorRole}">
-                                <biomd:showEditableTags bmTags="${bmTags}"/>
+                            <g:if test="${bmTags}">
+                                <g:if test="${canUpdate && hasCuratorRole}">
+                                    <biomd:showEditableTags bmTags="${bmTags}"/>
+                                </g:if>
+                                <g:else>
+                                    <biomd:showTags bmTags="${bmTags}"/>
+                                </g:else>
                             </g:if>
                             <g:else>
-                                <biomd:showTags bmTags="${bmTags}"/>
-                            </g:else></g:if>
+                                <g:if test="${canUpdate && hasCuratorRole}">
+                                    <biomd:showEditableTags bmTags="${bmTags}"/>
+                                </g:if>
+                            </g:else>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <g:if test="${shouldDisplayDisclaimer}">
                             <biomd:displayDisclaimer revision="${revision}"/></g:if>
