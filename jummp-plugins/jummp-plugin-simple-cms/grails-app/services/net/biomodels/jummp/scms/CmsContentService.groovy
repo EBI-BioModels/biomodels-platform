@@ -142,6 +142,10 @@ class CmsContentService {
         map
     }
 
+    List getAllItems() {
+        CmsContent.getAll()
+    }
+
     private static Map toMap(final CCTC cnt) {
         Map<String, Object> map = [:]
         map.put("id", cnt.id)

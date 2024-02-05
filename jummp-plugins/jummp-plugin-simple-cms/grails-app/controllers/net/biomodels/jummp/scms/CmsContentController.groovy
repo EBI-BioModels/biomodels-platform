@@ -36,6 +36,11 @@ class CmsContentController {
     def cmsContentService
     def userService
 
+    def index() {
+        List items = cmsContentService.getAllItems()
+        [titlePage: "List of all CMS items | BioModels", items: items]
+    }
+
     def create() {
         // -1 is a fake id that will be granted a valid value
         LOGGER.debug("Started creating new content...")
