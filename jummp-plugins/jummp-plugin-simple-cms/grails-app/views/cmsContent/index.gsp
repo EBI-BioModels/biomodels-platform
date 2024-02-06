@@ -13,15 +13,6 @@
     <g:render template="/templates/head"/>
 
     <style>
-    li {
-        margin-top: 8px;
-        margin-bottom: 10px;
-    }
-
-    ul li {
-        margin-bottom: 10px;
-    }
-
     .tree {
         --spacing: 1.5rem;
         --radius: 10px;
@@ -31,6 +22,8 @@
         display: block;
         position: relative;
         padding-left: calc(2 * var(--spacing) - var(--radius) - 2px);
+        margin-top: 8px;
+        margin-bottom: 10px;
     }
 
     .tree ul {
