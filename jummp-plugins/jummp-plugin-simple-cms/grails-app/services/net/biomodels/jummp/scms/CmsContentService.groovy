@@ -126,7 +126,9 @@ class CmsContentService {
     // allows only admin and curators to edit and create contents
     boolean canEdit() {
         boolean isLoggedIn = springSecurityService.isLoggedIn()
-        if (!isLoggedIn) { return false }
+        if (!isLoggedIn) {
+            return false
+        }
         boolean hasAdminOrCuratorRole = userService.isLoggedInUserACurator() || userService.isLoggedInUserAAdmin()
         hasAdminOrCuratorRole
     }
@@ -144,6 +146,43 @@ class CmsContentService {
 
     List getAllItems() {
         CmsContent.getAll()
+    }
+
+    /**
+     * <h3>Get all items alongside their parent</h3>
+     * <p>We need to build a map which the key is a combination of the id and
+     * title of the parental item and the value is the list of its children.</p>
+     * <p>Why do we need to create the key in such a way? The title is designed
+     * uniquely but it could be identical unexpectedly.</p>
+     * <p>This service is used to render all items.</p>
+     * <p>The combined key will be split in the view so we can get the parental
+     * item's title instead of its id.
+     *
+     * @return a map of the combined key of parental item's identifier and title
+     * with their children.
+     */
+    Map<String, List<CmsContent>> getAllItemsWithParentNode() {
+        List items = getAllItems()
+        Map<String, List<CmsContent>> retMap = new LinkedHashMap<>()
+
+        for (CmsContent item : items) {
+            if (item.parent) {
+                String key = "${item.parent.id};${item.parent.title}"
+                if (retMap.containsKey(key)) {
+                    retMap.get(key).add(item)
+                } else {
+                    retMap.put(key, [item])
+                }
+            }
+        }
+
+        // sort the entries in the alphabetical order
+        retMap = retMap.sort {
+            String[] parts = it.key.split(";")
+            parts[1]
+        }
+
+        retMap
     }
 
     private static Map toMap(final CCTC cnt) {

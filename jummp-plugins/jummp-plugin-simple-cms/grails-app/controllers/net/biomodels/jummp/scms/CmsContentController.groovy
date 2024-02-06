@@ -37,7 +37,7 @@ class CmsContentController {
     def userService
 
     def index() {
-        List items = cmsContentService.getAllItems()
+        Map items = cmsContentService.getAllItemsWithParentNode()
         [titlePage: "List of all CMS items | BioModels", items: items]
     }
 
