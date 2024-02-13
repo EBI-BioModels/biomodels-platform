@@ -198,6 +198,11 @@ grails.project.dependency.resolution = {
             excludes "spring-data-redis"
         }
 
+        compile(":spring-security-rest:1.5.3") {
+            excludes('spring-security-core', 'log4j-over-slf4j', 'slf4j-log4j12')
+        }
+        runtime ":cors:1.3.0"
+
         runtime ":database-migration:1.4.1"
         runtime ":hibernate4:4.3.10"
         runtime ":console:1.5.8"

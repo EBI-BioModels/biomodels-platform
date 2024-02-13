@@ -132,6 +132,12 @@ class UrlMappings {
             controller: "content", action: "showNewsItem"
         )
 
+        "/api/guest/model/about"(controller:'model', action:'about')
+        "/api/model/create"(controller:'model', action:'create')
+        "/api/model/revisionsState/$id?(.$format)?"(controller:'model', action:'revisionsState')
+        "/api/post/create"(controller:'post', action:'createNewPost')
+        "/api/user/list"(controller:'userAdministration', action:'list')
+
         def cmsPrefix = "/cms"
         "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
         "$cmsPrefix/editor/edit/$id?"(controller: "cmsEditor", action: "edit")

@@ -66,6 +66,16 @@ try {
 def jummpConfig = new ConfigSlurper().parse(jummpProperties)
 List pluginsToExclude = []
 
+cors.enabled=true
+cors.url.pattern = '/api/*'
+cors.headers=[
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Credentials': true,
+    'Access-Control-Allow-Headers': 'origin, authorization, accept, content-type, x-requested-with',
+    'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS',
+    'Access-Control-Max-Age': 3600
+]
+
 // The Accept header set by older versions of IE and Opera may be unreliable, ignore it
 grails.mime.disable.accept.header.userAgents = ['Presto', 'Trident']
 grails.mime.file.extensions = false // enables the parsing of file extensions from URLs into the request format
@@ -301,7 +311,7 @@ log4j.main = {
     rollingFile name: "hibernateAppender", file: "${logsDir}/jummp-hibernate.log",
         threshold: Level.WARN, additivity: false
     rollingFile name: "cronJobAppender", file: "${logsDir}/jummp-cronjob.log",
-        threshold: org.apache.log4j.Level.DEBUG, additivity: false
+        threshold: Level.DEBUG, additivity: false
 
     debug debugAppender: [
         'net.biomodels.jummp',
@@ -322,7 +332,10 @@ log4j.main = {
         'net.biomodels.jummp.security',
         'net.biomodels.jummp.utils.redis',
         'net.biomodels.jummp.webapp',
-        'grails.app.conf.BootStrap'
+        'grails.app.conf.BootStrap',
+        "grails.plugin.springsecurity",
+        "org.springframework.security",
+        "org.pac4j"
     ], additivity: false
 
     debug irreproducibleAppender: [
@@ -353,13 +366,6 @@ log4j.main = {
     ], additivity: false
 }
 
-// Added by the Spring Security Core plugin:
-grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jummp.plugins.security.User'
-grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
-grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
-grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
-grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
-grails.plugin.springsecurity.successHandler.defaultTargetUrl = "/"
 
 String healthCheckIpRestrictions = null
 if (jummpConfig.jummp.healthcheck.ipRestrictions instanceof String) {
@@ -409,11 +415,59 @@ jummp.controllerAnnotations = [
     "/plugins/*/images/*":      ['permitAll'],
     "/simpleCaptcha/captcha":   ['permitAll'],
     "/docs/**":                 ['permitAll'],
+    '/**/favicon.ico':          ['permitAll'],
     "/omicsdi/**":              ["hasRole('ROLE_ADMIN')"]
 ]
 
+// Added by the Spring Security Core plugin:
+grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jummp.plugins.security.User'
+grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
+grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
+grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
+grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
+grails.plugin.springsecurity.successHandler.defaultTargetUrl = "/"
+
+grails.plugin.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations
+
+// login
+grails.plugin.springsecurity.rest.login.active=true
+grails.plugin.springsecurity.rest.login.endpointUrl="/api/login"
+grails.plugin.springsecurity.rest.login.failureStatusCode=401
+grails.plugin.springsecurity.rest.login.useJsonCredentials=true
+grails.plugin.springsecurity.rest.login.usernamePropertyName='username'
+grails.plugin.springsecurity.rest.login.passwordPropertyName='password'
+// logout
+grails.plugin.springsecurity.rest.logout.endpointUrl='/api/logout'
+
+// token generation
+grails.plugin.springsecurity.rest.token.generation.useSecureRandom=true
+grails.plugin.springsecurity.rest.token.generation.useUUID=false
+
+// token rendering
+grails.plugin.springsecurity.rest.token.rendering.usernamePropertyName='username'
+grails.plugin.springsecurity.rest.token.rendering.authoritiesPropertyName='roles'
+grails.plugin.springsecurity.rest.token.rendering.tokenPropertyName='token'
+
+grails.plugin.springsecurity.rest.token.storage.useGorm = true
+grails.plugin.springsecurity.rest.token.storage.gorm.tokenDomainClassName = 'net.biomodels.jummp.plugins.security.AuthToken'
+grails.plugin.springsecurity.rest.token.storage.gorm.tokenValuePropertyName = "token"
+grails.plugin.springsecurity.rest.token.storage.gorm.usernamePropertyName = 'username'
+grails.plugin.springsecurity.rest.token.validation.headerName = 'X-Auth-Token'
+
+// Traditional chain
+
+grails.plugin.springsecurity.rest.token.validation.enableAnonymousAccess = true
+grails.plugin.springsecurity.filterChain.chainMap = [
+    '/api/guest/**': 'anonymousAuthenticationFilter,restTokenValidationFilter,restExceptionTranslationFilter,filterInvocationInterceptor',
+    // '/api/**': 'anonymousAuthenticationFilter,restTokenValidationFilter,restExceptionTranslationFilter,filterInvocationInterceptor',
+    '/api/**/**': 'JOINED_FILTERS,-exceptionTranslationFilter,-authenticationProcessingFilter,-securityContextPersistenceFilter,-rememberMeAuthenticationFilter',  // Stateless chain
+    '/**': 'JOINED_FILTERS,-restTokenValidationFilter,-restExceptionTranslationFilter'                                                                          // Traditional chain
+]
+
+
 // ldap
-if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) || !Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled)) {
+if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) ||
+    !Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled)) {
     jummp.security.ldap.enabled = false
     println("INFO\tExcluding ldap")
     pluginsToExclude << "springSecurityLdap"
@@ -704,7 +758,6 @@ if (jummpConfig.jummp.firstRun instanceof ConfigObject || !Boolean.parseBoolean(
     }
 }
 
-grails.plugin.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations
 if (!"jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
     jms.disabled = true
 }

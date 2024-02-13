@@ -109,7 +109,8 @@ class ModelController extends CommonController {
     final List<String> AUDIT_EXCEPTIONS = ['showWithMessage',
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
-                                           'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink']
+                                           'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
+                                           'create', 'about', 'revisionsState']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -401,8 +402,8 @@ class ModelController extends CommonController {
         try {
             Map resultMap = modelDelegateService.getRevisionsState(params.id)
             withFormat {
-                json { respond resultMap }
-                xml { respond resultMap }
+                json { render resultMap as JSON }
+                xml { render resultMap as XML }
                 '*' { render status: 415, view: "/errors/error415" }
             }
         } catch(Exception err) {
@@ -1269,5 +1270,29 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
             }
         }
         return href
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def about() {
+        Map map = ["description": "Model Controller"]
+        withFormat {
+            json { render map as JSON }
+            xml { render map as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
+    }
+
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    def create() {
+        Map map = ["description": "Create a new model"]
+        withFormat {
+            json { render map as JSON }
+            xml { render map as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
+    }
+
+    private void moveFile2FTP(RTC revision, String filePath) {
+
     }
 }
