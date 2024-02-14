@@ -33,6 +33,7 @@ package net.biomodels.jummp.core
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclSid
 import grails.plugin.springsecurity.userdetails.GrailsUser
+import grails.util.Metadata
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.user.*
@@ -494,22 +495,28 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         // send out notification mail
         if (grailsApplication.config.jummp.security.registration.email.send) {
             String recipient = newUser.email
-            if (grailsApplication.config.jummp.security.registration.email.sendToAdmin) {
-                recipient = grailsApplication.config.jummp.security.registration.email.adminAddress
-            }
-            String emailBody = grailsApplication.config.jummp.security.registration.email.body
+            def bccRecipients = []
             String emailSubject = grailsApplication.config.jummp.security.registration.email.subject
+            String emailBody = grailsApplication.config.jummp.security.registration.email.body
+            if (grailsApplication.config.jummp.security.registration.email.sendToAdmin) {
+                bccRecipients = grailsApplication.config.jummp.security.registration.email.adminAddress
+                emailSubject = "[BioModels - new registration] ${newUser.username} account has been created"
+            }
             emailBody = emailBody.replace("{{USERNAME}}", newUser.username)
             emailBody = emailBody.replace("{{PASSWORD}}", p)
             emailBody = emailBody.replace("{{REALNAME}}", newUser.person.userRealName)
             String webURL = grailsApplication.config.grails.serverURL
             if (!webURL) {
-                webURL = "http://localhost:8080/${grails.util.Metadata.current.'app.name'}"
+                webURL = "http://localhost:8080/${Metadata.current.'app.name'}"
             }
             emailBody = emailBody.replace("{{WEBURL}}", webURL)
+            String fromRecipient = grailsApplication.config.jummp.security.registration.email.sender
             mailService.sendMail {
                 to recipient
-                from grailsApplication.config.jummp.security.registration.email.sender
+                if (bccRecipients) {
+                    bcc bccRecipients
+                }
+                from fromRecipient
                 subject emailSubject
                 text emailBody
             }
