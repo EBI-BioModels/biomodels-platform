@@ -58,6 +58,7 @@ class ReviewerAccountService extends UserService implements InitializingBean {
     static private final Logger LOGGER = LoggerFactory.getLogger(ReviewerAccountService.class)
     def ms = Holders.grailsApplication.mainContext.modelService
     def sss = Holders.grailsApplication.mainContext.springSecurityService
+    def mailService = Holders.grailsApplication.mainContext.mailService
 
     User createReviewerUser(final String name, final String password) {
         Person p = new Person(userRealName: name).save()
@@ -85,7 +86,7 @@ class ReviewerAccountService extends UserService implements InitializingBean {
             throw new IllegalArgumentException("One or more of the submission identifiers $modelIDs could not be found")
         }
         for (Model m: models) {
-            if(!ms.canAddRevision(m)) { // TODO ensure that this only applies to previously-unpublished models
+            if (!ms.canAddRevision(m)) { // TODO ensure that this only applies to previously-unpublished models
                 throw new IllegalArgumentException(
                     "You can only create a reviewer account for your own models -- model ${m.submissionId} is not one of them")
             }
@@ -113,7 +114,7 @@ class ReviewerAccountService extends UserService implements InitializingBean {
         ReviewerAccountInfo reviewerInfo = createReviewerAccount(modelsToReview)
         String u = reviewerInfo.user.username
         String p = reviewerInfo.password
-        return """<p>Please forward the following instructions to the reviewers:</p>
+        String message = """<p>Please forward the following instructions to the reviewers:</p>
 
 <p>To access these models:</p>
 <p>
@@ -125,6 +126,16 @@ ${serverURL}/${modelsToReview}</a></p>
 
 <p>In case of problems, please email <em>biomodels-net-support@lists.sf.net</em>, indicating the username <strong>$u</strong>.</p>
 """
+        String emailBody = message
+        String emailSubject = "Reviewer account for your model ${modelsToReview}"
+        def currentUser = sss.currentUser
+        mailService.sendMail {
+            to currentUser.email
+            from grailsApplication.config.jummp.security.registration.email.sender
+            subject emailSubject
+            html emailBody
+        }
+        return message
     }
 
     String formatReviewerAccountName(List<String> modelIDs) {
