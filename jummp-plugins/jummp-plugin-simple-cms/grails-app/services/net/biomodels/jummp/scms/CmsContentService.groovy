@@ -190,6 +190,24 @@ Please correct it manually.""", cmd.parentAliasURI, cmd)
         retMap
     }
 
+    List searchPost(String searchTerm) {
+        List result = CmsContent.withCriteria {
+            projections {
+                property("id")
+                property("aliasURI")
+                property("title")
+                property("description")
+            }
+            or {
+                ilike "aliasURI", "%${searchTerm}%"
+                ilike "aliasURI", "%${searchTerm}%"
+                ilike "aliasURI", "%${searchTerm}%"
+            }
+        } as List
+
+        result
+    }
+
     private static Map toMap(final CCTC cnt) {
         Map<String, Object> map = [:]
         map.put("id", cnt.id)

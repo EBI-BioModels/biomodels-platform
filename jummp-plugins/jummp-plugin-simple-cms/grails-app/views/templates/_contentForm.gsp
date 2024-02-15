@@ -23,9 +23,10 @@
                 <input type="text" placeholder="Customise the slug for this content"
                        id="aliasURI" name="aliasURI" value="${content?.aliasURI}">
             </label>
-            <label>Alias URI or Slug of the parent<span style="color: red">(*)</span>
-                <input type="text" placeholder="The alias URI or Slug of the parent node"
+            <label>Alias URI or Slug of the parent node <span style="color: red">(*)</span>
+                <input type="text" placeholder="The alias URI or Slug of the parent node, for example: news, model-of-the-year,..."
                        id="parentAliasURI" name="parentAliasURI" value="${content?.parentAliasURI}">
+                <div id="suggestion-box"></div>
             </label>
         </div>
     </div>
@@ -131,7 +132,7 @@
             ],
             shouldNotGroupWhenFull: true
         },
-        // Changing the language of the interface requires loading the language file using the <script> tag.
+        // Changing the language of the editor interface requires loading the language file using the <script> tag.
         // language: 'es',
         list: {
             properties: {
@@ -264,6 +265,11 @@
     });
 </script>
 <g:javascript>
+    $(document).ready(function() {
+        // AJAX call for autocomplete
+        searchAutocomplete();
+    });
+
     $('#btnSave, #btnCreate').on("click", function (event) {
         "use strict";
         event.preventDefault();
@@ -287,7 +293,7 @@
             if (status === "Succeeded") {
                 toastr.success(message);
                 if ("${actionName}" === "create") {
-                    toastr.warning("Your content has been created successfully. Please wait 5s before redirecting...");
+                    toastr.warning("Your content has been created successfully. Please wait 3s before redirecting...");
                     setTimeout(function() {
                         redirectToShow(data.id);
                     }, 3000);
@@ -385,4 +391,39 @@
     function redirectToShow(id) {
         window.location.href = "${createLink(uri: "/cms/content/show/")}" + id;
     }
+
+    function searchAutocomplete() {
+        $("#parentAliasURI").on("keyup", function(){
+            const postURL = "${createLink(controller: "cmsContent", action: "searchAliasURIForEditorForm")}";
+            $.ajax({
+                type: "POST",
+                url: postURL,
+                data: {
+                    searchTerm: $(this).val(),
+                    column: 1 // or 2
+                },
+                beforeSend: function(){
+                    $("#parentAliasURI").css("background", "#FFF url(${serverURL}/images/loading.gif) no-repeat 225px");
+                },
+                success: function(data) {
+                    const posts = data["posts"];
+                    if (posts.length > 0) {
+                        $("#suggestion-box").show();
+                        $("#suggestion-box").html(data["htmlBasedStringOfPosts"]);
+                    }
+                    $("#parentAliasURI").css("background", "#ffffff"); //"#87cefa"
+                },
+                error: (err) => {
+                    const message = err["message"];
+                }
+            });
+        });
+    }
+
+    // To select a parent node found: to display
+    function selectFoundPost(val) {
+        $("#parentAliasURI").val(val);
+        $("#suggestion-box").hide();
+    }
+
 </g:javascript>

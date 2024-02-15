@@ -51,7 +51,7 @@ class CmsContentController {
             lastChangedBy: userService.username, lastChangedOn: new Date())
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
-        [content: content, dateFormat: dateFormat]
+        [content: content, dateFormat: dateFormat, serverURL: grailsApplication.config.grails.serverURL]
     }
 
     def show() {
@@ -92,6 +92,40 @@ class CmsContentController {
         result.put("id", id)
         LOGGER.debug(result.toString())
         render(result as JSON)
+    }
+
+    def searchAliasURIForEditorForm() {
+        String searchTerm = params.searchTerm?.decodeHTML()
+        List posts = searchPost(searchTerm)
+        Map<String, Object> postsMap = [posts: posts]
+        if (!posts.isEmpty()) {
+            /*
+            def scms = grailsApplication.mainContext.getBean('net.biomodels.jummp.scms.ScmsTagLib')
+            String str = scms.renderFoundPosts(posts: posts, searchTerm: searchTerm)
+            Both lines above is equivalent to one line below
+            */
+            String str = g.render(template: "/templates/content/listOfFoundPosts",
+                plugin: "jummp-plugin-simple-cms", model: [posts: posts, searchTerm: searchTerm]).toString()
+            postsMap.put("htmlBasedStringOfPosts", str)
+        } else {
+            postsMap = [message: "No Alias URI Found"]
+        }
+        render(postsMap as JSON)
+    }
+
+    private List searchPost(final String searchTerm) {
+        if (!searchTerm) { return [] }
+        List posts = cmsContentService.searchPost(searchTerm)
+        def sanitisedList = []
+        posts.each {post ->
+            def id = post[0]
+            def aliasURI = post[1]
+            def title = post[2]
+            def description = post[3]
+            sanitisedList << [label: "${aliasURI} [${title}]",
+                 value: id, aliasURI: aliasURI, title: title, description: description]
+        }
+        sanitisedList
     }
 
     def generateSlug() {
