@@ -110,14 +110,12 @@
                 String parentTitle = parts[1]
             %>
             <details>
-                <summary><a href="${createLink(controller: "cmsContent", action: "show", id: parentId)}"
-                            target="_blank">
+                <summary><a href="${createLink(controller: "cmsContent", action: "show", id: parentId)}">
                     ${parentTitle}</a></summary>
                 <ul>
                     <g:each in="${item.value}" var="child" status="j">
                         <li><details><summary>
-                            <a href="${createLink(controller: "cmsContent", action: "show", id: child.id)}"
-                               target="_blank">
+                            <a href="${createLink(controller: "cmsContent", action: "show", id: child.id)}">
                                 ${child.title}</a></summary></details></li>
                     </g:each>
                 </ul>
