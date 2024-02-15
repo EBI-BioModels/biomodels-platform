@@ -129,9 +129,12 @@ ${serverURL}/${modelsToReview}</a></p>
         String emailBody = message
         String emailSubject = "Reviewer account for your model ${modelsToReview}"
         def currentUser = sss.currentUser
+        def bccRecipients = [grailsApplication.config.jummp.security.registration.email.adminAddress].toArray()
+        def sender = grailsApplication.config.jummp.security.registration.email.sender
         mailService.sendMail {
             to currentUser.email
-            from grailsApplication.config.jummp.security.registration.email.sender
+            bcc bccRecipients
+            from sender
             subject emailSubject
             html emailBody
         }
