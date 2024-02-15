@@ -53,8 +53,6 @@ class CmsContentService {
             content.description = cmd.description
             content.content = cmd.content
 
-            content.parent = CmsContent.findByAliasURI(cmd.parentAliasURI)
-
             content.createdBy = createdBy
             content.createdOn = cmd.createdOn
             content.lastChangedBy = lastChangedBy
@@ -70,6 +68,13 @@ class CmsContentService {
                 title: cmd.title, description: cmd.description, content: cmd.content, parent: null,
                 createdBy: createdBy, createdOn: cmd.createdOn,
                 lastChangedBy: lastChangedBy, lastChangedOn: cmd.lastChangedOn)
+        }
+        CmsContent parent = CmsContent.findByAliasURI(cmd.parentAliasURI)
+        if (parent) {
+            content.parent = parent
+        } else {
+            LOGGER.debug("""Cannot find the parent node {} for the new content {}. \
+Please correct it manually.""", cmd.parentAliasURI, cmd)
         }
         Map result = [:]
         if (content.save(flush: true)) {

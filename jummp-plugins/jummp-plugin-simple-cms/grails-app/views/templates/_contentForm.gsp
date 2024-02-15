@@ -290,7 +290,7 @@
                     toastr.warning("Your content has been created successfully. Please wait 5s before redirecting...");
                     setTimeout(function() {
                         redirectToShow(data.id);
-                    }, 5000);
+                    }, 3000);
                 }
             } else if (status === "Failed") {
                 toastr.error(message);

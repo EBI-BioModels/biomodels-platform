@@ -42,9 +42,10 @@ class CmsContentController {
     }
 
     def create() {
-        // -1 is a fake id that will be granted a valid value
-        LOGGER.debug("Started creating new content...")
-        println("Started creating new content...")
+        LOGGER.debug("Started creating a new content...")
+        println("Started creating a new content...")
+        // -1 is a fake id so that it can meet a minimal condition in the editor form.
+        // it will be granted a valid value at persisting in the db.
         CCTC content = new CCTC(id: -1,
             createdBy: userService.username, createdOn: new Date(),
             lastChangedBy: userService.username, lastChangedOn: new Date())
