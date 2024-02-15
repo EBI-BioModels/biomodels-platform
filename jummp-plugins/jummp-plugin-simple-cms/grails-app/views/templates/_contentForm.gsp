@@ -88,8 +88,10 @@
     </div>
 
     <div class="row">
+        <% def dashboardLink = createLink(uri: grailsApplication.config.grails.serverURL + "/cms/content")%>
         <div class="columns small-12 medium-12 large-12">
-            <button type="button" id="btnDashboard" class="button btn-default">Dashboard</button>
+            <button type="button" id="btnDashboard" class="button btn-default"
+                    onclick='$.jummp.openPage("${dashboardLink}")'>Dashboard</button>
             <button type="reset" class="button btn-default">Reset</button>
             <g:if test="${actionName == 'edit'}">
                 <button type="button" class="button btn-default"
