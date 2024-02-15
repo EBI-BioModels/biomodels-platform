@@ -95,6 +95,11 @@
 
 <body>
 <h1>All Items</h1>
+<%
+    def creationLink = createLink(controller: "cmsContent", action: "create")
+%>
+<p><input type="button" class="button" value="Create a new post"
+          onclick='$.jummp.openPage("${creationLink}")'/></p>
 <!-- This implementation of tree view is original from the post https://iamkate.com/code/tree-views/ -->
 <ul class="tree">
     <g:each in="${items}" var="item" status="i">
