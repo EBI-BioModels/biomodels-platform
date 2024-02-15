@@ -284,7 +284,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     @Profiled(tag="userService.searchUsers")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
     List searchUsers(String term) {
-        return User.withCriteria {
+        List result = User.withCriteria {
             projections {
                 property('email')
                 property('username')
@@ -294,13 +294,15 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
                 property('id')
             }
             or {
-                ilike 'email', "%"+term + '%'
-                ilike 'username', "%"+term + '%'
+                ilike 'email', "%${term}%"
+                ilike 'username', "%${term}%"
                 person {
-                    ilike 'userRealName', "%"+term + '%'
+                    ilike 'userRealName', "%${term}%"
                 }
             }
-        }
+        } as List
+
+        result
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)

@@ -363,7 +363,7 @@
                 dataType: "json",
                 data: data,
             }).done(function (data, txtStatus, jqXHR) {
-                let slug = data.slug
+                let slug = data.slug;
                 $('#aliasURI').val(slug);
             }).fail(function (jqXHR, status, errorThrown) {
                 message = jqXHR.statusText;

@@ -363,7 +363,7 @@ with us asap for further instructions"""
     @Secured(["IS_AUTHENTICATED_FULLY"])
     def fetchUsers() {
         String request = params.request
-        if (Integer.parseInt(request) == RequestType.SEARCH_TERMS) {
+        if (Integer.parseInt(request) == RequestType.SEARCH_TERMS.value) {
             String searchTerm = params.search
             def usersMap = queryUsers(searchTerm)
             render(usersMap as JSON)
@@ -419,18 +419,18 @@ with us asap for further instructions"""
     private List queryUsers(final String searchTerm) {
         if (!searchTerm) { return [] }
         List users = userService.searchUsers(searchTerm)
-        def usersMap = []
-        users.each {user ->
+        def userList = []
+        users.each { def user ->
             def email = user[0]
             def username = user[1]
             def userRealName = user[2]
             def id = user[3]
-            usersMap << [label: "${userRealName} (${username}<${email}>)",
+            userList << [label: "${userRealName} (${username}<${email}>)",
                          value: id,
                          username: username,
                          email: email,
                          userRealname: userRealName]
         }
-        usersMap
+        userList
     }
 }

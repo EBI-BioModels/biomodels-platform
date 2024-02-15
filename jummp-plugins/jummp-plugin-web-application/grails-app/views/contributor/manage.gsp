@@ -125,9 +125,9 @@
                 }
             });
         });
-    };
+    }
 
-    // To select country name
+    // To select user found: to display
     function selectFoundUser(val) {
         $("#txt-email-or-name").val(val);
         $("#suggestion-box").hide();
@@ -163,12 +163,12 @@
     }
 
 
-    $("#txt-email-or-name").blur(function() {
+    $("#txt-email-or-name").on("blur", function() {
         let email = $(this).val().trim();
         doCheckEmail(email);
     });
 
-    $("#txt-email-invite").blur(function() {
+    $("#txt-email-invite").on("blur", function() {
         let email = $(this).val().trim();
         doCheckEmail(email);
     });
