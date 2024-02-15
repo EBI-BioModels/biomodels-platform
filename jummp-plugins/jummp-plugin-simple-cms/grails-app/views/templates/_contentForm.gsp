@@ -409,9 +409,11 @@
                 },
                 success: function(data) {
                     const posts = data["posts"];
-                    if (posts.length > 0) {
+                    if (posts !== undefined && posts.length > 0) {
                         $("#suggestion-box").show();
                         $("#suggestion-box").html(data["htmlBasedStringOfPosts"]);
+                    } else {
+                        $("#suggestion-box").hide();
                     }
                     $("#parentAliasURI").css("background", "#ffffff"); //"#87cefa"
                 },

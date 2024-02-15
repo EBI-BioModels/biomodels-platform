@@ -117,9 +117,11 @@
                 },
                 success: function(data){
                     const usersList = data["users"];
-                    if (usersList.length > 0) {
+                    if (usersList !== undefined && usersList.length > 0) {
                         $("#suggestion-box").show();
                         $("#suggestion-box").html(data["htmlBasedStringOfUsers"]);
+                    } else {
+                        $("#suggestion-box").hide();
                     }
                     $("#txt-email-or-name").css("background", "#ffffff"); //"#87cefa"
                 }
