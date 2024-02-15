@@ -104,7 +104,7 @@
                 Long parentId = parts[0] as Long
                 String parentTitle = parts[1]
             %>
-            <details open>
+            <details>
                 <summary><a href="${createLink(controller: "cmsContent", action: "show", id: parentId)}"
                             target="_blank">
                     ${parentTitle}</a></summary>
