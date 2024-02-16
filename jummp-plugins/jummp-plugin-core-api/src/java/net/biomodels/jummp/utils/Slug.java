@@ -32,12 +32,12 @@ import java.util.regex.Pattern;
  *
  * Author: tnguyen@ebi.ac.uk, nvntung@gmail.com
  */
-class Slug {
+public class Slug {
 
     private static final Pattern NON_LATIN = Pattern.compile("[^\\w-]");
     private static final Pattern WHITESPACE = Pattern.compile("[\\s]");
 
-    static String make(String input) {
+    public static String make(String input) {
         String non_whitespace = WHITESPACE.matcher(input).replaceAll("-");
         String normalized = Normalizer.normalize(non_whitespace, Form.NFD);
         String slug = NON_LATIN.matcher(normalized).replaceAll("");
