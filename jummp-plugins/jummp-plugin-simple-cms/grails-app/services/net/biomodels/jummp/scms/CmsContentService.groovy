@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat
 class CmsContentService {
     private static final Logger LOGGER = LoggerFactory.getLogger(CmsContentService.class)
 
+    def grailsApplication
     def springSecurityService
     def userService
 
@@ -125,6 +126,7 @@ Please correct it manually.""", cmd.parentAliasURI, cmd)
                 view = mainView
             }
         }
+        model.putAll(["serverURL": grailsApplication.config.grails.serverURL])
         [plugin: plugin, controller: controller, view: view, model: model]
     }
 
