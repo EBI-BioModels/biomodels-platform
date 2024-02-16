@@ -15,7 +15,7 @@
 <body>
     <g:if test="${parentAliasURI == "news"}">
     <h1>${title}</h1>
-        <p><em>Created on: ${createdOn}, Last Updated on: ${lastChangedOn}</em></p>
+        <p><em>created on: ${createdOn} by ${createdBy}, last updated on: ${lastChangedOn} by ${lastChangedBy}</em></p>
     </g:if>
     ${content}
 </body>
