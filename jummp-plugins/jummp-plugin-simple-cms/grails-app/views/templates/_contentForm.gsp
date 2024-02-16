@@ -304,7 +304,8 @@
                     }, 3000);
                 }
             } else if (status === "Failed") {
-                toastr.error(message);
+                toastr.error(message.replaceAll("\n", "<br/>")).css("width", "400px");
+                console.log(message);
             }
         }).fail(function (jqXHR, status, errorThrown) {
             let msg = jqXHR.statusText;

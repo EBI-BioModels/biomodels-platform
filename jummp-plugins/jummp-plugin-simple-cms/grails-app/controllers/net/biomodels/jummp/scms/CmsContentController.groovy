@@ -85,7 +85,10 @@ class CmsContentController {
             }
         } else {
             status = "Failed"
-            message = "Data invalid: ${cmd.errors.toString()}"
+            def appHolder = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
+            def list = cmd.errors.allErrors.collect {appHolder.g.message([error: it]) }
+            message = "Data invalid:\n" + list.join("\n")
+            message = message.replace("of class [class net.biomodels.jummp.scms.CmsContentTransportCommand]", "")
         }
         result.put("status", status)
         result.put("message", message)
