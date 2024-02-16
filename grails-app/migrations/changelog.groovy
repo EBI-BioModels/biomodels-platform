@@ -1323,5 +1323,6 @@ databaseChangeLog = {
     include file: '20230427_addONNXFormat.groovy'
     include file: '20231222_createAuthTokenTable.groovy'
     include file: '20231222_createPostTable.groovy'
+    include file: '20240216_addBMSFormat.groovy'
 }
 
