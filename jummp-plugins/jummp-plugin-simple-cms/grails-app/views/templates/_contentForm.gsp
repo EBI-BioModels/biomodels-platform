@@ -267,6 +267,9 @@
     });
 </script>
 <g:javascript>
+    let currentParentAliasURI = "";
+    let parentAliasURINotFound = false;
+
     $(document).ready(function() {
         // AJAX call for autocomplete
         searchAutocomplete();
@@ -303,16 +306,6 @@
             } else if (status === "Failed") {
                 toastr.error(message);
             }
-            /*let statusCode = data.status
-            if (statusCode === 200) {
-                toastr.success(msg);
-            } else if (statusCode === 400) {
-                toastr.error(msg);
-            } else if (statusCode === 422) {
-                toastr.warn(msg);
-            } else {
-                toastr.error("Cannot determine the reason for the unexpected error.");
-            }*/
         }).fail(function (jqXHR, status, errorThrown) {
             let msg = jqXHR.statusText;
             toastr.clear();
@@ -400,6 +393,15 @@
             });
         }
     });
+
+    $("#parentAliasURI").on("blur", function() {
+        if (parentAliasURINotFound && currentParentAliasURI !== null && currentParentAliasURI.length !== 0) {
+            toastr.clear();
+            toastr.error("The parent post alias URI doesn't exist!!!");
+            console.log("The parent post alias URI doesn't exist!!!");
+        }
+    });
+
     $('#createdOn').datepicker({
         dateFormat: 'yy-mm-dd',
         onSelect: function(datetext) {
@@ -423,7 +425,7 @@
     }
 
     function searchAutocomplete() {
-        $("#parentAliasURI").on("keyup", function(){
+        $("#parentAliasURI").on("keyup", function() {
             const postURL = "${createLink(controller: "cmsContent", action: "searchAliasURIForEditorForm")}";
             $.ajax({
                 type: "POST",
@@ -438,15 +440,20 @@
                 success: function(data) {
                     const posts = data["posts"];
                     if (posts !== undefined && posts.length > 0) {
+                        parentAliasURINotFound = false;
                         $("#suggestion-box").show();
                         $("#suggestion-box").html(data["htmlBasedStringOfPosts"]);
                     } else {
                         $("#suggestion-box").hide();
+                        parentAliasURINotFound = true;
                     }
                     $("#parentAliasURI").css("background", "#ffffff"); //"#87cefa"
                 },
                 error: (err) => {
                     const message = err["message"];
+                },
+                complete: () => {
+                    currentParentAliasURI = $(this).val();
                 }
             });
         });
