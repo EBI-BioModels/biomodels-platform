@@ -13,13 +13,9 @@
 </head>
 
 <body>
-    <g:if test="${parentAliasURI == "news"}">
-    <h1>${title}</h1>
-        <p><em>created on: ${createdOn} by ${createdBy}, last updated on: ${lastChangedOn} by ${lastChangedBy}</em></p>
-    </g:if>
-    ${content}
+    <g:render template="/templates/content/cntBody" />
     <g:if test="${canUpdate}">
-    <p><input type="button" class="button" value="Click here to edit"/></p>
+    <g:render template="/templates/actionButtons" />
     </g:if>
 </body>
 </html>

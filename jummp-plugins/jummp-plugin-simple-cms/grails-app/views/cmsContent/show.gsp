@@ -14,5 +14,6 @@
 
 <body>
     <g:render template="/templates/contentShow" />
+    <g:render template="/templates/actionButtons" />
 </body>
 </html>
