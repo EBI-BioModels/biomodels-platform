@@ -10,6 +10,7 @@ class ContentController {
 
     def grailsApplication
     def cmsContentService
+    def userService
 
     def index() {
         render("Test")
@@ -38,6 +39,8 @@ class ContentController {
             forward(controller: "errors", action: "error404", plugin: "jummp-plugin-web-application")
             return
         }
+        boolean canUpdate = userService.isLoggedInUserACurator() || userService.isLoggedInUserAAdmin()
+        data.put("canUpdate", canUpdate)
         render(view: "show", model: data)
     }
 
@@ -51,6 +54,8 @@ class ContentController {
             return
         }
         data.put("pageTitle", data.get("title"))
+        boolean canUpdate = userService.isLoggedInUserACurator() || userService.isLoggedInUserAAdmin()
+        data.put("canUpdate", canUpdate)
         render(view: "show", model: data)
     }
 }

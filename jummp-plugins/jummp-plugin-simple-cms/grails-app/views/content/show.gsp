@@ -18,5 +18,8 @@
         <p><em>created on: ${createdOn} by ${createdBy}, last updated on: ${lastChangedOn} by ${lastChangedBy}</em></p>
     </g:if>
     ${content}
+    <g:if test="${canUpdate}">
+    <p><input type="button" class="button" value="Click here to edit"/></p>
+    </g:if>
 </body>
 </html>
