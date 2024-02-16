@@ -14,6 +14,6 @@
 
 <body>
     <g:render template="/templates/contentShow" />
-    <g:render template="/templates/actionButtons" />
+    <g:render template="/templates/actionButtons" model='[id: "${id}"]'/>
 </body>
 </html>
