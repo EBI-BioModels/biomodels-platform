@@ -94,6 +94,17 @@ class CmsContentController {
         render(result as JSON)
     }
 
+    def checkDuplicateAliasURI() {
+        String aliasURI = params.aliasURI?.decodeHTML()
+        List posts = CmsContent.findAllByAliasURI(aliasURI)
+        boolean duplicated = false
+        if (!posts.isEmpty()) {
+            duplicated = true
+        }
+        Map<String, Object> mapData = ["duplicated": duplicated]
+        render(mapData as JSON)
+    }
+
     def searchAliasURIForEditorForm() {
         String searchTerm = params.searchTerm?.decodeHTML()
         List posts = searchPost(searchTerm)

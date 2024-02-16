@@ -361,7 +361,7 @@
                 cache: true,
                 processData: true,
                 dataType: "json",
-                data: data,
+                data: data
             }).done(function (data, txtStatus, jqXHR) {
                 let slug = data.slug;
                 $('#aliasURI').val(slug);
@@ -372,6 +372,34 @@
         }
     });
 
+    $('#aliasURI').on("blur", function() {
+        const aliasURI = $(this).val();
+        if (aliasURI) {
+            const data = { 'aliasURI': aliasURI };
+            let message = "";
+            $.ajax({
+                type: "POST",
+                url: $.jummp.createLink("cmsContent", "checkDuplicateAliasURI"),
+                cache: true,
+                processData: true,
+                dataType: "json",
+                data: data
+            }).done(function (data, txtStatus, jqXHR) {
+                let duplicated = data["duplicated"];
+                if (duplicated) {
+                    toastr.clear();
+                    toastr.error("This alias is not accepted because it exists!!!");
+                }
+            }).fail(function (jqXHR, status, errorThrown) {
+                message = jqXHR.statusText;
+                console.log(message);
+                toastr.clear();
+                toastr.error(message);
+            }).always(() => {
+                console.log(aliasURI + " is available.");
+            });
+        }
+    });
     $('#createdOn').datepicker({
         dateFormat: 'yy-mm-dd',
         onSelect: function(datetext) {
