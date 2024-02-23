@@ -201,7 +201,9 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
 
 
     def renderPublicationDetails() {
-        if (params.pubDetails.decodeHTML() == "\"\"" || params.pubDetails.decodeHTML() == "{}") {
+        if (params.pubDetails.decodeHTML() == "\"\"" ||
+            params.pubDetails.decodeHTML() == "{}" ||
+            params.pubDetails == null) {
             render("No publication provided")
         } else {
             // this action is often called to display the publication which has been validated
