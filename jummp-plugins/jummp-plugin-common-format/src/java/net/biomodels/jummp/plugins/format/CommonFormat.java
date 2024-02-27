@@ -11,7 +11,6 @@ import static net.biomodels.jummp.plugins.format.CommonFormat.Constants.*;
  * <p style="font-weight: bold">Authors:</p>
  * <ul>
  * <li><a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a></li>
- * <li><a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glonț</a></li>
  * </ul>
  */
 public enum CommonFormat {
@@ -22,6 +21,7 @@ public enum CommonFormat {
     MATLAB("MATLAB (Octave)", "matlab", DEFAULT_VERSIONS, MATLAB_MIME, "matlabFormatService", "matlab"),
     MORPHEUSML("MorpheusML", "MorpheusML", DEFAULT_VERSIONS, MORPHEUSML_MIME, "morpheusMLFormatService", DEFAULT_CONTROLLER),
     ONNX("Open Neural Network Exchange", "ONNX", DEFAULT_VERSIONS, ONNX_MIME, "onnxFormatService", DEFAULT_CONTROLLER),
+    BMS("BioModels Metadata Submission", "BMS", DEFAULT_VERSIONS, BMS_MIME, "bmsFormatService", DEFAULT_CONTROLLER),
     PYTHON("Python", "Python", Stream.concat(Arrays.stream(DEFAULT_VERSIONS), Arrays.stream(PYTHON_VERSIONS)).toArray(String[]::new), PYTHON_MIME),
     R("R", "R", DEFAULT_VERSIONS, R_MIME, "rlangFormatService", DEFAULT_CONTROLLER);
 
@@ -110,6 +110,9 @@ public enum CommonFormat {
                 Collections.singletonList("application/xml"));
         public static final Set<String> ONNX_MIME = new LinkedHashSet<>(
                 Collections.singletonList("text/onnx"));
+
+        public static final Set<String> BMS_MIME = new LinkedHashSet<>(
+                Collections.singletonList("text/bms"));
         public static final Set<String> CC3DML_MIME = new LinkedHashSet<>(
                 Collections.singletonList("application/xml"));
         public static final Set<String> R_MIME = new LinkedHashSet<>(
