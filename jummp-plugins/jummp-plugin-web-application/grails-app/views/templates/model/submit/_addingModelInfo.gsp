@@ -222,15 +222,14 @@
             msg = "You are submitting only metadata to BioModels. Please describe your model briefly in the description box.";
             messages.push(msg);
             // check the upload files if at least CSV file is uploaded
-            const isCSV = getFileExtension(modelFile.filename).toUpperCase() === "CSV"
-            const csvFiles = additionalFiles.filter(f => {
-               return getFileExtension(f.filename).toUpperCase() === "CSV"
-            });
-            const hasCSVInAdditionalFiles = csvFiles.length > 0;
-            if (!isCSV && !hasCSVInAdditionalFiles)  {
+            const hasCSV = existsFileExtension("CSV")
+            if (!hasCSV)  {
                 msg = "Metadata submission needs a CSV file containing all annotations. Please go back to the previous step to double check it.";
                 messages.push(msg);
             }
+        } else if (editedModelFormatNameAndVersion.indexOf("SBML") >= 0 && !existsFileExtension("XML")) {
+            msg = "You have chosen SBML as the model format but no SBML file (XML extension) has been uploaded.";
+            messages.push(msg);
         } else {
             isValid = true;
         }
@@ -240,6 +239,14 @@
     function getFileExtension(filename){
         // get file extension
         return filename.split('.').pop();
+    }
+
+    function existsFileExtension(extension) {
+        const isCSV = getFileExtension(modelFile.filename).toUpperCase() === extension
+        const csvFiles = additionalFiles.filter(f => {
+            return getFileExtension(f.filename).toUpperCase() === extension
+        });
+        return isCSV || csvFiles.lengths > 0
     }
 
     function associateEventHandlers(id) {
