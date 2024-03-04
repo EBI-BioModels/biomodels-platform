@@ -1,3 +1,4 @@
+<%@ page import="net.biomodels.jummp.webapp.RequestType" %>
 <g:javascript>
     let definedModellingApproachNames = [];
     <g:each in="${definedModellingApproachNames}" var="name">
@@ -9,11 +10,6 @@
     </g:each>
 </g:javascript>
 <style type="text/css">
-    .assistive-example {
-        font-size: small;
-        font-style: italic;
-        color: darkgray
-    }
     .disable{
         pointer-events: none;
         background: #bfbfbf;
@@ -36,14 +32,12 @@
             <span class="required">Name</span>&nbsp;
             <span class="assistive-example">[e.g. Launna2020 - T-Cell signalling model]</span></label>
         <g:if test="${"new_name"}">
-            <g:textField id="name" name="name" required=""
-                         value=""
-                         placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
+            <input type="text" id="name" name="name" required value=""
+                   placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
         </g:if>
         <g:else>
-            <g:textField id="name" name="name" required=""
-                         value=""
-                         placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
+            <input type="text" id="name" name="name" required value=""
+                   placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
             <p class="help-text" id="nameHelp" style="color: red">&nbsp;</p>
         </g:else>
 
@@ -58,7 +52,6 @@
         <label for="model_format">
             <span class="required">Model Format</span>&nbsp;
             <span class="assistive-example">[e.g. SBML L3V2, Python 2.7, C/C++]</span></label>
-        %{--            <g:if test="${workingMemory['model_type']}">--}%
         <g:if test="${"test"}">
         </g:if>
         <g:select name="model_format" id="model_format" required=""
@@ -77,9 +70,8 @@
         <label for="modelling_approach">
             <span class="required">Modelling Approach</span>&nbsp;
             <span class="assistive-example">[e.g. Constraint-based modelling, Logical model, Markov model,...]</span></label>
-        <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
-                     placeholder="Enter your modelling approach" required="true"
-                     aria-describedby="modellingApproachHelp"/>
+        <input type="text" name="modelling_approach" id="modelling_approach" value="${modellingApproach}" required
+               placeholder="Enter your modelling approach" aria-describedby="modellingApproachHelp"/>
         <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
         first characters of your words. The system will suggest you our defined modelling approaches. If you
         are not sure your modelling approach, please type Other for now.</p>
@@ -89,7 +81,7 @@
             <g:textField name="other_info" id="other_info"
                          value="${otherInfo}"
                          placeholder="Please enter here what is your modelling approach"/></div>
-        <p class="help-text" id="otherInfoHelp" style="color: red">&nbsp;</p>
+        <p class="help-text" id="otherInfoHelp" style="color: red !important;">&nbsp;</p>
     </div>
 </div>
 <input type="hidden" value="false" name="changed" id="changeStatus"/>
@@ -111,86 +103,96 @@
 <input type="button" name="next" class="next action-button" value="Next" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script>
+    /* This function will do front-end and back-end validation */
     function validateModelInfo() {
-        // perform a client side validation
-        // TODO: implement me: return false if there are errors on the form
         const data = buildModelInfoData();
-        // then perform a server side validation
-        return $.ajax({
-            url: "${createLink(controller: "submission", action: "validateModelInfo")}",
-            type: "GET",
-            data: {
-                submissionFolder: submissionFolder,
-                modelId: modelId,
-                isUpdate: isUpdate,
-                isAmend: isAmend,
-                latestModelName: latestModelName,
-                latestModelFormat: latestModelFormat,
-                latestModelFormatNameAndVersion: latestModelFormatNameAndVersion,
-                latestReadmeSubmission: latestReadmeSubmission,
-                latestModellingApproach: latestModellingApproach,
-                latestOtherInfo: latestOtherInfo,
 
-                editedModelName: $('input[id="name"]').val(),
-                editedModelDescription: $('textarea[id="description"]').val(),
-                editedModelFormat: $('#model_format').val(),
-                editedModelFormatNameAndVersion: $('#model_format option:selected').text(),
-                editedReadmeSubmission: $('#readme_submission').val(),
-                editedModellingApproach: $('#modelling_approach').val(),
-                editedOtherInfo: $('#other_info').val(),
+        // First, perform a client side validation. If the validation goes through, we will perform deeper checks
+        // at the back-end side. Both validations need to be returned an AJAX callback.
+        const formValidation = validateModelInfoForm(data);
+        if (!formValidation["isValid"]) {
+            let msg = "";
+            currentValidation = false;
+            errorMessages = [];
+            return $.ajax({
+                type: "POST",
+                url: "${createLink(controller: "submission", action: "renderFileUploadFailures")}",
+                success: function() {
+                    msg = "There are some errors. Please check and correct them.";
+                    showNotification(msg);
+                    console.log(msg);
+                },
+                error: function() {
+                    msg = "Errors when trying to validate the model info form.";
+                    console.log(msg);
+                    showNotification(msg);
+                    toastr.error(msg);
+                },
+                complete: () => {
+                    errorMessages.push(msg);
+                    errorMessages.push(...formValidation["messages"]);
+                    console.log(errorMessages);
+                    showFlashMessages(errorMessages);
+                }
+            });
+        } else {
+            // then perform a server side validation
+            return $.ajax({
+                url: "${createLink(controller: "submission", action: "validateModelInfo")}",
+                type: "GET",
+                data: data,
+                success: function (response) {
+                    console.log(JSON.stringify(response));
+                    changesMade = response["changesMade"];
+                    errorMessages = [];
+                    let isNameValid = true;
+                    if ($('input[id="name"]').val().length === 0) {
+                        errorMessages.push("The model name text box is empty. Please enter a meaningful name.")
+                        isNameValid = false;
+                    } else if ($('input[id="name"]').val().length < 5 || $('input[id="name"]').val().length > 255) {
+                        errorMessages.push("Length of the model name is greater 4 and less 256 characters.")
+                        isNameValid = false;
+                    }
 
-                changesMade: [...changesMade]
-            },
-            success: function (response) {
-                console.log(JSON.stringify(response));
-                changesMade = response["changesMade"];
-                errorMessages = [];
-                let isNameValid = true;
-                if ($('input[id="name"]').val().length === 0) {
-                    errorMessages.push("The model name text box is empty. Please enter a meaningful name.")
-                    isNameValid = false;
-                } else if ($('input[id="name"]').val().length < 5 || $('input[id="name"]').val().length > 255) {
-                    errorMessages.push("Length of the model name is greater 4 and less 256 characters.")
-                    isNameValid = false;
-                }
+                    let modelFormat = $("#model_format option:selected").text();
+                    let isMFDetected = definedModelFormatNames.filter(e => e === modelFormat).length === 1;
+                    let isFMMatched = true;
+                    if (modelFormat === "Original code *") {
+                        isFMMatched = $('#readme_submission').val().length > 0
+                    }
+                    if (!isFMMatched) {
+                        errorMessages.push("Please explain what is your model format in the corresponding box.");
+                    }
 
-                let modelFormat = $("#model_format option:selected").text();
-                let isMFDetected = definedModelFormatNames.filter(e => e === modelFormat).length === 1;
-                let isFMMatched = true;
-                if (modelFormat === "Original code *") {
-                    isFMMatched = $('#readme_submission').val().length > 0
+                    let modellingApproach = $('#modelling_approach').val();
+                    let isMARecognisable = definedModellingApproachNames.filter(ma => ma === modellingApproach).length === 1;
+                    if (!isMARecognisable) {
+                        errorMessages.push("Please type to choose a modelling approach from the pre-defined values.")
+                    }
+                    let isMAMatched = true;
+                    if (modellingApproach === "Other") {
+                        isMAMatched = $('#other_info').val().length > 0;
+                    }
+                    if (!isMAMatched) {
+                        errorMessages.push("Please explain what is your modelling approach in the corresponding box.");
+                    }
+                    currentValidation = isNameValid && isMFDetected && isFMMatched && isMARecognisable && isMAMatched;
+                    if (currentValidation) {
+                        updateModelInfoObject();
+                    }
                 }
-                if (!isFMMatched) {
-                    errorMessages.push("Please explain what is your model format in the corresponding box.");
-                }
-
-                let modellingApproach = $('#modelling_approach').val();
-                let isMARecognisable = definedModellingApproachNames.filter(ma => ma === modellingApproach).length === 1;
-                if (!isMARecognisable) {
-                    errorMessages.push("Please type to choose a modelling approach from the pre-defined values.")
-                }
-                let isMAMatched = true;
-                if (modellingApproach === "Other") {
-                    isMAMatched = $('#other_info').val().length > 0;
-                }
-                if (!isMAMatched) {
-                    errorMessages.push("Please explain what is your modelling approach in the corresponding box.");
-                }
-                currentValidation = isNameValid && isMFDetected && isFMMatched && isMARecognisable && isMAMatched;
-                if (currentValidation) {
-                    updateModelInfoObject();
-                }
-            }
-        });
+            });
+        }
     }
 
     function buildModelInfoData() {
         return {
+            submissionFolder: submissionFolder,
             modelId: modelId,
             isUpdate: isUpdate,
             isAmend: isAmend,
             latestModelName: latestModelName,
-            //latestModelDescription: latestModelDescription,
+            latestModelDescription: latestModelDescription,
             latestModelFormat: latestModelFormat,
             latestModelFormatNameAndVersion: latestModelFormatNameAndVersion,
             latestReadmeSubmission: latestReadmeSubmission,
@@ -207,6 +209,37 @@
 
             changesMade: [...changesMade]
         }
+    }
+
+    /* This is front-end validation */
+    function validateModelInfoForm(data) {
+        let messages = [];
+        const editedModelFormatNameAndVersion = data["editedModelFormatNameAndVersion"];
+        const editedModelDescription =  data["editedModelDescription"];
+        let msg = "";
+        let isValid = false;
+        if (editedModelDescription.length === 0 && editedModelFormatNameAndVersion === "BioModels Metadata Submission *") {
+            msg = "You are submitting only metadata to BioModels. Please describe your model briefly in the description box.";
+            messages.push(msg);
+            // check the upload files if at least CSV file is uploaded
+            const isCSV = getFileExtension(modelFile.filename).toUpperCase() === "CSV"
+            const csvFiles = additionalFiles.filter(f => {
+               return getFileExtension(f.filename).toUpperCase() === "CSV"
+            });
+            const hasCSVInAdditionalFiles = csvFiles.length > 0;
+            if (!isCSV && !hasCSVInAdditionalFiles)  {
+                msg = "Metadata submission needs a CSV file containing all annotations. Please go back to the previous step to double check it.";
+                messages.push(msg);
+            }
+        } else {
+            isValid = true;
+        }
+        return {isValid: isValid, messages: messages};
+    }
+
+    function getFileExtension(filename){
+        // get file extension
+        return filename.split('.').pop();
     }
 
     function associateEventHandlers(id) {
@@ -253,7 +286,7 @@
                     dataType: 'json',
                     data: {
                         search: request.term,
-                        request: ${net.biomodels.jummp.webapp.RequestType.SEARCH_TERMS.value}
+                        request: ${RequestType.SEARCH_TERMS.value}
                     },
                     success: function (data) {
                         response(data);
@@ -270,7 +303,7 @@
                     data: {
                         id: id,
                         name: label,
-                        request: ${net.biomodels.jummp.webapp.RequestType.SELECT_VALUE.value}
+                        request: ${RequestType.SELECT_VALUE.value}
                     },
                     dataType: 'json',
                     success: function (response) {
@@ -295,7 +328,6 @@
     $('#model_format').bind("change blur", function () {
         handleShowOrHideModelFormatExtraInfo(this);
     });
-
 
     function handleShowOrHideModellingApproachExtraInfo(selector, flag) {
         let element = $('#model_other_info_div');
@@ -361,7 +393,7 @@
 
         // the detected model format could not be identical to the latestModelFormat because the detected one
         // is inferred from the real main file uploaded in the file uploading step. Therefore, the text displayed
-        // in the format dropdown box might be different than what we can see from the latest revision format.
+        // in the format dropdown box might be different from what we can see from the latest revision format.
         $('#model_format').val(modelFile.detectedModelFormat.id).change();
         // Below are two pieces of information associated with the revision
         let readmeSubmission = modelFile.detectedModelFormat.readme;

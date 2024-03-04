@@ -52,3 +52,9 @@
         cursor: default;
     }
 }
+
+.assistive-example {
+    font-size: small;
+    font-style: italic;
+    color: #007c82;
+}

@@ -221,7 +221,7 @@
                 currentValidation = response["currentValidation"];
                 // Explain what you have updated
                 revisionComments = $('#revisionComments').val();
-                msg = "Finished the last validation of the submission data.\n";
+                msg = "Finished the last validation of the submission data.";
                 if (!currentValidation) {
                     msg += response["errMsg"];
                 } else {

@@ -44,8 +44,7 @@
         </div>
     </div>
 </div>
-<div name="authorListTemp" id="authorListTemp"
-     style="height: 50px; margin: auto; border: 3px solid #73AD21; display: none">
+<div id="authorListTemp" style="height: 50px; margin: auto; border: 3px solid #73AD21; display: none">
 </div>
 <input type="button" name="next" class="next action-button" value="Next" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>

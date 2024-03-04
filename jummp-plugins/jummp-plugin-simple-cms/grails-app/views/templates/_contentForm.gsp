@@ -24,6 +24,7 @@
                        id="aliasURI" name="aliasURI" value="${content?.aliasURI}">
             </label>
             <label>Alias URI or Slug of the parent node <span style="color: red">(*)</span>
+                <span class="assistive-example">[news, model-of-the-year,...]</span>
                 <input type="text" placeholder="The alias URI or Slug of the parent node, for example: news, model-of-the-year,..."
                        id="parentAliasURI" name="parentAliasURI" value="${content?.parentAliasURI}">
                 <div id="suggestion-box"></div>
