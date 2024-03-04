@@ -151,7 +151,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
     @Override
     boolean addModellingApproachAsAnnotation(RevisionTC revision, MA approach) throws ModelException {
         final Qualifier bqbHasProperty = Qualifier.BQB_HAS_PROPERTY
-        String[] identifiers = ["http://identifiers.org/mamo/${approach?.accession}"] as String[]
+        String[] identifiers = ["https://identifiers.org/mamo:${approach?.accession}"] as String[]
         String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
         addAnnotations2Model(TypeAnno.MODELLING_APPROACH, revision, bqbHasProperty, accessionPattern, identifiers)
     }
@@ -173,16 +173,16 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             LOGGER.debug("BioModels only supports to add an annotation to SBML file for PubMed and DOI.")
             return false
         }
-        String[] identifiers = ["http://identifiers.org/$namespace:$publication.link"] as String[]
+        String[] identifiers = ["https://identifiers.org/$namespace:$publication.link"] as String[]
         addAnnotations2Model(TypeAnno.PUBLICATION, revision, bqmIsDescribedBy, accessionPattern, identifiers)
     }
 
-    private boolean addAnnotationsIfNeeded(TypeAnno typeAnno,
-                                           RevisionTC revision,
-                                           SBMLDocument document,
-                                           Qualifier qualifier,
-                                           String accessionPattern,
-                                           String... identifiers) throws ModelException {
+    private static boolean addAnnotationsIfNeeded(TypeAnno typeAnno,
+                                                  RevisionTC revision,
+                                                  SBMLDocument document,
+                                                  Qualifier qualifier,
+                                                  String accessionPattern,
+                                                  String... identifiers) throws ModelException {
         String rID = Objects.requireNonNull(revision).identifier()
         Model model = Objects.requireNonNull(document).model
 
@@ -1358,7 +1358,7 @@ the user has attempted to update an blank value for the name attribute.""")
         true
     }
 
-    private boolean doRemoveAnnotation(Model model, RevisionTC revision, Qualifier qualifier, String rID) {
+    private static boolean doRemoveAnnotation(Model model, RevisionTC revision, Qualifier qualifier, String rID) {
         long mId = revision.model.id
         if (mId) {
             MA oldMA = net.biomodels.jummp.model.Model.get(mId).modellingApproach

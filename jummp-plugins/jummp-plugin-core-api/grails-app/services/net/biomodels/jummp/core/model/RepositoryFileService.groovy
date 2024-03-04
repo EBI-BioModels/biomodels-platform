@@ -419,15 +419,14 @@ the model ${modelId} revision ${revision.revisionNumber}"""
         throw new ModelException(modelTC, message)
     }
 
-    private List<File> hideSomeFileTypes(final File revisionDirectory, String filenameToBeFiltered /*String fileExtension*/) {
+    private static List<File> hideSomeFileTypes(final File revisionDirectory, String filenameToBeFiltered /*String fileExtension*/) {
         List<File> returnedFiles = revisionDirectory.listFiles().toList()
         returnedFiles = hideSomeFileTypes(returnedFiles, filenameToBeFiltered)
         return returnedFiles
     }
 
-    private List<File> hideSomeFileTypes(final List<File> listOfFiles, String filenameToBeFiltered /*String fileExtension*/) {
-        List<File> returnedFiles = new ArrayList<>()
-        returnedFiles = listOfFiles.findAll {
+    private static List<File> hideSomeFileTypes(final List<File> listOfFiles, String filenameToBeFiltered /*String fileExtension*/) {
+        List<File> returnedFiles = listOfFiles.findAll {
             String filename = it?.name
             //String extension = filename?.substring(filename?.lastIndexOf(".") + 1)
             //extension != fileExtension

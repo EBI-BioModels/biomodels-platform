@@ -2337,7 +2337,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
             RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
             // TODO externalise generation of canonical model URIs?
             String[] idXRefs = [revision.model.submissionId, publicationId].collect { String id ->
-                "http://identifiers.org/biomodels.db/$id".toString()
+                "https://identifiers.org/biomodels.db:$id".toString()
             } as String[]
             boolean revisionUpdated = addModelIdentifiersAsAnnotation(revisionTC, idXRefs)
 
@@ -2617,7 +2617,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
     boolean addModelIdentifiersAsAnnotation(RevisionTC revisionTC, String... xRefs = null) {
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
         if (!xRefs) {
-            xRefs = ["http://identifiers.org/biomodels.db:${revisionTC.model.submissionId}"] as String[]
+            xRefs = ["https://identifiers.org/biomodels.db:${revisionTC.model.submissionId}"] as String[]
         }
         sbmlService.addModelIdentifiersAsAnnotation(revisionTC, xRefs)
     }

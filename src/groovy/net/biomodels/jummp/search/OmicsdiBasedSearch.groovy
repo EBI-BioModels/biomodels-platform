@@ -43,9 +43,9 @@ import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.utils.EbiSearchHelper
 import net.biomodels.jummp.utils.FileHelper
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware as GCA
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
@@ -59,6 +59,7 @@ import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
 
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
 /**
  * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
@@ -75,18 +76,18 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(OmicsdiBasedSearch.class)
+    static final Logger LOGGER = LoggerFactory.getLogger(OmicsdiBasedSearch.class)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    static final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    static final boolean IS_INFO_ENABLED = LOGGER.isInfoEnabled()
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd")
 
-    private final java.util.regex.Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
+    private final Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
     private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
 
     private final Map<String, Integer> FACET_ORDER = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER) {
@@ -160,7 +161,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     @Override
     @NotTransactional
     Map checkIndexedData() {
-        log.debug("Checking whether BioModels duplicated entries on EBI Search Server...")
+        LOGGER.debug("Checking whether BioModels duplicated entries on EBI Search Server...")
         EbiSearchHelper.checkIndexedData()
     }
 
@@ -208,14 +209,14 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
             int facetCount = paginationCriteria['facetCount']
             result = datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
         } catch (HttpServerErrorException e) {
-            log.debug("""There was a problem obtaining search result from EBI search server. \
+            LOGGER.debug("""There was a problem obtaining search result from EBI search server. \
 The root cause is ${e.toString()}""")
-            log.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
+            LOGGER.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
             result = null
         } catch (HttpClientErrorException e) {
-            log.error("There was a problem searching models from BioModels ${e.toString()}")
+            LOGGER.error("There was a problem searching models from BioModels ${e.toString()}")
             if (e.statusCode.value() == 400) {
-                log.error("The querying string might be wrong syntax or contains restricted characters.")
+                LOGGER.error("The querying string might be wrong syntax or contains restricted characters.")
             }
             result = null
         } catch (UnknownHostException ignored ) {
@@ -338,8 +339,8 @@ The root cause is ${e.toString()}""")
         searchResponse.results = results
         searchResponse.totalCount = totalCount
         if (IS_DEBUG_ENABLED) {
-            log.debug("Search terms: $query")
-            log.debug("Results processed in ${System.currentTimeMillis() - startAt}")
+            LOGGER.debug("Search terms: $query")
+            LOGGER.debug("Results processed in ${System.currentTimeMillis() - startAt}")
         }
         return searchResponse
     }
@@ -374,7 +375,7 @@ The root cause is ${e.toString()}""")
             if (indexingData) {
                 indexingData.setText(builder.toPrettyString())
             } else {
-                log.info("Cannot create indexData.json to index the model {}.", revision.identifier())
+                LOGGER.info("Cannot create indexData.json to index the model {}.", revision.identifier())
                 throw new RuntimeException("Cannot create indexData.json to index the model ${revision.identifier()}.")
             }
 
@@ -385,7 +386,7 @@ The root cause is ${e.toString()}""")
             try {
                 producerTemplate.sendBody("seda:exec", argsMap)
             } catch (Exception e) {
-                log.error("Failed to index revision $revision.properties - ${e.message}", e)
+                LOGGER.error("Failed to index revision $revision.properties - ${e.message}", e)
                 //TODO RETRY
             }
         }
@@ -394,7 +395,7 @@ The root cause is ${e.toString()}""")
     void clearIndex() {
         // Delete indexing plans from the database
         if (IS_DEBUG_ENABLED) {
-            log.debug "Clearing the indexing plans."
+            LOGGER.debug "Clearing the indexing plans."
         }
         Revision.executeUpdate("delete IndexingPlan")
     }

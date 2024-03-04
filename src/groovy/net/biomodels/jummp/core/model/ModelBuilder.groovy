@@ -169,7 +169,7 @@ class ModelBuilder {
     private ModelBuilder addSubmissionIdAsBioModelsAnnotation() {
         if (this.revisionTC.format.identifier.toLowerCase() == "sbml") {
             def modelService = grailsApplication.mainContext.getBean("modelService")
-            String[] xref = ["http://identifiers.org/biomodels.db:${this.model.submissionId}"] as String[]
+            String[] xref = ["https://identifiers.org/biomodels.db:${this.model.submissionId}"] as String[]
             boolean r = modelService.addModelIdentifiersAsAnnotation(this.revisionTC, xref)
             if (!r) {
                 logger.debug("Cannot add BM_IS annotation built in with the submission id as an BioModels annotation to the model revision {}", revisionTC.identifier())
@@ -193,7 +193,7 @@ class ModelBuilder {
             } catch (Exception e) {
                 String pubDetails = this.revisionTC.model.publication.dump()
                 String errMsg = """Failed to add the following publication details to the model ${this.model?.submissionId}\n
-${pubDetails}."""
+${pubDetails} because of ${e.getMessage()}."""
                 logger.error(errMsg)
             } finally {
                 this.model.publication = publication

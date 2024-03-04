@@ -18,9 +18,9 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
-package net.biomodels.jummp.search
 
-import grails.util.Environment
+
+
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.camel.builder.RouteBuilder
