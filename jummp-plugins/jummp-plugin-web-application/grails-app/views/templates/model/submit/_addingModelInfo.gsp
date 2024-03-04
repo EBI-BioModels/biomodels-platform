@@ -246,7 +246,7 @@
         const csvFiles = additionalFiles.filter(f => {
             return getFileExtension(f.filename).toUpperCase() === extension
         });
-        return isCSV || csvFiles.lengths > 0
+        return isCSV || csvFiles.length > 0
     }
 
     function associateEventHandlers(id) {
