@@ -83,24 +83,23 @@ class ClassifierConfigureService implements InitializingBean {
      * @param hiddenLayers: List of layers and number neurons in each layer
      */
     void createDLModel(String name, int totalEpoch, int valPerEpoch, int batchSize, List<Integer> hiddenLayers) {
-        HttpHeaders headers = new HttpHeaders()
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED)
-
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<String, String>()
-        map.add("workspace", name)
-        map.add("total_epoch", Integer.toString(totalEpoch))
-        map.add("val_per_epoch", Integer.toString(valPerEpoch))
-        map.add("batch_size", Integer.toString(batchSize))
-        if (hiddenLayers.size() > 0) {
-            map.add("hidden_layer", hiddenLayers.join(","))
+        String output = ""
+        JSONObject jsonObject = new JSONObject()
+        try {
+            jsonObject.put("workspace", name)
+            jsonObject.put("total_epoch", Integer.toString(totalEpoch))
+            jsonObject.put("val_per_epoch", Integer.toString(valPerEpoch))
+            jsonObject.put("batch_size", Integer.toString(batchSize))
+            if (hiddenLayers.size() > 0) {
+                jsonObject.put("hidden_layer", hiddenLayers.join(","))
+            }
+            output = RestUtils.sendPost("$classificationEndpoint/train", jsonObject)
+        } catch (Exception e) {
+            LOGGER.error("An error occurred when creating a Deep Learning model with these params: ${jsonObject}")
+            e.printStackTrace()
+        } finally {
+            LOGGER.info("The output of creating a new trained model: $output")
         }
-
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map, headers)
-
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
-        uriComponentsBuilder.path("/train")
-        URI uri = uriComponentsBuilder.build().toUri()
-        RestUtils.exchange(uri, HttpMethod.POST, new TypeReference<String>() {}, request, 1)
     }
 
     /**

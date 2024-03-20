@@ -23,10 +23,10 @@
         <tbody>
         <tr class="prop">
             <td class="name" width="25%">
-                <label for="dlname">${message(code: 'modelclassifier.dllmodel.details.name')}:</label>
+                <label for="dlName">${message(code: 'modelclassifier.dllmodel.details.name')}:</label>
             </td>
             <td class="value ${hasErrors(bean: classifierCreator, field: 'dlName', 'errors')}">
-                <input type="text" name="dlname" id="dlname"
+                <input type="text" name="dlName" id="dlName"
                        style="width: 350px;"
                 />
             </td>
