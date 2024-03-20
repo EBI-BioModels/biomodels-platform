@@ -221,7 +221,6 @@ class ClassifierConfigureController {
     def trainModelStatus = {
         String modelName = params.get("model_name")
         List<Map<String, String>> status = classifierConfigureService.getDLModelTrainStatus(modelName)
-//        render(status.last() as JSON)
         render(new JSON(status.last()).toString())
     }
 

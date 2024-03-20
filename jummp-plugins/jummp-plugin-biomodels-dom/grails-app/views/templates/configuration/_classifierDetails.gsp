@@ -349,7 +349,7 @@ body {
         </div>
     </li>
     <li class="classifier-item">
-        <input type="hidden" name="dlname" id="dlname" value="${classifierCreator.dlName}"/>
+        <input type="hidden" name="dlName" id="dlName" value="${classifierCreator.dlName}"/>
         <table>
             <tbody>
             <tr>
@@ -389,11 +389,13 @@ body {
 <g:javascript>
     var svg;
 
-    $('#configurationForm').submit(function (e) {
-            if (!confirm("${message(code: 'modelclassifier.dllmodel.retrain.confirm')}")) {
-                return;
-            }
-        });
+    $('#configurationForm').submit(function () {
+        if (!confirm("${message(code: 'modelclassifier.dllmodel.retrain.confirm')}")) {
+            return false;
+        } else {
+            return true;
+        }
+    });
 
     function getTrainPercent() {
         console.log("Getting train percent...");
