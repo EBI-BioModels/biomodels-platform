@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-20204 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -33,18 +33,16 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.core.type.TypeReference
+import net.biomodels.jummp.core.util.RestUtils
+import org.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
-import net.biomodels.jummp.core.util.RestUtils
 import org.springframework.http.MediaType
-import org.springframework.util.LinkedMultiValueMap
-import org.springframework.util.MultiValueMap
 import org.springframework.web.util.UriComponentsBuilder
-
 
 /**
  * @short: Service responsible for classifier configure
@@ -69,7 +67,15 @@ class ClassifierConfigureService implements InitializingBean {
      */
     static final int RETRY_CLASSIFY_TIMES = 3
 
+    private HttpEntity requestEntity
+
     void afterPropertiesSet() throws Exception {
+        // http headers
+        HttpHeaders headers = new HttpHeaders()
+        // set `Content-Type` and `Accept` headers
+        headers.setContentType(MediaType.APPLICATION_JSON)
+        requestEntity = new HttpEntity(headers)
+
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
         LOGGER.info("Finished the bean initialisation")
     }
@@ -178,7 +184,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
     }
 
     /**
@@ -192,7 +198,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
     }
 
     /**
@@ -206,7 +212,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("model_id", submissionId)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
     }
 
     /**
@@ -220,6 +226,6 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("keyword", keyword)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
     }
 }

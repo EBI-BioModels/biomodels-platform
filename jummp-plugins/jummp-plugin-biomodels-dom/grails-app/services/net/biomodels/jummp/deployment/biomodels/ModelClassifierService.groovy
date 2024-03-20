@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -24,21 +24,22 @@ package net.biomodels.jummp.deployment.biomodels
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import net.biomodels.jummp.core.util.RestUtils
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.KV
 import net.biomodels.jummp.models.ModelDetails
 import net.biomodels.jummp.models.Progress
 import net.biomodels.jummp.utils.MathUtils
-import net.biomodels.jummp.core.util.RestUtils
 import net.biomodels.jummp.utils.TimeUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpMethod
 import org.springframework.web.util.UriComponentsBuilder
-import static grails.async.Promises.*
 
 import java.util.concurrent.atomic.AtomicInteger
+
+import static grails.async.Promises.task
 
 /**
  * @short: Service responsible for classify the bio-models into different categories

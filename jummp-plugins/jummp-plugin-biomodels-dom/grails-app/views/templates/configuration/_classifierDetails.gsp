@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -321,7 +321,7 @@ body {
         </span>
 
         <span class="classifier-name">
-            ${classifierCreator.dlname}
+            ${classifierCreator.dlName}
         </span>
 
         <span class="classifier-country list-only">
@@ -349,7 +349,7 @@ body {
         </div>
     </li>
     <li class="classifier-item">
-        <input type="hidden" name="dlname" id="dlname" value="${classifierCreator.dlname}"/>
+        <input type="hidden" name="dlname" id="dlname" value="${classifierCreator.dlName}"/>
         <table>
             <tbody>
             <tr>
@@ -396,12 +396,13 @@ body {
         });
 
     function getTrainPercent() {
+        console.log("Getting train percent...");
       $.ajax({
             dataType:'json',
             type: "GET",
             url: $.jummp.createLink("classifierConfigure", "trainModelStatus"),
             data: {
-                  model_name: encodeURIComponent("${classifierCreator.dlname}"),
+                  model_name: encodeURIComponent("${classifierCreator.dlName}"),
                   time: Date.now()
             },
             error: function(jqXHR) {
@@ -416,16 +417,16 @@ body {
     }
 
     function getTrainLog() {
+        console.log("Getting train log...");
         $.ajax({
             dataType:'json',
             type: "GET",
             url: $.jummp.createLink("classifierConfigure", "trainModelLogs"),
             data: {
-                  model_name: encodeURIComponent("${classifierCreator.dlname}"),
-                  time: Date.now()
+                  model_name: encodeURIComponent("${classifierCreator.dlName}")
             },
             error: function(jqXHR) {
-                toastr.error(jqXHR.responseJSON.message);
+                toastr.error(jqXHR.responseJSON);
             },
             success: function(data) {
                 if (data.length !== 0) {
@@ -443,7 +444,7 @@ body {
             return newArray;
         }
 
-        if (data[0]["epoch"] != "0") {
+        if (data[0]["epoch"] !== "0") {
             data = prepend({"loss": data[0]["loss"], "accuracy": data[0]["accuracy"], "epoch": "0"}, data);
         }
 
@@ -537,9 +538,9 @@ body {
                 .select(".line")   // change the line
                 .attr("d", function(d) { return line(d.values); })
                   .style("stroke", function(d) { return color(d.name); });
-        svg.select(".x.axis") // change the x axis
+        svg.select(".x.axis") // change the x-axis
             .call(xAxis);
-        svg.select(".y.axis") // change the y axis
+        svg.select(".y.axis") // change the y-axis
             .call(yAxis);
     }
 
