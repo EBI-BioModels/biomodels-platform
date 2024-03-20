@@ -332,10 +332,10 @@ log4j.main = {
         'net.biomodels.jummp.security',
         'net.biomodels.jummp.utils.redis',
         'net.biomodels.jummp.webapp',
-        'grails.app.conf.BootStrap',
-        "grails.plugin.springsecurity",
+        'grails.app.conf.BootStrap'
+        /*"grails.plugin.springsecurity",
         "org.springframework.security",
-        "org.pac4j"
+        "org.pac4j"*/
     ], additivity: false
 
     debug irreproducibleAppender: [
