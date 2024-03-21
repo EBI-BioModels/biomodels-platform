@@ -36,4 +36,11 @@ class UpdatePasswordCommand {
         	return repeatValue && cmd.newPassword == repeatValue
         }
     }
+    UpdatePasswordCommand sanitise() {
+        UpdatePasswordCommand cmd = new UpdatePasswordCommand()
+        cmd.oldPassword = this.oldPassword.decodeHTML()
+        cmd.newPassword = this.newPassword.decodeHTML()
+        cmd.newPasswordRpt = this.newPasswordRpt.decodeHTML()
+        return cmd
+    }
 }

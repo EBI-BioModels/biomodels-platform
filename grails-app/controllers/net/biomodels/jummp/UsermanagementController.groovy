@@ -207,17 +207,17 @@ class UsermanagementController {
      * to edit action and sends the user a helpful message.
      */
     @Secured(["IS_AUTHENTICATED_FULLY"])
-    def updatePassword() {
+    def updatePassword(UpdatePasswordCommand cmd) {
+        cmd = cmd.sanitise()
         withForm {
-            UpdatePasswordCommand cmd = new UpdatePasswordCommand()
-            if (!validateUserData(cmd, params)) {
-                return redirect(action: "editPassword")
+            if (!cmd.validate()) {
+                redirect(action: "editPassword")
             }
             try {
                 userService.changePassword(cmd.oldPassword, cmd.newPassword)
             } catch (Exception e) {
                 flash.message = e.getMessage();
-                return redirect(action: "editPassword")
+                redirect(action: "editPassword")
             }
             flash.message = "Password was updated successfully"
             redirect(action: "show")

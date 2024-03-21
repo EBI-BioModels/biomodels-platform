@@ -32,13 +32,13 @@
                 <h3>Change your password</h3>
                 <g:form action="updatePassword" useToken="true">
                     <div class="row column edit-password-form">
-                        <label class="required"><g:message code="user.administration.updatePassword.oldPassword"/></label>
+                        <label class="required" for="oldPassword"><g:message code="user.administration.updatePassword.oldPassword"/></label>
                         <g:passwordField name="oldPassword"/>
 
-                        <label class="required"><g:message code="user.administration.updatePassword.newPassword"/></label>
+                        <label class="required" for="newPassword"><g:message code="user.administration.updatePassword.newPassword"/></label>
                         <g:passwordField name="newPassword"/>
 
-                        <label class="required"><g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
+                        <label class="required" for="newPasswordRpt"><g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
                         <g:passwordField name="newPasswordRpt"/>
                         <p class="buttons">
                             <input type="submit" class="button" value="${g.message(code: 'user.administration.updatePassword.submit')}"/>

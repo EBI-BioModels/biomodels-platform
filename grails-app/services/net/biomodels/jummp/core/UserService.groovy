@@ -140,6 +140,8 @@ class UserService implements IUserService, InitializingBean {
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag = "userService.changePassword")
     void changePassword(String oldPassword, String newPassword) throws BadCredentialsException {
+        oldPassword = oldPassword.decodeHTML()
+        newPassword = newPassword.decodeHTML()
         User user = (User)springSecurityService.getCurrentUser()
         if (user.password != springSecurityService.encodePassword(oldPassword, null)) {
             throw new BadCredentialsException("Cannot change password, old password is incorrect")
