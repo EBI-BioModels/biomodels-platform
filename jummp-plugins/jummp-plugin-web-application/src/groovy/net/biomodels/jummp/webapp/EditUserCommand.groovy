@@ -87,4 +87,14 @@ class EditUserCommand implements Serializable {
         }
         return prefs
     }
+
+     EditUserCommand sanitise() {
+         EditUserCommand cmd = new EditUserCommand()
+         cmd.username = this.username.decodeHTML()
+         cmd.userRealName = this.userRealName.decodeHTML()
+         cmd.institution = this.institution.decodeHTML()
+         cmd.email = this.email.decodeHTML()
+         cmd.orcid = this.orcid.decodeHTML()
+         return cmd
+     }
 }

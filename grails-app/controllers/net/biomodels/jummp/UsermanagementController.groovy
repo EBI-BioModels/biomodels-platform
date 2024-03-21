@@ -157,9 +157,9 @@ class UsermanagementController {
      * to edit action and sends the user a helpful message.
      */
     @Secured(["IS_AUTHENTICATED_FULLY"])
-    def editUser() {
-        EditUserCommand cmd = new EditUserCommand()
-        if (!validateUserData(cmd, params)) {
+    def editUser(EditUserCommand cmd) {
+        cmd = cmd.sanitise()
+        if (!cmd.validate()) {
             return redirect(action: "edit")
         }
         try {
@@ -181,20 +181,20 @@ class UsermanagementController {
      * to edit action and sends the user a helpful message.
      */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
-    def newPassword() {
+    def newPassword(ResetPasswordCommand cmd) {
+        cmd = cmd.sanitise()
         withForm {
-            ResetPasswordCommand cmd = new ResetPasswordCommand()
-            if (!validateUserData(cmd, params)) {
+            if (!cmd.validate()) {
                 flash.hashCode = params.hashCode
-                return redirect(action: "reset")
+                redirect(action: "reset")
             }
             try {
                 userService.resetPassword(cmd.hashCode, cmd.username, cmd.newPassword)
             } catch (Exception e) {
                 flash.message = "password.reset.service.error"
-                return redirect(action: "reset")
+                redirect(action: "reset")
             }
-            flash.flashMessage = "Password for ${cmd.username} was updated successfully. Please try logging in with your updated password now."
+            flash.flashMessage = "The password for ${cmd.username} was updated successfully. Please log in BioModels with your newly updated password."
             redirect(controller: "login", action: "auth")
         }.invalidToken {
             render(controller: "errors", action: "error405")
@@ -219,7 +219,7 @@ class UsermanagementController {
                 flash.message = e.getMessage();
                 redirect(action: "editPassword")
             }
-            flash.message = "Password was updated successfully"
+            flash.message = "Your password was updated successfully!"
             redirect(action: "show")
         }.invalidToken {
             render(controller: "errors", action: "error405")
