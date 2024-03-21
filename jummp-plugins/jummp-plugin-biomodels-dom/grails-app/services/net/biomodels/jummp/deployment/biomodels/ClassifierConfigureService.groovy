@@ -129,7 +129,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.path("/workspace")
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI uri = uriComponentsBuilder.build().toUri()
-        RestUtils.exchange(uri, HttpMethod.DELETE, new TypeReference<String>() {}, null, 1)
+        RestUtils.exchange(uri, HttpMethod.DELETE, new TypeReference<String>() {}, requestEntity, 1)
     }
 
     /**
@@ -141,7 +141,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.path("/workspace")
         URI request = uriComponentsBuilder.build().toUri()
         List<Map<String, String>> workspaces = RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
         for (Map<String, String> workspace : workspaces) {
             List<Map<String, String>> status = getDLModelTrainStatus(workspace.get("name"))
             workspace.putAll(status.last())
@@ -162,7 +162,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
         Map<String, String> modelDetails = RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<HashMap<String, String>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<HashMap<String, String>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
         DLModelCommand dlModelCommand = new DLModelCommand()
         dlModelCommand.setDlName(modelName)
         dlModelCommand.setBatchSize(Integer.parseInt(modelDetails['batch_size']))
