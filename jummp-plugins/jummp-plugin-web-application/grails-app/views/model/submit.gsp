@@ -62,7 +62,7 @@
         var changesMade = new Set();
 
         var latestModelName = "${latestModelName}";
-        var latestModelDescription = "${latestModelDescription}";
+        var latestModelDescription = `${latestModelDescription}`;
         var latestModelFormat = "${latestModelFormat}"; // the format was defined in the previous update
         var detectedModelFormat; // the format is selected by the submitter
         var latestModelFormatNameAndVersion = "${latestModelFormatNameAndVersion}";
