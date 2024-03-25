@@ -238,7 +238,7 @@ class ContributorController extends CommonController {
             User currentUser = userService.currentUser
             if (currentUser.email != ci.inviteeEmail) {
                 msgLog = "The user (${currentUser.email}) shouldn't have the access of the invite ${refCode}."
-                msgUser = "Unfortunately, you are not allowed to perform this operation."
+                msgUser = "Unfortunately, you are not allowed to perform this operation. You're an user registered with another email!"
             } else {
                 if ("accept" == op) {
                     retMap.putAll(contributorService.processAccept(ci))

@@ -13,7 +13,7 @@
 </head>
 
 <body>
-    <h2>Thank you for interesting in BioModels!</h2>
+    <h2>Thank you for your interest in BioModels!</h2>
     <p>${msgUser}</p>
 </body>
 </html>
