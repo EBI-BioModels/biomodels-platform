@@ -133,7 +133,7 @@ class ContributorController extends CommonController {
         render(view: "manage", model: retMap)
     }
 
-    private Map<String, Object> doAnalyseAndExtractParameters(final String id, final Model model) {
+    private static Map<String, Object> doAnalyseAndExtractParameters(final String id, final Model model) {
         Map<String, Object> map = [:]
         String modelId = id
         Integer revisionNumber = 0

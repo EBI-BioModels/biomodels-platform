@@ -182,8 +182,8 @@ class ContributorService implements InitializingBean {
         [msgLog: msgLog, msgUser: msgUser]
     }
 
-    Map saveFirstContributors(final Map<String, CTC> contributors, final Revision revision) {
-        Map result = [:]
+    Map<String, CD> saveFirstContributors(final Map<String, CTC> contributors, final Revision revision) {
+        Map<String, CD> result = [:]
         for (CTC ctc: contributors.values()) {
             CD cd = CD.findOrSaveWhere(contributor: ctc.user, revision: revision, role: ctc.role)
             if (cd.save(flush: true)) {
