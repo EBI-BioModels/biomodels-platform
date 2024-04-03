@@ -97,5 +97,6 @@
     </div>
      <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
      <g:render template="/templates/biomodels/searchTips" />
+     <g:render template="/templates/biomodels/embl-ebi-data-preservation-statement" />
      <g:render template="/templates/biomodels/domainSwitcherExplanation" />
 </footer>
