@@ -628,7 +628,8 @@
                             id: revision.modelIdentifier())}')">Reviewer</button>
                     </li>
                 </g:if>
-                <g:if test="${canAskReviewerAccount}"> <!-- canAddContributor is the same canAskReviewerAccount -->
+                <g:if test="${canAskReviewerAccount || hasAdminRole}">
+                    <!-- canAddContributor is the same canAskReviewerAccount -->
                     <li>
                         <button class='toolbutton' id="manage-contributors"
                                 title="Click on this button to manage the list of contributors of your model"
@@ -747,21 +748,10 @@
                                     </jummp:displayModelDescriptionLabel>
                                 </div>
                                 <div class="small-12 medium-10 large-10 columns">
-                                    %{--<a class="descriptionToggle" title="Click to see more">
-                                        <span>Click here to collapse/expand the description
-                                            <img style="width:12px;margin:2px;float:none"
-                                                 src="${serverURL}/images/expand.png"/>
-                                        </span>
-                                    </a>--}%
                                     <div id="description">
                                         ${raw(revision.description)}
                                     </div>
                                 </div>
-                                <g:javascript>
-                                    /*$('.descriptionToggle').click(function() {
-                                        $('#description').slideToggle('fast');
-                                    });*/
-                                </g:javascript>
                             </div>
                             <div class="row">
                                 <div class="small-12 medium-2 large-2 columns">
