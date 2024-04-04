@@ -9,7 +9,7 @@
     </div>
     <div class="columns large-5 medium-5 small-12">
         <div class="contributor-header contributor-name">
-            Name, Username and Email
+            Name, Username/ORCID and Email
         </div>
     </div>
     <div class="columns large-2 medium-2 small-12">

@@ -5,7 +5,7 @@
   Time: 08:32
 --%>
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="grails.converters.JSON" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
@@ -13,7 +13,7 @@
     <script>
         const currentEmail = "";
         let contributorEmails = [];
-        $.each(${contributorEmailList as grails.converters.JSON}, (i, v) => {
+        $.each(${contributorEmailList as JSON}, (i, v) => {
             contributorEmails.push(v);
         });
     </script>
@@ -52,25 +52,56 @@
 <div class="add-contributor">
     <h3 class="padding-top-xlarge">Add an existing user as a contributor</h3>
     <div class="row">
-        <div class="columns large-2 medium-2 small-12">
+        <div class="columns large-3 medium-3 small-12">
             <label for="txt-email-or-name" class="text-right middle">Search</label>
         </div>
         <div class="columns large-8 medium-8 small-12">
             <input type="text" id="txt-email-or-name" name="txt-email-or-name"
-                   placeholder="Type a valid email address of the contributor" >
+                   placeholder="Type a valid email address" >
             <div id="suggestion-box"></div>
         </div>
-        <div class="columns large-2 medium-2 small-12">
+        <div class="columns large-1 medium-1 small-12">
             <input type="submit" class="button" value="Add" id="btn-add-contributor">
         </div>
     </div>
 </div>
-
+<!-- Add an external contributor without sending an invitation -->
+<div class="invite-contributor">
+    <h3 class="padding-top-xlarge">Add an external contributor without sending an invitation</h3>
+    <div class="row">
+        <div class="columns small-12 medium-3 large-3">
+            <label for="txt-display-name">Display Name</label>
+            <input type="text" id="txt-display-name" name="txt-display-name"
+                   placeholder="Type a full name or scientific name appeared in publications">
+        </div>
+        <div class="columns small-12 medium-3 large-3">
+            <label for="txt-email-address">Email</label>
+            <input type="text" id="txt-email-address" name="txt-email-address"
+                   placeholder="Type a valid email address">
+        </div>
+        <div class="columns small-12 medium-3 large-3">
+            <label for="txt-orcid">ORCID</label>
+            <input type="text" id="txt-orcid" name="txt-orcid"
+                   placeholder="Type the orcid id">
+        </div>
+        <div class="columns small-12 medium-2 large-2">
+            <label for="select-defined-roles">Roles</label>
+            <select name="defined-role" required id="select-defined-roles" class="form-control">
+                <g:each in="${roles}" var="role">
+                    <option value="${role}">${role}</option>
+                </g:each>
+            </select>
+        </div>
+        <div class="columns small-12 medium-1 large-1">
+            <input type="submit" class="button" value="Add" id="btn-add-contributor-wto-invite">
+        </div>
+    </div>
+</div>
 <!-- Invite a contributor -->
 <div class="invite-contributor">
     <h3 class="padding-top-xlarge">Invite a contributor</h3>
     <div class="row">
-        <div class="columns small-12 medium-2 large-2">
+        <div class="columns small-12 medium-3 large-3">
             <label for="txt-email-invite" class="text-right middle">Email</label>
         </div>
         <div class="columns small-12 medium-4 large-4">
@@ -84,7 +115,7 @@
                 </g:each>
             </select>
         </div>
-        <div class="columns small-12 medium-2 large-2">
+        <div class="columns small-12 medium-1 large-1">
             <input type="submit" class="button" value="Invite" id="btn-invite">
         </div>
     </div>
@@ -198,7 +229,7 @@
                 const errMsg = "Bad Server Response";
                 showNotification(errMsg);
                 toastr.error(errMsg);
-                throw new Error(errMsg);
+                //throw new Error(errMsg);
                 return false;
             } else {
                 return result.json();
@@ -215,6 +246,61 @@
             }
         }).catch((error) => {
             const errMsg = "There has been an internal error. Please try again or later.";
+            showNotification(errMsg);
+            toastr.error(errMsg);
+            console.log(error);
+        });
+        return true;
+    });
+
+    $("#btn-add-contributor-wto-invite").on("click", function() {
+        let email = $('input[name=txt-email-address]').val();
+        let valid = preValidate(email);
+        if (!valid) {
+            return false;
+        }
+        /*valid = doCheckEmail(email);
+        if (!valid) {
+            return false;
+        }*/
+        let displayName = $('input[name=txt-display-name]').val();
+        let orcid = $('input[name=txt-orcid]').val();
+        let role = $("#defined-role option:selected").text();
+        const urlPost = $.jummp.createLink("contributor", "addWithoutInvitation");
+        let data = new FormData();
+        data.append("modelId", "${modelId}");
+        data.append("revisionNumber", "${revisionNumber}");
+        data.append("displayName", displayName);
+        data.append("email", email);
+        data.append("orcid", orcid);
+        data.append("role", role);
+        fetch(urlPost, {
+            method: "POST",
+            body: data
+        }).then((result) => {
+            if (200 !== result.status) {
+                const errMsg = "Bad Server Response";
+                showNotification(errMsg);
+                toastr.error(errMsg);
+                //throw new Error(errMsg);
+                return false;
+            } else {
+                return result.json();
+            }
+        }).then((response) => {
+            const m = displayName + ", " + email + (orcid !== "" ? ", " + orcid : "");
+            const msg = "A new contributor [" + m  + "] has been added.";
+            showNotification(msg);
+            toastr.success(msg);
+            contributorEmails.push(response["email"]);
+            if ($(".row .contributors-body").length) {
+                $(".row .contributors-header").after(response["htmlBasedStringForNewContributor"]);
+            } else {
+                $(".row .contributors-body").after(response["htmlBasedStringForNewContributor"]);
+            }
+        }).catch((error) => {
+            const errMsg = "There has been an internal error. Please try again or later. " +
+                "If the error persists, please contact our developers team. Thank you for your patience.";
             showNotification(errMsg);
             toastr.error(errMsg);
             console.log(error);
@@ -255,7 +341,7 @@
                 const errMsg = "Bad Server Response";
                 showNotification(errMsg);
                 toastr.error(errMsg);
-                throw new Error(errMsg);
+                //throw new Error(errMsg);
                 return false;
             } else {
                 return result.json();
@@ -305,7 +391,7 @@
                 message = "Bad Server Response";
                 showNotification(message);
                 toastr.error(message);
-                throw new Error(message);
+                //throw new Error(message);
                 return result.text();
             }
             return result.json();
@@ -347,7 +433,7 @@
                 message = "Bad Server Response";
                 showNotification(message);
                 toastr.error(message);
-                throw new Error(message);
+                //throw new Error(message);
                 return result.text();
             }
             return result.json();
@@ -384,7 +470,7 @@
                 }
                 showNotification(message);
                 toastr.error(message);
-                throw new Error(message);
+                //throw new Error(message);
                 return result.text();
             }
             return result.json();

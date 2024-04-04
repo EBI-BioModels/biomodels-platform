@@ -24,6 +24,7 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.model.ContributionDetails as CD
+import net.biomodels.jummp.model.ContributionDetailsWithoutInvite as CDWI
 import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.Model
@@ -156,7 +157,7 @@ class ContributorController extends CommonController {
             // do nothing
         }
 
-        // TODO: handle 1 <= revisionNumer <= max
+        // TODO: handle 1 <= revisionNumber <= max
         map["modelId"] = modelId
         map["revisionNumber"] = revisionNumber
 
@@ -217,6 +218,41 @@ class ContributorController extends CommonController {
             model: [cont: ctc, serverURL: serverURL, roles: contributorService.roles])
         result.put("htmlBasedStringForNewContributor", htmlString)
         result.put("message", "The data has been updated successfully!")
+        render(result as JSON)
+    }
+
+    def addWithoutInvitation() {
+        String modelId = params["modelId"]?.decodeHTML()
+        Integer revisionNumber = params.getInt("revisionNumber")
+        Model model = modelService.getModel("$modelId.$revisionNumber")
+        if (!model) { return null }
+        Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
+        if (!revision) { return null }
+        String displayName = params["displayName"]?.decodeHTML()
+        String email = params["email"]?.decodeHTML()
+        String orcid = params["orcid"]?.decodeHTML()
+        String roleName = params["role"]?.decodeHTML()
+        Map result = [:]
+        result["displayName"] = displayName
+        result["email"] = email
+        result["orcid"] = orcid
+
+        // SAVE INPUT TO DB
+        CR role = CR.findByName(roleName)
+        CDWI cDWI = new CDWI(displayName: displayName, email: email, revision: revision, role: role)
+        if (orcid) { cDWI.orcid = orcid }
+        if (!cDWI.save()) {
+            LOGGER.error("""An occurred when saving [$displayName, $email, $orcid, $modelId, $revisionNumber, \
+${role.name}] into the database due to ${cDWI.errors.toString()}.""")
+            return false
+        }
+        // RENDER THE DATA TO VIEW
+        String htmlString = g.render(template: "/contributor/showContributor",
+            plugin: "jummp-plugin-web-application",
+            model: [cont: null, email: email, displayName: displayName, orcid: orcid,
+                    serverURL: serverURL, roles: contributorService.roles])
+        result.put("htmlBasedStringForNewContributor", htmlString)
+        result.put("message", "The contributor has been added successfully!")
         render(result as JSON)
     }
 

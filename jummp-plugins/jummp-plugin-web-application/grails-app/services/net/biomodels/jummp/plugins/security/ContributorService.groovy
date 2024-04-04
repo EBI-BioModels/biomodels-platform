@@ -210,7 +210,7 @@ class ContributorService implements InitializingBean {
         "[${cd.contributor.username}\t ${cd.role.name}\t ${cd.revision.id}: ${cd.revision.name}]".toString()
     }
 
-    private CI updateCI(CI ci, String userResponse) {
+    private static CI updateCI(CI ci, String userResponse) {
         ci.dateCompleted = new Date()
         switch (userResponse) {
             case "accept":
