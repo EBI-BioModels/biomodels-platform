@@ -45,7 +45,7 @@
                             <input type='text' name='j_username' id='username' placeholder="Username">
                         </label>
                         <label><g:message code="login.form.password"/>
-                            <input type='password' name='j_password' id='password' placeholder="Password"/>
+                            <input type='password' name='j_password' id='password' placeholder="Password" autocomplete="on"/>
                         </label>
                         <label for='j_previousURL'>
                             <input type='text' name='j_previousURL' id='j_previousURL'  value="${j_previousURL}"

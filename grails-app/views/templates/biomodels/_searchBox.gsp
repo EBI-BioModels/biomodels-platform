@@ -53,7 +53,7 @@
     <fieldset><div class="row">
         <div class="input-group margin-bottom-none margin-top-large padding-bottom-medium">
             <div class="input-group-field columns large-3 medium-3 small-12" style="vertical-align: text-top">
-                <select class="margin-bottom-none align-self-top" id="domain_switcher" name="domain_switcher">
+                <select class="margin-bottom-none align-self-top" id="domain_switcher" name="domain_switcher" title="Please choose a domain">
                     <option value="biomodels_all"><g:message code="net.biomodels.jummp.domain.name.BioModelsAll"/></option>
                     <option value="biomodels"><g:message code="net.biomodels.jummp.domain.name.BioModels"/></option>
                     <option value="biomodels_autogen"><g:message code="net.biomodels.jummp.domain.name.BioModelsAutogen"/></option>
@@ -62,8 +62,7 @@
                 <a class="help-text label-floating-left secondary label"
                    title="Learn more"
                    data-open="domainSwitcherExplanationBox">What is this box used for?</a>
-                <input type="text" id="chosenDomain" name="chosenDomain"
-                       style="display: none" value="biomodels"/>
+                <input type="text" id="chosenDomain" name="chosenDomain" style="display: none" value="biomodels" aria-label="Choose a domain"/>
             </div>
 
             <div class="input-group-field columns large-8 medium-8 small-12">
