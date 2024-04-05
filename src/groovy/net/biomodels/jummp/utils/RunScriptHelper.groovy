@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -24,6 +24,7 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 
@@ -32,7 +33,14 @@ import org.springframework.security.core.context.SecurityContextHolder
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-class RunScriptHelper {
+abstract class RunScriptHelper {
+    def ctx
+
+    static final String ADMIN_USERNAME = System.getenv("ADMIN_USERNAME")
+
+    // auth token for admin account; used by worker threads to publish models
+    static final Authentication adminAuth = createTokenForUser(ADMIN_USERNAME)
+
     /**
      * Creates and returns an authentication token for the given user.
      * Note that the owner of the credentials is *not* authenticated until the token is put in the SecurityContext
@@ -73,11 +81,11 @@ class RunScriptHelper {
     static def simpleRunAs = { auth, closure ->
         def currentAuth
         try {
-            currentAuth = SecurityContextHolder.context.authentication
             SecurityContextHolder.context.authentication = auth
             def result = closure.call()
             return result
         } finally {
+            currentAuth = SecurityContextHolder.context.authentication
             if (currentAuth) {
                 SecurityContextHolder.context.authentication = currentAuth
             } else {
@@ -85,4 +93,6 @@ class RunScriptHelper {
             }
         }
     }
+
+    abstract void run()
 }
