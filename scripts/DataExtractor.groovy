@@ -78,6 +78,8 @@ ORDER BY m.id desc
                         ctx.persistenceInterceptor?.init()
                         submissionId = m[1]
                         try {
+                            logger.info("Processing the model ${m[1]}...")
+                            println("Processing the model ${m[1]}...")
                             lookForSedMlFileInModel(m[1])
                         } catch (Exception e) {
                             String message = """\

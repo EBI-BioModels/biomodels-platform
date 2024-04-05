@@ -23,6 +23,9 @@ package net.biomodels.jummp.utils
 import grails.plugin.springsecurity.SpringSecurityUtils
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
@@ -33,13 +36,15 @@ import org.springframework.security.core.context.SecurityContextHolder
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-abstract class RunScriptHelper {
+abstract class RunScriptHelper implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RunScriptHelper.class)
+
     def ctx
 
-    static final String ADMIN_USERNAME = System.getenv("ADMIN_USERNAME")
+    static String ADMIN_USERNAME = System.getenv("ADMIN_USERNAME")
 
     // auth token for admin account; used by worker threads to publish models
-    static final Authentication adminAuth = createTokenForUser(ADMIN_USERNAME)
+    static Authentication adminAuth = createTokenForUser(ADMIN_USERNAME)
 
     /**
      * Creates and returns an authentication token for the given user.
@@ -91,6 +96,17 @@ abstract class RunScriptHelper {
             } else {
                 SecurityContextHolder.clearContext()
             }
+        }
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation.")
+        if (!ADMIN_USERNAME) {
+            ADMIN_USERNAME = "administrator"
+        }
+        if (!adminAuth) {
+            adminAuth = createTokenForUser(ADMIN_USERNAME)
         }
     }
 
