@@ -368,6 +368,7 @@
         const parentRow = $(this).parent().parent();
         const usernameAndEmailElement = parentRow.find(".username-email");
         const usernameAndEmail = usernameAndEmailElement.text();
+        const displayName = parentRow.find(".user-real-name").text().replaceAll("\n", "").trim();
         let message = "";
         if (!usernameAndEmail) {
             message = "Cannot update the contribution role due to an error!";
@@ -379,6 +380,7 @@
         showNotification(usernameAndEmail);
         const urlPost = $.jummp.createLink("contributor", "updateRole");
         let data = new FormData();
+        data.append("displayName", displayName);
         data.append("usernameAndEmail", usernameAndEmail);
         data.append("modelId", "${modelId}");
         data.append("revisionNumber", "${revisionNumber}");

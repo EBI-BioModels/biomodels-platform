@@ -30,6 +30,8 @@ import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.CommonController
+import net.biomodels.jummp.utils.FileHelper
+import net.biomodels.jummp.utils.MathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.OptimisticLockingFailureException
@@ -182,6 +184,15 @@ class ContributorController extends CommonController {
             CTC ctc = new CTC(user: detail.contributor,
                 role: detail.role, person: detail.contributor.person, locked: locked)
             contributorMap.put(username, ctc)
+        }
+        List lstContWtoInvite = CDWI.findAllByRevision(revision)
+        lstContWtoInvite.each {
+            String username = MathUtils.generatePassword((('A'..'Z')+('0'..'9')+('a'..'z')).join(), 6)
+            User user = new User(email: it.email, username: "ext_$username")
+            Person person = new Person(userRealName: it.displayName)
+            if (it.orcid) { person.orcid = it.orcid }
+            CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false)
+            contributorMap.put(user.username, ctc)
         }
 
         contributorMap
@@ -346,12 +357,6 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         Map result = [:]
         String message = "Under construction"
 
-        String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
-        String[] parts = usernameAndEmail.split(", ")
-        String username = parts[0]
-        String email = parts[1]
-        User contributor = User.findByUsernameAndEmail(username, email)
-
         String modelId = params.get("modelId")
         String revisionNumber = params.get("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
@@ -359,21 +364,43 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
 
         String newRoleName = params.get("newRole").decodeHTML()
         CR newRole = CR.findByName(newRoleName)
-
-        CD details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
-        try {
-            details?.delete()
-            details = new CD(contributor: contributor, revision: revision, role: newRole)
-            if (details.save(flush: true)) {
-                message = "Update the new role for this contributor successfully."
-            } else {
-                message = "An error has happened while trying to update the role for this contributor."
-            }
-        } catch (OptimisticLockingFailureException exception) {
-            println "$message: ${exception.toString()}"
-            LOGGER.error(message, exception)
-            throw exception
+        String displayName = params.get("displayName").decodeHTML()
+        String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
+        usernameAndEmail = usernameAndEmail.replaceAll("\r\n","").replaceAll(" ","")
+        if (!usernameAndEmail) {
+            throw new Exception("Failed to update contributor role because of the empty input.")
         }
+        String[] arrayOfStrings = usernameAndEmail.split(",")
+        List parts = arrayOfStrings as List
+        if (parts.size() == 1) {
+            // go to save the data in the CDWI table
+            message = contributorService.updateRoleForExternalContributor(revision, newRole, displayName, parts[0], "")
+        } else {
+            if (FileHelper.isValidOrcid(parts[0])) {
+                // go to save the data in the CDWI table
+                message = contributorService.updateRoleForExternalContributor(revision, newRole, displayName, parts[1], parts[0])
+            } else {
+                String username = parts[0]
+                String email = parts[1]
+                User contributor = User.findByUsernameAndEmail(username, email)
+
+                CD details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
+                try {
+                    details?.delete()
+                    details = new CD(contributor: contributor, revision: revision, role: newRole)
+                    if (details.save(flush: true)) {
+                        message = "Update the new role for this contributor successfully."
+                    } else {
+                        message = "An error has happened while trying to update the role for this contributor."
+                    }
+                } catch (OptimisticLockingFailureException exception) {
+                    println "$message: ${exception.toString()}"
+                    LOGGER.error(message, exception)
+                    throw exception
+                }
+            }
+        }
+
         result.put("message", message)
         render(result as JSON)
     }

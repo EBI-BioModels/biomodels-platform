@@ -16,7 +16,7 @@
         </h4>
         <p class="username-email">
         <g:if test="${cont}">
-            ${cont.user.username}, ${cont.user.email}
+            ${cont.user.username.startsWith("ext_") ? (cont.person.orcid ? cont.person.orcid + ", " : "") : cont.user.username + ", " }${cont.user.email}
         </g:if>
         <g:else>
             ${orcid}, ${email}

@@ -24,6 +24,7 @@ import grails.transaction.Transactional
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.core.model.InviteState
 import net.biomodels.jummp.model.ContributionDetails as CD
+import net.biomodels.jummp.model.ContributionDetailsWithoutInvite as CDWI
 import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.ContributionRole
@@ -203,6 +204,41 @@ class ContributorService implements InitializingBean {
             LOGGER.error("Could not create the contribution details: ${toStringCD(cd)}")
         }
         return cd
+    }
+
+    String updateRoleForExternalContributor(final Revision revision, final CR role, final String displayName,
+                                            final String email, final String orcid = "") {
+        Map namedParams = [revId: revision.id, displayName: displayName, email: email]
+        String query = """select CD.id from ContributionDetailsWithoutInvite as CD where CD.revision.id = :revId
+and CD.displayName = :displayName and CD.email = :email
+"""
+        if (orcid) {
+            query += " and CD.orcid = :orcid"
+            namedParams.put("orcid", orcid)
+        }
+        List result = CDWI.executeQuery(query, namedParams)
+        CDWI cdwi
+        if (result?.size()) {
+            cdwi = CDWI.get(result.get(0))
+            cdwi.role = role
+            if (!cdwi.save(flush: true)) {
+                return "An error has happened while trying to update the role for this contributor."
+            } else {
+                return "Update the new role for this contributor successfully."
+            }
+        } else {
+            cdwi = CDWI.findOrSaveWhere(revision: revision, role: role, displayName: displayName, email: email, orcid: orcid)
+            if (!cdwi.id) {
+                LOGGER.error("""Cannot create or save the contribution details [revision: ${revision.id}, ${revision.name}, \
+role: ${role.name}, email: ${email}, orcid: ${orcid}]""")
+                return "An error has happened while trying to update the role for this contributor."
+
+            } else {
+                LOGGER.info("""Succeed saving the contribution details [revision: ${revision.id}, ${revision.name}, \
+role: ${role.name}, email: ${email}, orcid: ${orcid}]""")
+                return "Update the new role for this contributor successfully."
+            }
+        }
     }
 
     // TODO: move the following method to ContributionDetails domain class

@@ -68,4 +68,10 @@ class FileHelper {
         }
         file
     }
+
+    static boolean isValidOrcid(final String orcid) {
+        Pattern p = Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)\$")
+        Matcher m = p.matcher(orcid)
+        m.matches()
+    }
 }
