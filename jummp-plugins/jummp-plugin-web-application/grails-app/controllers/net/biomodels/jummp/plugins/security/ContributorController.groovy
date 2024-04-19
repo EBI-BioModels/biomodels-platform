@@ -63,8 +63,8 @@ class ContributorController extends CommonController {
         Map result = [:]
         Map<String, CTC> contributors = contributorService.createFirstContributors(revision)
         result.put("contributors", contributors)
-        String message = ""
-        String htmlBasedStringOfContributors = ""
+        String message
+        String htmlBasedStringOfContributors
         if (contributors) {
             Map<String, CD> savedContributors = contributorService.saveFirstContributors(contributors, revision)
             if (0 == savedContributors?.size()) {
@@ -258,7 +258,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         }
         // RENDER THE DATA TO VIEW
         // create a temporarily CTC object
-        User user = createDummyUserPerson(displayName, email)
+        User user = createDummyUserPerson(displayName, email, orcid)
         CTC ctc = new CTC(user: user, role: role, person: user.person, locked: false, external: true)
         String htmlString = g.render(template: "/contributor/showContributor",
             plugin: "jummp-plugin-web-application",
@@ -460,10 +460,10 @@ from the model ${revisionIdentifier}."""
             List list = parts as List
             if (list.size() == 2) {
                 String username = list[0]
+                email = list[1]
                 if (FileHelper.isValidOrcid(username)) {
                     orcid = username
                 } else {
-                    email = list[1]
                     contributor = User.findByUsernameAndEmail(username, email)
                 }
             } else {
@@ -484,10 +484,12 @@ from the model ${revisionIdentifier}."""
          revisionNumber: revisionNumber, revisionIdentifier: "$modelId.$revisionNumber"]
     }
 
-    private static User createDummyUserPerson(final String displayName, final String email) {
+    private static User createDummyUserPerson(final String displayName, final String email,
+                                              final String orcid = "") {
         String username = MathUtils.generatePassword((('A'..'Z')+('0'..'9')+('a'..'z')).join(), 6)
         User user = new User(email: email, username: "ext_$username")
         Person person = new Person(userRealName: displayName)
+        if (orcid) { person.orcid = orcid }
         user.person = person
         user
     }
