@@ -368,7 +368,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         CR newRole = CR.findByName(newRoleName)
         String displayName = params.get("displayName").decodeHTML()
         String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
-        usernameAndEmail = usernameAndEmail.replaceAll("\r\n","").replaceAll(" ","")
+        usernameAndEmail = usernameAndEmail.replaceAll("\r\n","").trim()
         if (!usernameAndEmail) {
             throw new Exception("Failed to update contributor role because of the empty input.")
         }
