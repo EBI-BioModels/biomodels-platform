@@ -28,10 +28,7 @@
         <select name="role" required id="role" class="form-control">
             <g:each in="${roles}" var="role">
                 <option value="${role}"
-                        <g:if test="${cont}">
-
-                        <g:if test="${role.equals(cont.role.name)}">selected="selected" test="${cont.role.name}"</g:if>
-                        </g:if>
+                    <g:if test="${role == cont.role.name}">selected="selected"</g:if>
                 >${role}</option>
             </g:each>
         </select>

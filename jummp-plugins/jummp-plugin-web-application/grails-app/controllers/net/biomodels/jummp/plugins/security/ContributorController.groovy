@@ -187,9 +187,8 @@ class ContributorController extends CommonController {
         }
         List lstContWtoInvite = CDWI.findAllByRevision(revision)
         lstContWtoInvite.each {
-            String username = MathUtils.generatePassword((('A'..'Z')+('0'..'9')+('a'..'z')).join(), 6)
-            User user = new User(email: it.email, username: "ext_$username")
-            Person person = new Person(userRealName: it.displayName)
+            User user = createDummyUserPerson(it.displayName, it.email)
+            Person person = user.person
             if (it.orcid) { person.orcid = it.orcid }
             CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false)
             contributorMap.put(user.username, ctc)
@@ -258,9 +257,12 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
             return false
         }
         // RENDER THE DATA TO VIEW
+        // create a temporarily CTC object
+        User user = createDummyUserPerson(displayName, email)
+        CTC ctc = new CTC(user: user, role: role, person: user.person, locked: false)
         String htmlString = g.render(template: "/contributor/showContributor",
             plugin: "jummp-plugin-web-application",
-            model: [cont: null, email: email, displayName: displayName, orcid: orcid,
+            model: [cont: ctc, email: email, displayName: displayName, orcid: orcid,
                     serverURL: serverURL, roles: contributorService.roles])
         result.put("htmlBasedStringForNewContributor", htmlString)
         result.put("message", "The contributor has been added successfully!")
@@ -458,5 +460,13 @@ from the model ${revisionIdentifier}."""
 
         [contributor: contributor, revision: revision, modelId: modelId,
          revisionNumber: revisionNumber, revisionIdentifier: "$modelId.$revisionNumber"]
+    }
+
+    private static User createDummyUserPerson(final String displayName, final String email) {
+        String username = MathUtils.generatePassword((('A'..'Z')+('0'..'9')+('a'..'z')).join(), 6)
+        User user = new User(email: email, username: "ext_$username")
+        Person person = new Person(userRealName: displayName)
+        user.person = person
+        user
     }
 }

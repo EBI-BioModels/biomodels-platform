@@ -265,7 +265,7 @@
         }*/
         let displayName = $('input[name=txt-display-name]').val();
         let orcid = $('input[name=txt-orcid]').val();
-        let role = $("#defined-role option:selected").text();
+        let role = $("#select-defined-roles option:selected").text();
         const urlPost = $.jummp.createLink("contributor", "addWithoutInvitation");
         let data = new FormData();
         data.append("modelId", "${modelId}");
