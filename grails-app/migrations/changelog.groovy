@@ -1326,5 +1326,6 @@ databaseChangeLog = {
     include file: '20240216_addBMSFormat.groovy'
     include file: '20240326_updateContributorRoles.groovy'
     include file: '20240328_createContributionDetailsWithoutInviteTable.groovy'
+    include file: '20240419_removeUniqueConstraintToOrcid.groovy'
 }
 
