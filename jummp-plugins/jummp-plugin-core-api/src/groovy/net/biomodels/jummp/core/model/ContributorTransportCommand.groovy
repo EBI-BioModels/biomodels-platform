@@ -32,6 +32,11 @@ class ContributorTransportCommand {
     User user
     Person person
     ContributionRole role
+    boolean external
     // this property is used to disable the changing of the role for this contributor
     boolean locked
+
+    static constraints = {
+        external(nullable: true)
+    }
 }

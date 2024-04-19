@@ -59,7 +59,7 @@ class ContributorService implements InitializingBean {
     Map findOrCreateInvite(final CI ci, final String inviterName, final User inviter, final String inviteeEmail,
                            String howtoAction, final String refCode, final CR role, final Revision revision) {
         Map result = [:]
-        String msg = ""
+        String msg
         String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${role.name.toLowerCase()}"
         String emailHeading = "You are invited!"
         howtoAction = "Send"
@@ -208,15 +208,8 @@ class ContributorService implements InitializingBean {
 
     String updateRoleForExternalContributor(final Revision revision, final CR role, final String displayName,
                                             final String email, final String orcid = "") {
-        Map namedParams = [revId: revision.id, displayName: displayName, email: email]
-        String query = """select CD.id from ContributionDetailsWithoutInvite as CD where CD.revision.id = :revId
-and CD.displayName = :displayName and CD.email = :email
-"""
-        if (orcid) {
-            query += " and CD.orcid = :orcid"
-            namedParams.put("orcid", orcid)
-        }
-        List result = CDWI.executeQuery(query, namedParams)
+
+        List result = findCDWI(revision.id, displayName, email, orcid)
         CDWI cdwi
         if (result?.size()) {
             cdwi = CDWI.get(result.get(0))
@@ -241,6 +234,34 @@ role: ${role.name}, email: ${email}, orcid: ${orcid}]""")
         }
     }
 
+    String removeExternalContributor(final Map parsedParams) {
+        String message
+        Revision revision = parsedParams.get("revision") as Revision
+        String displayName = parsedParams.get("displayName")
+        String email = parsedParams.get("email")
+        String orcid = parsedParams.get("orcid")
+        CR role = parsedParams.get("role") as CR
+        List result = findCDWI(revision.id, displayName, email, orcid)
+        if (result.size()) {
+            CDWI cdwi = CDWI.get(result.get(0))
+            Long id = cdwi.id
+            cdwi.delete(flush: true)
+            cdwi = CDWI.get(id)
+            String contInfo = "[revision: ${revision.id}, ${revision.name}; role: ${role.name}; email: ${email}; orcid: ${orcid}]"
+            if (cdwi) {
+                message = "Failed to remove the external contributor $contInfo."
+            } else {
+                message = "Succeed to remove the external contributor $contInfo."
+            }
+            LOGGER.info(message)
+        } else {
+            message = """An error happened when removing the contributor \
+${displayName} (${orcid}, ${email}) from the model ${revision.model.submissionId}."""
+            LOGGER.error(message)
+        }
+        message
+    }
+
     // TODO: move the following method to ContributionDetails domain class
     String toStringCD(final CD cd) {
         "[${cd.contributor.username}\t ${cd.role.name}\t ${cd.revision.id}: ${cd.revision.name}]".toString()
@@ -258,6 +279,19 @@ role: ${role.name}, email: ${email}, orcid: ${orcid}]""")
         }
         ci.merge(flush: true)
         return ci
+    }
+
+    private static List findCDWI(final Long revisionId, final String displayName, final String email, final String orcid) {
+        Map namedParams = [revId: revisionId, displayName: displayName, email: email]
+        String query = """select CD.id from ContributionDetailsWithoutInvite as CD where CD.revision.id = :revId
+and CD.displayName = :displayName and CD.email = :email
+"""
+        if (orcid) {
+            query += " and CD.orcid = :orcid"
+            namedParams.put("orcid", orcid)
+        }
+        List result = CDWI.executeQuery(query, namedParams)
+        result
     }
 
     @Override

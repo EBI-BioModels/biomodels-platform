@@ -182,7 +182,7 @@ class ContributorController extends CommonController {
             String username = detail.contributor.username
             boolean locked = username in authors
             CTC ctc = new CTC(user: detail.contributor,
-                role: detail.role, person: detail.contributor.person, locked: locked)
+                role: detail.role, person: detail.contributor.person, locked: locked, external: false)
             contributorMap.put(username, ctc)
         }
         List lstContWtoInvite = CDWI.findAllByRevision(revision)
@@ -190,7 +190,7 @@ class ContributorController extends CommonController {
             User user = createDummyUserPerson(it.displayName, it.email)
             Person person = user.person
             if (it.orcid) { person.orcid = it.orcid }
-            CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false)
+            CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false, external: true)
             contributorMap.put(user.username, ctc)
         }
 
@@ -259,7 +259,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         // RENDER THE DATA TO VIEW
         // create a temporarily CTC object
         User user = createDummyUserPerson(displayName, email)
-        CTC ctc = new CTC(user: user, role: role, person: user.person, locked: false)
+        CTC ctc = new CTC(user: user, role: role, person: user.person, locked: false, external: true)
         String htmlString = g.render(template: "/contributor/showContributor",
             plugin: "jummp-plugin-web-application",
             model: [cont: ctc, email: email, displayName: displayName, orcid: orcid,
@@ -372,7 +372,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         if (!usernameAndEmail) {
             throw new Exception("Failed to update contributor role because of the empty input.")
         }
-        String[] arrayOfStrings = usernameAndEmail.split(",")
+        String[] arrayOfStrings = usernameAndEmail.split(", ")
         List parts = arrayOfStrings as List
         if (parts.size() == 1) {
             // go to save the data in the CDWI table
@@ -412,53 +412,75 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         String message = "In progress"
         Map parsedParameters = parseParameters()
         result.putAll(parsedParameters)
-        String revisionIdentifier = parsedParameters["revisionIdentifier"]
-        User contributor = parsedParameters["contributor"]
-        Revision revision = parsedParameters["revision"]
-        CD details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
-        try {
-            details?.delete(flush: true)
-            details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
-            if (details) {
-                message = """\
+        Boolean external = result.get("external") as Boolean
+        if (external) {
+            message = contributorService.removeExternalContributor(parsedParameters)
+        } else {
+            String revisionIdentifier = parsedParameters["revisionIdentifier"]
+            User contributor = parsedParameters["contributor"]
+            Revision revision = parsedParameters["revision"]
+            CD details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
+            try {
+                details?.delete(flush: true)
+                details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
+                if (details) {
+                    message = """\
 Remove the contributor \
 ${contributor.person.userRealName} (${contributor.username}, ${contributor.email}) \
 from the model ${revisionIdentifier} unsuccessfully."""
-            } else {
-                message = """\
+                } else {
+                    message = """\
 The contributor ${contributor.person.userRealName} (${contributor.username}, ${contributor.email}) \
 from the model ${revisionIdentifier} has been removed successfully."""
-            }
-            LOGGER.debug(message)
-        } catch (OptimisticLockingFailureException exception) {
-            throw exception
-            message = """\
+                }
+                LOGGER.debug(message)
+            } catch (OptimisticLockingFailureException exception) {
+                throw exception
+                message = """\
 An error happened when removing the contributor \
 ${contributor.person.userRealName} (${contributor.username}, ${contributor.email}) \
 from the model ${revisionIdentifier}."""
-            LOGGER.error(message, exception)
-            println "$message: ${exception.toString()}"
+                LOGGER.error(message, exception)
+                println "$message: ${exception.toString()}"
+            }
         }
+
         result.put("message", message)
         render(result as JSON)
     }
 
     private Map parseParameters() {
         User contributor = null
+        boolean externalContributor = params.getBoolean("externalContributor")
+        String email
+        String orcid
         if (params.containsKey("usernameAndEmail")) {
             String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
             String[] parts = usernameAndEmail.split(", ")
-            String username = parts[0]
-            String email = parts[1]
-            contributor = User.findByUsernameAndEmail(username, email)
+            List list = parts as List
+            if (list.size() == 2) {
+                String username = list[0]
+                if (FileHelper.isValidOrcid(username)) {
+                    orcid = username
+                } else {
+                    email = list[1]
+                    contributor = User.findByUsernameAndEmail(username, email)
+                }
+            } else {
+                email = list[0]
+            }
         }
-
+        String displayName = params.get("userRealName").decodeHTML()
         String modelId = params.get("modelId").decodeHTML()
         String revisionNumber = params.getInt("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
         Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
 
-        [contributor: contributor, revision: revision, modelId: modelId,
+        String roleName = params.get("roleName").decodeHTML()
+        CR role = CR.findByName(roleName)
+
+        [contributor: contributor, revision: revision, modelId: modelId, role: role,
+         external: externalContributor, email: email, orcid: orcid, displayName: displayName,
          revisionNumber: revisionNumber, revisionIdentifier: "$modelId.$revisionNumber"]
     }
 

@@ -1,4 +1,4 @@
-<div class="row contributors-body">
+<div class="row contributors-body ${cont.external ? 'external-contributor' : ''}">
     <div class="columns large-3 medium-3 small-12 text-center middle">
         <div class="thumbnail" style="border: none !important">
             <img src="${serverURL}/images/default-user-avatar.png" style="width: 30%">

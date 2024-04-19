@@ -411,8 +411,10 @@
     $("#model-contributor-list").on("click", ".contributor-remove.unlocked", function () {
         const parentRow = $(this).parent().parent();
         const usernameAndEmailElement = parentRow.find(".username-email");
-        const usernameAndEmail = usernameAndEmailElement.text();
-        const userRealName = parentRow.find(".username-email").text();
+        const usernameAndEmail = usernameAndEmailElement.text().trim("\n");
+        const userRealName = parentRow.find(".user-real-name").text().trim("\n");
+        const roleName = $("#defined-role option:selected").text();
+        const isExternal = parentRow.hasClass("external-contributor");
         let message = "";
         if (!usernameAndEmail) {
             message = "Cannot remove the contribution role due to an error!";
@@ -424,8 +426,10 @@
         let data = new FormData();
         data.append("usernameAndEmail", usernameAndEmail);
         data.append("userRealName", userRealName);
+        data.append("roleName", roleName);
         data.append("modelId", "${modelId}");
         data.append("revisionNumber", "${revisionNumber}");
+        data.append("externalContributor", isExternal);
         //data.append("newRole", currentRole);
         fetch(urlPost, {
             method: "POST",
