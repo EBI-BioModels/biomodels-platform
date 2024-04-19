@@ -72,7 +72,7 @@
         <div class="columns small-12 medium-3 large-3">
             <label for="txt-display-name">Display Name</label>
             <input type="text" id="txt-display-name" name="txt-display-name"
-                   placeholder="Type a full name or scientific name appeared in publications">
+                   placeholder="Type a full  or scientific name">
         </div>
         <div class="columns small-12 medium-3 large-3">
             <label for="txt-email-address">Email</label>
@@ -106,7 +106,7 @@
         </div>
         <div class="columns small-12 medium-4 large-4">
             <input type="text" id="txt-email-invite" name="txt-email-invite"
-                   placeholder="Type a valid email address of the contributor invited">
+                   placeholder="Type a valid email address">
         </div>
         <div class="columns small-12 medium-4 large-4">
             <select name="defined-role" required id="defined-role" class="form-control">
