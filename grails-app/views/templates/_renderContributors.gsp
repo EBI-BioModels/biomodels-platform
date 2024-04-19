@@ -6,16 +6,9 @@
         <em>Submitter of the first revision: </em>${revision.model.submitter}
         <br/>
         <em>Submitter of this revision: </em>${revision.owner}
-
-        <g:if test="${curators}"><br/><em>Curators:</em>
-        <g:join in="${curators}"/></g:if>
-
-        <g:if test="${modellers}">
-        <br/><em>Modellers:</em>
-        <g:join in="${modellers}"/></g:if>
-
-        <g:if test="${others}"><br/>
-        <em>Others:</em>
-        <g:join in="${others}"/></g:if>
+        <br/>
+        <g:each in="${contributors}" var="cont">
+            <em>${cont.value.size() > 1 ? cont.key + 's' : cont.key}: </em><g:join in="${cont.value}"/><br/>
+        </g:each>
     </div>
 </div>

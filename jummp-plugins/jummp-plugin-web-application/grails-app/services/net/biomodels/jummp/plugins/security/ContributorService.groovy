@@ -28,7 +28,9 @@ import net.biomodels.jummp.model.ContributionDetailsWithoutInvite as CDWI
 import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.ContributionRole
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.utils.MathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -46,6 +48,16 @@ class ContributorService implements InitializingBean {
 
     void init() {
         roles = CR.getAll().collect { it.name }.sort { it }
+    }
+
+    static User createDummyUserPerson(final String displayName, final String email,
+                                      final String orcid = "") {
+        String username = MathUtils.generatePassword((('A'..'Z')+('0'..'9')+('a'..'z')).join(), 6)
+        User user = new User(email: email, username: "ext_$username")
+        Person person = new Person(userRealName: displayName)
+        if (orcid) { person.orcid = orcid }
+        user.person = person
+        user
     }
 
     Map createFirstContributors(final Revision revision) {
@@ -204,6 +216,35 @@ class ContributorService implements InitializingBean {
             LOGGER.error("Could not create the contribution details: ${toStringCD(cd)}")
         }
         return cd
+    }
+
+    static Map<String, CTC> getContributors(Revision revision) {
+
+        Model model = revision.model
+        if (!model) { return null }
+        Map<String, CTC> contributorMap = [:]
+        List revisions = model.revisions.toList()
+
+        Set authors = revisions*.owner?.collect { it.username }?.toSet()
+
+        List details = CD.findAllByRevision(revision)
+        for (CD detail: details) {
+            String username = detail.contributor.username
+            boolean locked = username in authors
+            CTC ctc = new CTC(user: detail.contributor,
+                role: detail.role, person: detail.contributor.person, locked: locked, external: false)
+            contributorMap.put(username, ctc)
+        }
+        List lstContWtoInvite = CDWI.findAllByRevision(revision)
+        lstContWtoInvite.each {
+            User user = createDummyUserPerson(it.displayName, it.email)
+            Person person = user.person
+            if (it.orcid) { person.orcid = it.orcid }
+            CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false, external: true)
+            contributorMap.put(user.username, ctc)
+        }
+
+        contributorMap
     }
 
     String updateRoleForExternalContributor(final Revision revision, final CR role, final String displayName,

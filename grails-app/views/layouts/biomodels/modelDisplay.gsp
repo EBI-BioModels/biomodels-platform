@@ -764,9 +764,7 @@
                             </div>
                             <g:render template="/templates/renderPublication" />
                             <g:render template="/templates/renderContributors"
-                                      model="[modellers: contributors.get('modellers'),
-                                              curators: contributors.get('curators'),
-                                              others: contributors.get('others')]"/>
+                                      model="${contributors}"/>
                         </div>
 
                         <div class="small-12 medium-4 large-4 columns">

@@ -23,6 +23,7 @@ package net.biomodels.jummp.core.adapters
 import grails.util.Holders
 import net.biomodels.jummp.core.certification.QcInfoCategory
 import net.biomodels.jummp.core.certification.QcInfoTransportCommand
+import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
@@ -71,6 +72,8 @@ sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isC
         use(QcInfoCategory) {
             qcInfoCmd = revision.qcInfo?.toCommandObject()
         }
+        def contributorService = Holders.grailsApplication.mainContext.contributorService
+        Map<String, CTC> contributors = contributorService.getContributors(revision)
         RevisionTransportCommand rev = new RevisionTransportCommand(
                 id: revision.id,
                 state: revision.state,
@@ -88,7 +91,8 @@ sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isC
                 validationLevel: revision.validationLevel,
                 validationReport: revision.validationReport,
                 qcInfo: qcInfoCmd,
-                readmeSubmission: revision.readmeSubmission
+                readmeSubmission: revision.readmeSubmission,
+                contributors: contributors
         )
         return rev
     }

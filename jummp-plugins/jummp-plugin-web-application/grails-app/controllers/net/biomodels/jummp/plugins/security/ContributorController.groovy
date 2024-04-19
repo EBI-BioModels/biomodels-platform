@@ -22,6 +22,7 @@ package net.biomodels.jummp.plugins.security
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.model.ContributionDetails as CD
 import net.biomodels.jummp.model.ContributionDetailsWithoutInvite as CDWI
@@ -29,14 +30,11 @@ import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.utils.FileHelper
-import net.biomodels.jummp.utils.MathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.security.access.AccessDeniedException
-
 /**
  * @short Controller class for handling the list of contributors.
  *
@@ -120,7 +118,7 @@ class ContributorController extends CommonController {
         Revision revision = map["revision"] as Revision
 
         String message = ""
-        Map<String, CTC> contributors = getContributors(revision)
+        Map<String, CTC> contributors = contributorService.getContributors(revision)
         List contributorEmailList = contributors.values().collect { it.user.email }
         String currentUserEmail = userService.getEmailAddress()
         String currentUsername = userService.username
@@ -166,35 +164,6 @@ class ContributorController extends CommonController {
         Revision revision = revisions.find { it.revisionNumber == revisionNumber }
         map["revision"] = revision
         return map
-    }
-
-    private static Map<String, CTC> getContributors(Revision revision) {
-
-        Model model = revision.model
-        if (!model) { return null }
-        Map<String, CTC> contributorMap = [:]
-        List revisions = model.revisions.toList()
-
-        Set authors = revisions*.owner?.collect { it.username }?.toSet()
-
-        List details = CD.findAllByRevision(revision)
-        for (CD detail: details) {
-            String username = detail.contributor.username
-            boolean locked = username in authors
-            CTC ctc = new CTC(user: detail.contributor,
-                role: detail.role, person: detail.contributor.person, locked: locked, external: false)
-            contributorMap.put(username, ctc)
-        }
-        List lstContWtoInvite = CDWI.findAllByRevision(revision)
-        lstContWtoInvite.each {
-            User user = createDummyUserPerson(it.displayName, it.email)
-            Person person = user.person
-            if (it.orcid) { person.orcid = it.orcid }
-            CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false, external: true)
-            contributorMap.put(user.username, ctc)
-        }
-
-        contributorMap
     }
 
     def add() {
@@ -258,7 +227,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         }
         // RENDER THE DATA TO VIEW
         // create a temporarily CTC object
-        User user = createDummyUserPerson(displayName, email, orcid)
+        User user = contributorService.createDummyUserPerson(displayName, email, orcid)
         CTC ctc = new CTC(user: user, role: role, person: user.person, locked: false, external: true)
         String htmlString = g.render(template: "/contributor/showContributor",
             plugin: "jummp-plugin-web-application",
@@ -482,15 +451,5 @@ from the model ${revisionIdentifier}."""
         [contributor: contributor, revision: revision, modelId: modelId, role: role,
          external: externalContributor, email: email, orcid: orcid, displayName: displayName,
          revisionNumber: revisionNumber, revisionIdentifier: "$modelId.$revisionNumber"]
-    }
-
-    private static User createDummyUserPerson(final String displayName, final String email,
-                                              final String orcid = "") {
-        String username = MathUtils.generatePassword((('A'..'Z')+('0'..'9')+('a'..'z')).join(), 6)
-        User user = new User(email: email, username: "ext_$username")
-        Person person = new Person(userRealName: displayName)
-        if (orcid) { person.orcid = orcid }
-        user.person = person
-        user
     }
 }

@@ -278,7 +278,7 @@ class ModelController extends CommonController {
                     } else {
                         canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
                     }
-                    def contributors = modelDelegateService.collectContributors(revision.model.contributors)
+                    def contributors = modelDelegateService.convertContributors(revision.contributors)
                     boolean canSeeCurationTab = modelDelegateService.canSeeCurationTab(revision, hasCuratorRole, currentUser)
                     Map model = [
                          revision               : rev,

@@ -41,6 +41,7 @@ import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.core.model.ModelAuditTransportCommand as ModelATC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
@@ -66,6 +67,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+
 /**
  * @short Service delegating methods to ModelService.
  *
@@ -172,6 +174,26 @@ class ModelDelegateService implements IModelService, InitializingBean {
         retRes.put("others", others)
         retRes
     }
+
+    @NotTransactional
+    Map<String, List> convertContributors(Map<String, CTC> contributors) {
+        // use TreeMap to sort the keys in a natural order
+        Map<String, List> mapResult = new TreeMap<>()
+
+        for (Map.Entry<String, CTC> entry : contributors.entrySet()) {
+            CTC value = entry.getValue()
+            String roleName = value.role.name
+            String contributorName = value.person.userRealName
+            if (mapResult.containsKey(roleName)) {
+                mapResult.get(roleName).add(contributorName)
+            } else {
+                mapResult.put(roleName, [contributorName] as List)
+            }
+        }
+
+        return mapResult
+    }
+
     @NotTransactional
     long createAuditItem(ModelATC cmd) {
         return modelService.createAuditItem(cmd)
