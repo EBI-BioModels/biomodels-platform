@@ -16,10 +16,12 @@
         </h4>
         <p class="username-email">
         <g:if test="${cont}">
-            ${cont.user.username.startsWith("ext_") ? (cont.person.orcid ? cont.person.orcid + ", " : "") : cont.user.username + ", " }${cont.user.email}
+            ${cont.user.username.startsWith("ext_") ?
+                (cont.person.orcid ? (cont.person.orcid + ", ") : "") :
+                (cont.user.username + ", ")}${cont.user.email}
         </g:if>
         <g:else>
-            ${orcid}, ${email}
+            ${orcid ? orcid + ", " + email : email}
         </g:else></p>
     </div>
     <div class="columns large-2 medium-2 small-12">
