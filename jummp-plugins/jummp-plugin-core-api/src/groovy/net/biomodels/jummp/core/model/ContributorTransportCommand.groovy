@@ -28,7 +28,7 @@ import net.biomodels.jummp.plugins.security.User
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class ContributorTransportCommand {
+class ContributorTransportCommand implements Serializable {
     User user
     Person person
     ContributionRole role
