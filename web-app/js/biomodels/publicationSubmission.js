@@ -1,9 +1,21 @@
 const DELIMITER = "|";
+function retrieveAuthorInput() {
+    const userRealName = $('#newAuthorName').val().trim() || "";
+    const orcid = $('#newAuthorOrcid').val().trim() || "";
+    const institution = $('#newAuthorInstitution').val().trim() || "";
+    return {
+        "userRealName": userRealName,
+        "orcid": orcid,
+        "institution": institution
+    }
+}
+
 function addAuthor() {
-    if ($('#newAuthorName').val()) {
-        var userRealName = $('#newAuthorName').val();
-        var orcid = $('#newAuthorOrcid').val() || "";
-        var institution = $('#newAuthorInstitution').val() || "";
+    if ($('#newAuthorName').val().trim()) {
+        const input = retrieveAuthorInput();
+        const userRealName = input["userRealName"];
+        const orcid = input["orcid"];
+        const institution = input["institution"];
         if (authorList.filter(function(v) {
             return v["userRealName"] === userRealName &&
                    v["orcid"] === orcid &&
@@ -12,10 +24,10 @@ function addAuthor() {
             showNotification("The author named " + userRealName + " already exists. Please change it or enter an another name.");
         } else {
             // add the new author to the authors list
-            var newAuthor = {userRealName: userRealName, institution: institution, orcid: orcid};
+            const newAuthor = {userRealName: userRealName, institution: institution, orcid: orcid};
             authorList.push(newAuthor);
             // display/add it to the option element
-            var id = userRealName + DELIMITER + orcid + DELIMITER + institution;
+            const id = userRealName + DELIMITER + orcid + DELIMITER + institution;
             $('#authorList').attr('size', 4);
             $('#authorList')
                 .append($('<option>', {
@@ -37,11 +49,13 @@ function addAuthor() {
         showNotification("Please enter a name.");
     }
 }
+
 function deleteAuthor() {
-    var userRealName = $('#newAuthorName').val();
-    var orcid = $('#newAuthorOrcid').val() || "";
-    var institution = $('#newAuthorInstitution').val() || "";
-    var deletedAuthor = authorList.filter(function(v) {
+    const input = retrieveAuthorInput();
+    const userRealName = input["userRealName"];
+    const orcid = input["orcid"];
+    const institution = input["institution"];
+    let deletedAuthor = authorList.filter(function(v) {
         return v["userRealName"] === userRealName &&
                v["orcid"] === orcid &&
                v["institution"] === institution;
@@ -63,13 +77,15 @@ function deleteAuthor() {
         showNotification("Please select an author before deleting it.")
     }
 }
+
 function updateAuthor() {
     let selectedIndex = $('#authorList').prop('selectedIndex');
     if ($('#newAuthorName').val()) {
         let personId = $("#authorList option:selected").attr("data-person-id");
-        let userRealName = $('#newAuthorName').val();
-        let orcid = $('#newAuthorOrcid').val() || "";
-        let institution = $('#newAuthorInstitution').val() || "";
+        const input = retrieveAuthorInput();
+        let userRealName = input["userRealName"];
+        let orcid = input["orcid"];
+        let institution = input["institution"];
         let position;
         let updatedAuthor = authorList.filter(function(v,index) {
             position = index;

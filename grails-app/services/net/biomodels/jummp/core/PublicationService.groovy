@@ -317,6 +317,19 @@ There has been errors when assembling authors $authors into the publication '${p
     }
 
     private void reconcile(Publication publication, List<PersonTC> tobeAdded) {
+        // get rid of duplications if they exist. Filtering duplications is often processed at the client-side.
+        // However, duplications could be bypassed for whatever reason. We handle such duplications here just in case.
+        List noDupList = tobeAdded
+        tobeAdded = []
+        noDupList.eachWithIndex { PersonTC entry, int i ->
+            def personAdded = tobeAdded.find { PersonTC person ->
+                person.userRealName.trim() == entry.userRealName.trim() && person.orcid?.trim() == entry.orcid?.trim() && person.institution?.trim() == entry.institution?.trim()
+            }
+            if (!personAdded) {
+                tobeAdded.add(entry)
+            }
+        }
+
         List<PublicationPerson> existing = getPersons(publication)
         existing.eachWithIndex { PublicationPerson author, int index ->
             // find the authors will be remove out of the publication authors
@@ -345,7 +358,6 @@ There has been errors when assembling authors $authors into the publication '${p
                     return newAuthor.userRealName == oldAuthor.person.userRealName &&
                         newAuthor.institution == oldAuthor.person.institution
                 }
-                return false
             }
             if (!existingAuthor) {
                 Person newlyCreatedPubAuthor
@@ -408,7 +420,7 @@ where pp.publication = :publication and pp.person = :person and pp.position = :o
         }
     }
 
-    private List<PersonTC> parseAuthorsJSON(def jsonData) {
+    private static List<PersonTC> parseAuthorsJSON(def jsonData) {
         List<PersonTC> validatedAuthors = new LinkedList<>()
         def authorList
         if (jsonData instanceof String) {
@@ -457,7 +469,7 @@ where pp.publication = :publication and pp.person = :person and pp.position = :o
                 linkProvider {
                     eq("linkType", linkType)
                 }
-            }
+            } as Publication
         }
         publication
     }

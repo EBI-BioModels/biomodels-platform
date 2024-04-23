@@ -228,7 +228,7 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
                 }
             } else {
                 if (result["status"] == "Success" && result["publication"]) {
-                    findUpdates(changesMade, pubTC, result["publication"])
+                    findUpdates(changesMade, pubTC, result["publication"] as PubTC)
                 } else if (!result["publication"]) {
                     changesMade.addAll(["MODEL PUBLICATION: Removed the publication details."])
                 }
@@ -237,7 +237,7 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
         changesMade
     }
 
-    private HashSet findUpdates(HashSet<String> changesMade, PubTC oldPub, PubTC newPub) {
+    private static HashSet findUpdates(HashSet<String> changesMade, PubTC oldPub, PubTC newPub) {
         if (changesMade) {
             CollectionHelper.remove(changesMade, "MODEL PUBLICATION")
         }
