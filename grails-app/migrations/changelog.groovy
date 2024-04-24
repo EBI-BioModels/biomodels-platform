@@ -1328,5 +1328,6 @@ databaseChangeLog = {
     include file: '20240328_createContributionDetailsWithoutInviteTable.groovy'
     include file: '20240419_removeUniqueConstraintToOrcid.groovy'
     include file: '20240422_removeUniqueOnPersonOrcid.groovy'
+    include file: '20240424_makeEmailOptional_CDWI.groovy'
 }
 
