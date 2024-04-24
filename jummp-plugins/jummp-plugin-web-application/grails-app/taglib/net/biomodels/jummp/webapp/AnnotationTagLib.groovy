@@ -59,17 +59,19 @@ class AnnotationTagLib {
         String templateName = annotationRenderingTemplateProvider.template
         String tpl = "/annotation/$templateName"
         for (Map.Entry<QTC, List<RRTC>> entry : annotations.entrySet()) {
+            List<RRTC> sortedList = entry.value.sort { it.collectionName }
             int size = entry.value.size()
             out << g.render(template: "/annotation/biomodels/openQualifier",
                             plugin: "jummp-plugin-web-application", model: [qualifier: entry.key, total: size])
             int nbLoops = Math.ceil(size/BioModels.BM_MIN_NB_CR).toInteger()
-            int start =  0
-            int end = 0
+            int start
+            int end
             for (int i = 1; i <= nbLoops; i++) {
                 start = (i-1)*BioModels.BM_MIN_NB_CR
                 end = start + BioModels.BM_MIN_NB_CR
                 end = end > size ? size : end
-                List<RRTC> references = entry.value.subList(start, end)
+                List<RRTC> references = sortedList.subList(start, end)
+                references = references.sort { it.accession }
                 out << g.render(template: tpl, plugin: "jummp-plugin-web-application",
                                 model: [total: size, index: i, qualifier: entry.key, references: references])
             }
