@@ -100,7 +100,8 @@ class ModelAdapter {
             contributors: contributors,
             flagLevel: latestRev?.qcInfo?.flag,
             modellingApproach: model.modellingApproach,
-            otherInfo: model.otherInfo
+            otherInfo: model.otherInfo,
+            isMetadataSubmission: model.isMetadataSubmission
         )
     }
 

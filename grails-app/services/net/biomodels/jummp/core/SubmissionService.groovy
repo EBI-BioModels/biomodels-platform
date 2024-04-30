@@ -154,6 +154,7 @@ class SubmissionService implements InitializingBean {
             workingMemory.put("otherInfo", "")
             workingMemory.put("modellingApproach", "")
             workingMemory.put("readmeSubmission", "")
+            workingMemory.put("isMetadataSubmission", false)
         }
 
         /**
@@ -1009,6 +1010,9 @@ an annotation to SBML document.""")
             List revisions = Model.get(latest.model.id).revisions as List
             boolean amendable = revisions.size() >= 2
             workingMemory.put("amendable", amendable)
+
+            // is it metadata submission? this property should be updated here
+            workingMemory.put("isMetadataSubmission", latest.model.isMetadataSubmission)
 
             // the variable below is used for comparing the existing files and updated ones
             // then decide which changes have been made

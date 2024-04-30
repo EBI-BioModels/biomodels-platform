@@ -127,4 +127,9 @@ class ModelTransportCommand implements Serializable {
 
     // TODO: reconcile the contributors and createrUsernames states.
     Map<String, String> contributors
+
+    /**
+     * This flag tells the current submission (i.e., model) is a metadata submission/model or not
+     */
+    Boolean isMetadataSubmission
 }
