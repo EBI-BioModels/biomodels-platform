@@ -52,7 +52,7 @@
         }
         var validation = true;
         $(document).ready(function () {
-            if ("${publication}") {
+            if ("${publication.id}" !== null && "${publication.id}" !== "") {
                 $('#publicationLinkCol').show();
                 $('#freshPublicationBtnCol').show();
             } else {

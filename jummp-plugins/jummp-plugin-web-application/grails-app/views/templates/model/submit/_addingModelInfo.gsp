@@ -9,7 +9,7 @@
         definedModelFormatNames.push("${fmt?.name + ' ' + fmt?.formatVersion}");
     </g:each>
 </g:javascript>
-<style type="text/css">
+<style>
     .disable{
         pointer-events: none;
         background: #bfbfbf;
@@ -52,8 +52,6 @@
         <label for="model_format">
             <span class="required">Model Format</span>&nbsp;
             <span class="assistive-example">[e.g. SBML L3V2, Python 2.7, C/C++]</span></label>
-        <g:if test="${"test"}">
-        </g:if>
         <g:select name="model_format" id="model_format" required=""
                   from="${modelFormatsSortedByName}"
                   value="${selectedModelFormat}"

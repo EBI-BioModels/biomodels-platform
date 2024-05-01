@@ -77,7 +77,7 @@ class SubmissionController extends CommonController implements InitializingBean 
     def completeSubmission() {
         String message = ""
         String status = "Success"
-        Map working = new HashMap<String, Object>()
+        Map working
         try {
             /* The following statements aim at saving the new submission or updates */
             working = validSubmissionDataMap
@@ -201,7 +201,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
          * (2) clicking on the Submit button although the submission data have just been validated.
          */
         Map working = rebuildSubmissionData()
-        String errMsg = ""
+        String errMsg
 
         // 1. Check the uploaded files
         boolean areModelFilesValid = doValidateUploadedFiles(working)

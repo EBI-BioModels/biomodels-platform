@@ -244,8 +244,8 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         Map retMap = [:]
         retMap.put("reference", refCode)
         retMap.put("inviteeResponse", op)
-        String msgLog
-        String msgUser
+        String msgLog = ""
+        String msgUser = ""
         CI ci = CI.findWhere(reference: refCode)
 
         if (!ci) {
