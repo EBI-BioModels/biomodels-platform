@@ -527,7 +527,8 @@ The root cause is ${e.toString()}""")
             'submissionDate' : revision.model.submissionDate,
             'lastModified' :  revision.model.lastModifiedDate,
             'uniqueId' : uniqueId,
-            'tags': tags
+            'tags': tags,
+            'isMetadataSubmission': revision.model.isMetadataSubmission
         ]
         return data
     }
