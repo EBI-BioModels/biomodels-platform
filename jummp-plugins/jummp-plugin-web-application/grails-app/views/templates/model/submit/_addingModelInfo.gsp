@@ -399,7 +399,11 @@
         // the detected model format could not be identical to the latestModelFormat because the detected one
         // is inferred from the real main file uploaded in the file uploading step. Therefore, the text displayed
         // in the format dropdown box might be different from what we can see from the latest revision format.
-        $('#model_format').val(modelFile.detectedModelFormat.id).change();
+        if (modelFile.detectedModelFormat.id !== ${selectedModelFormat} &&
+            modelFile.detectedModelFormat.name !== "Other") {
+            console.log("Detected Model Format: " + modelFile.detectedModelFormat.name);
+            $("#model_format").val(modelFile.detectedModelFormat.id).change();
+        }
         // Below are two pieces of information associated with the revision
         let readmeSubmission = modelFile.detectedModelFormat.readme;
         if (!readmeSubmission && isUpdate)  {
