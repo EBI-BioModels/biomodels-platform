@@ -509,8 +509,10 @@ ${pubURIs?.join(";")}""")
 
         boolean isUpdate = params.boolean("isUpdate")
         boolean isAmend = params.boolean("isAmend")
+        boolean isMetadataSubmission = params.boolean("isMetadataSubmission")
         working.put("isUpdate", isUpdate)
         working.put("isAmend", isAmend)
+        working.put("isMetadataSubmission", isMetadataSubmission)
         MTC model = new MTC()
         if (isUpdate) {
             model = modelDelegateService.getModel(params.modelId)

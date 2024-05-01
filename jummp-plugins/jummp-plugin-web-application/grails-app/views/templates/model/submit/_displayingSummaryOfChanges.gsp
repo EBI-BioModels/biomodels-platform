@@ -121,6 +121,19 @@
 <div class="row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
+            Is this a metadata submission?
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="is-metadata-submission">
+            <g:checkBox name="isMetadataSubmission" id="chk-is-metadata-submission" value="${isMetadataSubmission}"
+                        title="Tick the check box if this is a metadata submission"/>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
             <g:message code="submission.summary.revisionLabel"/>
         </span>
     </div>
@@ -190,6 +203,7 @@
                 submitterInfo: submitterInfo,
                 isUpdate: isUpdate,
                 isAmend: isAmend,
+                isMetadataSubmission: isMetadataSubmission,
                 modelFile: JSON.stringify(modelFile),
                 additionalFiles: JSON.stringify(additionalFiles),
                 modelInfo: JSON.stringify(modelInfo),
@@ -249,6 +263,16 @@
 
         }
     });
+
+    $('#chk-is-metadata-submission').on("click", function () {
+        isMetadataSubmission = $(this).is(":checked");
+        if (isMetadataSubmission) {
+            // TODO: what should be done?
+        } else {
+
+        }
+    });
+
     $("input[name=btnFinalCheck]").on("click", function() {
         // it can be called: validateData(4).done(function(response) {}); -- 4 means the step 4 of the submission flow
         submitData().done(function(response) {

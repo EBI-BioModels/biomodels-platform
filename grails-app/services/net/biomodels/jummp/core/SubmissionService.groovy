@@ -899,7 +899,8 @@ an annotation to SBML document.""")
             // store model format, modelling approach and readme info if they're provided
             storeModelInfo(revision, workingMemory)
             revision.comment = "Import of ${revision.name}".toString()
-
+            Boolean isMetadataSubmission = workingMemory.get("isMetadataSubmission") as Boolean
+            model.isMetadataSubmission = isMetadataSubmission
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
             if (NEW_NAME) {
@@ -1099,6 +1100,9 @@ an annotation to SBML document.""")
 
             // update model format, modelling approach and readme info if they're provided and changed
             storeModelInfo(revision, workingMemory)
+            Boolean isMetadataSubmission = workingMemory.get("isMetadataSubmission") as Boolean
+            revision.model.isMetadataSubmission = isMetadataSubmission
+
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
             final String LATEST_NAME = workingMemory["latestModelName"]

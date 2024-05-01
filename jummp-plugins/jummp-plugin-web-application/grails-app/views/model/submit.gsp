@@ -75,6 +75,7 @@
         var guessedPublicationNamespace = "";
         var guessedPublicationCollectionLabel = "";
         var guessedPublicationAccession = "";
+        var isMetadataSubmission = "${isMetadataSubmission}";
 
         toastr.options = {
             // How long the toast will display without user interaction

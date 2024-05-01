@@ -39,6 +39,7 @@
             data: {
                 isUpdate: isUpdate,
                 isAmend: isAmend,
+                isMetadataSubmission: isMetadataSubmission,
                 modelFile: JSON.stringify(modelFile),
                 additionalFiles: JSON.stringify(additionalFiles),
                 modelInfo: JSON.stringify(modelInfo),

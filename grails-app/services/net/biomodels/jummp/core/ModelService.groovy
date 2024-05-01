@@ -2759,6 +2759,7 @@ an annotation to SBML document.""")
         StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateModelMetadata")
         model.modellingApproach = revision.model.modellingApproach
         model.otherInfo = revision.model.otherInfo
+        model.isMetadataSubmission = revision.model.isMetadataSubmission
         PublicationTransportCommand publicationTC = revision.model.publication
         if (!publicationTC && model.publication) {
             // delete db association if corresponding publication was removed in the UI
