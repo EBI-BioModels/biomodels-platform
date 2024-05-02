@@ -181,6 +181,7 @@ class ModelBuilder {
     private ModelBuilder addModelInfo() {
         this.model.modellingApproach = this.revisionTC.model.modellingApproach
         this.model.otherInfo = this.revisionTC.model.otherInfo
+        this.model.isMetadataSubmission = this.revisionTC.model.isMetadataSubmission
         return this
     }
 
