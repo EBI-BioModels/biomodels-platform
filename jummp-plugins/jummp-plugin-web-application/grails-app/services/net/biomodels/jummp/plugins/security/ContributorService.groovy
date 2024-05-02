@@ -83,7 +83,7 @@ class ContributorService implements InitializingBean {
                     break
                 case InviteState.PENDING:
                     msg = "A gentle reminder has been sent to the email ${inviteeEmail}."
-                    subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as a ${role.toLowerCase()}"
+                    subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as the ${role.name}."
                     emailHeading = "In case you missed it..."
                     howtoAction = "Remind"
                     break
@@ -97,7 +97,7 @@ class ContributorService implements InitializingBean {
                     break
                 case InviteState.RESENT:
                     msg = "A gentle reminder has been sent to the email ${inviteeEmail}."
-                    subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as a ${role.toLowerCase()}"
+                    subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as the ${role.name}."
                     emailHeading = "In case you missed it..."
                     howtoAction = "Remind"
                     break

@@ -299,7 +299,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         result.putAll([role: role, refCode: refCode, serverURL: serverURL] as Map)
 
         String msg = ""
-        String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${roleName.toLowerCase()}"
+        String subjectLine = "${inviterName} invited you to join BioModels as ${roleName}"
         String howtoAction = "Send"
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
