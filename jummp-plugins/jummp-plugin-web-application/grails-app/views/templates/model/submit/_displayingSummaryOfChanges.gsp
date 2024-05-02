@@ -97,6 +97,19 @@
         </div>
     </div>
 </div>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            Is this a metadata submission?
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="is-metadata-submission">
+            <g:checkBox name="isMetadataSubmission" id="chk-is-metadata-submission" value="${isMetadataSubmission}"
+                        title="Tick the check box if this is a metadata submission"/>
+        </div>
+    </div>
+</div>
 <g:if test="${isUpdate}">
 
 <div class="row">
@@ -118,19 +131,7 @@
         </div>
     </div>
 </div>
-<div class="row">
-    <div class="columns small-12 medium-2 large-2">
-        <span class="submission-prop">
-            Is this a metadata submission?
-        </span>
-    </div>
-    <div class="columns small-12 medium-10 large-10">
-        <div id="is-metadata-submission">
-            <g:checkBox name="isMetadataSubmission" id="chk-is-metadata-submission" value="${isMetadataSubmission}"
-                        title="Tick the check box if this is a metadata submission"/>
-        </div>
-    </div>
-</div>
+
 <div class="row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
