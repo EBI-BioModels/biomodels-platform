@@ -137,7 +137,7 @@
             // then perform a server side validation
             return $.ajax({
                 url: "${createLink(controller: "submission", action: "validateModelInfo")}",
-                type: "GET",
+                type: "POST",
                 data: data,
                 success: function (response) {
                     console.log(JSON.stringify(response));

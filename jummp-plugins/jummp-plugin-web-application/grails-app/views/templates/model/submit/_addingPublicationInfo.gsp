@@ -327,7 +327,7 @@
     function ajax(callback) {
         return $.ajax({
             url: "${createLink(controller: "submission", action: "checkCurrentValidation")}",
-            type: "GET",
+            type: "POST",
             data: {
                 isUpdate: isUpdate,
                 changesMade: [...changesMade]
