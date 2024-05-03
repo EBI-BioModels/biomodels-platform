@@ -42,9 +42,17 @@ class WebServiceFetcher implements InitializingBean {
         requestUrl = _requestUrl
     }
 
+    static getHttpStatus = {
+        hit(0)
+    }
+
     static getText = { ->
+        hit(1)
+    }
+
+    private static def hit(int op = 1)  {
         URL url = new URL(requestUrl)
-        String result = null
+        def result = null
         try {
             if (proxy) {
                 conn = (HttpURLConnection) url.openConnection(proxy)
@@ -56,20 +64,28 @@ class WebServiceFetcher implements InitializingBean {
             conn.setReadTimeout(30000)
             conn.connect()
             if (conn.responseCode < 400) {
-                result = conn.getInputStream().text
+                result = op == 0 ? conn.responseCode : conn.getInputStream().text
             } else {
+                result = conn.responseCode
                 LOGGER.error("""Couldn't fetch data from the resource ${url.toString()} because of the error \
 caused by ${conn.getErrorStream().inspect()}""")
             }
         } catch (SocketTimeoutException ste) {
+            result = conn.responseCode
             String msg = """Error while trying to retrieve data from ${url.toString()} due to ${ste.getMessage()}""".toString()
             LOGGER.error(msg, ste)
         } catch (IllegalArgumentException iae) {
+            result = conn.responseCode
             LOGGER.error("The proxy setting cannot be null or ${iae.getMessage()}")
+        } catch (FileNotFoundException exception) {
+            result = conn.responseCode
+            LOGGER.error("File Not Found ${exception.getMessage()}")
         } finally {
-            conn.getInputStream().close()
-            return result
+            if (conn.responseCode < 400)  {
+                conn.getInputStream().close()
+            }
         }
+        return result
     }
 
     @Override

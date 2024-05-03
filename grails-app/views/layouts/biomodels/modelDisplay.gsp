@@ -158,7 +158,7 @@
 
         $(document).ready(function() {
             // OmicsDI Service for showing rosette
-            let isAvailable = checkModelAvailability("${revision.modelIdentifier()}");
+            let isAvailable = ${hasRosetteLink}; //checkModelAvailability("${revision.modelIdentifier()}");
             if (isAvailable) {
                 createRosette("${revision.modelIdentifier()}");
                 $('.ext-rsc-text').attr('style', 'display:inline-block;');

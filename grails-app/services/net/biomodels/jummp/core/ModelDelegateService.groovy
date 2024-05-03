@@ -57,6 +57,7 @@ import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.utils.WebServiceFetcher
 import org.json.JSONArray
 import org.json.JSONObject
 import org.slf4j.Logger
@@ -740,6 +741,31 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     boolean retrieveGalaxyLink(String modelId) {
         String value = redisService.doRedisHGet(modelId, "galaxyLink")
+        value == "Yes"
+    }
+
+    String cacheRosetteLink(final String modelId) {
+        Map map = redisService.doRedisHGetAll(modelId)
+        String hasRosetteLink = String.valueOf(checkRosetteLink(modelId))
+        LOGGER.info("Caching rosette link check for $modelId to Redis.")
+        map.put("hasRosetteLink", hasRosetteLink)
+        redisService.doRedisHSet(modelId, map)
+        hasRosetteLink
+    }
+
+    boolean checkRosetteLink(final String modelId) {
+        LOGGER.info("Fetching OmicsDI data to check rosette link for $modelId...")
+        final EP_PREFIX = "https://www.omicsdi.org/ws/dataset/get?database=biomodels&accession="
+        final url = "${EP_PREFIX}$modelId"
+        int status = new WebServiceFetcher(url).getHttpStatus() as int
+        status == 200
+    }
+
+    boolean retrieveRosetteLink(final String modelId) {
+        String value = redisService.doRedisHGet(modelId, "hasRosetteLink")
+        if (!value) {
+            value = cacheRosetteLink(modelId)
+        }
         value == "Yes"
     }
 

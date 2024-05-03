@@ -314,6 +314,7 @@ class ModelController extends CommonController {
                          canSeeCurationTab      : canSeeCurationTab,
                          modelParentFolder      : modelParentFolder,
                          canCreateOmex          : canCreateOmex,
+                         hasRosetteLink         : modelDelegateService.retrieveRosetteLink(PERENNIAL_ID),
                          hasGalaxyLink          : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID),
                          canAddGalaxyLink       : hasCuratorRole || hasAdminRole,
                          shouldDisplayDisclaimer: modelDelegateService.shouldDisplayDisclaimer(revision)
