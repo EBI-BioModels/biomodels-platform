@@ -664,32 +664,32 @@
             </g:if>
 
             <!-- Show model revision name, model of the month, icons, flags, Reactome connected pathways, etc. -->
-            <div id="topBar">
+            <div id="topBar" class="row">
                 <div class="message" style="display: block"></div>
 
-                <div style="float:left;width:75%;">
+                <div style="float:left" class="columns medium-10 large-10 small-12">
                     <h2>${revision.name}</h2>
                     <biomd:renderModelOfMonth modelId="${revision.model.id}" />
                 </div>
 
-                <div style="float:right;margin-top:10px;">
+                <div style="float:right; text-align: right" class="columns medium-2 large-2 small-12">
                     <g:if test="${!flags.empty}">
                         <biomd:renderModelFlags flags="${flags}"/>
                     </g:if>
                     <g:if test="${revision.qcInfo != null}">
                         <jummp:renderStarLevels flag="${revision.qcInfo.flag}" />
                     </g:if>
-                    <span>&nbsp;</span>
+                    <h2>
+                    <g:if test="${revision.model.isMetadataSubmission}">
+                        <i class="icon icon-common icon-code" title="This is metadata submission"></i>
+                        <span>&nbsp;</span>
+                    </g:if>
                     <g:if test="${revision.state==ModelState.PUBLISHED}">
-                        <img style="float:right;margin-top:0;" title="This version of the model is public"
-                             alt="public model"
-                             src="${serverURL}/images/unlock.png"/>
+                        <i class="icon icon-common icon-unlock" title="This version of the model is public"></i>
                     </g:if>
                     <g:else>
-                        <img style="float:right;margin-top:0;" title="This version of the model is unpublished"
-                             alt="unpublished model"
-                             src="${serverURL}/images/lock.png"/>
-                    </g:else>
+                        <i class="icon icon-common icon-lock" title="This version of the model is unpublished"></i>
+                    </g:else></h2>
                 </div>
 
                 <g:if test="${reactomeIds}">
