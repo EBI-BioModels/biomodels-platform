@@ -68,7 +68,7 @@ class WebServiceFetcher implements InitializingBean {
             } else {
                 result = conn.responseCode
                 LOGGER.error("""Couldn't fetch data from the resource ${url.toString()} because of the error \
-caused by ${conn.getErrorStream().inspect()}""")
+caused by ${conn.responseCode}: ${conn.getErrorStream().inspect()}""")
             }
         } catch (SocketTimeoutException ste) {
             result = conn.responseCode
