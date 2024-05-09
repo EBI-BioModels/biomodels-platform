@@ -188,9 +188,9 @@ due to "${ste.getMessage()}" with the query info wrapped in the command: ${comma
 
     private static void doCacheSearchResultsOnRedis(String searchResults, String modelId) {
         if (searchResults && modelId) {
-            Map map = [:]
-            map.put(modelId, searchResults)
-            redisService.doRedisHSet("BP", map)
+            Map cachedBP = redisService.doRedisHGetAll("BP")
+            cachedBP.put(modelId, searchResults)
+            redisService.doRedisHSet("BP", cachedBP)
             LOGGER.debug("Caching the parameters for ${modelId} on Redis cache.")
             println("Caching the parameters for ${modelId} on Redis cache.")
         }
