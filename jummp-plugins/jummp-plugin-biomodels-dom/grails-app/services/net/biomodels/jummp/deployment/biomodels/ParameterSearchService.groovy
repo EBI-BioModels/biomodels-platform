@@ -195,4 +195,9 @@ due to "${ste.getMessage()}" with the query info wrapped in the command: ${comma
             println("Caching the parameters for ${modelId} on Redis cache.")
         }
     }
+
+    boolean existsPS(final String perennialId) {
+        def r = redisService.doRedisHGet("BP", perennialId)
+        r != null
+    }
 }

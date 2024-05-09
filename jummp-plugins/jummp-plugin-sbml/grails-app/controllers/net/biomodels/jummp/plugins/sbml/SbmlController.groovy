@@ -41,6 +41,27 @@ class SbmlController {
     def modelDelegateService
     def metadataDelegateService
     def sbmlService
+    def parameterSearchService
+
+    private boolean existsPS(final String perennialId) {
+        parameterSearchService.existsPS(perennialId)
+    }
+
+    private Map fetchComponents(Map model, final String perennialId) {
+        def components = [:]
+        // ignore PDGSM and Path2Models models
+        if (!perennialId.startsWith("BMID") && !perennialId.startsWith("MODEL170711") && existsPS(perennialId)) {
+            try {
+                components = sbmlService.extractComponentsFromBP(perennialId)
+            } catch (RuntimeException re) {
+                log.error("Error while extracting components from BP for $perennialId", re)
+            }
+            if (components.get("species") || components.get("reactions")) {
+                model['components'] = components
+            }
+        }
+        return components
+    }
 
     def show = {
         Map model = flash.genericModel
@@ -51,17 +72,8 @@ class SbmlController {
         if (annotations) {
             model["genericAnnotations"] = annotations
         }
-        if (!perennialId.startsWith("BMID") && !perennialId.startsWith("MODEL170711")) {
-            def components = [:]
-            try {
-                components = sbmlService.extractComponentsFromBP(perennialId)
-            } catch (RuntimeException re) {
-                log.error("Error while extracting components from BP for $perennialId", re)
-            }
-            if (components.get("species") || components.get("reactions")) {
-                model['components'] = components
-            }
-        }
+        // fetch Parameters Search
+        fetchComponents(model, perennialId)
         boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
         model["canCheckConsistency"] = canCheckConsistency
         render(view: "/model/sbml/show", model: model)
