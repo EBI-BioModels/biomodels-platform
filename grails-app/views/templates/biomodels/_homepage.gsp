@@ -86,22 +86,10 @@
         }
     }
 </script>
-<div id="hp-intro" class="row text-center top-widget-area">
-    <!-- Announcement area -->
-
-    <div class="columns small-12 medium-12 large-12">
-        <div id="announcement"
-             style="padding: 0px; background-color: #ff9800; margin-bottom: 15px; font-size: large">
-            <!-- Open the application -->
-            <h3 style="color: white; font-weight: bolder">Submit your model to enter
-                <a href="${SVR_URL}/competition/model-of-the-year-2024"
-                   target="_blank">"Model of the year" Competition 2024</a>. Deadline: 29<sup>th</sup> February 2024.</h3>
-            <!-- Closed the application
-            <h3 style="color: white; font-weight: bolder">Application closed for <a href="${SVR_URL}/competition/model-of-the-year-2024"
-               target="_blank">"Model of the year" Competition 2024</a>. Evaluation under progress!</h3>
-            -->
-        </div>
-    </div>
+<div id="hp-announcement" class="row text-center">
+    <g:render template="/templates/biomodels/homePage/hp-announcement"/>
+</div>
+<div id="hp-intro" class="row text-center">
     <div class="large-12 medium-12 small-12 columns">
     <p class="welcome-message" style="margin-top: 0.5em;">
         BioModels is a repository of mathematical models of biological and biomedical systems.

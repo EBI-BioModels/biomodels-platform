@@ -22,9 +22,7 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
 import net.biomodels.jummp.core.model.FlagTransportCommand
-import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
-import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.statistic.RecentlyPublishedModel
 import net.biomodels.jummp.deployment.biomodels.ModelOfTheMonthTransportCommand as MOMTC
 
@@ -137,6 +135,16 @@ class BioModelsTagLib {
         out << render(collection: attrs.sources,
             template: '/templates/originalModel',
             plugin: 'jummp-plugin-biomodels-dom', var: 'source')
+    }
+
+    /**
+     * Renders announcements for the home page
+     */
+    def renderHomePageAnnouncement = {
+        def content = decorationService.fetchAnnouncements()
+        if (content) {
+            out << render(template: "/templates/biomodels/homePage/hp-announcement-content", model: [content: content])
+        }
     }
 
     /**
