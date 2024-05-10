@@ -44,12 +44,16 @@ class CmsContent implements Serializable {
     Date createdOn
     User lastChangedBy
     Date lastChangedOn
+    Date publishedFrom
+    Date publishedTo
 
     static constraints = {
         content(nullable: true, maxSize: MAX_CONTENT_SIZE)
         parent(nullable: true, lazy: true)
         aliasURI(nullable: false, blank: false, unique: true)
         title(unique: true)
+        publishedFrom(nullable: true)
+        publishedTo(nullable: true)
     }
 
     static mapping = {

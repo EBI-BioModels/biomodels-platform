@@ -1330,5 +1330,6 @@ databaseChangeLog = {
     include file: '20240422_removeUniqueOnPersonOrcid.groovy'
     include file: '20240424_makeEmailOptional_CDWI.groovy'
     include file: '20240430_captureMetadataSubmission.groovy'
+    include file: '20240510_addPublishFromToCmsContent.groovy'
 }
 
