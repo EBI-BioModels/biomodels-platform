@@ -233,6 +233,18 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
         redisService.doRedisHSet(MOM_ENTRY_KEY, momEntry)
     }
 
+    String fetchAnnouncements() {
+        String content = ""
+        def queryStr = """\
+from CmsContent where parent.aliasURI = :aliasURI and publishedTo >= :now \
+and publishedFrom is not null and publishedTo is not null order by createdOn desc"""
+        def announcements = CmsContent.executeQuery(queryStr, [aliasURI: 'announcements', now: new Date()], [max: 10])
+        for (def entry : announcements) {
+            content += entry.content
+        }
+        LOGGER.info(content)
+        content
+    }
     /**
      * Fetches the statistical data for the chart of the modelling approaches shown on Home Page.
      *
