@@ -39,11 +39,15 @@ class CmsContentTransportCommand implements Serializable {
     String lastChangedBy
     Date lastChangedOn
     String parentAliasURI
+    Date publishedFrom
+    Date publishedTo
 
     static constraint = {
         //importFrom(CmsContent)
         id nullable: true
         parentAliasURI(nullable: true)
+        publishedFrom(nullable: true)
+        publishedTo(nullable: true)
     }
 
     Long getId() {
@@ -118,15 +122,32 @@ class CmsContentTransportCommand implements Serializable {
         this.lastChangedOn = lastChangedOn
     }
 
+    Date getPublishedFrom() {
+        return publishedFrom
+    }
+
+    void setPublishedFrom(Date publishedFrom) {
+        this.publishedFrom = publishedFrom
+    }
+
+    Date getPublishedTo() {
+        return publishedTo
+    }
+
+    void setPublishedTo(Date publishedTo) {
+        this.publishedTo = publishedTo
+    }
+
     static CmsContentTransportCommand toCommandObject(CmsContent obj) {
         new CmsContentTransportCommand(id: obj.id, title: obj.title, description: obj.description,
             content: obj.content, aliasURI: obj.aliasURI, parentAliasURI: obj.parent?.aliasURI ?: null,
             createdBy: obj.createdBy.username, createdOn: obj.createdOn,
-            lastChangedBy: obj.lastChangedBy.username, lastChangedOn: obj.lastChangedOn)
+            lastChangedBy: obj.lastChangedBy.username, lastChangedOn: obj.lastChangedOn,
+            publishedFrom: obj.publishedFrom, publishedTo: obj.publishedTo)
     }
 
     String toString() {
         """[$id] $title: $aliasURI: $description, created on $createdOn by $createdBy, \
-updated on $lastChangedOn by $lastChangedBy""".toString()
+updated on $lastChangedOn by $lastChangedBy, published from $publishedFrom until $publishedTo""".toString()
     }
 }

@@ -58,6 +58,8 @@ class CmsContentService {
             content.createdOn = cmd.createdOn
             content.lastChangedBy = lastChangedBy
             content.lastChangedOn = cmd.lastChangedOn
+            content.publishedFrom = cmd.publishedFrom
+            content.publishedTo = cmd.publishedTo
             // if both are the same, it means that the user hasn't clicked on this field on the form.
             // So we get the current time as the last changed date.
             if (cmd.lastChangedOn == content.lastChangedOn) {

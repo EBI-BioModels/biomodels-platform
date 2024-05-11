@@ -74,6 +74,25 @@
     </div>
 
     <div class="row">
+
+        <div class="small-12 medium-3 large-3 columns">
+            <label>Published From<small style="color: red">required</small>
+                <input type="text" id="publishedFrom" required
+                       placeholder="enter the date when the content is published"
+                       value="${dateFormat.format(content?.publishedFrom)}">
+            </label>
+        </div>
+
+        <div class="small-12 medium-3 large-3 columns">
+            <label>Published Until <small style="color: red">required</small>
+                <input type="text" id="publishedTo" required
+                       placeholder="enter the latest date when the content is unpublished"
+                       value="${dateFormat.format(content?.publishedTo)}">
+            </label>
+        </div>
+    </div>
+
+    <div class="row">
         <div class="columns small-12 medium-12 large-12">
             <label for="contentBody" class="col-sm-2 control-label">Body <span style="color: red">(*)</span></label>
             <!-- The toolbar will be rendered in this container. -->
@@ -328,9 +347,11 @@
         const createdOn = $('#createdOn').val();
         const lastChangedBy = $('#lastChangedBy').val();
         const lastChangedOn = $('#lastChangedOn').val();
+        const publishedFrom = $('#publishedFrom').val();
+        const publishedTo = $('#publishedTo').val();
         const parentAliasURI = $('#parentAliasURI').val();
 
-        const cmsContentTC = {
+        return {
             'id': id,
             'title': title,
             'aliasURI': aliasURI,
@@ -340,9 +361,10 @@
             'createdOn': createdOn,
             'lastChangedBy': lastChangedBy,
             'lastChangedOn': lastChangedOn,
+            'publishedFrom': publishedFrom,
+            'publishedTo': publishedTo,
             'parentAliasURI': parentAliasURI
-        }
-        return cmsContentTC;
+        };
     }
 
     $('#title').on("blur", function() {
@@ -414,6 +436,24 @@
     });
 
     $('#lastChangedOn').datepicker({
+        dateFormat: 'yy-mm-dd',
+        onSelect: function(datetext) {
+            datetext = datetext + getTimeStamp();
+            $('#datepicker').val(datetext);
+            $(this).val(datetext);
+        }
+    });
+
+    $('#publishedFrom').datepicker({
+        dateFormat: 'yy-mm-dd',
+        onSelect: function(datetext) {
+            datetext = datetext + getTimeStamp();
+            $('#datepicker').val(datetext);
+            $(this).val(datetext);
+        }
+    });
+
+    $('#publishedTo').datepicker({
         dateFormat: 'yy-mm-dd',
         onSelect: function(datetext) {
             datetext = datetext + getTimeStamp();
