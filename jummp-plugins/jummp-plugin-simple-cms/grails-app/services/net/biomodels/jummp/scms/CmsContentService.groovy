@@ -192,6 +192,13 @@ Please correct it manually.""", cmd.parentAliasURI, cmd)
             parts[1]
         }
 
+        retMap.each { String key, List<CmsContent> list ->
+            list = list.sort { def c1, def c2 ->
+                c2.createdOn <=> c1.createdOn
+            }
+            retMap.put(key, list)
+        }
+
         retMap
     }
 
