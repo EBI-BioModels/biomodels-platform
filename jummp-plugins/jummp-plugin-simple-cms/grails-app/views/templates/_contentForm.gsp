@@ -79,15 +79,15 @@
             <label>Published From<small style="color: red">required</small>
                 <input type="text" id="publishedFrom" required
                        placeholder="enter the date when the content is published"
-                       value="${dateFormat.format(content?.publishedFrom)}">
+                       <g:if test="${content?.publishedFrom}">value="${dateFormat.format(content?.publishedFrom)}"</g:if>>
             </label>
         </div>
 
         <div class="small-12 medium-3 large-3 columns">
             <label>Published Until <small style="color: red">required</small>
                 <input type="text" id="publishedTo" required
-                       placeholder="enter the latest date when the content is unpublished"
-                       value="${dateFormat.format(content?.publishedTo)}">
+                       placeholder="enter the latest date when the content is expired"
+                       <g:if test="${content?.publishedTo}">value="${dateFormat.format(content?.publishedTo)}"</g:if>>
             </label>
         </div>
     </div>

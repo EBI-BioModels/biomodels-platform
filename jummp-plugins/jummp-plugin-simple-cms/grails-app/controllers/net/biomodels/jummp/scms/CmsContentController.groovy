@@ -48,6 +48,7 @@ class CmsContentController {
         // it will be granted a valid value at persisting in the db.
         CCTC content = new CCTC(id: -1,
             createdBy: userService.username, createdOn: new Date(),
+            publishedFrom: new Date(), publishedTo: new Date() + 365,
             lastChangedBy: userService.username, lastChangedOn: new Date())
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
@@ -68,8 +69,8 @@ class CmsContentController {
         LOGGER.debug("Started $action the following content into the database...\n${cmd.toString()} ")
         println("Started $action the following content into the database...\n${cmd.toString()}")
 
-        String message = ""
-        String status = ""
+        String message
+        String status
         Long id = -1
         if (cmd?.validate()) {
             Map contentMap = cmsContentService.fromCommandObject(cmd)
