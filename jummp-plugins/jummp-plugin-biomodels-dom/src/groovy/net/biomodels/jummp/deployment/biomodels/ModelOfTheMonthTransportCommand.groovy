@@ -74,6 +74,8 @@ class ModelOfTheMonthTransportCommand implements Serializable {
      */
     transient Map<Long, String> associatedModelMap
     String models
+    Date publishedFrom
+    Date publishedUntil
 
     static constraints = {
         importFrom(ModelOfTheMonth)
@@ -101,6 +103,8 @@ class ModelOfTheMonthTransportCommand implements Serializable {
             def m = cmd.mimeType =~ mimeTypePattern
             return m.count >= 0
         }
+        publishedFrom(nullable: true, blank: true)
+        publishedUntil(nullable: true, blank: true)
     }
 
     final String getFormattedURL() {

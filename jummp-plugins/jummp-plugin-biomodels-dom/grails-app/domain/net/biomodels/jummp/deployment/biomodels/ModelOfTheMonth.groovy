@@ -41,6 +41,8 @@ class ModelOfTheMonth implements Serializable {
     Date lastUpdated
     String shortDescription
     byte[] previewImage
+    Date publishedFrom
+    Date publishedUntil
 
     static constraints = {
         title blank: false
@@ -48,6 +50,8 @@ class ModelOfTheMonth implements Serializable {
         shortDescription nullable: true, blank: true, maxSize: 1024
         // Limit upload file size to 2MB
         previewImage nullable: true, blank: true, maxSize: 1024 * 1024 * 2
+        publishedFrom(nullable: true, blank: true)
+        publishedUntil(nullable: true, blank: true)
     }
 
     ModelOfTheMonthTransportCommand toCommandObject() {
@@ -70,6 +74,7 @@ class ModelOfTheMonth implements Serializable {
             title: title, publicationDate: publicationDate,
             lastUpdated: lastUpdated, shortDescription: shortDescription,
             previewImage: strPreviewImage, associatedModelMap: modelsMap,
+            publishedFrom: publishedFrom, publishedUntil: publishedUntil,
             models: models)
     }
 }
