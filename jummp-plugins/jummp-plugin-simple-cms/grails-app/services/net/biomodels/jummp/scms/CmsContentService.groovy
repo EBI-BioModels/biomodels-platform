@@ -70,7 +70,8 @@ class CmsContentService {
             content = new CmsContent(aliasURI: cmd.aliasURI,
                 title: cmd.title, description: cmd.description, content: cmd.content, parent: null,
                 createdBy: createdBy, createdOn: cmd.createdOn,
-                lastChangedBy: lastChangedBy, lastChangedOn: cmd.lastChangedOn)
+                lastChangedBy: lastChangedBy, lastChangedOn: cmd.lastChangedOn,
+                publishedFrom: cmd.publishedFrom, publishedTo: cmd.publishedTo)
         }
         CmsContent parent = CmsContent.findByAliasURI(cmd.parentAliasURI)
         if (parent) {
