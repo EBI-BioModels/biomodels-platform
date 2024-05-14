@@ -1,7 +1,6 @@
 <div class="row">
     <div class="small-12 medium-12 large-12 columns">
-        <p style="color: orange; font-size: x-large; font-weight: bold;">${monthString},
-        &nbsp;${yearString}</p>
+        <p style="color: orange; font-size: x-large; font-weight: bold;">${monthString}, ${yearString}</p>
     </div>
 </div>
 

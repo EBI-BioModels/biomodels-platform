@@ -224,7 +224,12 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
 
     void refreshModelOfTheMonthEntryRedisCache() {
         Map momEntry = buildModelOfTheMonthEntry()
-        addModelOfTheMonthEntryToRedis(momEntry)
+        if (momEntry) {
+            LOGGER.debug("Adding or updating this entry on Redis Cache!")
+            addModelOfTheMonthEntryToRedis(momEntry)
+        } else {
+            LOGGER.debug("Cannot load and update Redis Cache for the current entry of Model of the Month!")
+        }
     }
 
     private void addModelOfTheMonthEntryToRedis(final Map momEntry) {
@@ -505,18 +510,21 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
     }
 
     private Map<String, String> buildModelOfTheMonthEntry() {
-        final String query = "from ModelOfTheMonth order by publicationDate desc"
-        ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
+        Date now = new Date()
+        final String query = "from ModelOfTheMonth where publishedFrom <= :now and :now < publishedUntil order by publishedFrom asc"
+        ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query, [now: now])
         if (!theLatestMoM) {
-            return null
+            query = "from ModelOfTheMonth order by publicationDate desc"
+            theLatestMoM = ModelOfTheMonth.find(query)
+            if (!theLatestMoM) { return null }
         }
         String entryTitle = theLatestMoM.title
         String shortDescription = theLatestMoM.shortDescription
         String previewImage = Base64.encoder.encodeToString(theLatestMoM.previewImage)
-        Date theLatestPublicationDate = theLatestMoM.publicationDate
-        def monthNumStr = new SimpleDateFormat("MM").format(theLatestPublicationDate)
-        def monthString = new SimpleDateFormat("MMMMM").format(theLatestPublicationDate)
-        def yearString = new SimpleDateFormat("YYYY").format(theLatestPublicationDate)
+        Date publishedFromDate = theLatestMoM.publishedFrom
+        def monthNumStr = new SimpleDateFormat("MM").format(publishedFromDate)
+        def monthString = new SimpleDateFormat("MMMMM").format(publishedFromDate)
+        def yearString = new SimpleDateFormat("YYYY").format(publishedFromDate)
         final String prefixLink = "${SVR_URL}/content/model-of-the-month".toString()
         def link = "${prefixLink}?year=${yearString}&month=${monthNumStr}".toString()
         def linkAll = "${prefixLink}?all=yes".toString()
