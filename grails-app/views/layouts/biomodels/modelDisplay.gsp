@@ -681,7 +681,7 @@
                     </g:if>
                     <h2>
                     <g:if test="${revision.model.isMetadataSubmission}">
-                        <i class="icon icon-common icon-code" title="This is metadata submission"></i>
+                        <i class="icon icon-common icon-code" title="This is a metadata-only submission"></i>
                         <span>&nbsp;</span>
                     </g:if>
                     <g:if test="${revision.state==ModelState.PUBLISHED}">
