@@ -23,7 +23,8 @@
 
 <body>
     <g:if test="${errMsg}">
-        <p>The errors have been reported<br/>${errMsg}</p>
+        <h2 style="color: orange">The errors have been reported!</h2>
+        <h3>${errMsg}</h3>
     </g:if>
     <g:else>
         <g:if test="${entry}">

@@ -32,6 +32,7 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.deployment.biomodels.ModelOfTheMonth as MOM
 import net.biomodels.jummp.deployment.biomodels.ModelOfTheMonthTransportCommand as MOMTC
 
 import java.text.SimpleDateFormat
@@ -47,22 +48,22 @@ class ModelOfTheMonthController {
 
     def create() {
         Date current = new Date()
-        String yearDate = current.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+        String yearDate = current.format(MOM.DATE_FORMAT_PATTERN)
         MOMTC entry = new MOMTC(formattedEntryDate: yearDate, lastUpdated: current,
             publicationDate: current)
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
         [entry: entry, dateFormat: dateFormat]
     }
 
-    def show(ModelOfTheMonth entry) {
+    def show(MOM entry) {
         String errMsg = ""
         if (!entry) {
             // render out the error
-            errMsg = entry.errors.toString()
-            [errMsg: errMsg]
+            errMsg = entry?.errors?.toString() ?: "The entry in request is unavailable!"
+            return [errMsg: errMsg]
         }
         MOMTC command = entry.toCommandObject()
-        command.formattedEntryDate = command.publicationDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+        command.formattedEntryDate = command.publicationDate.format(MOM.DATE_FORMAT_PATTERN)
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
         [entry: command, dateFormat: dateFormat, errMsg: errMsg]
     }
@@ -70,7 +71,7 @@ class ModelOfTheMonthController {
     def save(MOMTC command) {
         Map result = [:]
         if (command?.validate()) {
-            ModelOfTheMonth updated = modelOfTheMonthService.doCreateOrUpdate(command)
+            MOM updated = modelOfTheMonthService.doCreateOrUpdate(command)
             if (updated) {
                 result.status = 200
                 result['entity'] = updated

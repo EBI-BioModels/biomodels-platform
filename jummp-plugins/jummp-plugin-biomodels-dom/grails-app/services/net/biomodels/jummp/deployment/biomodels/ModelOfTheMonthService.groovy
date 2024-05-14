@@ -141,6 +141,13 @@ class ModelOfTheMonthService implements InitializingBean {
             entry.lastUpdated = new Date()
             entry.publicationDate = new Date()
         }
+
+        if (command.publishedFrom) {
+            entry.publishedFrom = command.publishedFrom
+        }
+        if (command.publishedUntil) {
+            entry.publishedUntil = command.publishedUntil
+        }
         // for the models associated with this entry
         Set<Model> models = new HashSet<>()
         command.associatedModelMap.each {

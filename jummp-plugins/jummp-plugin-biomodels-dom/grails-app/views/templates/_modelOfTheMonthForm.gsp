@@ -38,6 +38,20 @@
                                value="${dateFormat.format(entry?.lastUpdated)}">
                     </div>
                 </div>
+                <div class="row">
+                    <div class="small-12 medium-6 large-6 columns">
+                        <label for="publishedFrom">Published From Date</label>
+                        <input type="text" id="publishedFrom" name="publishedFrom"
+                               placeholder="Published From Which Date"
+                               <g:if test="${entry?.publishedFrom}">value="${dateFormat.format(entry?.publishedFrom)}"</g:if>>
+                    </div>
+                    <div class="small-12 medium-6 large-6 columns">
+                        <label for="publishedUntil">Published Until Date</label>
+                        <input type="text" id="publishedUntil" name="publishedUntil"
+                               placeholder="Published Until Which Date"
+                               <g:if test="${entry?.publishedUntil}">value="${dateFormat.format(entry?.publishedUntil)}"</g:if>>
+                    </div>
+                </div>
             </div>
             <div class="small-12 medium-6 large-6 columns">
                 <label for="previewImage">Preview Image</label>
@@ -102,6 +116,24 @@
         }
     });
 
+    $('#publishedFrom').datepicker({
+        dateFormat: 'yy-mm-dd',
+        onSelect: function(datetext) {
+            datetext = datetext + getTimeStamp();
+            $('#datepicker').val(datetext);
+            $(this).val(datetext);
+        }
+    });
+
+    $('#publishedUntil').datepicker({
+        dateFormat: 'yy-mm-dd',
+        onSelect: function(datetext) {
+            datetext = datetext + getTimeStamp();
+            $('#datepicker').val(datetext);
+            $(this).val(datetext);
+        }
+    });
+
     function checkCustomValidity() {
         return Object.keys(messages).length === 0;
     }
@@ -133,6 +165,8 @@
         var shortDescription = $('#shortDescription').val();
         var publicationDate = $('#publicationDate').val();
         var lastUpdated = $('#lastUpdated').val();
+        var publishedFrom = $('#publishedFrom').val();
+        var publishedUntil = $('#publishedUntil').val();
         var models = $('#models').val();
         var momEntryTC = {
             'id': id,
@@ -141,6 +175,8 @@
             'shortDescription': shortDescription,
             'publicationDate': publicationDate,
             'lastUpdated': lastUpdated,
+            'publishedFrom': publishedFrom,
+            'publishedUntil': publishedUntil,
             'updated': ${entry?.updated},
             'models': models
         };
