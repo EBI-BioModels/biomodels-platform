@@ -10,7 +10,7 @@
         listOfFacets.add(index)
     }
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
-    def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
+    def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag", "submitter_keywords"]
 %>
 <g:if test="${models}">
 <div class="sidebar">

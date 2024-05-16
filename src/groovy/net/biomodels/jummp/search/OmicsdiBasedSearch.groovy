@@ -95,7 +95,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
             put("Curation status", 1)
             put("Model format", 2)
             put("Modelling approach", 3)
-            put("Model flag", 4)
+            put("Model Tag", 4)
             put("Organisms", 5)
             put("Disease", 6)
             put("GO", 7)
@@ -103,6 +103,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
             put("ChEBI", 9)
             put("ChEMBL", 10)
             put("Ensembl", 11)
+            put("Model flag", 12)
         }
     }
 
@@ -167,7 +168,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
 
     @NotTransactional
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
-            Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
+            Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 20] ) {
         long startAt = System.currentTimeMillis()
         boolean inProdMode = Environment.current == Environment.PRODUCTION
         AbstractEbeyeWsConfig ebeyeWsConfig
@@ -196,7 +197,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
         SearchResponse searchResponse = new SearchResponse()
         String[] fields = ["name", "description", "submitter", "curationstatus",
                            "last_modification_date", "submission_date", "modellingapproach",
-                           "modelformat", "levelversion", "first_author", "publication_year", "isprivate"]
+                           "modelformat", "levelversion", "first_author", "publication_year", "isprivate", "submitter_keywords"]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
         String sort = sortField ? String.format("%s:%s", sortField, sortDir) : ""
@@ -293,7 +294,9 @@ The root cause is ${e.toString()}""")
                 if (facet.id == "modelFlag") {
                     facet.id = "modelflag"
                 }
-
+                if (facet.id == "submitter_keywords") {
+                    facet.label = "Model Tag"
+                }
                 shouldBeHidden = hiddenFacets.contains(facet.label.toUpperCase())
                 if (!shouldBeHidden) {
                     facets.add(facet)

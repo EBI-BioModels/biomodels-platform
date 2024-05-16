@@ -317,7 +317,7 @@ under the format: ${response.format}"""
     }
 
     private Map searchCore(String query, String domain, String sortBy,
-                           String sortDirection, int offset = 0, int length = 10) {
+                           String sortDirection, int offset = 0, int length = 20) {
 
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
