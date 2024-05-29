@@ -151,8 +151,9 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
     @Override
     boolean addModellingApproachAsAnnotation(RevisionTC revision, MA approach) throws ModelException {
         final Qualifier bqbHasProperty = Qualifier.BQB_HAS_PROPERTY
-        String[] identifiers = ["https://identifiers.org/mamo:${approach?.accession}"] as String[]
-        String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
+        // As of writing this comment, the resource property is an URI-based value.
+        String[] identifiers = [approach.resource] as String[]
+        String accessionPattern = ""
         addAnnotations2Model(TypeAnno.MODELLING_APPROACH, revision, bqbHasProperty, accessionPattern, identifiers)
     }
 
@@ -194,7 +195,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             identifiers = tobeAdded.toArray()
         }
 
-        boolean retVal = false
+        boolean retVal
         switch (typeAnno) {
             case TypeAnno.MODEL_IDENTIFIER:
                 retVal = doAddAnnotations(typeAnno, model, revision, rID, qualifier, accessionPattern, identifiers)
@@ -1285,7 +1286,7 @@ the user has attempted to update an blank value for the name attribute.""")
     private boolean addAnnotations2Model(TypeAnno typeAnno,
                                          RevisionTC revision,
                                          Qualifier qualifier,
-                                         String accessionPattern,
+                                         String accessionPattern = "",
                                          String... identifiers) {
         boolean validRevision = revision && "SBML" == revision.format.identifier
         boolean validIdentifiers = null != identifiers && 0 != identifiers.length
@@ -1332,8 +1333,16 @@ the user has attempted to update an blank value for the name attribute.""")
         // find the set of resources that should be kept
         List filteredAnnotations = cVTerms.collect { CVTerm t ->
             t.getResources().findAll { String xref ->
-                if (!targetAccessionPattern.matcher(xref).find() || typeAnno == TypeAnno.MODEL_IDENTIFIER) {
-                    return true
+                if (typeAnno == TypeAnno.MODELLING_APPROACH) {
+                    // As of writing this statement, we support a single modelling approach.
+                    // So we ensure that the first element is the actual value. Also, this commit
+                    // has implemented the way of initialising the identifiers by using URIs directly.
+                    // Therefore, we have to compare xref with these URIs instead of using the accession pattern.
+                    xref != identifiers.first() as String
+                } else {
+                    if (!targetAccessionPattern.matcher(xref).find() || typeAnno == TypeAnno.MODEL_IDENTIFIER) {
+                        return true
+                    }
                 }
                 return false
             }

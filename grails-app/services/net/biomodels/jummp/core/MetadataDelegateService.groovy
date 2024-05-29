@@ -237,11 +237,11 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         rev.model.publicationId ? "curated" : "non-curated"
     }
 
-    Map<String, String> fetchModellingApproaches(RevisionTC rev) {
+    Map<String, String[]> fetchModellingApproaches(RevisionTC rev) {
         ModellingApproach modellingApproach =  rev.model.modellingApproach
         Map result = [:]
         if (modellingApproach) {
-            result.put(modellingApproach.accession, modellingApproach.name)
+            result.put(modellingApproach.accession, [modellingApproach.name, modellingApproach.resource] as String[])
         }
         return result
     }

@@ -262,7 +262,7 @@ class ModelController extends CommonController {
                     List<String> possibleCurationStates = CurationState.values()*.name()
                     List<STC> modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(rev)
                     List<String> originalModels = metadataDelegateService.fetchOriginalModels(modelLevelAnnotations)
-                    Map<String, String> modellingApproaches =
+                    Map<String, String[]> modellingApproaches =
                         metadataDelegateService.fetchModellingApproaches(rev)
                     boolean hasCuratorRole = userService.isLoggedInUserACurator()
                     boolean hasAdminRole = userService.isLoggedInUserAAdmin()

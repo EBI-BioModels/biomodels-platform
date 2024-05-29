@@ -3,7 +3,7 @@
         Other
     </g:if>
     <g:else>
-        <a href="http://identifiers.org/mamo/${modellingApproach.key}" target="_blank">
-            ${modellingApproach.value}</a>
+        <a href="${modellingApproach.value[1]}" target="_blank">
+            ${modellingApproach.value[0]}</a>
     </g:else>
 </span>
