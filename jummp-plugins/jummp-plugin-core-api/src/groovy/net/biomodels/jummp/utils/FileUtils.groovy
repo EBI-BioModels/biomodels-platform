@@ -1,5 +1,7 @@
 package net.biomodels.jummp.utils
 
+import java.security.MessageDigest
+
 class FileUtils {
 
     /**
@@ -25,5 +27,18 @@ class FileUtils {
             is -> is.readObject()
         } as T
         return object
+    }
+
+    static String checksum(File file, String algorithm) {
+        MessageDigest digest = MessageDigest.getInstance(algorithm)
+        file.withInputStream() { is ->
+            byte[] buffer = new byte[8192]
+            int read
+            while ((read = is.read(buffer)) > 0) {
+                digest.update(buffer, 0, read)
+            }
+        }
+
+        digest.digest().encodeHex().toString()
     }
 }

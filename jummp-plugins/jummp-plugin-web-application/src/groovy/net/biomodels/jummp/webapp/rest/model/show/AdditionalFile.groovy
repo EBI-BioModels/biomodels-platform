@@ -25,7 +25,7 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 class AdditionalFile extends ModelFile {
     String description
 
-    public AdditionalFile(RepositoryFileTransportCommand file) {
+    AdditionalFile(RepositoryFileTransportCommand file) {
         super(file)
         description = file.description
     }

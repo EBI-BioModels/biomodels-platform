@@ -21,14 +21,25 @@
 package net.biomodels.jummp.webapp.rest.model.show
 
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+import net.biomodels.jummp.utils.FileUtils
 
 class ModelFile {
     String name
+    String description
     String fileSize
+    String mimeType
+    String md5sum
+    String sha1sum
+    String sha256sum
 
-    public ModelFile(RepositoryFileTransportCommand file) {
+    ModelFile(RepositoryFileTransportCommand file) {
         File f = new File(file.path)
         name = f.getName()
+        description = file.description
+        mimeType = file.mimeType
         fileSize = f.length()
+        sha1sum = FileUtils.checksum(f, "SHA-1")
+        sha256sum = FileUtils.checksum(f, "SHA-256")
+        md5sum = FileUtils.checksum(f, "MD5")
     }
 }

@@ -26,7 +26,7 @@ class ModelFiles {
     List<ModelFile> main = new LinkedList()
     List<AdditionalFile> additional = new LinkedList()
 
-    public ModelFiles(List<RepositoryFileTransportCommand> files) {
+    ModelFiles(List<RepositoryFileTransportCommand> files) {
         files.findAll { it.mainFile } .each { main.add(new ModelFile(it)) }
         files.findAll { !it.mainFile } .each { additional.add(new AdditionalFile(it)) }
     }
