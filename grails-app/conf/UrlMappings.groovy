@@ -137,6 +137,7 @@ class UrlMappings {
         "/api/model/revisionsState/$id?(.$format)?"(controller:'model', action:'revisionsState')
         "/api/post/create"(controller:'post', action:'createNewPost')
         "/api/user/list"(controller:'userAdministration', action:'list')
+        "/api/submission/create"(controller: "submission", action: "create")
 
         def cmsPrefix = "/cms"
         "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
