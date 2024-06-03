@@ -747,7 +747,7 @@ an annotation to SBML document.""")
             def modelTC = new MTC(name: modelName, description: modelDescription,
                 submitter: working["submitterInfo"]["userRealName"])
 
-            def revisionTC = new RTC(model: modelTC, owner: working['submitterInfo']['userRealName'],
+            def revisionTC = new RTC(model: modelTC, owner: working['submitterInfo']['userRealName'], name: modelName,
                 format: formatTC, files: allFiles, minorRevision: false, validated: true)
 
             String submitterInfo = "[${working['submitterInfo']['username']}, ${working['submitterInfo']['email']}]"
