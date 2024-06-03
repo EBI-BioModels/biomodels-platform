@@ -765,6 +765,8 @@ an annotation to SBML document.""")
             working.put("other_info", jsonObj["other_info"])
             working.put("readme_submission", jsonObj["readme_submission"])
             working.put("shouldCreateNewRevision", true)
+            working.put("isMetadataSubmission", jsonObj["isMetadataSubmission"] ?: false)
+
             // changesMade no need for submitting a new model
             /*Set<String> changesMade = new HashSet<>()
             changesMade.add("Added a new file, for example.")
