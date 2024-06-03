@@ -105,7 +105,7 @@ class SubmissionController extends CommonController implements InitializingBean 
                 HashSet<String> changes = changesMade.sort()
                 working.put("changesMade", changes)
             }
-            String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
+            String modelURL = createLink(controller: "model", action: "show", params: [id: modelId], absolute: true)
             working.putAll(["modelId": modelId, "modelURL": modelURL])
             working.put("site", deployTarget)
 
