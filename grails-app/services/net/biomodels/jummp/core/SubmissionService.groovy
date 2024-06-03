@@ -33,6 +33,7 @@ package net.biomodels.jummp.core
 
 import grails.converters.JSON
 import grails.plugin.cache.Cacheable
+import groovy.json.JsonSlurper
 import groovy.time.TimeCategory
 import groovy.time.TimeDuration
 import groovy.transform.CompileStatic
@@ -704,13 +705,73 @@ an annotation to SBML document.""")
             returnMe
         }
 
-        /*
+        /**
          * Convenience method for creating
-         * @link{net.biomodels.jummp.core.model.RepositoryFileTransportCommand} objects
+         * {@link net.biomodels.jummp.core.model.RepositoryFileTransportCommand} objects
          */
-        public RFTC createRFTC(File file, boolean isMain, String description) {
+        RFTC createRFTC(File file, boolean isMain, String description) {
             new RFTC(path: file.getCanonicalPath(), mainFile: isMain, userSubmitted: true,
                     hidden: false, description: description)
+        }
+
+        @CompileStatic(TypeCheckingMode.SKIP)
+        void buildFromJSONFile(String metadata, Map working) {
+            String EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
+            def slurper = new JsonSlurper()
+            def jsonObj = slurper.parseText(metadata)
+            def main = jsonObj["files"]["main"]
+            String submissionFolder = working.get("submissionFolder")
+            def additional = jsonObj["files"]["additional"]
+            List<RFTC> allFiles = new ArrayList()
+            for (def f : main) {
+                File file = new File(EXCH_DIR + File.separator + submissionFolder, f["name"])
+                RFTC obj = createRFTC(file, true, f["description"])
+                allFiles.add(obj)
+            }
+
+            for (def f : additional) {
+                File file = new File(EXCH_DIR + File.separator + submissionFolder, f["name"])
+                RFTC obj = createRFTC(file, false, f["description"])
+                allFiles.add(obj)
+            }
+            String formatName = jsonObj["format"]["name"] as String
+            String formatVersion = jsonObj["format"]["version"] as String
+            ModelFormat format = ModelFormat.findByNameAndFormatVersion(formatName, formatVersion)
+            if (!format) {
+                format = ModelFormat.findByName("Other")
+            }
+            MFTC formatTC = new MFAdapter(format: format).toCommandObject()
+
+            String modelName = jsonObj["name"]
+            String modelDescription = jsonObj["description"]
+            def modelTC = new MTC(name: modelName, description: modelDescription,
+                submitter: working["submitterInfo"]["userRealName"])
+
+            def revisionTC = new RTC(model: modelTC, owner: working['submitterInfo']['userRealName'],
+                format: formatTC, files: allFiles, minorRevision: false, validated: true)
+
+            String submitterInfo = "[${working['submitterInfo']['username']}, ${working['submitterInfo']['email']}]"
+            working["submitterInfo"] = submitterInfo
+            working.put("RevisionTC", revisionTC)
+            working.put("ModelTC", modelTC)
+            working.put("format", formatTC)
+            working.put("model_format", formatTC.id as String)
+            working.put("modelling_approach", "machine learning")
+            working.put("repository_files", allFiles)
+            working.put("new_description", modelDescription)
+            working.put("new_name", modelName)
+            working.put("latestModelDescription", modelDescription)
+            working.put("latestModelName", modelName)
+            working.put("other_info", jsonObj["other_info"])
+            working.put("readme_submission", jsonObj["readme_submission"])
+            working.put("shouldCreateNewRevision", true)
+            // changesMade no need for submitting a new model
+            /*Set<String> changesMade = new HashSet<>()
+            changesMade.add("Added a new file, for example.")
+            working.put("changesMade", changesMade)*/
+            working.put("modelId", "")
+
+            println "Done!"
         }
 
 
@@ -1338,6 +1399,10 @@ an annotation to SBML document.""")
     boolean validateSyntax(final File uploadFile, final String format, final List<String> errors) {
         Map<String, Object> working = ["isUpdateOnExistingModel": false, "shouldCreateNewRevision": true] as Map<String, Object>
         getStrategyFromContext(working).doValidateSyntax(uploadFile, format, errors)
+    }
+
+    void buildFromJSONFile(String metadata, Map working) {
+        getStrategyFromContext(working).buildFromJSONFile(metadata, working)
     }
 
     /**

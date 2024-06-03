@@ -32,6 +32,7 @@ package net.biomodels.jummp.webapp
 
 import grails.async.Promises
 import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.model.CurationState
@@ -63,6 +64,7 @@ class SubmissionController extends CommonController implements InitializingBean 
     def modelDelegateService
     def publicationService
     def redisService
+    def springSecurityService
     def submissionService
 
     private String EXCH_DIR
@@ -296,6 +298,30 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
     def renderFileUploadFailures() {
         render([status: "OK"] as JSON)
+    }
+
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    def create() {
+        String metadata = request.reader.text
+        Map<String, Object> working = [isUpdate: false, isUpdateOnExistingModel: false,
+                                       isAmend: false, isMetadataSubmission: false]
+        String uuid = request.getHeader("SubmissionFolder")
+
+        working.put("submissionFolder", uuid)
+        def currentUser = springSecurityService.currentUser
+        working.put("submitterInfo", [userRealName: currentUser?.person?.userRealName,
+                                      username: currentUser.username, email: currentUser.email])
+        submissionService.buildFromJSONFile(metadata, working)
+        doLastValidateSubmissionData()
+        /*println "Got request: " + request.reader.text
+        println "User agent: " + request.getHeader("User-Agent")
+        println "format: ${request.getParameterMap()['format']}"
+        println "get parameter map: ${request.getParameterMap()}"*/
+        withFormat {
+            json { render map as JSON }
+            xml { render map as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
     }
 
     private List validateFile(final JSONElement file) {
