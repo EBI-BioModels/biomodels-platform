@@ -77,6 +77,11 @@ class SubmissionController extends CommonController implements InitializingBean 
     }
 
     def completeSubmission() {
+        Map result = doCompleteSubmission()
+        render(result as JSON)
+    }
+
+    private Map doCompleteSubmission() {
         String message = ""
         String status = "Success"
         Map working
@@ -129,15 +134,16 @@ class SubmissionController extends CommonController implements InitializingBean 
             Map msg = buildResultMessage(isUpdate, status, message, modelURL, modelId, working)
             message = msg.get("message")
             status = msg.get("status")
-            render(["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId] as JSON)
+            return ["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId]
         } catch (Exception e) {
             status = "Failure"
             handleException(working, e)
             String errorTicketId = working.get("submissionFolder")
             message = groovyPageRenderer.render(template: "/templates/errorTemplate",
                 plugin: "jummp-plugin-web-application", model: ["errorTicketId": errorTicketId])
-            render(["ticketID": errorTicketId, "status": status, "message": message] as JSON)
+            return ["ticketID": errorTicketId, "status": status, "message": message]
         }
+        return [:]
     }
 
     /**
@@ -203,6 +209,12 @@ hyphens, plus signs and underscores. It should also have a proper file extension
          * (2) clicking on the Submit button although the submission data have just been validated.
          */
         Map working = rebuildSubmissionData()
+        Map result = doValidateSubmissionData(working)
+
+        render(result as JSON)
+    }
+
+    private Map doValidateSubmissionData(Map working) {
         String errMsg
 
         // 1. Check the uploaded files
@@ -227,7 +239,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.debug("The result of verifying the submission data: \n$strResult")
         println("The result of verifying the submission data: \n$strResult")
         validSubmissionDataMap = working
-        render(result as JSON)
+        result
     }
 
     private boolean doValidateUploadedFiles(Map working) {
@@ -312,7 +324,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         working.put("submitterInfo", [userRealName: currentUser?.person?.userRealName,
                                       username: currentUser.username, email: currentUser.email])
         submissionService.buildFromJSONFile(metadata, working)
-        doLastValidateSubmissionData()
+        doValidateSubmissionData(working)
+        Map map = doCompleteSubmission()
         /*println "Got request: " + request.reader.text
         println "User agent: " + request.getHeader("User-Agent")
         println "format: ${request.getParameterMap()['format']}"
