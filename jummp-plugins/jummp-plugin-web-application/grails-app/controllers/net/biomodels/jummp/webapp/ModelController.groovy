@@ -521,9 +521,9 @@ class ModelController extends CommonController {
         modelInfo.put("detectedDescription", isUpdate ? revisionTC?.description : "")
 
         Map detectedModelFormat = [:]
-        detectedModelFormat.put("id", revisionTC?.format?.id?.toString())
-        detectedModelFormat.put("name", revisionTC?.format?.name)
-        detectedModelFormat.put("readme", revisionTC?.readmeSubmission)
+        detectedModelFormat.put("id", revisionTC?.format?.id?.toString() ?: "")
+        detectedModelFormat.put("name", revisionTC?.format?.name ?: "")
+        detectedModelFormat.put("readme", revisionTC?.readmeSubmission ?: "")
         modelInfo.put("detectedModelFormat", detectedModelFormat)
 
         Map detectedModelling = [:]
