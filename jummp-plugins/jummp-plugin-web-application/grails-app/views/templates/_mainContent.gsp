@@ -82,11 +82,11 @@
                                 <span style="font-size: small; margin: -25px 0;">
                                 ID: ${id}
                                 <g:if test="${model.state == ModelState.PUBLISHED}">|
-                                Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
+                                </g:if>
+                                Format: ${model.format.name} |
                                 Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
                                 Last modified date: ${model.lastModifiedDate.format('dd/MM/yyyy')}
-                                </g:if>
                                 <g:if test="${model.publication}"> | Published in: ${model.publication.year}</g:if>
                                 </span>
                             </h4>
