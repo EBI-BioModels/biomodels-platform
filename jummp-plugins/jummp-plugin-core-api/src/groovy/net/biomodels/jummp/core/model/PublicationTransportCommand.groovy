@@ -182,7 +182,7 @@ class PublicationTransportCommand implements Serializable {
             String userRealName = "$firstName $lastName"
             author.userRealName = userRealName
             log.debug("Author: ${author?.userRealName}")
-            String affiliation = authorXml.affiliation[0].text()
+            String affiliation = authorXml.authorAffiliationDetailsList.authorAffiliation.affiliation
             author.institution = affiliation
             this.authors.add(author)
         }
