@@ -88,11 +88,11 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
     @SuppressWarnings("EmptyCatchBlock")
     @Override
     PubTC fetchPublicationData(final String id, final PubLP.LinkType linkType) throws JummpException {
-        final queryString = ""
+        String queryString = ""
         if (linkType == PubLP.LinkType.PUBMED) {
             queryString = "${PUBMED_API_URL}ext_id:${id}%20src:med&resulttype=core"
         } else if (linkType == PubLP.LinkType.DOI) {
-            queryString = "${PUBMED_API_URL}doi:${id}%20src:med&resulttype=core"
+                queryString = "${PUBMED_API_URL}doi:${id}%20&resulttype=core"
         }
         def slurper = lookupPublicationDataInPubMed(queryString)
 
