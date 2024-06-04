@@ -393,6 +393,7 @@ There has been errors when assembling authors $authors into the publication '${p
             } else {
                 // If the position of authors have been updated
                 if (existingAuthor.position != index ||
+                    existingAuthor.person.institution != newAuthor.institution ||
                     existingAuthor.pubAlias != newAuthor.userRealName) {
                     String query = """update PublicationPerson pp
 set pp.position = :newPosition, pp.pubAlias = :newPubAlias
