@@ -88,7 +88,7 @@ class PublicationService implements IPublicationService, InitializingBean {
         PubTC retrieved = new PubTC()
         PLP publicationLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", provider)
-        }
+        } as PLP
         retrieved.link = pubLink
         retrieved.linkProvider = new PLPA(linkProvider:
                 publicationLinkProvider).toCommandObject()
@@ -115,7 +115,7 @@ class PublicationService implements IPublicationService, InitializingBean {
     PubTC findPublicationOfModel(final String modelId) {
         String queryStr = "from Model as m where m.publicationId = :modelId or m.submissionId = :modelId"
         List result = Model.executeQuery(queryStr, [modelId: modelId])
-        Publication publication = result?.first()?.publication
+        Publication publication = result ? result.first()?.publication : null
         if (!publication) { return null }
         new PublicationAdapter(publication: publication).toCommandObject()
     }
@@ -124,7 +124,7 @@ class PublicationService implements IPublicationService, InitializingBean {
         def linkProvider = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
         PLP pubLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", linkProvider)
-        }
+        } as PLP
         if (!pubLinkProvider) {
             return false
         }
@@ -140,7 +140,7 @@ class PublicationService implements IPublicationService, InitializingBean {
         PLP.LinkType linkProvider = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
         PLP pubLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", linkProvider)
-        }
+        } as PLP
         PLPTC transportCommand = new PLPA(linkProvider: pubLinkProvider).toCommandObject()
         return transportCommand
     }
@@ -148,7 +148,7 @@ class PublicationService implements IPublicationService, InitializingBean {
     PDEC getPublicationExtractionContext(PubTC cmd) throws JummpException {
         Publication publication = findByPublicationTransportCommand(cmd)
         PDEC ctx = new  PDEC()
-        PubTC pubTC = null
+        PubTC pubTC
         if (publication) {
             // if existing in database
             pubTC = new PublicationAdapter(publication: publication).toCommandObject()
@@ -242,7 +242,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
      * @return  An updated publication transport command
      */
     PubTC assembleAuthors(PubTC cmd, def authorsAsJson) throws InvalidPublicationAuthorsException {
-        List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
+        List<PersonTC> validatedAuthors
         validatedAuthors = parseAuthorsJSON(authorsAsJson)
         cmd.authors = validatedAuthors
         if (!cmd.validate()) {
@@ -302,7 +302,7 @@ There has been errors when assembling authors $authors into the publication '${p
         new PublicationAdapter(publication: publication).toCommandObject()
     }
 
-    private PubTC bindJSONData(PubTC pubTC, def jsonData) {
+    private static PubTC bindJSONData(PubTC pubTC, def jsonData) {
         pubTC.link = jsonData.link
         pubTC.title = jsonData.title
         pubTC.journal = jsonData.journal

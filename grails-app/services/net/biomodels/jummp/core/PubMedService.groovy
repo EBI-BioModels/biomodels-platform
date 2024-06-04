@@ -105,7 +105,7 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
     PLPTC createLinkProviderInstance() {
         PubLP link = PubLP.withCriteria(uniqueResult: true) {
             eq("linkType", PubLP.LinkType.PUBMED)
-        }
+        } as PubLP
         PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
         linkCommand
     }
@@ -122,7 +122,7 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
     PLPTC createLinkProviderInstance(final PubLP.LinkType linkType) {
         PubLP link = PubLP.withCriteria(uniqueResult: true) {
             eq("linkType", linkType)
-        }
+        } as PubLP
         PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
         linkCommand
     }
@@ -153,7 +153,7 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
             if (conn.responseCode < 400) {
                 try {
                     String records = conn.getInputStream().text
-                    def slurper = null
+                    def slurper
                     try {
                         slurper = new XmlSlurper().parseText(records)
                     } catch (SAXParseException e) {
@@ -163,8 +163,8 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
                     }
                     return slurper
                 } catch (IOException e) {
-                    log.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of the error ${e
-                        .message}""")
+                    log.error("""Error while getting data from HttpUrlConnection ${conn.dump()} \
+because of the error ${e.message}""")
                     return null
                 }
             } else {
@@ -176,7 +176,7 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
         } catch (SocketException se) {
             log.error("Error while retrieving records from PubMed Centre", se)
         } catch (IllegalArgumentException ile) {
-            log.error("The proxy setting cannot be null")
+            log.error("The proxy setting cannot be null", ile)
         }
         return null
     }

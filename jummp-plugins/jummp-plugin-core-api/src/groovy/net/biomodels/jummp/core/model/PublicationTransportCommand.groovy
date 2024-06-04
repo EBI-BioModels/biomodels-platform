@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core.model
 
+import grails.validation.Validateable
 import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
@@ -45,7 +46,7 @@ import org.apache.commons.logging.LogFactory
  *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
-@grails.validation.Validateable
+@Validateable
 class PublicationTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
     /**
