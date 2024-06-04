@@ -1332,5 +1332,6 @@ databaseChangeLog = {
     include file: '20240430_captureMetadataSubmission.groovy'
     include file: '20240510_addPublishFromToCmsContent.groovy'
     include file: '20240513_addPublishedFromUntilMoM.groovy'
+    include file: '20240605_widenPersonInstitution.groovy'
 }
 
