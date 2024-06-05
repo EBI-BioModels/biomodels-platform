@@ -312,13 +312,22 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         render([status: "OK"] as JSON)
     }
 
-    @Secured(['IS_AUTHENTICATED_FULLY'])
     def create() {
         String metadata = request.reader.text
         Map<String, Object> working = [isUpdate: false, isUpdateOnExistingModel: false,
                                        isAmend: false, isMetadataSubmission: false]
-        String uuid = request.getHeader("SubmissionFolder")
+        makeSubmission(metadata, working)
+    }
 
+    def update() {
+        String metadata = request.reader.text
+        Map<String, Object> working = [isUpdate: true, isUpdateOnExistingModel: true,
+                                       isAmend: false, isMetadataSubmission: false]
+        makeSubmission(metadata, working)
+    }
+
+    private void makeSubmission(String metadata, Map working) {
+        String uuid = request.getHeader("SubmissionFolder")
         working.put("submissionFolder", uuid)
         def currentUser = springSecurityService.currentUser
         working.put("submitterInfo", [userRealName: currentUser?.person?.userRealName,
@@ -326,10 +335,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         submissionService.buildFromJSONFile(metadata, working)
         doValidateSubmissionData(working)
         Map map = doCompleteSubmission()
-        /*println "Got request: " + request.reader.text
-        println "User agent: " + request.getHeader("User-Agent")
-        println "format: ${request.getParameterMap()['format']}"
-        println "get parameter map: ${request.getParameterMap()}"*/
+
         withFormat {
             json { render map as JSON }
             xml { render map as XML }
