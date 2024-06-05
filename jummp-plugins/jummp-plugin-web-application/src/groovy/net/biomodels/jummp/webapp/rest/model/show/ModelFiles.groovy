@@ -28,6 +28,8 @@ class ModelFiles {
 
     ModelFiles(List<RepositoryFileTransportCommand> files) {
         files.findAll { it.mainFile } .each { main.add(new ModelFile(it)) }
+        main = main.sort { it.name }
         files.findAll { !it.mainFile } .each { additional.add(new AdditionalFile(it)) }
+        additional = additional.sort { it.name }
     }
 }
