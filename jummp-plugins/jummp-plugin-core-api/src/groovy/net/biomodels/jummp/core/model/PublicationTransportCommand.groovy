@@ -184,7 +184,9 @@ class PublicationTransportCommand implements Serializable {
             author.userRealName = userRealName
             log.debug("Author: ${author?.userRealName}")
             String affiliation = authorXml.authorAffiliationDetailsList.authorAffiliation.affiliation
-            author.institution = affiliation
+            if (affiliation) {
+                author.institution = affiliation
+            }
             this.authors.add(author)
         }
     }
