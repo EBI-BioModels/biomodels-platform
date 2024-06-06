@@ -724,14 +724,14 @@ an annotation to SBML document.""")
             def additional = jsonObj["files"]["additional"]
             List<RFTC> allFiles = new ArrayList()
             for (def f : main) {
-                File file = new File(EXCH_DIR + File.separator + submissionFolder, f["name"])
-                RFTC obj = createRFTC(file, true, f["description"])
+                File file = new File(EXCH_DIR + File.separator + submissionFolder, f["name"] as String)
+                RFTC obj = createRFTC(file, true, f["description"] as String)
                 allFiles.add(obj)
             }
 
             for (def f : additional) {
-                File file = new File(EXCH_DIR + File.separator + submissionFolder, f["name"])
-                RFTC obj = createRFTC(file, false, f["description"])
+                File file = new File(EXCH_DIR + File.separator + submissionFolder, f["name"] as String)
+                RFTC obj = createRFTC(file, false, f["description"] as String)
                 allFiles.add(obj)
             }
             String formatName = jsonObj["format"]["name"] as String

@@ -322,7 +322,7 @@ particularly for network file systems."""
      * Locates the folder where all models should reside based on user's settings.
      */
     private File findRoot() {
-        String rootLocation
+        String rootLocation = ""
         VcsCommand vcsCommand = configurationService.loadVcsConfiguration()
         if (vcsCommand.isGit()) {
             rootLocation = vcsCommand.workingDirectory

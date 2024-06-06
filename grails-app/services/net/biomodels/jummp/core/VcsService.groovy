@@ -90,7 +90,7 @@ class VcsService implements GrailsConfigurationAware, InitializingBean {
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @Profiled(tag = "vcsService.updateModel")
     String updateModel(final Model model, final List<File> files,
-                       final List<File> deleted, final String commitMessage,
+                       final List<File> deleted, String commitMessage,
                        final boolean isAmend = false) throws VcsException {
         if (!isValid()) {
             throw new VcsException("Version Control System is not valid")
@@ -100,13 +100,10 @@ class VcsService implements GrailsConfigurationAware, InitializingBean {
                     File.separator).append(model.vcsIdentifier).toString()
         final File MODEL_FOLDER = new File(modelFolderPath)
         if (commitMessage == null || commitMessage.isEmpty()) {
-            // TODO: replace toGMTString method
-            Date dtStamp = new Date()
-            String cmtMsg = "Updated at ${dtStamp.format('yyyy-MM-dd HH:mm:ss z')}".toString()
-            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, cmtMsg , isAmend)
-        } else {
-            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage, isAmend)
+            Date date = new Date()
+            commitMessage = "Updated at ${date.format('yyyy-MM-dd HH:mm:ss z')}".toString()
         }
+        return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage, isAmend)
     }
 
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
