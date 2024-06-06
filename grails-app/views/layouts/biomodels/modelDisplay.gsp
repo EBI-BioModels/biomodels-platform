@@ -680,6 +680,12 @@
                         <jummp:renderStarLevels flag="${revision.qcInfo.flag}" />
                     </g:if>
                     <h2>
+                    <a href="${g.createLink(controller: 'model', action: 'show', id: revision.identifier(), params: ['format': 'json'])}"
+                       target="_blank" title="Click here to view JSON format of this model">
+                        <i class="icon icon-fileformats icon-JSON"></i></a>
+                    <a href="${g.createLink(controller: 'model', action: 'show', id: revision.identifier(), params: ['format': 'xml'])}"
+                       target="_blank" title="Click here to view XML format of this model">
+                        <i class="icon icon-fileformats icon-XML"></i></a>
                     <g:if test="${revision.model.isMetadataSubmission}">
                         <i class="icon icon-common icon-code" title="This is a metadata-only submission"></i>
                         <span>&nbsp;</span>
