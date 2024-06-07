@@ -97,8 +97,12 @@ class SubmissionService implements InitializingBean {
      */
     transient SessionFactory sessionFactory
 
+    String EXCH_DIR
+
     @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
     void afterPropertiesSet() throws Exception {
+        EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
         logger.info("Finished the bean initialisation")
     }
 /**
@@ -716,11 +720,90 @@ an annotation to SBML document.""")
 
         @CompileStatic(TypeCheckingMode.SKIP)
         void buildFromJSONFile(String metadata, Map working) {
-            String EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
             def slurper = new JsonSlurper()
             def jsonObj = slurper.parseText(metadata)
-            def main = jsonObj["files"]["main"]
             String submissionFolder = working.get("submissionFolder")
+            List<RFTC> allFiles = buildModelFilesFromJSONObject(jsonObj, submissionFolder)
+            String formatName = jsonObj["format"]["name"] as String
+            String formatVersion = jsonObj["format"]["version"] as String
+            ModelFormat format = ModelFormat.findByNameAndFormatVersion(formatName, formatVersion)
+            if (!format) {
+                format = ModelFormat.findByName("Other")
+            }
+            MFTC formatTC = new MFAdapter(format: format).toCommandObject()
+
+            String modelName = jsonObj["name"]
+            String modelDescription = jsonObj["description"]
+            String userRealName = working["submitterInfo"]["userRealName"]
+            def modelTC = new MTC(name: modelName, description: modelDescription, submitter: userRealName)
+
+            def revisionTC = new RTC(model: modelTC, owner: userRealName, name: modelName,
+                format: formatTC, files: allFiles, minorRevision: false, validated: true)
+
+            if (working["isUpdate"]) {
+                String submissionId = jsonObj["submissionId"] as String
+                if (!submissionId) {
+                    throw new IllegalAccessException("The model identifier is missing. The update process has been terminated!")
+                }
+
+                Set<String> changesMade = new HashSet<>()
+                // get the latest revision
+                revisionTC = modelDelegateService.getLatestRevision(submissionId, true)
+                modelTC = revisionTC.model
+                String comment = jsonObj["comment"] ?: revisionTC.comment
+                revisionTC.comment = comment
+                if (modelTC.name != modelName && modelName) {
+                    modelTC.name = modelName
+                    changesMade.add("MODEL INFO: The model name has been modified.")
+                } else if (!modelName) {
+                    modelName = modelTC.name
+                }
+                if (revisionTC.description != modelDescription && modelDescription) {
+                    modelTC.description = modelDescription
+                    revisionTC.description = modelDescription
+                    changesMade.add("MODEL INFO: The model description has been modified.")
+                } else if (!modelDescription) {
+                    modelDescription = revisionTC.description
+                }
+                if (modelTC.submitter != userRealName && userRealName) {
+                    modelTC.submitter = userRealName
+                } else if (!userRealName) {
+                    userRealName = modelTC.submitter
+                }
+                if (revisionTC.owner != userRealName && userRealName) {
+                    revisionTC.owner = userRealName
+                }
+                revisionTC.files = allFiles
+                // TODO: write a private service to check the modifications made on the files. Here, we just use hard code
+                changesMade.add("MODEL FILES: The model files have been likely updated.")
+
+                working.put("modelId", submissionId)
+                working.put("changesMade", changesMade)
+            }
+            String modellingApproach = jsonObj["modelling_approach"] ?: ModellingApproach.findByAccession("OTHER").name
+            String submitterInfo = "[${working['submitterInfo']['username']}, ${working['submitterInfo']['email']}]"
+            working["submitterInfo"] = submitterInfo
+            working.put("RevisionTC", revisionTC)
+            working.put("ModelTC", modelTC)
+            working.put("format", formatTC)
+            working.put("model_format", formatTC.id as String)
+            working.put("modelling_approach", modellingApproach)
+            working.put("repository_files", allFiles)
+            working.put("new_description", modelDescription)
+            working.put("new_name", modelName)
+            working.put("latestModelDescription", modelDescription)
+            working.put("latestModelName", modelName)
+            working.put("other_info", jsonObj["other_info"] ?: modelTC.otherInfo ?: "")
+            working.put("readme_submission", jsonObj["readme_submission"] ?: revisionTC.readmeSubmission ?: "")
+            working.put("shouldCreateNewRevision", true)
+            working.put("isMetadataSubmission", jsonObj["isMetadataSubmission"] ?: modelTC.isMetadataSubmission ?: false)
+            working.put("isAmend", jsonObj["isAmend"] ?: false)
+
+            logger.info "Done!"
+        }
+
+        private List buildModelFilesFromJSONObject(def jsonObj, String submissionFolder) {
+            def main = jsonObj["files"]["main"]
             def additional = jsonObj["files"]["additional"]
             List<RFTC> allFiles = new ArrayList()
             for (def f : main) {
@@ -734,49 +817,9 @@ an annotation to SBML document.""")
                 RFTC obj = createRFTC(file, false, f["description"] as String)
                 allFiles.add(obj)
             }
-            String formatName = jsonObj["format"]["name"] as String
-            String formatVersion = jsonObj["format"]["version"] as String
-            ModelFormat format = ModelFormat.findByNameAndFormatVersion(formatName, formatVersion)
-            if (!format) {
-                format = ModelFormat.findByName("Other")
-            }
-            MFTC formatTC = new MFAdapter(format: format).toCommandObject()
 
-            String modelName = jsonObj["name"]
-            String modelDescription = jsonObj["description"]
-            def modelTC = new MTC(name: modelName, description: modelDescription,
-                submitter: working["submitterInfo"]["userRealName"])
-
-            def revisionTC = new RTC(model: modelTC, owner: working['submitterInfo']['userRealName'], name: modelName,
-                format: formatTC, files: allFiles, minorRevision: false, validated: true)
-
-            String submitterInfo = "[${working['submitterInfo']['username']}, ${working['submitterInfo']['email']}]"
-            working["submitterInfo"] = submitterInfo
-            working.put("RevisionTC", revisionTC)
-            working.put("ModelTC", modelTC)
-            working.put("format", formatTC)
-            working.put("model_format", formatTC.id as String)
-            working.put("modelling_approach",
-                jsonObj["modelling_approach"] ?: ModellingApproach.findByAccession("OTHER").name)
-            working.put("repository_files", allFiles)
-            working.put("new_description", modelDescription)
-            working.put("new_name", modelName)
-            working.put("latestModelDescription", modelDescription)
-            working.put("latestModelName", modelName)
-            working.put("other_info", jsonObj["other_info"] ?: "")
-            working.put("readme_submission", jsonObj["readme_submission"] ?: "")
-            working.put("shouldCreateNewRevision", true)
-            working.put("isMetadataSubmission", jsonObj["isMetadataSubmission"] ?: false)
-
-            // changesMade no need for submitting a new model
-            /*Set<String> changesMade = new HashSet<>()
-            changesMade.add("Added a new file, for example.")
-            working.put("changesMade", changesMade)*/
-            working.put("modelId", "")
-
-            println "Done!"
+            return allFiles
         }
-
 
         /**
          * Purpose: Utility method to generate the publication map of
