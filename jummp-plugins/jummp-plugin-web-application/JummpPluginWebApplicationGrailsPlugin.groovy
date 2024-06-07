@@ -22,7 +22,7 @@ import grails.converters.JSON
 import grails.converters.XML
 import net.biomodels.jummp.core.IModelService
 import net.biomodels.jummp.webapp.rest.marshaller.ModelXmlMarshaller
-import net.biomodels.jummp.webapp.rest.model.show.Model
+import net.biomodels.jummp.webapp.rest.model.Model
 
 class JummpPluginWebApplicationGrailsPlugin {
     // the plugin version

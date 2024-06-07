@@ -18,7 +18,7 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-package net.biomodels.jummp.webapp.rest.model.show
+package net.biomodels.jummp.webapp.rest.model
 
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 

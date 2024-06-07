@@ -1,4 +1,4 @@
-package net.biomodels.jummp.webapp.rest.model.show
+package net.biomodels.jummp.webapp.rest.model
 
 import net.biomodels.jummp.core.user.PersonTransportCommand
 

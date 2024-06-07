@@ -64,8 +64,8 @@ import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
-import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
-import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
+import net.biomodels.jummp.webapp.rest.model.Model as RestfulModel
+import net.biomodels.jummp.webapp.rest.model.ModelFiles
 import org.apache.http.HttpEntity
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpPost

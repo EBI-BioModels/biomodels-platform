@@ -18,20 +18,20 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-package net.biomodels.jummp.webapp.rest.model.show
+package net.biomodels.jummp.webapp.rest.model
 
-import grails.util.Holders
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 
-class History {
-    List<Revision> revisions = []
+class Revision {
+    int version
+    long submitted
+    String submitter
+    String comment
 
-    public History(String modelId) {
-        List<RevisionTransportCommand> revs = Holders.grailsApplication.mainContext
-                                              .getBean("modelDelegateService").getAllRevisions(modelId)
-
-        for (int i = 0; i < revs.size(); i++) {
-            revisions.add(new Revision(revs.get(i)))
-        }
+    public Revision(RevisionTransportCommand revision) {
+        version = revision.revisionNumber
+        submitted = revision.uploadDate.getTime()
+        submitter = revision.owner
+        comment = revision.comment
     }
 }

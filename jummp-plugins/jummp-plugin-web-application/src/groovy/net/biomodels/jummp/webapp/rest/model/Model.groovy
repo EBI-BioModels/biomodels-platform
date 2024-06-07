@@ -18,7 +18,7 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-package net.biomodels.jummp.webapp.rest.model.show
+package net.biomodels.jummp.webapp.rest.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -39,6 +39,7 @@ class Model {
     /** perennial model identifiers */
     String submissionId
     String publicationId
+    ModellingApproach modellingApproach
 
     Model(RevisionTransportCommand revision, boolean isPrivate) {
         ModelTransportCommand model = revision.model

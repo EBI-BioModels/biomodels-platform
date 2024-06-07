@@ -18,15 +18,16 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-package net.biomodels.jummp.webapp.rest.model.show
+package net.biomodels.jummp.webapp.rest.model
 
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 
-class AdditionalFile extends ModelFile {
-    String description
+class Format {
+    String name
+    String version
 
-    AdditionalFile(RepositoryFileTransportCommand file) {
-        super(file)
-        description = file.description
+    public Format(ModelFormatTransportCommand f) {
+        name = f.name
+        version = f.formatVersion
     }
 }
