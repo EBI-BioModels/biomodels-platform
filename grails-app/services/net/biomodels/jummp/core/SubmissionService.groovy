@@ -735,8 +735,10 @@ an annotation to SBML document.""")
             String modelName = jsonObj["name"]
             String modelDescription = jsonObj["description"]
             String userRealName = working["submitterInfo"]["userRealName"]
-            def modelTC = new MTC(name: modelName, description: modelDescription, submitter: userRealName)
+            String modellingApproach = jsonObj["modelling_approach"] ?: ""
+            def otherMA = ModellingApproach.findByAccession("OTHER")
 
+            def modelTC = new MTC(name: modelName, description: modelDescription, submitter: userRealName)
             def revisionTC = new RTC(model: modelTC, owner: userRealName, name: modelName,
                 format: formatTC, files: allFiles, minorRevision: false, validated: true)
 
@@ -773,14 +775,24 @@ an annotation to SBML document.""")
                 if (revisionTC.owner != userRealName && userRealName) {
                     revisionTC.owner = userRealName
                 }
+                if (modelTC.modellingApproach.name != modellingApproach && modellingApproach) {
+                    modelTC.modellingApproach = ModellingApproach.findByName(modellingApproach) ?: otherMA
+                    changesMade.add("MODEL INFO: The modelling approach has been updated.")
+                } else if (!modellingApproach && modelTC.modellingApproach.name) {
+                    modellingApproach = modelTC.modellingApproach.name
+                }
                 revisionTC.files = allFiles
                 // TODO: write a private service to check the modifications made on the files. Here, we just use hard code
                 changesMade.add("MODEL FILES: The model files have been likely updated.")
 
                 working.put("modelId", submissionId)
                 working.put("changesMade", changesMade)
+            } else {
+                // By default, the modelling approach will be assigned 'other' if it is omitted or empty
+                if (!modellingApproach) {
+                    modellingApproach = otherMA.name
+                }
             }
-            String modellingApproach = jsonObj["modelling_approach"] ?: ModellingApproach.findByAccession("OTHER").name
             String submitterInfo = "[${working['submitterInfo']['username']}, ${working['submitterInfo']['email']}]"
             working["submitterInfo"] = submitterInfo
             working.put("RevisionTC", revisionTC)
