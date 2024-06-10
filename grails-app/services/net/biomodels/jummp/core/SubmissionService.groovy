@@ -89,6 +89,7 @@ class SubmissionService implements InitializingBean {
     ModelService modelService
     ModelDelegateService modelDelegateService
     FileSystemService fileSystemService
+    PublicationService publicationService
     def springSecurityService
     def userService
     /**
@@ -747,7 +748,7 @@ an annotation to SBML document.""")
             String userRealName = working["submitterInfo"]["userRealName"]
             String modellingApproach = jsonObj["modelling_approach"] ?: ""
             def otherMA = ModellingApproach.findByAccession("OTHER")
-
+            PubTC suppliedPublication = buildPublicationTCFromJSON(jsonObj["publication"])
             def modelTC = new MTC(name: modelName, description: modelDescription, submitter: userRealName)
             def revisionTC = new RTC(model: modelTC, owner: userRealName, name: modelName,
                 format: formatTC, files: allFiles, minorRevision: false, validated: true)
@@ -795,6 +796,16 @@ an annotation to SBML document.""")
                 // TODO: write a private service to check the modifications made on the files. Here, we just use hard code
                 changesMade.add("MODEL FILES: The model files have been likely updated.")
 
+                if (modelTC.publication && suppliedPublication) {
+                    // TODO: write a procedure to check which fields have been modified for the publication details
+                    // and have a corresponding message. Here is just a simple check
+                    if (modelTC.publication.link != suppliedPublication.link ||
+                        modelTC.publication.linkProvider != suppliedPublication.linkProvider) {
+                        modelTC.publication = suppliedPublication
+                    }
+                } else if (suppliedPublication) {
+                    modelTC.publication = suppliedPublication
+                }
                 working.put("modelId", submissionId)
                 working.put("changesMade", changesMade)
             } else {
@@ -843,6 +854,21 @@ an annotation to SBML document.""")
             }
 
             return allFiles
+        }
+
+        private PubTC buildPublicationTCFromJSON(def pubJSON) {
+            PubTC pubTC = null
+            if (pubJSON) {
+                String pubLinkProvider = pubJSON["source"]
+                String pubLink = pubJSON["accession"]
+                if (pubLinkProvider && pubLink) {
+                    Map result = publicationService.doVerifyPubLinkAndFetchData(pubLinkProvider, pubLink)
+                    pubTC = result["publication"] as PubTC
+                }
+            } else {
+                // TODO: should we parse the full publication?
+            }
+            pubTC
         }
 
         /**

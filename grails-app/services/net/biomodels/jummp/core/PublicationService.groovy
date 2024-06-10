@@ -136,6 +136,47 @@ class PublicationService implements IPublicationService, InitializingBean {
         return m.matches()
     }
 
+    Map doVerifyPubLinkAndFetchData(String pubLinkProvider, String pubLink) {
+        PubTC cmd = new PubTC()
+        String message
+        String status
+        boolean comesFromDB = false
+        if (pubLinkProvider == "NoPub" && pubLink) {
+            message = "Please select a publication link type."
+            status = "Failed"
+        } else {
+            if (!verifyLink(pubLinkProvider, pubLink)) {
+                message = "The link is not a valid ${pubLinkProvider}"
+                status = "Failed"
+            } else {
+                message = "The publication details have been fetched successfully."
+                status = "OK"
+                cmd = createPTCWithMinimalInformation(pubLinkProvider, pubLink, [])
+                PDEC ctx = loadOrFetchOrCreatePublication(cmd, pubLinkProvider, pubLink)
+                // reassign cmd to a newly refreshed one
+                cmd = ctx?.publication
+                if (!cmd) {
+                    status = "Unavailable"
+                    message = "No record found. Please do check and try again."
+                } else if (!cmd?.synopsis || !cmd?.affiliation || !cmd?.title) {
+                    // for DOI fetched from DOI service or for PubMed entry not having any values for these fields
+                    status = "Warning"
+                    String t = cmd.linkProvider.linkType
+                    String pubHref = "https://doi.org/${pubLink}"
+                    if (t == PLP.LinkType.PUBMED.getLabel()) {
+                        pubHref = "https://identifiers.org/pubmed:${pubLink}"
+                    }
+                    message = """The publication details are the best which our system can automatically
+fetch from <a href="${pubHref}" target="_blank">${pubHref}</a>. Currently they are
+missing a title, an affiliation and/or an abstract. Please verify the form and fill in the empty fields manually."""
+                }
+
+                comesFromDB = ctx?.comesFromDatabase
+            }
+        }
+        ["message": message, "status": status, "publication": cmd, "comesFromDB": comesFromDB]
+    }
+
     PLPTC inferPublicationLinkProvider(final String linkTypeAsString) {
         PLP.LinkType linkProvider = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
         PLP pubLinkProvider = PLP.withCriteria(uniqueResult: true) {
@@ -300,6 +341,26 @@ There has been errors when assembling authors $authors into the publication '${p
     PubTC getById(Long id) {
         Publication publication = Publication.get(id)
         new PublicationAdapter(publication: publication).toCommandObject()
+    }
+
+    private PDEC loadOrFetchOrCreatePublication(PubTC pubTC, String pubLinkProvider, String pubLink) {
+        try {
+            PDEC publicationContext = getPublicationExtractionContext(pubTC)
+            if (publicationContext.publication) {
+                if (publicationContext.comesFromDatabase) {
+                    flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                }
+            } else {
+                PubTC retrieved
+                retrieved = createPTCWithMinimalInformation(pubLinkProvider, publicationLink, [])
+                publicationContext.publication = retrieved
+                publicationContext.comesFromDatabase = false
+            }
+            return publicationContext
+        } catch (Exception e) {
+            log.error(e.message, e)
+            return null
+        }
     }
 
     private static PubTC bindJSONData(PubTC pubTC, def jsonData) {

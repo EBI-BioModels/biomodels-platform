@@ -372,26 +372,30 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         if (pubURIs) {
             logger.info("""Detected publication identifiers included in the file $filename as annotations: \
 ${pubURIs?.join(";")}""")
-            String firstPubURI = pubURIs?.first()
-            String rest = JummpHttpService.getDataTypeAndAccession(firstPubURI)
-            String json = JummpHttpService.jsonGetRequest("https://resolver.api.identifiers.org/" + rest)
-            JSONObject jsonObject = new JSONObject(json)
-            JSONObject parsedCI = jsonObject.getJSONObject("payload").getJSONObject("parsedCompactIdentifier")
-            String localId = parsedCI.getString("localId")
-            String namespace = parsedCI.getString("namespace")
-            String collectionLabel = ""
-            if ("pubmed" == namespace) {
-                collectionLabel = "PubMed ID"
-            } else if ("doi" == namespace) {
-                collectionLabel = "DOI"
-            }
-            pubDetails.putAll(["pubURI": firstPubURI, "namespace": namespace,
-                               "collectionLabel": collectionLabel, "accession": localId])
+            Map pubMeta = resolvePublicationMetadata(pubURIs)
+            if (pubMeta) { pubDetails.putAll(pubMeta) }
         }
 
         // TODO: add "readme": "not decided yet" with an updated value to the returned map
         pubDetails.putAll(["identifier": format.identifier, "name": format.name, "id": format.id])
         return pubDetails
+    }
+
+    private Map resolvePublicationMetadata(List<String> pubURIs) {
+        String firstPubURI = pubURIs?.first()
+        String rest = JummpHttpService.getDataTypeAndAccession(firstPubURI)
+        String json = JummpHttpService.jsonGetRequest("https://resolver.api.identifiers.org/" + rest)
+        JSONObject jsonObject = new JSONObject(json)
+        JSONObject parsedCI = jsonObject.getJSONObject("payload").getJSONObject("parsedCompactIdentifier")
+        String localId = parsedCI.getString("localId")
+        String namespace = parsedCI.getString("namespace")
+        String collectionLabel = ""
+        if ("pubmed" == namespace) {
+            collectionLabel = "PubMed ID"
+        } else if ("doi" == namespace) {
+            collectionLabel = "DOI"
+        }
+        ["pubURI": firstPubURI, "namespace": namespace, "collectionLabel": collectionLabel, "accession": localId]
     }
 
     /**
