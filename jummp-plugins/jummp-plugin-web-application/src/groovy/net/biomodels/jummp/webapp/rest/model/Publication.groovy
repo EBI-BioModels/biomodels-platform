@@ -3,7 +3,7 @@ package net.biomodels.jummp.webapp.rest.model
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 
 class Publication {
-    String source
+    String type
     String accession
     String journal
     String title
@@ -19,7 +19,7 @@ class Publication {
     List<PublicationAuthor> authors
 
     Publication(PublicationTransportCommand publicationTC) {
-        source = publicationTC.linkProvider.linkType
+        type = publicationTC.linkProvider.linkType
         accession = publicationTC.link
         journal = publicationTC.journal
         title = publicationTC.title

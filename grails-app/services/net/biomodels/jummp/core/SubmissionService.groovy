@@ -859,7 +859,7 @@ an annotation to SBML document.""")
         private PubTC buildPublicationTCFromJSON(def pubJSON) {
             PubTC pubTC = null
             if (pubJSON) {
-                String pubLinkProvider = pubJSON["source"]
+                String pubLinkProvider = pubJSON["type"]
                 String pubLink = pubJSON["accession"]
                 if (pubLinkProvider && pubLink) {
                     Map result = publicationService.doVerifyPubLinkAndFetchData(pubLinkProvider, pubLink)
