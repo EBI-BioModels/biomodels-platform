@@ -49,9 +49,6 @@ class Model {
         if (model.publication) {
             PublicationTransportCommand pubTC = model.publication
             publication = new Publication(pubTC)
-            publication.link = model.publication.linkProvider.identifiersPrefix ?
-                          pubTC.linkProvider.identifiersPrefix + pubTC.link :
-                          pubTC.link
             pubTC.authors.each { PersonTransportCommand personTC ->
                 publication.authors << new PublicationAuthor(personTC)
             }

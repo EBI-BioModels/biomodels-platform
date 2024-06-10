@@ -3,6 +3,8 @@ package net.biomodels.jummp.webapp.rest.model
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 
 class Publication {
+    String type
+    String accession
     String journal
     String title
     String affiliation
@@ -17,6 +19,8 @@ class Publication {
     List<PublicationAuthor> authors
 
     Publication(PublicationTransportCommand publicationTC) {
+        type = publicationTC.linkProvider.linkType
+        accession = publicationTC.link
         journal = publicationTC.journal
         title = publicationTC.title
         affiliation = publicationTC.affiliation
@@ -27,7 +31,8 @@ class Publication {
         volume = publicationTC.volume
         issue = publicationTC.issue
         pages = publicationTC.pages
-        link = publicationTC.link
+        link = publicationTC.linkProvider.identifiersPrefix ?
+            publicationTC.linkProvider.identifiersPrefix + publicationTC.link : publicationTC.link
         authors = new ArrayList<PublicationAuthor>()
     }
 }

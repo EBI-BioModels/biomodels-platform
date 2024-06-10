@@ -729,6 +729,10 @@ an annotation to SBML document.""")
             } catch (Exception e) {
                 logger.error("File not found")
                 working.put("cause", "Files not found")
+            } finally {
+                if (!allFiles) {
+                    logger.error("Files not found. The create or update process has been terminated unexpectedly!")
+                }
             }
             String formatName = jsonObj["format"]["name"] as String
             String formatVersion = jsonObj["format"]["version"] as String
