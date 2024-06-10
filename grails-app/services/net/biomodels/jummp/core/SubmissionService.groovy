@@ -723,7 +723,13 @@ an annotation to SBML document.""")
             def slurper = new JsonSlurper()
             def jsonObj = slurper.parseText(metadata)
             String submissionFolder = working.get("submissionFolder")
-            List<RFTC> allFiles = buildModelFilesFromJSONObject(jsonObj, submissionFolder)
+            List<RFTC> allFiles
+            try {
+                allFiles = buildModelFilesFromJSONObject(jsonObj, submissionFolder)
+            } catch (Exception e) {
+                logger.error("File not found")
+                working.put("cause", "Files not found")
+            }
             String formatName = jsonObj["format"]["name"] as String
             String formatVersion = jsonObj["format"]["version"] as String
             ModelFormat format = ModelFormat.findByNameAndFormatVersion(formatName, formatVersion)
@@ -788,6 +794,8 @@ an annotation to SBML document.""")
                 working.put("modelId", submissionId)
                 working.put("changesMade", changesMade)
             } else {
+                revisionTC.files = allFiles
+
                 // By default, the modelling approach will be assigned 'other' if it is omitted or empty
                 if (!modellingApproach) {
                     modellingApproach = otherMA.name
