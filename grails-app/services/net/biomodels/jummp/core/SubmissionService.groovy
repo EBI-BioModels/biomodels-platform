@@ -435,7 +435,11 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
             // add MAMO term representing the modelling approach into the SBML file if the curators or the submitter
             // has not added it to model level annotations yet
             if (revision.format.identifier == "SBML") {
-                modelService.addModellingApproachAsAnnotation(revision, approach)
+                try {
+                    modelService.addModellingApproachAsAnnotation(revision, approach)
+                } catch (Exception e) {
+                    logger.error "${e.message}"
+                }
             }
 
             // update model format, accepted Other as the default if no selection or missing
