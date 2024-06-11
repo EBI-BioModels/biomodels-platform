@@ -314,6 +314,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
     def create() {
         String metadata = request.reader.text
+        logger.info("Creating the submission: $metadata")
         Map<String, Object> working = [isUpdate: false, isUpdateOnExistingModel: false,
                                        isAmend: false, isMetadataSubmission: false]
         makeSubmission(metadata, working)
@@ -321,6 +322,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
     def update() {
         String metadata = request.reader.text
+        logger.info("Updating the submission: $metadata")
         Map<String, Object> working = [isUpdate: true, isUpdateOnExistingModel: true,
                                        isAmend: false, isMetadataSubmission: false]
         makeSubmission(metadata, working)
