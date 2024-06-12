@@ -111,7 +111,7 @@
                         <div class="progress mb-2">
                             <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"
                                  role="progressbar"
-                                 style="width: 0%"
+                                 style="width: 0"
                                  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
@@ -131,7 +131,7 @@
                         </div>
                     </div>
                     <div class="columns small-12 medium-1 large-1">
-                        <i class="icon icon-common icon-times btn-remove-file"></i>
+                        <i class="icon icon-common icon-times btn-remove-file" data-file-name="%{filename}%"></i>
                     </div>
                 </div>
             </div>

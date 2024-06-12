@@ -1095,7 +1095,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return longFromString(attributeValue, attributeName, mainFile)
     }
 
-    private File fetchMainFileFromRevision(RevisionTC revision) {
+    private static File fetchMainFileFromRevision(RevisionTC revision) {
         final String mainFileLocation = revision?.files?.find {it.mainFile}?.path
         if (!mainFileLocation) {
             LOGGER.error "The main file of revision ${revision.properties} is undefined."

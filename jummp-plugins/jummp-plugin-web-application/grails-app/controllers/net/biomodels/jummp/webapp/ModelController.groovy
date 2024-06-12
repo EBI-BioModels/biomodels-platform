@@ -272,7 +272,7 @@ class ModelController extends CommonController {
                     String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
                     String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
                     def currentUser = springSecurityService.currentUser
-                    boolean canAskReviewerAccount = true
+                    boolean canAskReviewerAccount
                     if (!currentUser) {
                         canAskReviewerAccount = false
                     } else {

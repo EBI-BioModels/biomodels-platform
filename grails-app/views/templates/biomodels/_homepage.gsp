@@ -20,7 +20,7 @@
         font-weight: bold;
     }
     div#acknowledgements a:visited {
-        border-bottom-width: 0px;
+        border-bottom-width: 0;
         border-bottom-style: none;
         border-bottom-color: inherit;
     }
@@ -71,14 +71,14 @@
             interval_timeline = setInterval(function(){
                 if ($('.twitter-timeline').hasClass('twitter-timeline-rendered')) {
                     clearInterval(interval_timeline);
-                    var chartAreaHeight = $('.chart-placeholder').height();
+                    const chartAreaHeight = $('.chart-placeholder').height();
                     $('#twitter-widget-0').height(chartAreaHeight);
                 }
             }, 50);
         }
     }
     function showOrHidePublicationInfo() {
-        var innerWidth = window.innerWidth;
+        const innerWidth = window.innerWidth;
         if (innerWidth < 2000 || innerWidth > 2100) {
             $('.publication-info').hide();
         } else {

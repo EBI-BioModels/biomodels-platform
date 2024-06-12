@@ -34,7 +34,7 @@
         <title><g:message code="error.404.title"/> | BioModels</title>
     </head>
     <body>
-        <h2 class="errors">${code}: <g:message code="error.404.title"/></h2>
+        <h2 class="errors">404: <g:message code="error.404.title"/></h2>
         <p><g:message code="error.404.explanation" args="${[resource]}"/>
     </body>
 </html>
