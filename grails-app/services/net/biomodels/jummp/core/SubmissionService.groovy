@@ -760,6 +760,7 @@ an annotation to SBML document.""")
             if (working["isUpdate"]) {
                 String submissionId = jsonObj["submissionId"] as String
                 if (!submissionId) {
+                    working.put("cause", "The model identifier is missing.")
                     throw new IllegalAccessException("The model identifier is missing. The update process has been terminated!")
                 }
 
@@ -818,6 +819,10 @@ an annotation to SBML document.""")
                 // By default, the modelling approach will be assigned 'other' if it is omitted or empty
                 if (!modellingApproach) {
                     modellingApproach = otherMA.name
+                }
+                if (!modelName || !formatTC) {
+                    working.put("cause", "Cannot leave these properties empty!")
+                    throw new IllegalAccessException("Cannot leave these properties empty!")
                 }
             }
             String submitterInfo = "[${working['submitterInfo']['username']}, ${working['submitterInfo']['email']}]"
