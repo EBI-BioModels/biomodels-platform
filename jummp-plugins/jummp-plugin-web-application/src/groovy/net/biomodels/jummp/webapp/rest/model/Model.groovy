@@ -39,7 +39,7 @@ class Model {
     /** perennial model identifiers */
     String submissionId
     String publicationId
-    //ModellingApproach modellingApproach
+    ModellingApproach modellingApproach
 
     Model(RevisionTransportCommand revision, boolean isPrivate) {
         ModelTransportCommand model = revision.model
@@ -62,7 +62,7 @@ class Model {
         submissionId = model.submissionId
         publicationId = model.publicationId
         firstPublished = model.firstPublished
-        //modellingApproach = new ModellingApproach(model.modellingApproach)
+        modellingApproach = new ModellingApproach(model.modellingApproach)
     }
 
     String outputModelAsString(String contentType) {
