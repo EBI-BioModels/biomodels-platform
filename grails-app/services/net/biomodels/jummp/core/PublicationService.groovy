@@ -152,7 +152,9 @@ class PublicationService implements IPublicationService, InitializingBean {
                 message = "The publication details have been fetched successfully."
                 status = "OK"
                 cmd = createPTCWithMinimalInformation(pubLinkProvider, pubLink, [])
-                PDEC ctx = loadOrFetchOrCreatePublication(cmd, pubLinkProvider, pubLink)
+                Map m = loadOrFetchOrCreatePublication(cmd, pubLinkProvider)
+                PDEC ctx = m["pubCtx"]
+                message += "<br/>" + m["message"]
                 // reassign cmd to a newly refreshed one
                 cmd = ctx?.publication
                 if (!cmd) {
@@ -343,23 +345,30 @@ There has been errors when assembling authors $authors into the publication '${p
         new PublicationAdapter(publication: publication).toCommandObject()
     }
 
-    private PDEC loadOrFetchOrCreatePublication(PubTC pubTC, String pubLinkProvider, String pubLink) {
+    private Map loadOrFetchOrCreatePublication(PubTC pubTC, String pubLinkProvider) {
+        String message
+        PDEC publicationContext
         try {
-            PDEC publicationContext = getPublicationExtractionContext(pubTC)
+            publicationContext = getPublicationExtractionContext(pubTC)
             if (publicationContext.publication) {
                 if (publicationContext.comesFromDatabase) {
-                    flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                    String code = "publication.editor.duplicateEntry.message"
+                    String pubLink = pubTC.link
+                    message = messageSource.getMessage(code, [pubLink] as Object[], Locale.default)
+                    log.debug(message)
                 }
             } else {
                 PubTC retrieved
-                retrieved = createPTCWithMinimalInformation(pubLinkProvider, publicationLink, [])
+                retrieved = createPTCWithMinimalInformation(pubLinkProvider, pubTC.link, [])
                 publicationContext.publication = retrieved
                 publicationContext.comesFromDatabase = false
             }
-            return publicationContext
         } catch (Exception e) {
-            log.error(e.message, e)
-            return null
+            message = e.message
+            log.error(message, e)
+            publicationContext = null
+        } finally {
+            return [message: message, pubCtx: publicationContext]
         }
     }
 

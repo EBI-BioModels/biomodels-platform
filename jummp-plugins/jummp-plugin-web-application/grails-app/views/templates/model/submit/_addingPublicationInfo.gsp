@@ -114,7 +114,7 @@
                     }
                     showFlashMessages(msg);
                     if (data["comesFromDB"]) {
-                        msg = "${g.message(code: "publication.editor.duplicateEntry.message")}";
+                        msg = data["message"];
                         toastr.warning(msg);
                         showFlashMessages(msg);
                     }

@@ -86,11 +86,11 @@ function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
         msg = extractErrorMessage(jqXHR);
         toastr.error(msg);
         showFlashMessages(msg);
-    }).complete(function () {
+    }).complete(function (data) {
         let comesFromDB = ("true" === $('#comesFromDB').html());
         let messages = [];
         if (comesFromDB) {
-            msg = "${g.message(code: "publication.editor.duplicateEntry.message")}";
+            msg = data["message"];
             toastr.warning(msg);
             messages.push(msg);
         }
