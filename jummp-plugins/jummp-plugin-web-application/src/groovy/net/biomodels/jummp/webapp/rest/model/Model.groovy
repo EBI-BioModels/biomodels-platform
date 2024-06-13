@@ -62,7 +62,9 @@ class Model {
         submissionId = model.submissionId
         publicationId = model.publicationId
         firstPublished = model.firstPublished
-        modellingApproach = new ModellingApproach(model.modellingApproach)
+        if (model.modellingApproach) {
+            modellingApproach = new ModellingApproach(model.modellingApproach)
+        }
     }
 
     String outputModelAsString(String contentType) {
