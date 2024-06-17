@@ -45,6 +45,7 @@ import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorI
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
 import net.biomodels.jummp.plugins.bives.RevisionCreatedListener
 import net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler
+import net.biomodels.jummp.plugins.security.RestAccessTokenService
 import net.biomodels.jummp.search.OmicsdiBasedSearch
 import net.biomodels.jummp.search.SolrBasedSearch
 import net.biomodels.jummp.search.SolrServerHolder
@@ -292,4 +293,6 @@ beans = {
         visibility(com.fasterxml.jackson.annotation.PropertyAccessor.ALL, com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
         configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
+
+    restAccessTokenService(RestAccessTokenService)
 }
