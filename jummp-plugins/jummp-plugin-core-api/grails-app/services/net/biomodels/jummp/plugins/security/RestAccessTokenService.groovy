@@ -84,22 +84,23 @@ due to ${tokenManager.getErrors().toString()}.""")
 
         // 3. Send an email to the requester/user and say that your access token
         // will be expired after 30 days of usage, for example.
-        String body = """Hey ${username},\n An access token was recently issued to your account. The token will be expired after 30 days since now.\n
-Notes that the former tokens have been deleted, therefore, you have to update it in your work to avoid unnecessary interuptions.\n
-If you didn't request it or or you run into problems, please contact us asap.\n
-\n\n
-Thanks,\n
+        String body = """Hey ${username},<p>An access token was recently issued to your account. \
+The token will be expired after 30 days since now.</p>\
+<p>Notes that the former tokens have been deleted, therefore, you have to update it in your work \
+to avoid unnecessary interuptions.</p>
+<p>If you didn't request it or you run into problems, please contact us asap.</p>
+<br/>
+Thanks,<br/>
 BioModels"""
-        String receiverEmail = requester?.email
-        if (receiverEmail) {
+        final String RECEIVER = requester?.email
+        if (RECEIVER) {
             // send a confirmation email to the requester/account's owner
-            final String sender = grailsApplication.config.jummp.model.curators.mailinglist
-            final String subject = "[BioModels] An access token has been issued to your account"
+            final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
+            final String SUBJECT = "[BioModels] An access token has been issued to your account"
             mailService.sendMail {
-                async true
-                to receiverEmail
-                from sender
-                subject subject
+                to RECEIVER
+                from SENDER
+                subject SUBJECT
                 html body
             }
         }
