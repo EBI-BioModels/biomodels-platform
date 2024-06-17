@@ -42,6 +42,9 @@ import org.springframework.context.ApplicationListener
 @Transactional
 class RestAccessTokenService implements ApplicationListener<RestTokenCreationEvent> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestAccessTokenService.class)
+
+    def mailService
+
     @Override
     void onApplicationEvent(RestTokenCreationEvent event) {
         if (!event) {
@@ -49,8 +52,8 @@ class RestAccessTokenService implements ApplicationListener<RestTokenCreationEve
 The request to issue an access token was failed.""")
         }
         def user = event.principal
-        def username = user?.username
-        def newToken = event?.accessToken // the newly issued token
+        String username = user?.username
+        String newToken = event?.accessToken // the newly issued token
         // 1. Look for and delete all the tokens issued in the former requests
         def qStr = "select id from AuthToken as AT where AT.username = :username and token != :token"
         List<Long> ids = AuthToken.executeQuery(qStr, [username: username, token: newToken]) as List<Long>
@@ -62,11 +65,36 @@ The request to issue an access token was failed.""")
             }
             LOGGER.info("Tokens $ids of the user: $username will be deleted now.")
         }
-        // 2. Send an email to the requester/user and say that your access token
-        // will be expired after 30 days of usage, for example.
-        // TODO: TBD soon
+        // 2. Set an expiry date for the newly issued token
+        AuthToken authToken = AuthToken.findByTokenAndUsername(newToken, username)
+        if (authToken) {
+            authToken.expiredDate = new Date() + 30
+            if (!authToken.save(flush: true)) {
+                LOGGER.debug("""Cannot set an expired date for the token ([id: $authToken.id]) \
+due to ${authToken.getErrors().toString()}.""")
+            }
+        }
 
-        // 3. Set an expiry date for the newly issued token
-        // TODO: TBD soon
+        // 3. Send an email to the requester/user and say that your access token
+        // will be expired after 30 days of usage, for example.
+        String body = """Hey ${username},\n An access token was recently issued to your account. The token will be expired after 30 days since now.\n
+Notes that the former tokens have been deleted, therefore, you have to update it in your work to avoid unnecessary interuptions.\n
+If you didn't request it or or you run into problems, please contact us asap.\n
+\n\n
+Thanks,\n
+BioModels"""
+        String receiverEmail = user?.email
+        if (receiverEmail) {
+            // send a confirmation email to the requester/account's owner
+            final String sender = grailsApplication.config.jummp.model.curators.mailinglist
+            final String subject = "[BioModels] An access token has been issued to your account"
+            mailService.sendMail {
+                async true
+                to receiverEmail
+                from sender
+                subject subject
+                html body
+            }
+        }
     }
 }

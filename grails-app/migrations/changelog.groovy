@@ -1333,5 +1333,7 @@ databaseChangeLog = {
     include file: '20240510_addPublishFromToCmsContent.groovy'
     include file: '20240513_addPublishedFromUntilMoM.groovy'
     include file: '20240605_widenPersonInstitution.groovy'
+    include file: '20240617_addExpiredDate2AuthToken.groovy'
+    include file: '20240617_setExpiredDate4AuthToken.groovy'
 }
 
