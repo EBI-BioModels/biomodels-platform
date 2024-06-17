@@ -294,5 +294,8 @@ beans = {
         configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-    restAccessTokenService(RestAccessTokenService)
+    restAccessTokenService(RestAccessTokenService) { bean ->
+        grailsApplication = ref("grailsApplication")
+        userService = ref("userService")
+    }
 }
