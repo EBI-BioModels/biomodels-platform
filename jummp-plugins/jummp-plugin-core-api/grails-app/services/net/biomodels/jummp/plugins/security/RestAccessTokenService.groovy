@@ -31,6 +31,7 @@
 package net.biomodels.jummp.plugins.security
 
 import grails.plugin.springsecurity.rest.RestTokenCreationEvent
+import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.transaction.Transactional
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -43,7 +44,9 @@ import org.springframework.context.ApplicationListener
 class RestAccessTokenService implements ApplicationListener<RestTokenCreationEvent> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestAccessTokenService.class)
 
+    def grailsApplication
     def mailService
+    def userService
 
     @Override
     void onApplicationEvent(RestTokenCreationEvent event) {
@@ -51,8 +54,9 @@ class RestAccessTokenService implements ApplicationListener<RestTokenCreationEve
             throw new IllegalStateException("""Cannot determine credential and principal. \
 The request to issue an access token was failed.""")
         }
-        def user = event.principal
+        GrailsUser user = event.principal as GrailsUser
         String username = user?.username
+        User requester = userService.getUser(username)
         String newToken = event?.accessToken // the newly issued token
         // 1. Look for and delete all the tokens issued in the former requests
         def qStr = "select id from AuthToken as AT where AT.username = :username and token != :token"
@@ -83,7 +87,7 @@ If you didn't request it or or you run into problems, please contact us asap.\n
 \n\n
 Thanks,\n
 BioModels"""
-        String receiverEmail = user?.email
+        String receiverEmail = requester?.email
         if (receiverEmail) {
             // send a confirmation email to the requester/account's owner
             final String sender = grailsApplication.config.jummp.model.curators.mailinglist
