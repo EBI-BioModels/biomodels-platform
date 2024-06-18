@@ -92,6 +92,78 @@ $username (${requester.person.userRealName}) when issuing a new access token."""
         }
     }
 
+    Map<Long, Object> doCheckAndExpireAccessTokens() {
+        List<AuthToken> allTokens = AuthToken.getAll()
+        Map result = [:]
+        for (AuthToken token : allTokens) {
+            Map m = expireAccessToken(token)
+            result.put(token.id, m)
+        }
+
+        result.each { Long key, Map value ->
+            println "Token ${key}:"
+            value.each { def k, def v ->
+                println "\t${k}: ${v}"
+            }
+        }
+        result
+    }
+
+    Map<String, Object> expireAccessToken(final AuthToken authToken) {
+        doExpireAccessToken(authToken)
+    }
+
+    Map<String, Object> expireAccessToken(final String token, final String username) {
+        // Look up the access token using two params: token and username
+        AuthToken authToken = AuthToken.findByTokenAndUsername(token, username)
+        doExpireAccessToken(authToken)
+    }
+
+    private Map<String, Object> doExpireAccessToken(final AuthToken authToken) {
+        if (authToken) {
+            final String token = authToken.token
+            final String username = authToken.username
+            return doExpireAccessToken(token, username)
+        } else {
+            return [success: false, massage: "Cannot find any access token matching with the username ${username}"]
+        }
+    }
+
+    private Map<String, Object> doExpireAccessToken(final String accessToken, final String username) {
+        //  i) check whether its associated expiredDate (in AuthTokenManager) is later than the current date or not
+        // ii) if it is the case, delete that access token
+        // User user = userService.getUser(username)
+        AuthTokenManager account = AuthTokenManager.findByAccessToken(accessToken)
+        boolean success
+        String message
+        String endingToken = accessToken[-5..-1]
+        if (account) {
+            boolean expired = account.expiredDate < new Date()
+            if (expired) {
+                AuthToken.where {
+                    token == accessToken
+                }.deleteAll()
+            } else {
+
+            }
+
+            if (AuthToken.findByToken(accessToken) && expired) {
+                success = false
+                message = "Failed to remove/expire the token ending $endingToken of the username $username"
+            } else if (AuthToken.findByToken(accessToken) && !expired) {
+                success = false
+                message = "The token ending $endingToken of the username $username is still valid to use."
+            } else {
+                success = true
+                message = "Expired the token eding $endingToken of the username $username successfully"
+            }
+        } else {
+            success = false
+            message = "No access token details found for the token ending $endingToken and the username $username"
+        }
+        return [success: success, message: message]
+    }
+
     private void confirmByEmail(final User requester, final String username) {
         String friendlyName = requester?.person?.userRealName ?: username
         String body = """Hey ${friendlyName},<p>An access token ending <strong></strong> was recently issued to your account. \
