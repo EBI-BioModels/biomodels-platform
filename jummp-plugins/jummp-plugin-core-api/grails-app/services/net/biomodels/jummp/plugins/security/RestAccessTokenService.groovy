@@ -84,6 +84,15 @@ due to ${tokenManager.getErrors().toString()}.""")
 
         // 3. Send an email to the requester/user and say that your access token
         // will be expired after 30 days of usage, for example.
+        try {
+            confirmByEmail(requester, username)
+        } catch (Exception e) {
+            LOGGER.error("""Failed to send the confirmation to the user \
+$username (${requester.person.userRealName}) when issuing a new access token.""")
+        }
+    }
+
+    private void confirmByEmail(final User requester, final String username) {
         String friendlyName = requester?.person?.userRealName ?: username
         String body = """Hey ${friendlyName},<p>An access token ending <strong></strong> was recently issued to your account. \
 The token will be expired after 30 days since now.</p>\
