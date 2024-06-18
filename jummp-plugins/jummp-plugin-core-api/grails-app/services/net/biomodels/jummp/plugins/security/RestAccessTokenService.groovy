@@ -72,12 +72,12 @@ The request to issue an access token was failed.""")
         // 2. Set an expiry date for the newly issued token
         AuthToken authToken = AuthToken.findByTokenAndUsername(newToken, username)
         if (authToken) {
-            AuthTokenManager tokenManager = new AuthTokenManager(hitCount: 0)
-            tokenManager.authToken = authToken
+            AuthTokenManager tokenManager = new AuthTokenManager(hitCount: 0, user: requester)
+            tokenManager.accessToken = newToken
             tokenManager.createdDate = new Date()
             tokenManager.expiredDate = new Date() + 30
             if (!tokenManager.save(flush: true)) {
-                LOGGER.debug("""Cannot set an expired date for the token ([id: $authToken.id]) \
+                LOGGER.debug("""Cannot create the details for the token ([id: $authToken.id]) \
 due to ${tokenManager.getErrors().toString()}.""")
             }
         }
