@@ -84,13 +84,14 @@ due to ${tokenManager.getErrors().toString()}.""")
 
         // 3. Send an email to the requester/user and say that your access token
         // will be expired after 30 days of usage, for example.
-        String body = """Hey ${username},<p>An access token was recently issued to your account. \
+        String friendlyName = requester?.person?.userRealName ?: username
+        String body = """Hey ${friendlyName},<p>An access token ending <strong></strong> was recently issued to your account. \
 The token will be expired after 30 days since now.</p>\
 <p>Notes that the former tokens have been deleted, therefore, you have to update it in your work \
 to avoid unnecessary interuptions.</p>
 <p>If you didn't request it or you run into problems, please contact us asap.</p>
 <br/>
-Thanks,<br/>
+Thank you,<br/>
 BioModels"""
         final String RECEIVER = requester?.email
         if (RECEIVER) {
