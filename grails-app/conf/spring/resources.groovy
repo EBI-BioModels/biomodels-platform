@@ -293,9 +293,4 @@ beans = {
         visibility(com.fasterxml.jackson.annotation.PropertyAccessor.ALL, com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
         configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
-
-    restAccessTokenService(RestAccessTokenService) { bean ->
-        grailsApplication = ref("grailsApplication")
-        userService = ref("userService")
-    }
 }
