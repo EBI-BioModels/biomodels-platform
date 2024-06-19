@@ -29,8 +29,10 @@ class AccessTokenExpirationCheckerJob {
     def restAccessTokenService
 
     static triggers = {
-        // cron name: "checkAccessTokenExpiration", cronExpression: "0 0/5 * 1/1 * ? *"
-        cron name: "checkAccessTokenExpiration", cronExpression: "0 0/1 * 1/1 * ? *"
+        // every 30 minutes
+         cron name: "checkAccessTokenExpiration", cronExpression: "0 0/30 * 1/1 * ? *"
+        // every one minute
+        // cron name: "checkAccessTokenExpiration", cronExpression: "0 0/1 * 1/1 * ? *"
     }
 
     def execute() {
