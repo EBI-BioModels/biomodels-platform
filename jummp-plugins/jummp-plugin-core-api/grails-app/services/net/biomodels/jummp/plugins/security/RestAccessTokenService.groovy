@@ -85,7 +85,7 @@ due to ${tokenManager.getErrors().toString()}.""")
         // 3. Send an email to the requester/user and say that your access token
         // will be expired after 30 days of usage, for example.
         try {
-            confirmByEmail(requester, username)
+            confirmByEmail(requester, username, newToken[-8..-1])
         } catch (Exception e) {
             LOGGER.error("""Failed to send the confirmation to the user \
 $username (${requester.person.userRealName}) when issuing a new access token.""")
@@ -132,19 +132,24 @@ $username (${requester.person.userRealName}) when issuing a new access token."""
     private Map<String, Object> doExpireAccessToken(final String accessToken, final String username) {
         //  i) check whether its associated expiredDate (in AuthTokenManager) is later than the current date or not
         // ii) if it is the case, delete that access token
-        // User user = userService.getUser(username)
         AuthTokenManager account = AuthTokenManager.findByAccessToken(accessToken)
         boolean success
         String message
-        String endingToken = accessToken[-5..-1]
+        String endingToken = accessToken[-8..-1]
         if (account) {
             boolean expired = account.expiredDate < new Date()
             if (expired) {
                 AuthToken.where {
                     token == accessToken
                 }.deleteAll()
+                notifyByEmail(account)
             } else {
-
+                use(groovy.time.TimeCategory) {
+                    def duration = account.expiredDate - account.createdDate
+                    if (duration.days <= 7) {
+                        remindByEmail(account)
+                    }
+                }
             }
 
             if (AuthToken.findByToken(accessToken) && expired) {
@@ -164,26 +169,59 @@ $username (${requester.person.userRealName}) when issuing a new access token."""
         return [success: success, message: message]
     }
 
-    private void confirmByEmail(final User requester, final String username) {
+    private void notifyByEmail(final AuthTokenManager atm) {
+        String friendlyName = atm.user?.person?.userRealName ?: atm.user.username
+        String endingToken = atm.accessToken[-8..-1]
+        final String BODY = """Dear ${friendlyName},\
+<p>We are writing to inform you that your access token ending <strong>$endingToken</strong> has \
+expired at ${atm.expiredDate}.</p>\
+<p>You can create a new access token now to avoid any unexpected downtime.</p>
+<p>If you need any assistance, please contact us asap.</p>
+<br/>
+<p>Best regards,<br/>
+The BioModels Team</p>"""
+        final String SUBJECT = "[BioModels] Access Token Expiration"
+        sendEmail(atm.user, BODY, SUBJECT)
+    }
+
+    private void remindByEmail(final AuthTokenManager atm) {
+        String friendlyName = atm.user?.person?.userRealName ?: atm.user.username
+        String endingToken = atm.accessToken[-8..-1]
+        final String BODY = """Dear ${friendlyName},\
+<p>We are writing to inform you that your access token ending <strong>$endingToken</strong> is \
+about to expire at ${atm.expiredDate}.</p>\
+<p>You can create a new access token now to avoid unnecessary downtime.</p>
+<p>If you need any assistance, please contact us asap.</p>
+<br/>
+<p>Best regards,<br/>
+The BioModels Team</p>"""
+        final String SUBJECT = "[BioModels] Access Token Expiring Soon"
+        sendEmail(atm.user, BODY, SUBJECT)
+    }
+
+    private void confirmByEmail(final User requester, final String username, final String endingToken) {
         String friendlyName = requester?.person?.userRealName ?: username
-        String body = """Hey ${friendlyName},<p>An access token ending <strong></strong> was recently issued to your account. \
+        final String BODY = """Hey ${friendlyName},<p>An access token ending <strong>$endingToken</strong> was recently issued to your account. \
 The token will be expired after 30 days since now.</p>\
 <p>Notes that the former tokens have been deleted, therefore, you have to update it in your work \
 to avoid unnecessary interuptions.</p>
 <p>If you didn't request it or you run into problems, please contact us asap.</p>
 <br/>
 Thank you,<br/>
-BioModels"""
-        final String RECEIVER = requester?.email
+The BioModels Team"""
+        final String SUBJECT = "[BioModels] An access token has been issued to your account"
+        sendEmail(requester, BODY, SUBJECT)
+    }
+
+    private void sendEmail(final User RECEIVER, final String BODY, final String SUBJECT) {
+        final String TO_EMAIL = RECEIVER?.email
         if (RECEIVER) {
-            // send a confirmation email to the requester/account's owner
             final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
-            final String SUBJECT = "[BioModels] An access token has been issued to your account"
             mailService.sendMail {
-                to RECEIVER
+                to TO_EMAIL
                 from SENDER
                 subject SUBJECT
-                html body
+                html BODY
             }
         }
     }
