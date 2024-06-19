@@ -174,7 +174,7 @@ $username (${requester.person.userRealName}) when issuing a new access token."""
         String endingToken = atm.accessToken[-8..-1]
         final String BODY = """Dear ${friendlyName},\
 <p>We are writing to inform you that your access token ending <strong>$endingToken</strong> has \
-expired at ${atm.expiredDate}.</p>\
+expired at <strong>${atm.expiredDate.format('HH:mm:ss')}</strong> on <strong>${atm.expiredDate.format('dd-MM-yyyy')}</strong>.</p>\
 <p>You can create a new access token now to avoid any unexpected downtime.</p>
 <p>If you need any assistance, please contact us asap.</p>
 <br/>
