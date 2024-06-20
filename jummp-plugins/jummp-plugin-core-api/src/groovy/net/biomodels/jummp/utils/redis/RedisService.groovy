@@ -130,6 +130,18 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         }
     }
 
+    synchronized static void doRedisSAdd(final String key, final String... values) {
+        jedisPool.getResource().withCloseable { Jedis jedis ->
+            jedis.sadd(key, values)
+        }
+    }
+
+    synchronized static Set<String> doRedisSMembers(final String key) {
+        jedisPool.getResource().withCloseable { Jedis jedis ->
+            jedis.smembers(key)
+        }
+    }
+
     synchronized static void deleteAllByPattern(final String pattern) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
             deleteAllByPattern(jedis, pattern)
@@ -205,13 +217,13 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         ttl
     }
 
-    synchronized Boolean exists(final String key) {
+    synchronized static Boolean exists(final String key) {
         jedisPool.getResource().withCloseable {
             return it.exists(key)
         }
     }
 
-    synchronized Boolean hexists(final String key, final String field) {
+    synchronized static Boolean hexists(final String key, final String field) {
         jedisPool.getResource().withCloseable {
             return it.hexists(key, field)
         }
