@@ -186,7 +186,7 @@ The BioModels Team</p>"""
         String endingToken = atm.accessToken[-8..-1]
         final String BODY = """Dear ${friendlyName},\
 <p>We are writing to inform you that your access token ending <strong>$endingToken</strong> is \
-about to expire at ${atm.expiredDate}.</p>\
+about to expire at <strong>${atm.expiredDate.format('HH:mm:ss')}</strong> on <strong>${atm.expiredDate.format('dd-MM-yyyy')}</strong>.</p>\
 <p>You can create a new access token now to avoid unnecessary downtime.</p>
 <p>If you need any assistance, please contact us asap.</p>
 <br/>
