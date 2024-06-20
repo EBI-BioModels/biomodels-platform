@@ -14,10 +14,6 @@ databaseChangeLog = {
 				constraints(nullable: "false")
 			}
 
-			column(name: "auth_token_id", type: "bigint") {
-				constraints(nullable: "false")
-			}
-
 			column(name: "created_date", type: "datetime") {
 				constraints(nullable: "false")
 			}
@@ -30,16 +26,6 @@ databaseChangeLog = {
 				constraints(nullable: "false")
 			}
 		}
-	}
-
-	changeSet(author: "tnguyen (generated)", id: "1718660361274-2") {
-		createIndex(indexName: "FK_t9qlsu1rdoxhrnr6bx4qbopv7", tableName: "auth_token_manager") {
-			column(name: "auth_token_id")
-		}
-	}
-
-	changeSet(author: "tnguyen (generated)", id: "1718660361274-3") {
-		addForeignKeyConstraint(baseColumnNames: "auth_token_id", baseTableName: "auth_token_manager", constraintName: "FK_t9qlsu1rdoxhrnr6bx4qbopv7", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "auth_token", referencesUniqueColumn: "false")
 	}
 
     changeSet(author: "tnguyen (generated)", id: "1718660361274-4") {
