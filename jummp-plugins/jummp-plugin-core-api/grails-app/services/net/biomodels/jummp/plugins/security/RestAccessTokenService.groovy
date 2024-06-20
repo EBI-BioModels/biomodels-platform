@@ -33,6 +33,7 @@ package net.biomodels.jummp.plugins.security
 import grails.plugin.springsecurity.rest.RestTokenCreationEvent
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.transaction.Transactional
+import groovy.time.TimeCategory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
@@ -46,6 +47,7 @@ class RestAccessTokenService implements ApplicationListener<RestTokenCreationEve
 
     def grailsApplication
     def mailService
+    def redisService
     def userService
 
     @Override
@@ -88,7 +90,8 @@ due to ${tokenManager.getErrors().toString()}.""")
             confirmByEmail(requester, username, newToken[-8..-1])
         } catch (Exception e) {
             LOGGER.error("""Failed to send the confirmation to the user \
-$username (${requester.person.userRealName}) when issuing a new access token.""")
+$username (${requester.person.userRealName}) when issuing a new access token. The cause is ${e.message}.""")
+            e.printStackTrace()
         }
     }
 
@@ -100,13 +103,13 @@ $username (${requester.person.userRealName}) when issuing a new access token."""
             result.put(token.id, m)
         }
 
-        result.each { Long key, Map value ->
+        result.each { def key, def value ->
             println "Token ${key}:"
             value.each { def k, def v ->
                 println "\t${k}: ${v}"
             }
         }
-        result
+        result as Map<Long, Object>
     }
 
     Map<String, Object> expireAccessToken(final AuthToken authToken) {
@@ -125,7 +128,8 @@ $username (${requester.person.userRealName}) when issuing a new access token."""
             final String username = authToken.username
             return doExpireAccessToken(token, username)
         } else {
-            return [success: false, massage: "Cannot find any access token matching with the username ${username}"]
+            return [success: false,
+                    massage: "Cannot find any access token matching with the username given"] as Map<String, Object>
         }
     }
 
@@ -144,12 +148,7 @@ $username (${requester.person.userRealName}) when issuing a new access token."""
                 }.deleteAll()
                 notifyByEmail(account)
             } else {
-                use(groovy.time.TimeCategory) {
-                    def duration = account.expiredDate - account.createdDate
-                    if (duration.days <= 7) {
-                        remindByEmail(account)
-                    }
-                }
+                sendReminderEmail(account)
             }
 
             if (AuthToken.findByToken(accessToken) && expired) {
@@ -166,7 +165,7 @@ $username (${requester.person.userRealName}) when issuing a new access token."""
             success = false
             message = "No access token details found for the token ending $endingToken and the username $username"
         }
-        return [success: success, message: message]
+        return [success: success, message: message] as Map<String, Object>
     }
 
     private void notifyByEmail(final AuthTokenManager atm) {
@@ -213,6 +212,30 @@ The BioModels Team"""
         sendEmail(requester, BODY, SUBJECT)
     }
 
+    private void sendReminderEmail(final AuthTokenManager account) {
+        /**
+         * the scheduled emails relying on the number of days left (called nbDaysLeft) which the token is valid
+         * 1 < nbDaysLeft <= 7: a week left -> sending a reminder email if it hasn't been sent yet
+         * 1 = nbDaysLeft: 1 day left -> sending one more reminder email if it hasn't been sent yet
+         */
+        use(TimeCategory) {
+            def duration = account.expiredDate - account.createdDate
+            boolean sent7daysYet = isSentReminderYet(account.user.username, "sent7daysYet")
+            boolean sent1dayYet = isSentReminderYet(account.user.username, "sent1dayYet")
+            boolean shouldSendReminderEmail =
+                (duration.days <= 7 && duration.days > 1 && !sent7daysYet) ||
+                    (duration.days == 1 && !sent1dayYet)
+            if (shouldSendReminderEmail) {
+                remindByEmail(account)
+                if (duration.days <= 7 && duration.days > 1 && !sent7daysYet) {
+                    redisService.doRedisSAdd("userLog:${account.user.username}", "sent7daysYet:true")
+                } else if (duration.days == 1 && !sent1dayYet) {
+                    redisService.doRedisSAdd("userLog:${account.user.username}", "sent1dayYet:true")
+                }
+            }
+        }
+    }
+
     private void sendEmail(final User RECEIVER, final String BODY, final String SUBJECT) {
         final String TO_EMAIL = RECEIVER?.email
         if (RECEIVER) {
@@ -223,6 +246,16 @@ The BioModels Team"""
                 subject SUBJECT
                 html BODY
             }
+        }
+    }
+
+    boolean isSentReminderYet(final String username, final String key) {
+        Set<String> uLog = redisService.doRedisSMembers("userLog:$username") as Set<String>
+        String r = uLog.find { it.startsWith(key) }
+        if (r) {
+            return r.split(":")[1] as boolean
+        } else {
+            return false
         }
     }
 }
