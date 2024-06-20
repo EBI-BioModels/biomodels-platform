@@ -41,13 +41,9 @@ ${new Date().format('yyyy-MM-dd HH:mm:ss')} QuartzJob: Started checking the acce
         LOGGER.info(msgLog)
         println(msgLog)
         try {
-            println "Let run the job: check expiredDate whether sending an email to remind or delete the expired one and sending an email"
-            LOGGER.info("Let run the job")
             restAccessTokenService.doCheckAndExpireAccessTokens()
         } catch (Exception e) {
-            println "Caught the bug and do nothing ${e.getMessage()}"
-
-            LOGGER.info("Caught the bug and do nothing")
+            println "${new Date().format('yyyy-MM-dd HH:mm:ss')} QuartzJob: Caught the bug and do nothing ${e.getMessage()}"
         }
     }
 }

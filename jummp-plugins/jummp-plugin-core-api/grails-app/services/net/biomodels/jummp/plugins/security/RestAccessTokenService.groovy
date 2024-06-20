@@ -102,13 +102,11 @@ $username (${requester.person.userRealName}) when issuing a new access token. Th
             Map m = expireAccessToken(token)
             result.put(token.id, m)
         }
-
+        // the block below aimed for debugging
+        /*
         result.each { def key, def value ->
-            println "Token ${key}:"
-            value.each { def k, def v ->
-                println "\t${k}: ${v}"
-            }
-        }
+            LOGGER.info("Token ${key}: ${value}")
+        }*/
         result as Map<Long, Object>
     }
 
