@@ -16,10 +16,6 @@ databaseChangeLog = {
         }
     }
 
-    changeSet(author: "tnguyen (generated)", id: "1718698494-3") {
-        dropColumn(columnName: "auth_token_id", tableName: "auth_token_manager")
-    }
-
     changeSet(author: "tnguyen (generated)", id: "1718698959221-2") {
         createIndex(indexName: "FK_tdgpk4jctb9pc4acex6feecte", tableName: "auth_token_manager") {
             column(name: "user_id")
