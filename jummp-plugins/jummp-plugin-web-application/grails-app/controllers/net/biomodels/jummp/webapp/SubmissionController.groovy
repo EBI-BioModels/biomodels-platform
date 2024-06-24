@@ -334,7 +334,18 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         def currentUser = springSecurityService.currentUser
         working.put("submitterInfo", [userRealName: currentUser?.person?.userRealName,
                                       username: currentUser.username, email: currentUser.email])
-        submissionService.buildFromJSONFile(metadata, working)
+        try {
+            submissionService.buildFromJSONFile(metadata, working)
+        } catch (Exception e) {
+            logger.error e.getMessage()
+            return
+        } finally {
+            if (!working["repository_files"]) {
+                throw new FileNotFoundException("Cannot find the model files. The submission process has to be terminated!")
+                redirect(controller: "errors", action: "error415")
+                return
+            }
+        }
         doValidateSubmissionData(working)
         Map map = doCompleteSubmission()
 

@@ -732,11 +732,12 @@ an annotation to SBML document.""")
             try {
                 allFiles = buildModelFilesFromJSONObject(jsonObj, submissionFolder)
             } catch (Exception e) {
-                logger.error("File not found")
-                working.put("cause", "Files not found")
+                logger.error("File not found because of ${e.message}")
+                working.put("cause", "Files not found because of ${e.message}")
             } finally {
                 if (!allFiles) {
                     logger.error("Files not found. The create or update process has been terminated unexpectedly!")
+                    throw new FileNotFoundException("Cannot find the model files. The submission process has to be terminated!")
                 }
             }
             String formatName = jsonObj["format"]["name"] as String
@@ -791,12 +792,16 @@ an annotation to SBML document.""")
                 if (revisionTC.owner != userRealName && userRealName) {
                     revisionTC.owner = userRealName
                 }
-                if (modelTC.modellingApproach.name != modellingApproach && modellingApproach) {
+
+                if (modelTC.modellingApproach?.name != modellingApproach && modellingApproach) {
                     modelTC.modellingApproach = ModellingApproach.findByName(modellingApproach) ?: otherMA
                     changesMade.add("MODEL INFO: The modelling approach has been updated.")
-                } else if (!modellingApproach && modelTC.modellingApproach.name) {
-                    modellingApproach = modelTC.modellingApproach.name
+                } else if (!modellingApproach && modelTC.modellingApproach?.name) {
+                    modellingApproach = modelTC.modellingApproach?.name
+                } else {
+                    modellingApproach = otherMA.name
                 }
+
                 revisionTC.files = allFiles
                 // TODO: write a private service to check the modifications made on the files. Here, we just use hard code
                 changesMade.add("MODEL FILES: The model files have been likely updated.")
@@ -847,6 +852,10 @@ an annotation to SBML document.""")
         }
 
         private List buildModelFilesFromJSONObject(def jsonObj, String submissionFolder) {
+            if (!jsonObj) {
+                logger.error("Cannot build up the list of model files from the empty input!")
+                return null
+            }
             def main = jsonObj["files"]["main"]
             def additional = jsonObj["files"]["additional"]
             List<RFTC> allFiles = new ArrayList()
