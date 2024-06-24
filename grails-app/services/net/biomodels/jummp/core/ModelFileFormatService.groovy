@@ -282,7 +282,7 @@ class ModelFileFormatService implements InitializingBean {
     }
 
     /**
-     * Retrieves the version of the format in which @p revisiontransportcommand is encoded.
+     * Retrieves the version of the format in which {@link RTC} is encoded.
      * @param revision the RevisionTransportCommand/Revision for which to extract the format version.
      * @return The format version, or '*' if this cannot be extracted.
      */
