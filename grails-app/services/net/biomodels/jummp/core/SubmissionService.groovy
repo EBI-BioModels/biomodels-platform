@@ -727,6 +727,10 @@ an annotation to SBML document.""")
         void buildFromJSONFile(String metadata, Map working) {
             def slurper = new JsonSlurper()
             def jsonObj = slurper.parseText(metadata)
+            if (jsonObj instanceof String) {
+                // Due to the metadata is escaped double quotes
+                jsonObj = slurper.parseText(jsonObj)
+            }
             String submissionFolder = working.get("submissionFolder")
             List<RFTC> allFiles
             try {
