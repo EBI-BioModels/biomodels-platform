@@ -317,7 +317,11 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.info("Creating the submission: $metadata")
         Map<String, Object> working = [isUpdate: false, isUpdateOnExistingModel: false,
                                        isAmend: false, isMetadataSubmission: false]
-        makeSubmission(metadata, working)
+        if (metadata) {
+            makeSubmission(metadata, working)
+        } else {
+            logger.debug("Cannot create the model as requested because of the empty input.")
+        }
     }
 
     def update() {
@@ -325,7 +329,11 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.info("Updating the submission: $metadata")
         Map<String, Object> working = [isUpdate: true, isUpdateOnExistingModel: true,
                                        isAmend: false, isMetadataSubmission: false]
-        makeSubmission(metadata, working)
+        if (metadata) {
+            makeSubmission(metadata, working)
+        } else {
+            logger.debug("Cannot update the model as requested because of the empty input.")
+        }
     }
 
     private void makeSubmission(String metadata, Map working) {
@@ -334,20 +342,21 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         def currentUser = springSecurityService.currentUser
         working.put("submitterInfo", [userRealName: currentUser?.person?.userRealName,
                                       username: currentUser.username, email: currentUser.email])
+        Map map
         try {
             submissionService.buildFromJSONFile(metadata, working)
         } catch (Exception e) {
             logger.error e.getMessage()
-            return
         } finally {
             if (!working["repository_files"]) {
-                throw new FileNotFoundException("Cannot find the model files. The submission process has to be terminated!")
-                redirect(controller: "errors", action: "error415")
-                return
+                String msg = "Cannot find the model files. The submission process has to be terminated!"
+                logger.error(msg)
+                map = [message: msg, status: 400]
+            } else {
+                doValidateSubmissionData(working)
+                map = doCompleteSubmission()
             }
         }
-        doValidateSubmissionData(working)
-        Map map = doCompleteSubmission()
 
         withFormat {
             json { render map as JSON }

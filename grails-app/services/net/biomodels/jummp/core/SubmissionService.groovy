@@ -728,7 +728,8 @@ an annotation to SBML document.""")
             def slurper = new JsonSlurper()
             def jsonObj = slurper.parseText(metadata)
             if (jsonObj instanceof String) {
-                // Due to the metadata is escaped double quotes
+                // Just want to make sure the double quotes in the JSON input won't be escaped.
+                logger.info("Parsing the JSON string as the input again")
                 jsonObj = slurper.parseText(jsonObj)
             }
             String submissionFolder = working.get("submissionFolder")
@@ -852,7 +853,7 @@ an annotation to SBML document.""")
             working.put("isMetadataSubmission", jsonObj["isMetadataSubmission"] ?: modelTC.isMetadataSubmission ?: false)
             working.put("isAmend", jsonObj["isAmend"] ?: false)
 
-            logger.info "Done!"
+            logger.info("Built the submission data completely from the JSON input.")
         }
 
         private List buildModelFilesFromJSONObject(def jsonObj, String submissionFolder) {
