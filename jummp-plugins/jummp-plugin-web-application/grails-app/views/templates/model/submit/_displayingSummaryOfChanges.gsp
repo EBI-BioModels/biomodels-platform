@@ -107,6 +107,10 @@
         <div id="is-metadata-submission">
             <g:checkBox name="isMetadataSubmission" id="chk-is-metadata-submission" value="${isMetadataSubmission}"
                         title="Tick the check box if this is a metadata submission"/>
+            <span>&nbsp;<strong>
+            (Note</strong>: Only check this box if you are making a metadata-only submission. Read more about
+            <a href="${serverURL}/faq#how-to-submit-only-metadata" target="_blank">How to make metadata-oly submissions?</a>)
+        </span>
         </div>
     </div>
 </div>

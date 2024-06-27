@@ -422,7 +422,7 @@
             <li><a href="#reviewer-access">How can reviewers access unpublished models?</a></li>
             <li><a href="#supported-formats">What are the supported model encoding formats?</a></li>
             <li><a href="#how-to-submit-revised-version">How to submit a revised version of a model?</a></li>
-            <li><a href="#how-to-submit-only-metadata">How to submit only metadata?</a></li>
+            <li><a href="#how-to-submit-only-metadata">How to make metadata-only submissions?</a></li>
             <li><a
                 href="#cellml-conversion">Why does my SBML model contain no species or reactions after a conversion from CellML?</a>
             </li>
@@ -680,24 +680,26 @@
             </dd>
         </dl>
 
-        <h3 id="how-to-submit-only-metadata">How to submit only metadata?</h3>
+        <h3 id="how-to-submit-only-metadata">How to make metadata-only submissions?</h3>
         <p>
-        We are supporting our users to submit only metadata at the best convenience. To meet ones of the minimal
+        We are supporting our users to deposit metadata-only submissions at the best convenience. To meet ones of the minimal
         submission constraints, users have to respect the following requirements:</p>
         <ol>
-        <li>At Step 1: Upload one CSV file as the main model file. This file
+            <li>At <strong>Step 1</strong>: Upload one CSV file as the <span style="background-color: deeppink">main model file</span>. This file
         contains all annotations which are used to describe the model in process. The structure of this CSV file
         is like the
-    <a href="https://www.ebi.ac.uk/biomodels/services/download/get-files/MODEL2310150001/2/PD1_melanoma_LR.csv"
-       target="_blank">one published here</a>. Certainly, you can upload other files
+    <a href="https://www.ebi.ac.uk/biomodels/services/download/get-files/MODEL2405080001/2/eos3804%20-%20BioModels%20Metadata%20file.csv"
+       target="_blank">one published here</a>. Certainly, you can upload other files.
         </li>
-        <li>At Step 2: Select <strong>BioModels Metadata Submission (BMS) *</strong> from the dropdown list of the pre-defined model formats.
+        <li>At <strong>Step 4</strong> (e.g., where all user's input is summarised): Check the box
+            <strong>Is this a metadata submission?</strong> to mark the current submission as a
+            <span style="background-color: deeppink">metadata-only submission</span>.
         If you fail this step, the model won't be indexed and is less searchable. </li>
         </ol>
-        <p>If missing either of these two requirements, the submission is likely failed.</p>
+        <p>If missing either of these two requirements, your submission is likely improper.</p>
         <p>We also strongly request users to provide more
         information about the model by adding a meaningful text in the model submission description box. The
-    information can be left in here such as how the model is encoded, what is the link of the original model...</p>
+        information can be left here such as <em>how the model is encoded</em>, <em>what is the link of the original model</em>.</p>
 
         <h3 id="cellml-conversion">Why does my SBML model contain no species or reactions after a conversion from CellML?</h3>
 
