@@ -1,14 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.ModelTransportCommand" %>
-<%
-    /*ModelTransportCommand model = workingMemory.get("ModelTC")
-    RevisionTransportCommand revision = workingMemory.get("RevisionTC")*/
-%>
-<style type="text/css">
+
+<style>
     .submission-prop {
         font-weight: bold;
         color: #0e0e0e;
+    }
+    .spacing-row {
+        padding: 10px 0 10px 0;
+    }
+    .even-row {
+        background-color: lightgrey;
+    }
+    .odd-row {
+        background-color: lightcyan;
     }
 </style>
 <div class="row">
@@ -20,7 +26,7 @@
         <h2 class="steps">Step 4 - 5</h2>
     </div>
 </div>
-<div class="row">
+<div class="row spacing-row odd-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             <g:message code="submission.summary.nameLabel"/></span>
@@ -29,7 +35,7 @@
         <div id="detectedModelName"></div>
     </div>
 </div>
-<div class="row">
+<div class="row spacing-row even-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             <jummp:displayModelDescriptionLabel>
@@ -41,7 +47,7 @@
         <div id="detectedModelDescription"></div>
     </div>
 </div>
-<div class="row">
+<div class="row spacing-row odd-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             Model format
@@ -52,7 +58,7 @@
         <div id="detectedModelFormatReadme"></div>
     </div>
 </div>
-<div class="row">
+<div class="row spacing-row even-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             Modelling approach
@@ -63,7 +69,7 @@
         <div id="detectedModellingOtherInfo"></div>
     </div>
 </div>
-<div class="row">
+<div class="row spacing-row odd-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             Model file
@@ -74,7 +80,7 @@
         <div id="detectedModelFileDescription"></div>
     </div>
 </div>
-<div class="row">
+<div class="row spacing-row even-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             Additional files
@@ -86,7 +92,7 @@
         </div>
     </div>
 </div>
-<div class="row">
+<div class="row spacing-row odd-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             Publication
@@ -97,7 +103,7 @@
         </div>
     </div>
 </div>
-<div class="row">
+<div class="row spacing-row even-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             Is this a metadata submission?
@@ -107,16 +113,16 @@
         <div id="is-metadata-submission">
             <g:checkBox name="isMetadataSubmission" id="chk-is-metadata-submission" value="${isMetadataSubmission}"
                         title="Tick the check box if this is a metadata submission"/>
-            <span>&nbsp;<strong>
-            (Note</strong>: Only check this box if you are making a metadata-only submission. Read more about
-            <a href="${serverURL}/faq#how-to-submit-only-metadata" target="_blank">How to make metadata-oly submissions?</a>)
+            <span>&nbsp;
+            (<strong>Note</strong>: Only check this box if you are making a metadata-only submission. Read more about
+            <a href="${serverURL}/faq#how-to-submit-only-metadata" target="_blank">How to make metadata-only submissions?</a>)
         </span>
         </div>
     </div>
 </div>
 <g:if test="${isUpdate}">
 
-<div class="row">
+<div class="row spacing-row odd-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             Do you want to amend the revision?
@@ -136,7 +142,7 @@
     </div>
 </div>
 
-<div class="row">
+<div class="row spacing-row even-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             <g:message code="submission.summary.revisionLabel"/>
