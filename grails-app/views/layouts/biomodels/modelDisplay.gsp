@@ -932,7 +932,8 @@
                                                       model="${revision.modelIdentifier()}"
                                                       modelName="${revision.name}"
                                                       canSeeCurationTab="${canSeeCurationTab}"
-                                                      hasCuratorRole="${hasCuratorRole}"/>
+                                                      hasCuratorRole="${hasCuratorRole}"
+                                                      hasAdminRole="${hasAdminRole}"/>
                     </g:if>
                 </div>
             </div>

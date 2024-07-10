@@ -40,7 +40,7 @@ import java.text.SimpleDateFormat
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@Secured(['ROLE_CURATOR'])
+@Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class CurationNotesController {
     def curationNotesService
 
@@ -89,13 +89,11 @@ class CurationNotesController {
         command
     }
 
-    @Secured(['IS_AUTHENTICATED_FULLY'])
     def show() {
         def data = curationNotesService.loadOrInitialise(params)
         render(view: "curationNotesEditor", model: data)
     }
 
-    @Secured(['IS_AUTHENTICATED_FULLY'])
     def doAddOrUpdate() {
         Map result = [:]
         def curationNotes = params.curationNotes.decodeHTML()

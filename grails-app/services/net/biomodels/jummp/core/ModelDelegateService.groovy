@@ -704,8 +704,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             // only show the Curation tab if there has been the curation results and the model is public
             return isPublicModel
         } else  {
-            // otherwise, display it to curators or the model's submitter
-            return hasCuratorRole || isOwnedBy(revision, userService.getCurrentUser())
+            // otherwise, display it to curators
+            return hasCuratorRole
         }
     }
 
