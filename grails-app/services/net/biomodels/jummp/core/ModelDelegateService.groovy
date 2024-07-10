@@ -286,7 +286,10 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     Map getRevisionsState(final String modelId) {
         Model model = modelService.getModel(modelId)
+        getRevisionsState(model)
+    }
 
+    Map getRevisionsState(final Model model) {
         // for example: "aaa/2023-09-08T13-04-45-193_MODEL2309080001/"
         String vcsId = model.vcsIdentifier
         vcsId = vcsId?.take(3)
@@ -301,7 +304,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             }
         }
 
-        ["vcsId": vcsId, "publishedRevs": publishedRevs, "privateRevs": privateRevs, "submissionId": model.submissionId]
+        ["vcsId": vcsId, "publishedRevs": publishedRevs, 
+         "privateRevs": privateRevs, "submissionId": model.submissionId]
     }
 
     ModelTC uploadModel(List<File> modelFiles, ModelTC meta) throws

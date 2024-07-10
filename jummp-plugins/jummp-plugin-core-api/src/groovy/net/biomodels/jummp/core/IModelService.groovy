@@ -40,6 +40,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import org.springframework.security.access.AccessDeniedException as ADEx
 
@@ -396,6 +397,8 @@ interface IModelService {
     String getVcsIdentifier(final String perennialIdentifier)
 
     Map getRevisionsState(final String modelId)
+
+    Map getRevisionsState(final Model model)
 
     boolean haveMultiplePerennialIdentifierTypes()
 
