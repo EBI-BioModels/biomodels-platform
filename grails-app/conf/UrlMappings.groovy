@@ -133,6 +133,20 @@ class UrlMappings {
         )
 
         "/api/guest/model/about"(controller:'model', action:'about')
+        "/api/model/$id(.$revisionId)?" {
+            controller = "model"
+            action = 'show'
+            constraints {
+                id(nullable: false, validator: { modelId ->
+                    def registryFactory = grailsApplication.mainContext.idGeneratorRegistryFactoryBean
+                    def registry = registryFactory.object
+                    Pattern modelIdRegexes = registry.getRegexForAllModelIdentifiers()
+
+                    modelIdRegexes.matcher(modelId).matches()
+                })
+                revisionId(matches: /\d+/)
+            }
+        }
         "/api/model/create"(controller:'model', action:'create')
         "/api/model/revisionsState/$id?(.$format)?"(controller:'model', action:'revisionsState')
         "/api/post/create"(controller:'post', action:'createNewPost')
