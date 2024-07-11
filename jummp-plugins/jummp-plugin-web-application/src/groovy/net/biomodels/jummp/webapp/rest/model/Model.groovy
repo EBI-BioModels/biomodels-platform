@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -23,10 +23,12 @@ package net.biomodels.jummp.webapp.rest.model
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import grails.util.Holders
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.user.PersonTransportCommand
+import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 
 class Model {
     String name
@@ -40,6 +42,10 @@ class Model {
     String submissionId
     String publicationId
     ModellingApproach modellingApproach
+    String curationStatus
+    List<String> modelTags
+    Map contributors
+    String vcsIdentifier
 
     Model(RevisionTransportCommand revision, boolean isPrivate) {
         ModelTransportCommand model = revision.model
@@ -65,6 +71,15 @@ class Model {
         if (model.modellingApproach) {
             modellingApproach = new ModellingApproach(model.modellingApproach)
         }
+        curationStatus = revision.curationState.toString() //revision.curationState.name()
+        def mdds = Holders.grailsApplication.mainContext.getBean("metadataDelegateService")
+        Set<TagTransportCommand> tags = mdds.findTagsByModel(revision.model)
+        List<String> tagList = tags.collect { it.name }
+        modelTags = tagList
+
+        def mds = Holders.grailsApplication.mainContext.getBean("modelDelegateService")
+        contributors = mds.convertContributors(revision.contributors)
+        vcsIdentifier = mds.getRevisionsState(revision.model.submissionId)["vcsId"]
     }
 
     String outputModelAsString(String contentType) {
