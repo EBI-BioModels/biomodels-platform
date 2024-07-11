@@ -30,7 +30,7 @@ import groovy.xml.MarkupBuilder
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.constants.BioModels
 
-@Secured(["IS_AUTHENTICATED_FULLY"])
+@Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
 class JummpController extends CommonController {
     def springSecurityService
     def userService
@@ -45,7 +45,6 @@ class JummpController extends CommonController {
 
     //def beforeInterceptor = [action: this.&detectTheme, except: AUDIT_EXCEPTIONS]
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def support() {
         Map model = COMMON_PROPERTIES
         model.putAll([
@@ -55,7 +54,6 @@ class JummpController extends CommonController {
         model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def faq() {
         Map model = COMMON_PROPERTIES
         String titlePage = messageSource.getMessage("jummp.faq.${theme}.title", null, Locale.ENGLISH)
@@ -64,14 +62,12 @@ class JummpController extends CommonController {
         model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def courses() {
         Map model = COMMON_PROPERTIES
         model.putAll(["titleCode": "jummp.courses.${theme}.title"])
         model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def aboutus() {
         Map model = COMMON_PROPERTIES
         model.putAll([messageCode: "jummp.aboutus.${theme}.message",
@@ -79,7 +75,6 @@ class JummpController extends CommonController {
         model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def contactus() {
         Map model = COMMON_PROPERTIES
         model.putAll([messageCode: "jummp.contactus.${theme}.message",
@@ -87,7 +82,6 @@ class JummpController extends CommonController {
         model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def termsOfUse() {
         Map model = COMMON_PROPERTIES
         model.putAll([messageCode: "jummp.termsOfUse.${theme}.message",
@@ -95,49 +89,42 @@ class JummpController extends CommonController {
         model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def howToCiteBioModelsDatabase() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.howToCite.${theme}.title")
         render(view: "howToCite", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def acknowledgements() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.acknowledgements.${theme}.title")
         render(view: "acknowledgements", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def jobs() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.jobs.${theme}.title")
         model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def curators() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.curators.${theme}.title")
         render(view: "list-curators", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def curatorZone() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.curatorZone.${theme}.title")
         render(view: "curatorZone", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def developerZone() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.developerZone.${theme}.title")
         render(view: "developerZone", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def feedback() {
         if (params.star) {
             byte star = params.byte("star")
@@ -211,7 +198,6 @@ class JummpController extends CommonController {
      * A Sitemap controller that automatically generates sitemap.xml for a grails based website.
      *
      */
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def sitemap() {
         StringWriter writer = new StringWriter()
         MarkupBuilder mkb = new MarkupBuilder(writer)

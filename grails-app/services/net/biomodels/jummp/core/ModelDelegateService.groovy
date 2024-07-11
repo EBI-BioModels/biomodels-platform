@@ -304,7 +304,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             }
         }
 
-        ["vcsId": vcsId, "publishedRevs": publishedRevs, 
+        ["vcsId": vcsId, "publishedRevs": publishedRevs,
          "privateRevs": privateRevs, "submissionId": model.submissionId]
     }
 
@@ -685,6 +685,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return createAuditItem(audit)
     }
 
+    @NotTransactional
     List<RFTC> sortModelFilesByName(final List<RFTC> repoFiles) {
         List<RFTC> sortedList = repoFiles.sort { it.filename }
         return sortedList
@@ -713,6 +714,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         }
     }
 
+    @NotTransactional
     JSONArray buildJsonArray(final String deployTarget, final String parentDir, final String modelId,
                              final Integer revisionNumber, final List<RFTC> files, final String modelExportsDir,
                              final String modelCacheDir, final String state) {
@@ -743,11 +745,13 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return array
     }
 
+    @NotTransactional
     boolean retrieveGalaxyLink(String modelId) {
         String value = redisService.doRedisHGet(modelId, "galaxyLink")
         value == "Yes"
     }
 
+    @NotTransactional
     String cacheRosetteLink(final String modelId) {
         Map map = redisService.doRedisHGetAll(modelId)
         String hasRosetteLink = String.valueOf(checkRosetteLink(modelId))
@@ -757,6 +761,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         hasRosetteLink
     }
 
+    @NotTransactional
     boolean checkRosetteLink(final String modelId) {
         LOGGER.info("Fetching OmicsDI data to check rosette link for $modelId...")
         final EP_PREFIX = "https://www.omicsdi.org/ws/dataset/get?database=biomodels&accession="
@@ -765,6 +770,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         status == 200
     }
 
+    @NotTransactional
     boolean retrieveRosetteLink(final String modelId) {
         String value = redisService.doRedisHGet(modelId, "hasRosetteLink")
         if (!value) {
@@ -773,6 +779,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         value == "Yes"
     }
 
+    @NotTransactional
     boolean doAddOrRemoveGalaxyLink(String modelId, String value) {
         LOGGER.info("Adding or removing GALAXY link $modelId -- $value")
         redisService.doRedisHSet(modelId, ["galaxyLink": value] as Map)
