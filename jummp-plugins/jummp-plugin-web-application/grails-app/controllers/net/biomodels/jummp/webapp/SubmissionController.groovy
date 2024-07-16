@@ -348,7 +348,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         } catch (Exception e) {
             logger.error e.getMessage()
         } finally {
-            if (!working["repository_files"]) {
+            def files = working["repository_files"] as List
+            if (files.isEmpty()) {
                 String msg = "Cannot find the model files. The submission process has to be terminated!"
                 logger.error(msg)
                 map = [message: msg, status: 400]
