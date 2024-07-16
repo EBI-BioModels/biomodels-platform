@@ -317,7 +317,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         String metadata = request.reader.text
         logger.info("Creating the submission: $metadata")
         Map<String, Object> working = [isUpdate: false, isUpdateOnExistingModel: false,
-                                       isAmend: false, isMetadataSubmission: false]
+                                       isAmend: false, isMetadataSubmission: false, accessType: "create"]
         if (metadata) {
             makeSubmission(metadata, working)
         } else {
@@ -331,7 +331,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         String metadata = request.reader.text
         logger.info("Updating the submission: $metadata")
         Map<String, Object> working = [isUpdate: true, isUpdateOnExistingModel: true,
-                                       isAmend: false, isMetadataSubmission: false]
+                                       isAmend: false, isMetadataSubmission: false, accessType: "update"]
         if (metadata) {
             makeSubmission(metadata, working)
         } else {
