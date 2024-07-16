@@ -26,7 +26,7 @@ class Format {
     String name
     String version
 
-    public Format(ModelFormatTransportCommand f) {
+    Format(ModelFormatTransportCommand f) {
         name = f.name
         version = f.formatVersion
     }

@@ -247,7 +247,6 @@ and publishedFrom is not null and publishedTo is not null order by createdOn des
         for (def entry : announcements) {
             content += entry.content
         }
-        LOGGER.info(content)
         content
     }
     /**

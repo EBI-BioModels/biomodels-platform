@@ -141,7 +141,8 @@ class SubmissionController extends CommonController implements InitializingBean 
             String errorTicketId = working.get("submissionFolder")
             message = groovyPageRenderer.render(template: "/templates/errorTemplate",
                 plugin: "jummp-plugin-web-application", model: ["errorTicketId": errorTicketId])
-            return ["ticketID": errorTicketId, "status": status, "message": message]
+            String cause = working.get("cause")
+            return ["ticketID": errorTicketId, "status": status, "message": message, "cause": cause]
         }
         return [:]
     }
@@ -320,7 +321,9 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         if (metadata) {
             makeSubmission(metadata, working)
         } else {
-            logger.debug("Cannot create the model as requested because of the empty input.")
+            String msg = "Cannot create the model as requested because of the empty input."
+            logger.debug(msg)
+            render([message: msg, status: 400] as JSON)
         }
     }
 
@@ -332,7 +335,9 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         if (metadata) {
             makeSubmission(metadata, working)
         } else {
-            logger.debug("Cannot update the model as requested because of the empty input.")
+            String msg = "Cannot update the model as requested because of the empty input."
+            logger.debug(msg)
+            render([message: msg, status: 400] as JSON)
         }
     }
 
