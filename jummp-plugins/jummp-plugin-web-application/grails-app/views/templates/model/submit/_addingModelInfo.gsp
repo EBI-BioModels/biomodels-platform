@@ -144,10 +144,12 @@
                     changesMade = response["changesMade"];
                     errorMessages = [];
                     let isNameValid = true;
-                    if ($('input[id="name"]').val().length === 0) {
-                        errorMessages.push("The model name text box is empty. Please enter a meaningful name.")
+                    let modelName = $('input[id="name"]').val();
+                    modelName = modelName.trim(); // to prevent from the hacking: a string of spaces
+                    if (modelName.length === 0) {
+                        errorMessages.push("The model name text box is empty or cannot be a string of spaces. Please enter a meaningful name.")
                         isNameValid = false;
-                    } else if ($('input[id="name"]').val().length < 5 || $('input[id="name"]').val().length > 255) {
+                    } else if (modelName.length < 5 || modelName.length > 255) {
                         errorMessages.push("Length of the model name is greater 4 and less 256 characters.")
                         isNameValid = false;
                     }
