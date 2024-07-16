@@ -313,11 +313,15 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         render([status: "OK"] as JSON)
     }
 
+    /**
+     * This method is designed to serve the create process called via REST API
+     * @return rendering the result map to an JSON object
+     */
     def create() {
         String metadata = request.reader.text
         logger.info("Creating the submission: $metadata")
         Map<String, Object> working = [isUpdate: false, isUpdateOnExistingModel: false,
-                                       isAmend: false, isMetadataSubmission: false, accessType: "create"]
+           isAmend: false, isMetadataSubmission: false, accessType: "create", accessFormat: "json"]
         if (metadata) {
             makeSubmission(metadata, working)
         } else {
@@ -327,11 +331,15 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         }
     }
 
+    /**
+     * This method is designed to serve the update process called via REST API
+     * @return rendering the result map to an JSON object
+     */
     def update() {
         String metadata = request.reader.text
         logger.info("Updating the submission: $metadata")
         Map<String, Object> working = [isUpdate: true, isUpdateOnExistingModel: true,
-                                       isAmend: false, isMetadataSubmission: false, accessType: "update"]
+           isAmend: false, isMetadataSubmission: false, accessType: "update", accessFormat: "json"]
         if (metadata) {
             makeSubmission(metadata, working)
         } else {

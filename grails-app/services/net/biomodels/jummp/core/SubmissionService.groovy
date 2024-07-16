@@ -971,13 +971,13 @@ an annotation to SBML document.""")
         HashSet<String> processPostSubmission(Map<String, Object> working) {
             HashSet<String> returned = new HashSet<String>()
             // update the model history
-            String modelId = working.get("modelId")
+            MTC model = working.get("ModelTC")
             String username = userService.getUsername()
             String accessType = working.get("accessType")
-            String formatType = "html"
+            String accessFormat = working.get("accessFormat") ?: "html"
             def changesMade = working.get("changesMade")
             changesMade = changesMade.join(", ")
-            int result = modelDelegateService.updateHistory(modelId, username, accessType, formatType, changesMade)
+            int result = modelDelegateService.updateHistory(model, username, accessType, accessFormat, changesMade)
             returned.add(result.toString())
             returned
         }
