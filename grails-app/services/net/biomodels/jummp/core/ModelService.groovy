@@ -2546,27 +2546,30 @@ WHERE
 
     private void addContributors(final Revision revision, final Map working) {
         final String username = revision.owner.username
+        String roleName = working["contributorRole"] as String
+        List CONTRIBUTOR_ROLES = CR.all.collect { it.name }
+        if (!CONTRIBUTOR_ROLES.contains(roleName)) {
+            logger.debug("""Cannot find the right contributor role for the role name `${roleName}` provided \
+during the submission or update process. Hence, we have added `$username` as a modeller by default.""")
+        }
         String msg
         aclInsertionLock.lock()
         try {
-            CD details = CD.findByContributorAndRevision(revision.owner, revision, [locked: true])
+            CR newRole = CR.findByName(roleName)
+            CD details = CD.findByContributorAndRevisionAndRole(revision.owner, revision, role, [locked: true])
             if (!details) {
                 // TODO: create an UI to allow users to choose the contribution role during the submission flow
-                String role = "Modeller"
-                CR newRole = CR.findByName(role)
                 details = new CD(contributor: revision.owner, revision: revision, role: newRole)
                 if (details.save(flush: true)) {
-                    msg = "Added $username as a $role for the revision ${revision.id} successfully."
+                    msg = "Added $username as a $roleName for the revision ${revision.id} successfully."
                 } else {
-                    msg = "Failed to add $username as a $role for the revision ${revision.id}."
+                    msg = "Failed to add $username as a $roleName for the revision ${revision.id}."
                 }
                 logger.debug(msg)
-                println(msg)
             }
         } catch (Exception e) {
             msg = "Failed to add $username as a contributor for the revision ${revision.id} due to ${e.toString()}."
             logger.error(msg)
-            println(msg)
         } finally {
             aclInsertionLock.unlock()
         }
