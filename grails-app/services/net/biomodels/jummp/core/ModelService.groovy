@@ -806,17 +806,19 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Revision addRevision(final List<RFTC> repoFiles,
                          final List<RFTC> deleteFiles,
-                         final RevisionTransportCommand rev) throws ModelException {
-        Revision revision
+                         final RevisionTransportCommand rev,
+                         final Map working = null) throws ModelException {
+        Revision revision = null
         def txDefinition = [
             // this tx will use a different session than the current one
             propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW
         ]
         Revision.withTransaction(txDefinition) {
             // the returned revision is detached from the Hibernate session
+
             revision = doPersistRevision(repoFiles, deleteFiles, rev)
         }
-        Revision attachedRevision = doPostPersistRevision(revision)
+        Revision attachedRevision = doPostPersistRevision(revision, working)
         return attachedRevision ?: revision
     }
 
@@ -826,7 +828,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Revision amendRevision(final List<RFTC> repoFiles,
                          final List<RFTC> deleteFiles,
-                         final RevisionTransportCommand rev) throws ModelException {
+                         final RevisionTransportCommand rev, final Map working = null) throws ModelException {
         logger.debug("Amending the revision: ${rev.dump()}")
         Revision revision = null
         def txDefinition = [
@@ -837,7 +839,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             // the returned revision is detached from the Hibernate session
             revision = doAmendRevision(repoFiles, deleteFiles, rev)
         }
-        Revision attachedRevision = doPostPersistRevision(revision)
+        Revision attachedRevision = doPostPersistRevision(revision, working)
         return attachedRevision ?: revision
     }
     /**
@@ -987,7 +989,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Profiled(tag="modelService.uploadValidatedModel")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Model uploadValidatedModel(final List<RFTC> repoFiles,
-            RevisionTransportCommand rev) throws ModelException {
+            RevisionTransportCommand rev, final Map working) throws ModelException {
         Model model
         // this tx will use a different session than the current one
         def txDefinition = [propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW]
@@ -1001,7 +1003,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             // turn them into transport commands in order to avoid LazyInitialisationExceptions
             def attachedModel = Model.get(model.id)
             Revision r = attachedModel.revisions.first()
-            doPostPersistRevision(r)
+            doPostPersistRevision(r, working)
             return attachedModel
         }
         model
@@ -2542,14 +2544,14 @@ WHERE
 	    return results
     }
 
-    private void addContributors(final Revision revision) {
+    private void addContributors(final Revision revision, final Map working) {
         final String username = revision.owner.username
-        String msg = ""
+        String msg
         aclInsertionLock.lock()
         try {
             CD details = CD.findByContributorAndRevision(revision.owner, revision, [locked: true])
             if (!details) {
-                // TODO: create an UI to allow users to choose the contribution role during the submisision flow
+                // TODO: create an UI to allow users to choose the contribution role during the submission flow
                 String role = "Modeller"
                 CR newRole = CR.findByName(role)
                 details = new CD(contributor: revision.owner, revision: revision, role: newRole)
@@ -2667,7 +2669,7 @@ an annotation to SBML document.""")
         stopWatch.stop()
     }
 
-    private Revision doPostPersistRevision(final Revision revision) {
+    private Revision doPostPersistRevision(final Revision revision, final Map working = null) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doPostPersistRevision")
         if (revision) {
             /*
@@ -2694,7 +2696,7 @@ an annotation to SBML document.""")
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             try {
                 // TODO: catch exceptions of each post-submission processes to report to the submitter and BioModels cura
-                addContributors(attachedRevision)
+                addContributors(attachedRevision, working)
                 indexModelRevision(cmd)
                 //convertModelToOtherFormats(cmd)
                 shareRevision2FellowCurators(cmd)
