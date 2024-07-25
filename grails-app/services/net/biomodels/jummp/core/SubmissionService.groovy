@@ -1303,9 +1303,9 @@ an annotation to SBML document.""")
             addPublicationAsAnnotation(workingMemory)
 
             if (workingMemory.get("isAmend")) {
-                modelService.amendRevision(repoFiles, deleteFiles, revision)
+                modelService.amendRevision(repoFiles, deleteFiles, revision, workingMemory)
             } else {
-                modelService.addRevision(repoFiles, deleteFiles, revision)
+                modelService.addRevision(repoFiles, deleteFiles, revision, workingMemory)
             }
             return changes
         }

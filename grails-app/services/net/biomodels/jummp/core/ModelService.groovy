@@ -827,8 +827,9 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Profiled(tag="modelService.amendRevision")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Revision amendRevision(final List<RFTC> repoFiles,
-                         final List<RFTC> deleteFiles,
-                         final RevisionTransportCommand rev, final Map working = null) throws ModelException {
+                           final List<RFTC> deleteFiles,
+                           final RevisionTransportCommand rev,
+                           final Map working = null) throws ModelException {
         logger.debug("Amending the revision: ${rev.dump()}")
         Revision revision = null
         def txDefinition = [
