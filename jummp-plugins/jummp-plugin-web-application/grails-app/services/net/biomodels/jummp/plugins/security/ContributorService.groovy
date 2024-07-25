@@ -207,13 +207,20 @@ class ContributorService implements InitializingBean {
         result
     }
 
+    CD findOrSaveContributionDetails(final Revision revision, final String roleName) {
+        CR role = CR.findByName(roleName)
+        findOrSaveContributionDetails(revision, role)
+    }
+
     CD findOrSaveContributionDetails(final Revision revision, final CR role) {
         CD cd = CD.findOrSaveWhere(contributor: revision.owner, revision: revision, role: role)
         if (cd.save(flush: true)) {
-            LOGGER.debug("Successfully created the contribution details: ${toStringCD(cd)}")
+            LOGGER.debug("""Successfully created the contribution details: \
+${toStringCD(cd)}. Added ${revision.owner.username} as a ${role.name} for the revision ${revision.id} successfully.""")
         } else {
             cd = null
-            LOGGER.error("Could not create the contribution details: ${toStringCD(cd)}")
+            LOGGER.error("""Could not create the contribution details: ${toStringCD(cd)}. \
+Failed to add ${revision.owner.username} as a ${role.name} for the revision ${revision.id}.""")
         }
         return cd
     }

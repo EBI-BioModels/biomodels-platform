@@ -133,6 +133,7 @@ class ModelService implements InitializingBean {
     def modelConversionService
     def repositoryFileService
     def redisService
+    def contributorService
 
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
@@ -2552,24 +2553,25 @@ WHERE
         if (!CONTRIBUTOR_ROLES.contains(roleName)) {
             logger.debug("""Cannot find the right contributor role for the role name `${roleName}` provided \
 during the submission or update process. Hence, we have added `$username` as a modeller by default.""")
+            roleName = "Modeller"
         }
         String msg
         aclInsertionLock.lock()
         try {
-            CR newRole = CR.findByName(roleName)
-            CD details = CD.findByContributorAndRevisionAndRole(revision.owner, revision, role, [locked: true])
-            if (!details) {
-                // TODO: create an UI to allow users to choose the contribution role during the submission flow
-                details = new CD(contributor: revision.owner, revision: revision, role: newRole)
-                if (details.save(flush: true)) {
-                    msg = "Added $username as a $roleName for the revision ${revision.id} successfully."
-                } else {
-                    msg = "Failed to add $username as a $roleName for the revision ${revision.id}."
+            boolean isUpdate = working["isUpdate"] as boolean
+            if (isUpdate) {
+                List<CD> cds = CD.findAllByContributorAndRevision(revision.owner, revision, [locked: true])
+                cds.each { CD cd ->
+                    CD.where {
+                        revision == cd.revision && contributor == cd.contributor
+                    }.deleteAll()
                 }
-                logger.debug(msg)
+            }
+            CD.withTransaction {
+                contributorService.findOrSaveContributionDetails(revision, roleName)
             }
         } catch (Exception e) {
-            msg = "Failed to add $username as a contributor for the revision ${revision.id} due to ${e.toString()}."
+            msg = "Failed to add $username as a(n) ${roleName} for the revision ${revision.id} due to ${e.toString()}."
             logger.error(msg)
         } finally {
             aclInsertionLock.unlock()

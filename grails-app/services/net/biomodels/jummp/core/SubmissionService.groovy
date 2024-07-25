@@ -852,6 +852,8 @@ an annotation to SBML document.""")
             working.put("shouldCreateNewRevision", true)
             working.put("isMetadataSubmission", jsonObj["isMetadataSubmission"] ?: modelTC.isMetadataSubmission ?: false)
             working.put("isAmend", jsonObj["isAmend"] ?: false)
+            // If the contributor role isn't provided, adding "Modeller" as the default role
+            working.put("contributorRole", jsonObj["contributorRole"] ?: "Modeller")
 
             logger.info("Built the submission data completely from the JSON input.")
         }
