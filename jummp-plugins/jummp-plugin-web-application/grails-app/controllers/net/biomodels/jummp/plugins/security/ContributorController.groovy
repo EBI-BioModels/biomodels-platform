@@ -89,6 +89,16 @@ class ContributorController extends CommonController {
         render(result as JSON)
     }
 
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def list() {
+        List<CR> roleList = CR.all
+        Map mapRoles = [:]
+        roleList.each {
+            mapRoles.put(it.name, it.description)
+        }
+        render(mapRoles as JSON)
+    }
+
     def manage() {
         String id = params.get("id").decodeHTML()
         String username = userService?.username
