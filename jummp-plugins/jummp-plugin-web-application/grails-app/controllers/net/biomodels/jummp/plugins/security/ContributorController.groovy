@@ -90,7 +90,7 @@ class ContributorController extends CommonController {
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-    def list() {
+    def role() {
         List<CR> roleList = CR.all
         Map mapRoles = [:]
         roleList.each {
