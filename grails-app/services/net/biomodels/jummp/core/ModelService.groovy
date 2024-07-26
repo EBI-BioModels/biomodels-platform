@@ -991,7 +991,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Profiled(tag="modelService.uploadValidatedModel")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Model uploadValidatedModel(final List<RFTC> repoFiles,
-            RevisionTransportCommand rev, final Map working) throws ModelException {
+            RevisionTransportCommand rev, final Map working = null) throws ModelException {
         Model model
         // this tx will use a different session than the current one
         def txDefinition = [propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW]

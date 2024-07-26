@@ -1099,7 +1099,7 @@ an annotation to SBML document.""")
             addPublicationAsAnnotation(workingMemory)
 
             // store files
-            Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
+            Model newModel = modelService.uploadValidatedModel(repoFiles, revision, workingMemory)
             String modelId = newModel.submissionId
             workingMemory.put("model_id", modelId)
             HashSet<String> result = [modelId] as HashSet
