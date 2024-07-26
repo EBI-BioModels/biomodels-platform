@@ -635,6 +635,10 @@ ${pubURIs?.join(";")}""")
         // this method. Therefore, this method can see the params object.
         working.put("changesMade", params.list("changesMade[]"))
 
+        String lcr = params.latestContributorRole?.decodeHTML() as String
+        String contributorRole = lcr.indexOf(":") > 0 ? lcr.take(lcr.indexOf(":")) : lcr
+        working.put("contributorRole", contributorRole)
+
         return working
     }
 

@@ -51,7 +51,7 @@
     <div class="small-12 medium-6 large-6 columns">
         <label for="model_format">
             <span class="required">Model Format</span>&nbsp;
-            <span class="assistive-example">[e.g. SBML L3V2, Python 2.7, C/C++]</span></label>
+            <span class="assistive-example">[e.g., SBML L3V2, Python 2.7, C/C++,...]</span></label>
         <g:select name="model_format" id="model_format" required=""
                   from="${modelFormatsSortedByName}"
                   value="${selectedModelFormat}"
@@ -59,7 +59,7 @@
                   optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
         <div id="readme_submission_div" style="display: none">
             <label for="readme_submission" class="required">
-                Describe more exactly your model format (e.g. SBML L3V2, Python 2.7, C/C++)</label>
+                Describe more exactly your model format (e.g., SBML L3V2, Python 2.7, C/C++,...)</label>
             <g:textField name="readme_submission" id="readme_submission"
                          value="${readmeSubmission}"
                          placeholder="Please describe here more accurately what is your model format" />
@@ -67,7 +67,7 @@
         </div>
         <label for="modelling_approach">
             <span class="required">Modelling Approach</span>&nbsp;
-            <span class="assistive-example">[e.g. Constraint-based modelling, Logical model, Markov model,...]</span></label>
+            <span class="assistive-example">[e.g., Constraint-based modelling, Logical model, Markov model,...]</span></label>
         <input type="text" name="modelling_approach" id="modelling_approach" value="${modellingApproach}" required
                placeholder="Enter your modelling approach" aria-describedby="modellingApproachHelp"/>
         <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
@@ -80,6 +80,14 @@
                          value="${otherInfo}"
                          placeholder="Please enter here what is your modelling approach"/></div>
         <p class="help-text" id="otherInfoHelp" style="color: red !important;">&nbsp;</p>
+        <label for="modelContributorRole">
+            <span class="required">Model Contributor Role</span>&nbsp;
+            <span class="assistive-example">[e.g., Modeller, Submitter, Curator,...]</span></label>
+        <g:select name="modelContributorRole" id="modelContributorRole" required=""
+                  from="${modelContributorRolesSortedByName}"
+                  value="${previousContributorRole}"
+                  optionKey="id"
+                  optionValue="${{it?.name + ': ' + it?.description}}"/>
     </div>
 </div>
 <input type="hidden" value="false" name="changed" id="changeStatus"/>
@@ -206,7 +214,7 @@
             editedReadmeSubmission: $('#readme_submission').val(),
             editedModellingApproach: $('#modelling_approach').val(),
             editedOtherInfo: $('#other_info').val(),
-
+            editedContributorRole: $("#modelContributorRole option:selected").text(),
             changesMade: [...changesMade]
         }
     }
@@ -455,5 +463,7 @@
         modelInfo.detectedModelling = {};
         modelInfo.detectedModelling.approach = $('#modelling_approach').val();
         modelInfo.detectedModelling.otherInfo = $('#other_info').val();
+
+        latestContributorRole = $("#modelContributorRole option:selected").text();
     }
 </script>

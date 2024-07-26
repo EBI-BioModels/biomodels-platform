@@ -70,7 +70,7 @@
 
         var latestModellingApproach = "${latestModellingApproach}";
         var latestOtherInfo = "${latestOtherInfo}";
-
+        var latestContributorRole = "${previousContributorRole}";
         var pubURI = "";
         var guessedPublicationNamespace = "";
         var guessedPublicationCollectionLabel = "";

@@ -47,6 +47,7 @@ import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.model.ContributionRole
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
@@ -135,6 +136,7 @@ class SubmissionService implements InitializingBean {
             ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
             MFTC unknownFormatTC = new MFAdapter(format: unknownFormat).toCommandObject()
             workingMemory.put("unknown_format_command", unknownFormatTC)
+            List<ContributionRole> roles = ContributionRole.list().sort { it.name }
 
             String serverURL = grailsApplication.config.grails.serverURL
             Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
@@ -160,6 +162,7 @@ class SubmissionService implements InitializingBean {
             workingMemory.put("otherInfo", "")
             workingMemory.put("modellingApproach", "")
             workingMemory.put("readmeSubmission", "")
+            workingMemory.put("modelContributorRolesSortedByName", roles)
             workingMemory.put("isMetadataSubmission", false)
         }
 
@@ -733,7 +736,7 @@ an annotation to SBML document.""")
                 jsonObj = slurper.parseText(jsonObj)
             }
             String submissionFolder = working.get("submissionFolder")
-            List<RFTC> allFiles
+            List<RFTC> allFiles = null
             try {
                 allFiles = buildModelFilesFromJSONObject(jsonObj, submissionFolder)
             } catch (Exception e) {
@@ -1173,6 +1176,7 @@ an annotation to SBML document.""")
                 logger.debug("File ${fileCopied.absolutePath} copied to the submission directory $submissionFolder".toString())
             }
             files = sortByRole(files)
+            String previousContributorRole = "Modeller" // TODO: improve me!
             workingMemory.put("RevisionTC", latest)
             workingMemory.put("RevisionID", latest.id)
             workingMemory.put("RevisionNumber", latest.revisionNumber)
@@ -1187,6 +1191,7 @@ an annotation to SBML document.""")
             workingMemory.put("latestReadmeSubmission", latest.readmeSubmission)
             workingMemory.put("modellingApproach", modellingApproach)
             workingMemory.put("otherInfo", latest.model.otherInfo)
+            workingMemory.put("previousContributorRole", previousContributorRole)
             workingMemory.put("files", files)
 
             // protect the first version: only allow to amend from the second version

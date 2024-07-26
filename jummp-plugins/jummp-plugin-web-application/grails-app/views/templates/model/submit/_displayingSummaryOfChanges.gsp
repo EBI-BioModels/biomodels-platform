@@ -227,7 +227,7 @@
                 latestReadmeSubmission: latestReadmeSubmission,
                 latestModellingApproach: latestModellingApproach,
                 latestOtherInfo:latestOtherInfo,
-
+                latestContributorRole: latestContributorRole,
                 /**
                  * changesMade is a Set object. It is put here to pass to the server side as a list
                  * because it is one of the members of the params object. So, [...changesMade] is to
