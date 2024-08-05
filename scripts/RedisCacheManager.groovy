@@ -12,15 +12,26 @@ class RedisCacheManager {
     }
 
     void retrieveAnnotations() {
-        String modelId = "MODEL8389825246"
-        doRetrieveAnnotations modelId
+        def mDS = ctx.getBean("modelDelegateService")
+        def redis = ctx.getBean("redisService")
+        List<String> listAllIdentifiers = mDS.getAllModelIdentifiers()
+        List tenFirstIds = listAllIdentifiers.take(10)
+        //String modelId = "MODEL8389825246"
+        tenFirstIds.each { String modelId ->
+            doRetrieveAnnotations modelId
+        }
     }
 
     def doRetrieveAnnotations(String modelId) {
         def mS = ctx.getBean("modelService")
         def mdDS = ctx.getBean("metadataDelegateService")
 
-        Model model = Model.findBySubmissionId(modelId)
+        Model model
+        if (modelId.startsWith("MODEL")) {
+            model = Model.findBySubmissionId(modelId)
+        } else {
+            model = Model.findByPublicationId(modelId)
+        }
         Revision[] pairFirstLastRev = getFirstAndLastRevision(model)
         Revision latest = pairFirstLastRev[1]
         def revTC = new RevisionAdapter(revision: latest, latest: true).toCommandObject()
