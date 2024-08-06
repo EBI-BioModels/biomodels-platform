@@ -13,7 +13,6 @@ class RedisCacheManager {
 
     void retrieveAnnotations() {
         def mDS = ctx.getBean("modelDelegateService")
-        def redis = ctx.getBean("redisService")
         List<String> listAllIdentifiers = mDS.getAllModelIdentifiers()
         List tenFirstIds = listAllIdentifiers.take(10)
         //String modelId = "MODEL8389825246"
@@ -25,6 +24,7 @@ class RedisCacheManager {
     def doRetrieveAnnotations(String modelId) {
         def mS = ctx.getBean("modelService")
         def mdDS = ctx.getBean("metadataDelegateService")
+        def redis = ctx.getBean("redisService")
 
         Model model
         if (modelId.startsWith("MODEL")) {
@@ -39,9 +39,23 @@ class RedisCacheManager {
         List<EATC> annotations = mdDS.fetchAnnotations(revTC)
         List statements = annotations*.statement
         statements = statements.unique { it.object.uri }
-        statements.each {
-            println "${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}"
+        String hasTaxon = ""
+        String strOfAnnotations = ""
+        statements.eachWithIndex { def it, int idx ->
+            println "${model.submissionId}\t${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}"
+            if (it.predicate.accession == "hasTaxon" && it.object.datatype == "taxonomy") {
+                hasTaxon = it.object.uri
+            }
+            strOfAnnotations += "${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}\t${it.object.name}|"
         }
+
+        strOfAnnotations = strOfAnnotations.substring(0, strOfAnnotations.length() - 1) // remove the last pile - vertical line
+        redis.doRedisHSetNX(model.submissionId, "annotations", strOfAnnotations)
+
+        if (hasTaxon) {
+            redis.doRedisHSetNX(model.submissionId, "organism", hasTaxon)
+        }
+
         println statements.size()
     }
 
