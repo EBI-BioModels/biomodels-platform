@@ -41,10 +41,10 @@ class RedisCacheManager {
         statements = statements.unique { it.object.uri }
         String hasTaxon = ""
         String strOfAnnotations = ""
-        statements.eachWithIndex { def it, int idx ->
+        statements.each {
             println "${model.submissionId}\t${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}"
             if (it.predicate.accession == "hasTaxon" && it.object.datatype == "taxonomy") {
-                hasTaxon = it.object.uri
+                hasTaxon = "${it.object.accession}|${it.object.name}|${it.object.uri}"
             }
             strOfAnnotations += "${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}\t${it.object.name}|"
         }
