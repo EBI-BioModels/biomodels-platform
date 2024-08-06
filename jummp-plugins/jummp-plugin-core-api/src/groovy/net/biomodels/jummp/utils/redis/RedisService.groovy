@@ -95,14 +95,12 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
 
     synchronized static void doRedisHSet(final String key, final Map<String, String> data) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
-            deleteAllByPattern(jedis, key)
             jedis.hmset(key, data)
         }
     }
 
     synchronized static void doRedisHSetNX(final String key, final String field, final String value) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
-            deleteAllByPattern(jedis, key)
             jedis.hsetnx(key, field, value)
         }
     }
