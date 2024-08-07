@@ -55,7 +55,9 @@ class RedisCacheManager {
         }
 
         // remove the last pile - vertical line
-        strOfAnnotations = strOfAnnotations.substring(0, strOfAnnotations.length() - 1)
+        if (strOfAnnotations) {
+            strOfAnnotations = strOfAnnotations.substring(0, strOfAnnotations.length() - 1)
+        }
         redis.doRedisHSetNX(model.submissionId, "annotations", strOfAnnotations)
 
         if (hasTaxon) {
