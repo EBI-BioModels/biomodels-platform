@@ -9,12 +9,13 @@ class RedisCacheManager {
     private final Logger LOGGER = LoggerFactory.getLogger(RedisCacheManager.class)
     def ctx
 
-    void run() {
+    void main() {
         println "Extracting all annotations of a model"
         retrieveAnnotations()
     }
 
     void retrieveAnnotations() {
+        println "Started the job at ${new Date()}..."
         def mDS = ctx.getBean("modelDelegateService")
         List<String> listAllIdentifiers = mDS.getAllModelIdentifiers()
         List tenFirstIds = listAllIdentifiers.take(5)
@@ -33,6 +34,7 @@ class RedisCacheManager {
     List doRetrieveAnnotations(String modelId) {
         def mdDS = ctx.getBean("metadataDelegateService")
         def redis = ctx.getBean("redisService")
+        println "Retrieving annotations of $modelId"
 
         Model model
         if (modelId.startsWith("MODEL")) {
@@ -42,10 +44,12 @@ class RedisCacheManager {
         }
         if (!model) {
             LOGGER.info("$modelId doesn't exist.")
+            println("$modelId doesn't exist.")
             return
         }
         Revision[] pairFirstLastRev = getFirstAndLastRevision(model)
         Revision latest = pairFirstLastRev[1]
+        println "${modelId}.${latest.revisionNumber}"
         def revTC = new RevisionAdapter(revision: latest, latest: true).toCommandObject()
         List<EATC> annotations = mdDS.fetchAnnotations(revTC)
         List statements = annotations*.statement
@@ -53,7 +57,7 @@ class RedisCacheManager {
         String hasTaxon = ""
         String strOfAnnotations = ""
         statements.each {
-            //println "${model.submissionId}\t${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}"
+            println "${model.submissionId}\t${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}"
             if (it.predicate.accession == "hasTaxon" && it.object.datatype == "taxonomy") {
                 hasTaxon = "${it.object.accession}|${it.object.name}|${it.object.uri}"
             }
@@ -83,4 +87,4 @@ class RedisCacheManager {
     }
 }
 
-new RedisCacheManager(ctx: ctx).run()
+new RedisCacheManager(ctx: ctx).main()
