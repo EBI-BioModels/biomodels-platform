@@ -21,10 +21,16 @@ class RedisCacheManager {
         //String modelId = "MODEL8389825246"
         tenFirstIds.each { String modelId ->
             doRetrieveAnnotations modelId
+
+        listAllIdentifiers.each { String modelId ->
+            List stmts = doRetrieveAnnotations modelId
+            if (stmts.isEmpty()) {
+                println modelId
+            }
         }
     }
 
-    def doRetrieveAnnotations(String modelId) {
+    List doRetrieveAnnotations(String modelId) {
         def mdDS = ctx.getBean("metadataDelegateService")
         def redis = ctx.getBean("redisService")
 
@@ -64,7 +70,7 @@ class RedisCacheManager {
             redis.doRedisHSetNX(model.submissionId, "organism", hasTaxon)
         }
 
-        //println statements.size()
+        statements
     }
 
     protected Revision[] getFirstAndLastRevision(Model model) {
