@@ -17,12 +17,27 @@ class RedisCacheManager {
     void retrieveAnnotations() {
         println "Started the job at ${new Date()}..."
         def mDS = ctx.getBean("modelDelegateService")
-        List<String> listAllIdentifiers = mDS.getAllModelIdentifiers()
-        List tenFirstIds = listAllIdentifiers.take(5)
+        List<String> listAllIdentifiers = mDS.getAllModelIdentifiers() // 3084 as of writing this comment
+        //List tenFirstIds = listAllIdentifiers.take(5)
         //String modelId = "MODEL8389825246"
-        tenFirstIds.each { String modelId ->
-            doRetrieveAnnotations modelId
-
+        listAllIdentifiers = listAllIdentifiers.subList(1900, 2000)
+        listAllIdentifiers = ["BIOMD0000000001"]
+        // 0..99: subList(0, 100)
+        // 100..199: subList(100, 200)
+        // 199..499: subList(200, 500)
+        // 499..999: subList(500, 1000)
+        // 999..1499: subList(1000, 1500)
+        // 1499..1799: subList(1500, 1800)
+        // 1799..1999: subList(1800, 2000)
+        // 1999..2005: subList(2000, 2005)
+        // 2005..2200: subList(2006, 2200)
+        // 2200..2500: subList(2200, 2500)
+        // 2500..2700: subList(2500, 2700)
+        // 2700..2900: subList(2700, 2900)
+        // 2900..3084: subList(2900, 3084)
+        //listAllIdentifiers = listAllIdentifiers.subList(2900, 3084)
+        //listAllIdentifiers = ["BIOMD0000000001", "BIOMD0000000002"]
+        listAllIdentifiers = listAllIdentifiers.findAll { it.startsWith("BIOMD") }
         listAllIdentifiers.each { String modelId ->
             List stmts = doRetrieveAnnotations modelId
             if (stmts.isEmpty()) {
