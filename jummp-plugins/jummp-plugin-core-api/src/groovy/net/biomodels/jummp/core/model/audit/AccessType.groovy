@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -30,7 +30,8 @@ enum AccessType {
    DOWNLOAD (6, "Download"),
    SHARE (7, "Share"),
    FILES (8, "Files"),
-   VALIDATE(9, "Validate");
+   VALIDATE (9, "Validate"),
+   UNPUBLISH(10, "Unpublish");
 
 
    final int id
@@ -43,11 +44,12 @@ enum AccessType {
 
    static AccessType fromAction(String action) {
    	   action = action.toLowerCase()
-   	   switch(action) {
+   	   switch (action) {
    	   	   case "create": return CREATE
    	   	   case "update": return UPDATE
    	   	   case "show": return READ
    	   	   case "publish": return PUBLISH
+   	   	   case "unpublish": return UNPUBLISH
    	   	   case "delete": return ARCHIVE
    	   	   case "download": return DOWNLOAD
    	   	   case "shareupdate": return SHARE
@@ -56,7 +58,6 @@ enum AccessType {
    	   }
    	   return null
    }
-
 
    String toString() { name }
 }

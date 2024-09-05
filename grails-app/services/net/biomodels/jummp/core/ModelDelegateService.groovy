@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -457,6 +457,18 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     Boolean canPublish(String modelId) {
         def revision = getLatestRevision(modelId)
         canPublish(revision)
+    }
+
+    @NotTransactional
+    Boolean canUnpublish(RevisionTC revision) {
+        if (revision.state == ModelState.PUBLISHED) {
+            try {
+                return modelService.canUnpublish(Revision.get(revision.id))
+            } catch(Exception e) {
+                return false
+            }
+        }
+        return false
     }
 
     @NotTransactional

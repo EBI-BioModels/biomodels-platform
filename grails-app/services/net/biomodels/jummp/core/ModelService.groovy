@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -2084,13 +2084,35 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
 
     /**
      * Tests if the user can publish this revision
-     * Only a Curator or an Administrator are allowed to call this
-     * method.
+     * Only a Curator or an Administrator are allowed to call this method.
      * @param revision The Revision to be published
      */
-    @PostLogging(LoggingEventType.UPDATE)
+    @PostLogging(LoggingEventType.PUBLISH)
     @Profiled(tag="modelService.canPublish")
-    public boolean canPublish(Revision revision) {
+    boolean canPublish(Revision revision) {
+        if (!revision) {
+            return false
+        }
+        if (revision.deleted) {
+            return false
+        }
+        if (revision.model.deleted) {
+            return false
+        }
+        if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN,ROLE_CURATOR")) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Tests if the user can unpublish this revision
+     * Only a Curator or an Administrator are allowed to call this method.
+     * @param revision The Revision to be unpublished/unreleased
+     */
+    @PostLogging(LoggingEventType.UNPUBLISH)
+    @Profiled(tag="modelService.canUnpublish")
+    boolean canUnpublish(Revision revision) {
         if (!revision) {
             return false
         }
@@ -2284,12 +2306,13 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         }
         model.firstPublished = new Date()
         markRevisionAsPublic(revision)
+        ModelTC cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
         if (!model.save(flush: true)) {
-            ModelTC cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
             throw new ModelException(cmd,
-                    "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
+                "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
         }
-
+        //ModelPublishedEvent event = new ModelPublishedEvent(new Object(), cmd)
+        //grailsApplication.mainContext.publishEvent(event)
         revision
     }
 
@@ -2382,7 +2405,7 @@ the perennial publication identifier to the model file.""")
     @PreAuthorize("(hasRole('ROLE_CURATOR') and hasPermission(#revision, admin)) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.unpublishModelRevision")
-    public void unpublishModelRevision(Revision revision) {
+    void unpublishModelRevision(Revision revision) {
         if (!revision) {
             throw new IllegalArgumentException("Revision may not be null")
         }

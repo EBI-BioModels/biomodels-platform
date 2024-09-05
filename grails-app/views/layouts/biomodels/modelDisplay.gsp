@@ -220,6 +220,24 @@
                     }
                 }
             });
+
+            $('#confirm-model-unpublish').dialog({
+                resizable: false,
+                autoOpen: false,
+                height: 250,
+                width: 500,
+                modal: true,
+                buttons: {
+                    Confirm: function() {
+                        $.jummp.openPage("${g.createLink(controller: 'model',
+                        action: 'unpublish', id: revision.identifier() )}");
+                        $( this ).dialog( "close" );
+                    },
+                    Cancel: function() {
+                        $( this ).dialog( "close" );
+                    }
+                }
+            });
             $('#confirm-model-notify').dialog({
                 resizable: false,
                 autoOpen: false,
@@ -308,6 +326,12 @@
                     text:false,
                     icons: {
                         primary:"ui-icon-unlocked"
+                    }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            $( "#unpublish" ).button({
+                    text:false,
+                    icons: {
+                        primary:"ui-icon-locked"
                     }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             $( "#share" ).button({
@@ -567,6 +591,15 @@
                     <li>
                     <button class='toolbutton' id="publish"
                             onclick="return $( '#confirm-model-publish' ).dialog( 'open' );">Publish</button>
+                    </li>
+                </g:if>
+                <g:if test="${showUnpublishOption}">
+                    <div id="confirm-model-unpublish" title="Confirm!!!" style="display:block">
+                        <p>You are about to unpublish this model version. Are you sure?</p>
+                    </div>
+                    <li>
+                    <button class='toolbutton' id="unpublish"
+                            onclick="return $( '#confirm-model-unpublish' ).dialog( 'open' );">Unpublish</button>
                     </li>
                 </g:if>
                 <g:if test="${canShare}">

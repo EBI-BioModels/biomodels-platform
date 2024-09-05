@@ -236,6 +236,7 @@ class ModelController extends CommonController {
                     }
                     RTC revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     boolean showPublishOption = modelDelegateService.canPublish(revision)
+                    boolean showUnpublishOption = modelDelegateService.canUnpublish(revision)
                     boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
                     boolean canCertify = modelDelegateService.canCertify(revision)
                     boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
@@ -280,6 +281,7 @@ class ModelController extends CommonController {
                     }
                     def contributors = modelDelegateService.convertContributors(revision.contributors)
                     boolean canSeeCurationTab = modelDelegateService.canSeeCurationTab(revision, hasCuratorRole, currentUser)
+                    boolean canManageContributors = hasAdminRole || canAskReviewerAccount
                     Map model = [
                          revision               : rev,
                          reactomeIds            : reactomeIds,
@@ -293,6 +295,7 @@ class ModelController extends CommonController {
                          canDelete              : canDelete,
                          canShare               : canShare,
                          showPublishOption      : showPublishOption,
+                         showUnpublishOption    : showUnpublishOption,
                          canSubmitForPublication: canSubmitForPublication,
                          canCertify             : canCertify,
                          repoFiles              : repoFiles,
@@ -334,6 +337,7 @@ class ModelController extends CommonController {
                     } else { //showing an old version, with the default page. Do not allow updates.
                         model["canUpdate"] = false
                         model["showPublishOption"] = false
+                        model["showUnpublishOption"] = false
                         model["oldVersion"] = true
                         model["canDelete"] = false
                         model["canShare"] = false
