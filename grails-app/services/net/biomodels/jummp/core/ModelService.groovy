@@ -74,6 +74,7 @@ import org.springframework.security.acls.domain.GrantedAuthoritySid
 import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.AccessControlEntry
 import org.springframework.security.acls.model.Acl
+import org.springframework.security.acls.model.NotFoundException
 import org.springframework.security.core.Authentication
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
@@ -548,6 +549,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
         } else {
             throw new AccessDeniedException("No access to Model with Id ${id}".toString())
         }
+
         return model
     }
 
@@ -730,7 +732,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostAuthorize("hasPermission(returnObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getRevision")
-    public Revision getRevision(Model model, int revisionNumber) {
+    Revision getRevision(Model model, int revisionNumber) {
         Revision revision = Revision.findByRevisionNumberAndModel(revisionNumber, model)
         if (!revision || revision.deleted /*|| model.deleted */) {
             throw new AccessDeniedException("Sorry you are not allowed to access this Model.")
@@ -1057,7 +1059,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsList")
-    public Model uploadModelAsList(final List<RFTC> repoFiles, ModelTC meta)
+    Model uploadModelAsList(final List<RFTC> repoFiles, ModelTC meta)
             throws ModelException {
         def stopWatch = new Log4JStopWatch("modelService.uploadModelAsList.sanityChecks")
         // TODO: to support anonymous submissions this method has to be changed
@@ -1135,7 +1137,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 comment: meta.comment,
                 uploadDate: new Date())
 
-        // keep a list of RFs closeby, as we may need to discard all of them
+        // keep a list of RFs closely, as we may need to discard all of them
         List<RepositoryFile> domainObjects =
             repositoryFileService.convertRFTCToRF(repoFiles, revision)
         String formatVersion = modelFileFormatService.getFormatVersion(revision)
@@ -1153,7 +1155,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             errMsg.append("${m.properties} to VCS: ${e.getMessage()}.\n")
             errMsg.append("${model.errors.allErrors.inspect()}\n")
             errMsg.append("${revision.errors.allErrors.inspect()}\n")
-            logger.error(errMsg)
+            logger.error(errMsg.toString())
             stopWatch.stop()
             throw new ModelException(m,
                 "Could not store new Model $m.properties} in VCS".toString(), e)
@@ -1175,11 +1177,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 def msg  = new StringBuffer("New Model ${name} does not validate:\n")
                 msg.append("${model.errors.allErrors.inspect()}\n")
                 msg.append("${revision.errors.allErrors.inspect()}\n")
-                logger.error(msg)
+                logger.error(msg.toString())
                 stopWatch.stop()
-                ModelAdapter adapter = new ModelAdapter(model: model, latest: revision).toCommandObject()
+                ModelAdapter adapter = new ModelAdapter(model: model, latest: revision).toCommandObject() as ModelAdapter
                 msg = "New model does not validate"
-                throw new ModelException(adapter, msg)
+                throw new ModelException(adapter.toCommandObject(), msg)
             }
             model.save(flush: true)
             stopWatch.lap("Finished GORM validation.")
@@ -1360,7 +1362,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.canAddRevision")
-    public Boolean canAddRevision(final Model model) {
+    Boolean canAddRevision(final Model model) {
         if (model.deleted) {
             return false
         }
@@ -1446,7 +1448,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.grantReadAccess")
-    public void grantReadAccess(Model model, User collaborator) {
+    void grantReadAccess(Model model, User collaborator) {
         final String username = collaborator.username
         // Read access is modeled by adding read access to the model (user will get read access for future revisions)
         // and by adding read access to all revisions the user has access to
@@ -1483,8 +1485,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         sendMessage("seda:model.readAccessGranted", notification)
     }
 
-    private String getPermissionString(int p) {
-        switch(p) {
+    private static String getPermissionString(int p) {
+        switch (p) {
             case BasePermission.READ.getMask(): return "r"
             case BasePermission.WRITE.getMask(): return "w"
         }
@@ -1502,7 +1504,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
    // @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getPermissionsMap")
-    public Collection<PermissionTransportCommand> getPermissionsMap(Model model, boolean authenticated = true) {
+    Collection<PermissionTransportCommand> getPermissionsMap(Model model, boolean authenticated = true) {
         def map = new HashMap<Integer, PermissionTransportCommand>()
         if (!authenticated || aclUtilService.hasPermission(springSecurityService.authentication, model,
                     BasePermission.ADMINISTRATION ) || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
@@ -1518,7 +1520,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     User user = User.findByUsername(principal)
                     if (user) {
                         String userRealName = user.person.userRealName
-                        int userId = user.id
+                        int userId = (int) user.id
                         if (!map.containsKey(userId)) {
                             PermissionTransportCommand ptc = new PermissionTransportCommand(
                                 name: userRealName, id: userId, username: user.username)
@@ -1670,7 +1672,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.revokeReadAccess")
-    public boolean revokeReadAccess(Model model, User collaborator) {
+    boolean revokeReadAccess(Model model, User collaborator) {
         final String principal = collaborator.username
         if (principal == springSecurityService.authentication.name) {
             // the user cannot revoke his own rights
@@ -1679,11 +1681,11 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         boolean isCurator = userService.isCurator(collaborator)
         Set<Revision> revisions = model.revisions
         try {
-            boolean check = hasPermission(model, BasePermission.READ)
+            boolean check = hasPermission(model, BasePermission.READ as BasePermission)
             if (check) {
                 aclUtilService.deletePermission(model, principal, BasePermission.READ)
             }
-            check = hasPermission(model, BasePermission.WRITE)
+            check = hasPermission(model, BasePermission.WRITE as BasePermission)
             if (check) {
                 aclUtilService.deletePermission(model, principal, BasePermission.WRITE)
             }
@@ -1696,14 +1698,14 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             } else {
                 boolean adminToModel = hasAdminPermission(model, principal)
                 if (adminToModel) {
-                    check = hasPermission(model, BasePermission.ADMINISTRATION)
+                    check = hasPermission(model, BasePermission.ADMINISTRATION as BasePermission)
                     if (check) {
                         aclUtilService.deletePermission(model, principal, BasePermission.ADMINISTRATION)
                     }
                 }
                 final boolean isAdmin = SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')
                 for (Revision revision in revisions) {
-                    boolean canRead = hasPermission(revision, BasePermission.READ)
+                    boolean canRead = hasPermission(revision, BasePermission.READ as BasePermission)
                     if (canRead || isAdmin) {
                         try {
                             aclUtilService.deletePermission(revision, principal, BasePermission.READ)
@@ -1715,10 +1717,11 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 }
             }
             return true
-        } catch (org.springframework.security.acls.model.NotFoundException notFoundException) {
+        } catch (NotFoundException notFoundException) {
             logger.error("An error has occurred when trying to revoke non-exist permission... The error details could be found below.")
             notFoundException.printStackTrace()
         }
+        return false
     }
 
     /*
@@ -1755,7 +1758,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 return false
             }
             def sid
-            String currentUsernameOrRole
+            String currentUsernameOrRole = ""
             if (ace.sid instanceof PrincipalSid) {
                 sid = ace.sid as PrincipalSid
                 currentUsernameOrRole = sid.principal
@@ -1788,7 +1791,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.revokeWriteAccess")
-    public boolean revokeWriteAccess(Model model, User collaborator) {
+    boolean revokeWriteAccess(Model model, User collaborator) {
         final String principal = collaborator.username
         if (principal == springSecurityService.authentication.name) {
             // the user cannot revoke his own rights
@@ -1869,7 +1872,7 @@ ${contributor.username} on ${model.submissionId}. Please check the data and comp
         }
     }
 
-    private boolean changeContributionDetails(final Set<Revision> revisions, final User contributor) {
+    private static boolean changeContributionDetails(final Set<Revision> revisions, final User contributor) {
         Integer count = 0
         List<Integer> result = new ArrayList<>()
         for (Revision revision: revisions) {
@@ -1933,7 +1936,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
     **/
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.canShare")
-    public boolean canShare(Model model) {
+    boolean canShare(Model model) {
         if (!model) {
             throw new IllegalArgumentException("Model may not be null")
         }
@@ -2022,7 +2025,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.restoreModel")
-    public boolean restoreModel(Model model) {
+    boolean restoreModel(Model model) {
         if (!model) {
             throw new IllegalArgumentException("Model may not be null")
         }
@@ -2053,7 +2056,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
     @PreAuthorize("hasPermission(#revision, delete) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="modelService.deleteRevision")
-    public boolean deleteRevision(Revision revision) {
+    boolean deleteRevision(Revision revision) {
         if (!revision) {
             throw new IllegalArgumentException("Revision may not be null")
         }
@@ -2164,7 +2167,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
          */
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.canValidate")
-    public boolean canValidate(Revision revision) {
+    boolean canValidate(Revision revision) {
         if (!revision) {
             return false
         }
@@ -2350,7 +2353,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
      *      https://github.com/grails-plugins/grails-spring-security-core/blob/2.x/src/java/grails/plugin/springsecurity/authentication/GrailsAnonymousAuthenticationToken.java
      *      https://github.com/grails-plugins/grails-spring-security-core/blob/2.x/grails-app/conf/DefaultSecurityConfig.groovy#L145
      */
-    private Authentication createAnonymousAuthToken() {
+    private static Authentication createAnonymousAuthToken() {
         String key ='foo' // same as grailsApplication.config.grails.plugin.springsecurity.anon.key
         new GrailsAnonymousAuthenticationToken(key, null)
     }
@@ -2379,6 +2382,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
             }
             revisionTC.minorRevision = true
             revisionTC.comment = "Automatically added model identifier $publicationId"
+
             Revision toPublish = doPersistRevision(revisionTC.files, [], revisionTC)
             RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
             indexModelRevision(toPublishTC)
@@ -2766,7 +2770,7 @@ an annotation to SBML document.""")
                 }
             }
         } catch (Exception e) {
-            logger.error(e.getMessage())
+            logger.error(e.getMessage()) // TODO: here?
         } finally {
             aclInsertionLock.unlock()
         }
@@ -2805,7 +2809,8 @@ an annotation to SBML document.""")
             }
         }
         stopWatch.stop()
-        return model
+
+        model
     }
 
     private Revision putFilesUnderVcs(final Model model, final Revision revision,
@@ -2827,7 +2832,8 @@ an annotation to SBML document.""")
             revision.addToRepoFiles(it)
         }
         stopWatch.stop()
-        return revision
+
+        revision
     }
 
     private void discardFailedRevision(final Model model, final Revision revision, final List repoFiles) {
@@ -2866,7 +2872,8 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
         // delete the previous repository files associating with the revision
         RepositoryFile.where { revision == revision }.deleteAll()
         stopWatch.stop()
-        return revision
+
+        revision
     }
 
     void updateModelCache(final Revision revision) {
@@ -2887,7 +2894,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
      * @return a list of string objects as the model identifiers
      */
     List<String> getAllModelIdentifiers() {
-        List<String> identifiers = []
+        List<String> identifiers
         String strIdentifiers = redisService.doRedisGet(Redis.REDIS_KEY_ALL_MODEL_IDS)
         if (strIdentifiers) {
             logger.debug("Retrieving all model identifiers from Redis cache.")
@@ -2897,7 +2904,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
             identifiers = extractAndCacheModelIdentifiers()
 
         }
-        return identifiers
+        identifiers
     }
 
     /**
@@ -2906,7 +2913,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
      * @return a list of string objects as the model identifiers
      */
     List<String> extractAndCacheModelIdentifiers(boolean updateCache = true) {
-        List<String> identifiers = new ArrayList<>()
+        List<String> identifiers
         final String query = "query=*:*&isprivate:false&fields=id,name,isprivate&format=json"
         String BM = "${BioModels.EBI_PROD_WS_REST_BM_URL}?$query"
         identifiers = extractIdentifiersBasedEbiSearchJson(BM)
@@ -2917,7 +2924,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
             redisService.doRedisSet(Redis.REDIS_KEY_ALL_MODEL_IDS, strIdentifiers)
         }
 
-        return identifiers
+        identifiers
     }
 
     /**
@@ -2957,7 +2964,8 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
         if (!identifiers.isEmpty()) {
             identifiers.sort()
         }
-        return identifiers
+
+        identifiers
     }
 
     private List<String> extractAllModelIdentifiers(JSONObject json) {
