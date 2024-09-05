@@ -388,8 +388,8 @@ for revision ${revision.dump()} without main file"""
             accept("application/json")
             contentType("application/json;charset=UTF-8")
         }
-        logger.debug(response.toString())
-        response
+        logger.debug(response?.text)
+        response?.text
     }
 
     private void doUpdateModelRevisionCacheDirectory(final Revision revision) {

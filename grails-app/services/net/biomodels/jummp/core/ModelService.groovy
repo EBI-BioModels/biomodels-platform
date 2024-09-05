@@ -2879,7 +2879,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
 
     void copyRevisionFilesToFtp(final Revision revision) {
         String message = repositoryFileService.copyRevisionFilesToFtp(revision)
-        logger.debug("sent a request to cluster to copy the revision files to FTP: $message")
+        logger.debug("sent a request to HPC to copy the revision files to FTP: $message")
     }
 
     /**
