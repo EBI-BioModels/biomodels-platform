@@ -457,7 +457,7 @@ class ModelController extends CommonController {
                 " with the publication identifier ${published.modelIdentifier()}." : "."
             redirect(action: "showWithMessage", id: published.identifier(),
                         params: [flashMessage: "Model has been published${extraMsg}"])
-            doCopyFilesToEBIFTP(published)
+            //doCopyFilesToEBIFTP(published)
         } catch(AccessDeniedException e) {
             LOGGER.error(e.message, e)
             forward(controller: "errors", action: "error403")

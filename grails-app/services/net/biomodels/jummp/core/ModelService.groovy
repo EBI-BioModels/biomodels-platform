@@ -2313,6 +2313,12 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         }
         //ModelPublishedEvent event = new ModelPublishedEvent(new Object(), cmd)
         //grailsApplication.mainContext.publishEvent(event)
+
+        // publish the revision files to EBI's FTP for downloading
+        if (grailsApplication.isWarDeployed()) {
+            copyRevisionFilesToFtp(revision)
+        }
+
         revision
     }
 
@@ -2383,11 +2389,6 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
 the perennial publication identifier to the model file.""")
             RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: revision).toCommandObject()
             indexModelRevision(toPublishTC)
-        }
-
-        // publish the revision files to FTP
-        if (grailsApplication.isWarDeployed()) {
-            copyRevisionFilesToFtp(revision)
         }
 
         return revision
