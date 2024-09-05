@@ -457,6 +457,7 @@ class ModelController extends CommonController {
                 " with the publication identifier ${published.modelIdentifier()}." : "."
             redirect(action: "showWithMessage", id: published.identifier(),
                         params: [flashMessage: "Model has been published${extraMsg}"])
+            doCopyFilesToEBIFTP(published)
         } catch(AccessDeniedException e) {
             LOGGER.error(e.message, e)
             forward(controller: "errors", action: "error403")
@@ -464,16 +465,43 @@ class ModelController extends CommonController {
             LOGGER.error(e.message)
             redirect(action: "showWithMessage",
                     id: rev.identifier(),
-                    params: [flashMessage: "Model has not been published because there is a " +
-                            "problem with this version of the model. Sorry!"])
+                    params: [flashMessage: """Model has not been published because due to an internal problem. \
+Please contact the developers team for support!"""])
         } catch(Exception e) {
             LOGGER.error("General exception thrown while publishing ${rev.identifier()} (${published?.identifier()})", e)
-            redirect(action: "showWithMessage", id: rev.identifier(), params: [flashMessage: "An internal error prevented this model from being published"])
+            redirect(action: "showWithMessage", id: rev.identifier(),
+                params: [flashMessage: """An internal error prevented this model from being published. \
+Please contact the developers team for support!"""])
+        }
+    }
+
+    def unpublish() {
+        LOGGER.info("Unpublishing ${params.id}.${params.revisionId}...")
+        RTC rev
+        try {
+            rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+            modelDelegateService.unpublishModelRevision(rev)
+            redirect(action: "showWithMessage",
+                params: [id: "${params.id}.${params.revisionId}", flashMessage: "Model has been moved back to the private zone!"])
+        } catch(AccessDeniedException e) {
+            LOGGER.error(e.message, e)
+            forward(controller: "errors", action: "error403")
+        } catch(IllegalArgumentException e) {
+            LOGGER.error(e.message)
+            redirect(action: "showWithMessage",
+                id: rev.identifier(),
+                params: [flashMessage: """Model has not been unpublished due to a problem. \
+Please contact the developers team for support!"""])
+        } catch(Exception e) {
+            LOGGER.error("General exception thrown while unpublishing ${rev.identifier()} (${rev?.identifier()})", e)
+            redirect(action: "showWithMessage", id: rev.identifier(),
+                params: [flashMessage: """An internal error prevented this model from being unpublished. \
+Please contact the developers team for support!"""])
         }
     }
 
     def submitForPublication() {
-        def rev = modelDelegateService.getRevisionFromParams(params.id)
+        def rev = modelDelegateService.getRevisionFromParams(params.id as String)
         boolean allowed2Request = modelDelegateService.canSubmitForPublication(rev)
         if (!allowed2Request) {
             redirect(action: "showWithMessage",
@@ -802,14 +830,14 @@ class ModelController extends CommonController {
         boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
         if (isLargeSubmission) {
             // Use case 1: large and private
-            println "${revision.modelIdentifier()}: download omex => use case 1: large and private"
+            LOGGER.info "${revision.modelIdentifier()}: download omex => use case 1: large and private"
             String[] parts = defineMrPathAndFileNameForOmex(revision)
             String filePath = parts[1]
             // the OMEX file could be created using the external FileService
             serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
         } else {
             // Use case 3: small and private, then generate/create CombineArchive on the spot
-            println "${revision.modelIdentifier()}: download omex => use case 3: small and private"
+            LOGGER.info "${revision.modelIdentifier()}: download omex => use case 3: small and private"
             serveModelAsCombineArchiveInstantly(revision, files, resp)
         }
     }
@@ -986,7 +1014,13 @@ after a few seconds. If you have any trouble in downloading the file after about
         }
     }
 
-    private static Promise moveOmexFile(final File source, final File target) {
+    /**
+     * After OMEX created, it should be copied to EBI FTP for serving
+     * @param source
+     * @param target
+     * @return
+     */
+    private static Promise doCopyOmexFileToFTP(final File source, final File target) {
         Promise p = task {
             LOGGER.info("Moved the OMEX file: ${source}")
             println("Moved the OMEX file: ${source}")
@@ -1297,7 +1331,36 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         }
     }
 
-    private void moveFile2FTP(RTC revision, String filePath) {
-
+    /**
+     * When a model revision is made publicly accessible, its files should be copied to EBI's FTP for serving
+     * @param revision {@link Revision}
+     */
+    private void doCopyFilesToEBIFTP(RTC revision) {
+        if (deployTarget == "local") {
+            LOGGER.info("No need to copy model files to EBI FTP because this is a local server.")
+            return
+        }
+        LOGGER.info("Publishing (i.e., copying) model files to EBI FTP.")
+        final String SVC_URL = "http://ebi-mol-sys-dev.ebi.ac.uk:8000/model/publish"
+        List info = modelDelegateService.getRevisionsState(revision.model.submissionId)
+        final String PARENT = info["vcsId"] as String
+        final String SUB_ID = revision.model.submissionId
+        final int REV_NUM = revision.revisionNumber
+        final String DEP = deployTarget
+        Promise p = task {
+            String URL = "${SVC_URL}/${DEP}/${PARENT}/${SUB_ID}/${REV_NUM}"
+            URL url = new URL(URL)
+            LOGGER.info("Copying job info: " + url.text)
+        }
+        p.onError { Throwable err ->
+            String msg = "Error when copying the files of ${revision.identifier()} to EBI's FTP."
+            LOGGER.debug(msg)
+            println msg
+        }
+        p.onComplete { res ->
+            println "Promise returned $res"
+        }
+        // block until the result is called to prevent async execution error
+        p.get()
     }
 }
