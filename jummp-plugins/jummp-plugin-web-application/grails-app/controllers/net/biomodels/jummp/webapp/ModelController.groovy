@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2023 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -27,9 +27,6 @@
  * include the source code for the parts of Spring Framework, Spring Security used as well as
  * that of the covered work.}
  **/
-
-
-
 
 
 package net.biomodels.jummp.webapp
@@ -78,7 +75,6 @@ import org.json.JSONArray
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
-import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import javax.servlet.http.HttpServletResponse
@@ -137,13 +133,13 @@ class ModelController extends CommonController {
                 // publish uses revision ids, annoyingly enough.
                 if (accessType.contains("publish")) {
                     def rev = modelDelegateService.getRevisionDetails(
-                                new RTC(id: modelIdParam.toInteger()))
+                        new RTC(id: modelIdParam.toInteger()))
                     if (rev) {
                         modelId = rev.modelIdentifier()
                     }
                 }
             }
-            ModelTransportCommand model
+            ModelTransportCommand model = null
             if (!modelId) {
                 model = modelDelegateService.findByPerennialIdentifier(modelIdParam)
             }
@@ -157,7 +153,7 @@ class ModelController extends CommonController {
                 forward(controller: "errors", action: "error404")
                 return false
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             LOGGER.error(e.message, e)
             String actionError = params?.action == "download" ? "error400" : "error403"
             forward(controller: "errors", action: actionError)
@@ -165,13 +161,13 @@ class ModelController extends CommonController {
         }
     }
 
-    private void auditAfter(def model) {
+    private void auditAfter() {
         try {
             if (request.lastHistory) {
-                modelDelegateService.updateAuditSuccess(request.lastHistory, true)
+                modelDelegateService.updateAuditSuccess(request.lastHistory as Long, true)
                 request.removeAttribute("lastHistory")
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
             LOGGER.error e.message, e
         }
     }
@@ -192,10 +188,10 @@ class ModelController extends CommonController {
         RTC rev
         boolean isPrivateModel = false
         try {
-            rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+            rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
         } catch (AccessDeniedException e) {
             Model model = Model.findByPublicationIdOrSubmissionId(params.id as String, params.id as String)
-            LOGGER.warn("""An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
+            LOGGER.warn("""An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}. Caused ${e.message}""")
             int revisionNumber = -1
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
@@ -283,44 +279,45 @@ class ModelController extends CommonController {
                     boolean canSeeCurationTab = modelDelegateService.canSeeCurationTab(revision, hasCuratorRole, currentUser)
                     boolean canManageContributors = hasAdminRole || canAskReviewerAccount
                     Map model = [
-                         revision               : rev,
-                         reactomeIds            : reactomeIds,
-                         reactomeUrl            : reactomeUrl,
-                         hrefLinkToNewtEditor   : hrefLinkToNewtEditor,
-                         authors                : rev.model.creators,
-                         contributors           : contributors,
-                         allRevs                : revs,
-                         flashMessage           : flashMessage,
-                         canUpdate              : canUpdate,
-                         canDelete              : canDelete,
-                         canShare               : canShare,
-                         showPublishOption      : showPublishOption,
-                         showUnpublishOption    : showUnpublishOption,
-                         canSubmitForPublication: canSubmitForPublication,
-                         canCertify             : canCertify,
-                         repoFiles              : repoFiles,
-                         validationLevel        : rev.getValidationLevelMessage(),
-                         certComment            : rev.getCertificationMessage(),
-                         flags                  : flags,
-                         curationState          : curationState,
-                         possibleCurationStates : possibleCurationStates,
-                         modellingApproaches    : modellingApproaches,
-                         curationNotes          : curationNotes,
-                         modelLevelAnnotations  : modelLevelAnnotations,
-                         originalModels         : originalModels,
-                         hasAdminRole           : hasAdminRole,
-                         hasCuratorRole         : hasCuratorRole,
-                         supportedForConversion : supportedForConversion,
-                         convertedFilesTC       : convertedFilesTC,
-                         bmTags                 : tags,
-                         canAskReviewerAccount  : canAskReviewerAccount,
-                         canSeeCurationTab      : canSeeCurationTab,
-                         modelParentFolder      : modelParentFolder,
-                         canCreateOmex          : canCreateOmex,
-                         hasRosetteLink         : modelDelegateService.retrieveRosetteLink(PERENNIAL_ID),
-                         hasGalaxyLink          : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID),
-                         canAddGalaxyLink       : hasCuratorRole || hasAdminRole,
-                         shouldDisplayDisclaimer: modelDelegateService.shouldDisplayDisclaimer(revision)
+                        revision               : rev,
+                        reactomeIds            : reactomeIds,
+                        reactomeUrl            : reactomeUrl,
+                        hrefLinkToNewtEditor   : hrefLinkToNewtEditor,
+                        authors                : rev.model.creators,
+                        contributors           : contributors,
+                        allRevs                : revs,
+                        flashMessage           : flashMessage,
+                        canUpdate              : canUpdate,
+                        canDelete              : canDelete,
+                        canShare               : canShare,
+                        showPublishOption      : showPublishOption,
+                        showUnpublishOption    : showUnpublishOption,
+                        canSubmitForPublication: canSubmitForPublication,
+                        canCertify             : canCertify,
+                        repoFiles              : repoFiles,
+                        validationLevel        : rev.getValidationLevelMessage(),
+                        certComment            : rev.getCertificationMessage(),
+                        flags                  : flags,
+                        curationState          : curationState,
+                        possibleCurationStates : possibleCurationStates,
+                        modellingApproaches    : modellingApproaches,
+                        curationNotes          : curationNotes,
+                        modelLevelAnnotations  : modelLevelAnnotations,
+                        originalModels         : originalModels,
+                        hasAdminRole           : hasAdminRole,
+                        hasCuratorRole         : hasCuratorRole,
+                        supportedForConversion : supportedForConversion,
+                        convertedFilesTC       : convertedFilesTC,
+                        bmTags                 : tags,
+                        canAskReviewerAccount  : canAskReviewerAccount,
+                        canSeeCurationTab      : canSeeCurationTab,
+                        modelParentFolder      : modelParentFolder,
+                        canCreateOmex          : canCreateOmex,
+                        hasRosetteLink         : modelDelegateService.retrieveRosetteLink(PERENNIAL_ID),
+                        hasGalaxyLink          : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID),
+                        canAddGalaxyLink       : hasCuratorRole || hasAdminRole,
+                        shouldDisplayDisclaimer: modelDelegateService.shouldDisplayDisclaimer(revision),
+                        canManageContributors  : canManageContributors
                     ]
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)
@@ -383,7 +380,7 @@ class ModelController extends CommonController {
             return
         }
         try {
-            def revisionFiles = modelDelegateService.getRevisionFromParams(params.id, params.revisionId).files
+            def revisionFiles = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String).files
             def responseFiles = revisionFiles.findAll { !it.hidden }
             def modelFiles = new ModelFiles(responseFiles)
             withFormat {
@@ -391,7 +388,7 @@ class ModelController extends CommonController {
                 xml { respond modelFiles }
                 '*' { render status: 415, view: "/errors/error415" }
             }
-        } catch(Exception err) {
+        } catch (Exception err) {
             LOGGER.error err.message, err
             forward controller: 'errors', action: 'error404'
         }
@@ -405,13 +402,13 @@ class ModelController extends CommonController {
             return
         }
         try {
-            Map resultMap = modelDelegateService.getRevisionsState(params.id)
+            Map resultMap = modelDelegateService.getRevisionsState(params.id as String)
             withFormat {
                 json { render resultMap as JSON }
                 xml { render resultMap as XML }
                 '*' { render status: 415, view: "/errors/error415" }
             }
-        } catch(Exception err) {
+        } catch (Exception err) {
             LOGGER.error err.message, err
             forward controller: 'errors', action: 'error404'
         }
@@ -431,7 +428,7 @@ class ModelController extends CommonController {
                 xml { render models as XML }
                 '*' { render status: 415, view: "/errors/error415" }
             }
-        } catch(Exception err) {
+        } catch (Exception err) {
             println(err.printStackTrace())
             LOGGER.error(err.message, err)
             forward controller: 'errors', action: 'error404'
@@ -439,37 +436,37 @@ class ModelController extends CommonController {
     }
 
     def publish() {
-        RTC rev
-        RTC published
+        RTC rev = null
+        RTC published = null
         try {
-            rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+            rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
             published = modelDelegateService.publishModelRevision(rev)
             def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [
                     revision: rev,
-                    user: currentUser,
-                    perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
+                    user    : currentUser,
+                    perms   : modelDelegateService.getPermissionsMap(rev.model.submissionId)]
                 sendMessage("seda:model.publish", notification)
             }
             boolean havePublicationId = published.model.publicationId != null
             String extraMsg = havePublicationId ?
                 " with the publication identifier ${published.modelIdentifier()}." : "."
             redirect(action: "showWithMessage", id: published.identifier(),
-                        params: [flashMessage: "Model has been published${extraMsg}"])
+                params: [flashMessage: "Model has been published${extraMsg}"])
             //doCopyFilesToEBIFTP(published)
-        } catch(AccessDeniedException e) {
+        } catch (AccessDeniedException e) {
             LOGGER.error(e.message, e)
             forward(controller: "errors", action: "error403")
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error(e.message)
             redirect(action: "showWithMessage",
-                    id: rev.identifier(),
-                    params: [flashMessage: """Model has not been published because due to an internal problem. \
+                id: rev.identifier(),
+                params: [flashMessage: """Model has not been published because due to an internal problem. \
 Please contact the developers team for support!"""])
-        } catch(Exception e) {
-            LOGGER.error("General exception thrown while publishing ${rev.identifier()} (${published?.identifier()})", e)
-            redirect(action: "showWithMessage", id: rev.identifier(),
+        } catch (Exception e) {
+            LOGGER.error("General exception thrown while publishing ${rev?.identifier()} (${published?.identifier()})", e)
+            redirect(action: "showWithMessage", id: rev?.identifier(),
                 params: [flashMessage: """An internal error prevented this model from being published. \
 Please contact the developers team for support!"""])
         }
@@ -477,24 +474,24 @@ Please contact the developers team for support!"""])
 
     def unpublish() {
         LOGGER.info("Unpublishing ${params.id}.${params.revisionId}...")
-        RTC rev
+        RTC rev = null
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
             modelDelegateService.unpublishModelRevision(rev)
             redirect(action: "showWithMessage",
                 params: [id: "${params.id}.${params.revisionId}", flashMessage: "Model has been moved back to the private zone!"])
-        } catch(AccessDeniedException e) {
+        } catch (AccessDeniedException e) {
             LOGGER.error(e.message, e)
             forward(controller: "errors", action: "error403")
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOGGER.error(e.message)
             redirect(action: "showWithMessage",
                 id: rev.identifier(),
                 params: [flashMessage: """Model has not been unpublished due to a problem. \
 Please contact the developers team for support!"""])
-        } catch(Exception e) {
-            LOGGER.error("General exception thrown while unpublishing ${rev.identifier()} (${rev?.identifier()})", e)
-            redirect(action: "showWithMessage", id: rev.identifier(),
+        } catch (Exception e) {
+            LOGGER.error("General exception thrown while unpublishing ${rev?.identifier()} (${rev?.identifier()})", e)
+            redirect(action: "showWithMessage", id: rev?.identifier(),
                 params: [flashMessage: """An internal error prevented this model from being unpublished. \
 Please contact the developers team for support!"""])
         }
@@ -526,7 +523,7 @@ Please contact the developers team for support!"""])
             LOGGER.error(e.message, e)
             String message = "Sorry!!! There has been a problem. Please try it later or contact us for further help."
             redirect(action: "showWithMessage",
-                id: modelDelegateService.getRevisionFromParams(params.id).identifier(),
+                id: modelDelegateService.getRevisionFromParams(params.id as String).identifier(),
                 params: [flashMessage: message])
         }
     }
@@ -685,7 +682,7 @@ Please contact the developers team for support!"""])
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revisionTC)
             String parentDir = modelDelegateService.getVcsIdentifier(modelId)?.take(3)
             String modelExportsDir = grailsApplication.config.jummp.model.exportFolder
-            final String MODEL_CACHE= grailsApplication.config.jummp.model.cache.dir
+            final String MODEL_CACHE = grailsApplication.config.jummp.model.cache.dir
             JSONArray array = modelDelegateService.buildJsonArray(deployTarget,
                 parentDir, modelId, revisionNumber, FILES, modelExportsDir, MODEL_CACHE, revisionTC.state.name())
 
@@ -727,20 +724,20 @@ Please contact the developers team for support!"""])
 
     def delete() {
         try {
-            boolean deleted = modelDelegateService.deleteModel(params.id)
+            boolean deleted = modelDelegateService.deleteModel(params.id as String)
             def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [
-                    model: modelDelegateService.getModel(params.id),
-                    user: currentUser,
-                    perms: modelDelegateService.getPermissionsMap(params.id)]
+                    model: modelDelegateService.getModel(params.id as String),
+                    user : currentUser,
+                    perms: modelDelegateService.getPermissionsMap(params.id as String)]
                 sendMessage("seda:model.delete", notification)
             }
             redirect(action: "showWithMessage", id: params.id,
-                        params: [ flashMessage: deleted ?
-                                    "Model has been deleted, and moved into archives." :
-                                    "Model could not be deleted"])
-        } catch(Exception e) {
+                params: [flashMessage: deleted ?
+                    "Model has been deleted, and moved into archives." :
+                    "Model could not be deleted"])
+        } catch (Exception e) {
             LOGGER.error e.message, e
             forward(controller: "errors", action: "error403")
         }
@@ -751,13 +748,13 @@ Please contact the developers team for support!"""])
     def getFileDetails() {
         try {
             final RTC REVISION =
-                        modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            def retval = modelDelegateService.getFileDetails(REVISION.id, params.filename)
+                modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+            def retval = modelDelegateService.getFileDetails(REVISION.id, params.filename as String)
             if (IS_DEBUG_ENABLED) {
                 LOGGER.debug("Permissions for ${REVISION.identifier()}: ${retval as JSON}")
             }
             render retval as JSON
-        } catch(Exception e) {
+        } catch (Exception e) {
             LOGGER.error e.message, e
             return "INVALID ID"
         }
@@ -765,11 +762,11 @@ Please contact the developers team for support!"""])
 
     def share() {
         try {
-            def rev = modelDelegateService.getRevisionFromParams(params.id)
+            def rev = modelDelegateService.getRevisionFromParams(params.id as String)
             def perms = modelDelegateService.getPermissionsMap(rev.model.submissionId)
             def teams = getTeamsForCurrentUser()
             return [revision: rev, permissions: perms as JSON, teams: teams]
-        } catch(Exception error) {
+        } catch (Exception error) {
             LOGGER.error error.message, error
             forward(controller: "errors", action: "error403")
         }
@@ -793,33 +790,33 @@ Please contact the developers team for support!"""])
                 for (int i = 0; i < map.length(); i++) {
                     JSONObject perm = map.getJSONObject(i)
                     PermissionTransportCommand ptc = new PermissionTransportCommand(
-                                id: perm.getInt("id"),
-                                username: perm.getString("username"),
-                                name: perm.getString("name"),
-                                read: perm.getBoolean("read"),
-                                write: perm.getBoolean("write"))
+                        id: perm.getInt("id"),
+                        username: perm.getString("username"),
+                        name: perm.getString("name"),
+                        read: perm.getBoolean("read"),
+                        write: perm.getBoolean("write"))
                     collabsNew.add(ptc)
                 }
-                modelDelegateService.setPermissions(params.id, collabsNew)
+                modelDelegateService.setPermissions(params.id as String, collabsNew)
                 JSON result = ['success': true, 'permissions':
-                            modelDelegateService.getPermissionsMap(params.id)]
+                    modelDelegateService.getPermissionsMap(params.id as String)]
                 render result
-            } catch(Exception e) {
+            } catch (Exception e) {
                 LOGGER.error e.message, e
                 valid = false
             }
         }
         if (!valid) {
-            render (['success': false, 'message': "Could not update permissions"] as JSON)
+            render(['success': false, 'message': "Could not update permissions"] as JSON)
         }
     }
 
     private void serveModelAsCombineArchive(RTC revision, List<RFTC> files, def resp) {
         if (revision.state == ModelState.PUBLISHED) {
-            println "${revision.modelIdentifier()}: download omex => use case 2 and 4: public - regardless of its size"
-            serveModelAsCombineArchiveForPublished(revision, files, resp)
+            LOGGER.info "${revision.modelIdentifier()}: download omex => use case 2 and 4: public - regardless of its size"
+            serveModelAsCombineArchiveForPublished(revision)
         } else {
-            println "${revision.modelIdentifier()}: download omex => use case 1 and 3: private - considering its size to serve instantly or later"
+            LOGGER.info "${revision.modelIdentifier()}: download omex => use case 1 and 3: private - considering its size to serve instantly or later"
             serveModelAsCombineArchiveForPrivate(revision, files, resp)
         }
     }
@@ -842,7 +839,7 @@ Please contact the developers team for support!"""])
         }
     }
 
-    private void serveModelAsCombineArchiveForPublished(RTC revision, List<RFTC> files, def resp) {
+    private void serveModelAsCombineArchiveForPublished(RTC revision) {
         String[] parts = defineMrPathAndFileNameForOmex(revision)
         String filePath = parts[1]
         // Use case 2 and 4: Revision is public regardless of its size
@@ -870,7 +867,7 @@ Please contact the developers team for support!"""])
         String name = omexFile.name
         resp.setContentType("application/zip")
         resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
-        ByteArrayInputStream  stream = null
+        ByteArrayInputStream stream = null
         try {
             stream = new ByteArrayInputStream(omexFile.readBytes())
             resp.outputStream << stream
@@ -897,13 +894,13 @@ Please contact the developers team for support!"""])
     }
 
     private void serveModelAsCombineArchiveWithCheckingAndFileService(final RTC revision, final String filePath) {
-        final String MODEL_CACHE= grailsApplication.config.jummp.model.cache.dir
+        final String MODEL_CACHE = grailsApplication.config.jummp.model.cache.dir
         File omexFile = new File(MODEL_CACHE, filePath)
         String DOWNLOAD_SERVICE_URL = grailsApplication.config.jummp.model.download.server
         String url = "${DOWNLOAD_SERVICE_URL}/get-files/$filePath"
         if (!omexFile.exists()) {
             Map result = generateOmex(revision.model.submissionId, revision.revisionNumber) as Map
-            String omexLocation  = result.get("location")
+            String omexLocation = result.get("location")
             if (omexLocation && revision.state != ModelState.PUBLISHED) {
                 String msg = """Your file might be big. It is being generated. Please be patient and check the download \
 link <a href='${url}' target='_blank'>${url}</a> after a few seconds. If you have any trouble in downloading the file after \
@@ -981,10 +978,10 @@ after a few seconds. If you have any trouble in downloading the file after about
         final String INLINE = inline ? "inline" : "attachment"
         final String F_NAME = URLEncoder.encode(file.name, "UTF-8")
         resp.setCharacterEncoding("UTF-8")
-        resp.setHeader( "Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
+        resp.setHeader("Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
         byte[] fileData = null
         int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
-        ByteArrayInputStream  stream = null
+        ByteArrayInputStream stream = null
         try {
             if (file.length() > BioModels.MAX_FILE_SIZE) {
                 String warnMsg = "File ${file.name} is too large to be served now."
@@ -1010,7 +1007,7 @@ after a few seconds. If you have any trouble in downloading the file after about
                 LOGGER.debug("InputStream of the file ${file.name} has been flushed and closed.")
                 stream.close()
             }
-            Arrays.fill(fileData, (byte)0)
+            Arrays.fill(fileData, (byte) 0)
         }
     }
 
@@ -1091,7 +1088,7 @@ after a few seconds. If you have any trouble in downloading the file after about
             } else {
                 forward(controller: "errors", action: "error400")
             }
-        } catch (Exception e ) {
+        } catch (Exception e) {
             String errDesc = handleDlException(e)
             render(status: 400, view: "/errors/error400", model: [code: 400, errorDescription: errDesc])
         } finally {
@@ -1170,21 +1167,21 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
      * Display basic information about the model
      */
     def summary = {
-        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id as String)
         [
-            publication: modelDelegateService.getPublication(params.id),
-            revision: rev,
-            notes: sbmlService.getNotes(rev),
+            publication: modelDelegateService.getPublication(params.id as String),
+            revision   : rev,
+            notes      : sbmlService.getNotes(rev),
             annotations: sbmlService.getAnnotations(rev)
         ]
     }
 
     def overview = {
-        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id as String)
         [
-            reactions: sbmlService.getReactions(rev),
-            rules: sbmlService.getRules(rev),
-            parameters: sbmlService.getParameters(rev),
+            reactions   : sbmlService.getReactions(rev),
+            rules       : sbmlService.getRules(rev),
+            parameters  : sbmlService.getParameters(rev),
             compartments: sbmlService.getCompartments(rev)
         ]
     }
@@ -1193,12 +1190,12 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
      * Renders html snippet with Publication information for the current Model identified by the id.
      */
     def publication = {
-        PublicationTransportCommand publication = modelDelegateService.getPublication(params.id)
+        PublicationTransportCommand publication = modelDelegateService.getPublication(params.id as String)
         [publication: publication]
     }
 
     def notes = {
-        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id as String)
         [notes: sbmlService.getNotes(rev)]
     }
 
@@ -1206,7 +1203,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
      * Retrieve annotations and hand them over to the view
      */
     def annotations = {
-        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id as String)
         [annotations: sbmlService.getAnnotations(rev)]
     }
 
@@ -1214,8 +1211,8 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
      * File download of the model file for a model by id
      */
     def downloadModelRevision = {
-        RTC rev = modelDelegateService.getRevisionFromParams(params.id)
-        byte[] bytes = modelDelegateService.retrieveModelFiles(rev)
+        RTC rev = modelDelegateService.getRevisionFromParams(params.id as String)
+        byte[] bytes = modelDelegateService.retrieveModelFiles(rev) as byte[]
         response.setContentType("application/xml")
         // TODO: set a proper name for the model
         response.setHeader("Content-disposition", "attachment;filename=\"model.xml\"")
@@ -1255,43 +1252,6 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
             fileName = new String(fileName.getBytes("iso-8859-1"))
         }
         return fileName
-    }
-
-    private List getMainFiles(Map<String,Object> workingMemory) {
-        List<RFTC> uploaded = workingMemory.get("repository_files") as List<RFTC>
-        return uploaded.findAll { it.mainFile }
-    }
-
-    private boolean mainFileOverwritten(List mainFiles, List multipartFiles) {
-        boolean returnVal = false
-        mainFiles.each { RFTC mainFile ->
-            String name = new File(mainFile.path).name
-            multipartFiles.each { MultipartFile uploaded ->
-                if (uploaded.getOriginalFilename() == name) {
-                    returnVal = true
-                }
-            }
-        }
-        return returnVal
-    }
-
-    private boolean mainFileDeleted(List mainFiles, List cmdMains, List<String> mainsToBeDeleted) {
-        def nonEmptyCmdMains = cmdMains?.find{!it.isEmpty()}
-        if (nonEmptyCmdMains) {
-            return false
-        }
-        def mainFileNames = mainFiles.collect { RFTC rf -> new File(rf.path).name }
-        def remainingFiles = mainFileNames - mainsToBeDeleted
-        return remainingFiles.isEmpty()
-    }
-
-    private static boolean isPositiveNumber(String value) {
-        for (char c in value.toCharArray()) {
-            if (!Character.isDigit(c)) {
-                return false
-            }
-        }
-        return true
     }
 
     private String makeLinkToNewtEditor(final RTC revision, final List<RFTC> repoFiles) {
@@ -1342,7 +1302,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         }
         LOGGER.info("Publishing (i.e., copying) model files to EBI FTP.")
         final String SVC_URL = "http://ebi-mol-sys-dev.ebi.ac.uk:8000/model/publish"
-        List info = modelDelegateService.getRevisionsState(revision.model.submissionId)
+        List info = modelDelegateService.getRevisionsState(revision.model.submissionId) as List
         final String PARENT = info["vcsId"] as String
         final String SUB_ID = revision.model.submissionId
         final int REV_NUM = revision.revisionNumber
