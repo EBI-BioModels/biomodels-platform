@@ -163,11 +163,12 @@ class ModelController extends CommonController {
         }
     }
 
-    private void auditAfter() {
+    private void auditAfter(def model) {
         try {
             if (request.lastHistory) {
                 modelDelegateService.updateAuditSuccess(request.lastHistory as Long, true)
                 request.removeAttribute("lastHistory")
+                LOGGER.info("Model in auditAfter: ${model?.dump()}")
             }
         } catch (Exception e) {
             LOGGER.error e.message, e
