@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -45,5 +45,14 @@ class MathUtils {
         new Random().with {
             (1..n).collect { alphabet[ nextInt( alphabet.length() ) ] }.join()
         }
+    }
+
+    static boolean isPositiveNumber(String value) {
+        for (char c in value.toCharArray()) {
+            if (!Character.isDigit(c)) {
+                return false
+            }
+        }
+        return true
     }
 }

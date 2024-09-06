@@ -31,6 +31,8 @@
 
 package net.biomodels.jummp.webapp
 
+import net.biomodels.jummp.utils.MathUtils
+
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
@@ -126,7 +128,7 @@ class ModelController extends CommonController {
             String formatType = response.format
             String changesMade = null
 
-            final boolean HAS_ONLY_DIGITS = isPositiveNumber(modelIdParam)
+            final boolean HAS_ONLY_DIGITS = MathUtils.isPositiveNumber(modelIdParam)
             //perennial model identifiers include literals
             final boolean IS_REVISION_ID = !revisionIdParam && HAS_ONLY_DIGITS
             if (IS_REVISION_ID) {
