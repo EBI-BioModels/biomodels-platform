@@ -193,7 +193,8 @@ class ModelController extends CommonController {
             rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
         } catch (AccessDeniedException e) {
             Model model = Model.findByPublicationIdOrSubmissionId(params.id as String, params.id as String)
-            LOGGER.warn("""An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}. Caused ${e.message}""")
+            LOGGER.warn("""An anonymous or restricted access user is trying to retrieve this model: \
+${model.submissionId}. Caused: ${e.message}""")
             int revisionNumber = -1
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
@@ -382,7 +383,8 @@ class ModelController extends CommonController {
             return
         }
         try {
-            def revisionFiles = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String).files
+            def revision = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+            def revisionFiles = revision.files
             def responseFiles = revisionFiles.findAll { !it.hidden }
             def modelFiles = new ModelFiles(responseFiles)
             withFormat {

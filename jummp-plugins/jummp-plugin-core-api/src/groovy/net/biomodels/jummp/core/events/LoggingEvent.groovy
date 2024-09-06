@@ -52,7 +52,7 @@ class LoggingEvent extends JummpEvent {
     /**
      * The type of the logging event.
      */
-    net.biomodels.jummp.core.events.LoggingEventType type
+    LoggingEventType type
 
     /**
      * Constructor for a LoggingEvent raised when an intercepted method was executed.
@@ -62,7 +62,7 @@ class LoggingEvent extends JummpEvent {
      * @param args The arguments passed into the executed method
      * @param type The type of the executed method
      */
-    LoggingEvent(Object source, String user, Object returnValue, Object[] args, net.biomodels.jummp.core.events.LoggingEventType type) {
+    LoggingEvent(Object source, String user, Object returnValue, Object[] args, LoggingEventType type) {
         super(source)
         this.user = user
         this.returnValue = returnValue

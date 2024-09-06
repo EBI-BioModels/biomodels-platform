@@ -85,7 +85,7 @@ class NotificationService implements InitializingBean {
 
     Set<User> getNotificationRecipients(def permissionsMap) {
         def writeAccessList = permissionsMap.findAll { ptc -> ptc.write }
-        def recipients = writeAccessList.collect { User.get(it.id) }
+        def recipients = writeAccessList.collect { User.get(it.id as Long) }
         recipients
     }
 

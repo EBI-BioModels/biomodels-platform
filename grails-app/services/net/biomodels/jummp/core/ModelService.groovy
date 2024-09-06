@@ -353,7 +353,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count, boolean sortOrder) {
+    List<Model> getAllModels(int offset, int count, boolean sortOrder) {
         getAllModels(offset, count, sortOrder, ModelListSorting.ID)
     }
 
@@ -365,7 +365,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count, ModelListSorting sortColumn) {
+    List<Model> getAllModels(int offset, int count, ModelListSorting sortColumn) {
         return getAllModels(offset, count, true, sortColumn)
     }
 
@@ -377,7 +377,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count) {
+    List<Model> getAllModels(int offset, int count) {
         return getAllModels(offset, count, ModelListSorting.ID)
     }
 
@@ -390,7 +390,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(ModelListSorting sortColumn) {
+    List<Model> getAllModels(ModelListSorting sortColumn) {
         return getAllModels(0, 10, true, sortColumn)
     }
 
@@ -402,7 +402,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels() {
+    List<Model> getAllModels() {
         return getAllModels(ModelListSorting.ID)
     }
 
@@ -623,7 +623,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
                 rev.model = :model
                 AND revisions.deleted = false
                 GROUP BY rev.model, rev.id, rev.revisionNumber
-                HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [model: model]) as List
+                HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [model: model]) as List<Long>
             if (!result) {
                 return null
             }
@@ -667,7 +667,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         Set<String> roles = SpringSecurityUtils.authoritiesToRoles(SpringSecurityUtils.getPrincipalAuthorities())
         if (springSecurityService.isLoggedIn()) {
             // anonymous users do not have a principal
-            roles.add(getUsername())
+            roles.add(userService.username)
         }
         return roles
     }
@@ -753,7 +753,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getPublication")
-    public Publication getPublication(final Model model) throws AccessDeniedException, IllegalArgumentException {
+    Publication getPublication(final Model model) throws AccessDeniedException, IllegalArgumentException {
         if (!model) {
             throw new IllegalArgumentException("Model may not be null")
         }
@@ -1244,8 +1244,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevisionAsList")
-    public Revision addRevisionAsList(Model model, final List<RFTC> repoFiles,
-            final ModelFormat format, final String comment) throws ModelException {
+    Revision addRevisionAsList(Model model, final List<RFTC> repoFiles,
+                               final ModelFormat format, final String comment) throws ModelException {
         // TODO: the method should be thread safe, add a lock
         if (!model) {
             throw new ModelException(null, "Model may not be null")
@@ -1547,11 +1547,11 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     }
                 }
             }
+        } else {
+            throw new AccessDeniedException("You can't access permissions if you don't have them.")
         }
-        else {
-            throw new AccessDeniedException("You cant access permissions if you dont have them.")
-        }
-        return map.values()
+
+        map.values()
     }
 
     /**
@@ -1562,7 +1562,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.setPermissions")
-    public void setPermissions(Model model, List<PermissionTransportCommand> permissions) {
+    void setPermissions(Model model, List<PermissionTransportCommand> permissions) {
         if (aclUtilService.hasPermission(springSecurityService.authentication, model,
                     BasePermission.ADMINISTRATION ) || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             Collection<PermissionTransportCommand> existing = getPermissionsMap(model)
@@ -1610,13 +1610,6 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         } else {
             throw new AccessDeniedException("You can't access the model ${model.submissionId} if you don't have required permissions.")
         }
-    }
-
-    private String getUsername() {
-        if (springSecurityService.isLoggedIn()) {
-            return (springSecurityService.currentUser as User).getUsername()
-        }
-        return "anonymous"
     }
 
     /**
@@ -2242,7 +2235,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
      * @param revision The Revision to be published
      */
     @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
-    @PostLogging(LoggingEventType.UPDATE)
+    @PostLogging(LoggingEventType.PUBLISH)
     @Profiled(tag="modelService.publishModelRevision")
     Revision publishModelRevision(Revision revision) {
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
@@ -2408,7 +2401,7 @@ the perennial publication identifier to the model file.""")
      * @param revision The Revision to be published
      */
     @PreAuthorize("(hasRole('ROLE_CURATOR') and hasPermission(#revision, admin)) or hasRole('ROLE_ADMIN')")
-    @PostLogging(LoggingEventType.UPDATE)
+    @PostLogging(LoggingEventType.UNPUBLISH)
     @Profiled(tag="modelService.unpublishModelRevision")
     void unpublishModelRevision(Revision revision) {
         if (!revision) {
@@ -2419,7 +2412,7 @@ the perennial publication identifier to the model file.""")
         }
         aclUtilService.deletePermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.deletePermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
-        revision.state=ModelState.UNPUBLISHED
+        revision.state = ModelState.UNPUBLISHED
         revision.model.firstPublished = null
         revision.model.publicationId = null
         if (!revision.save(flush:true)) {
@@ -2938,7 +2931,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
         return extractIdentifiersBasedEbiSearchJson(query)
     }
 
-    private List<String> extractIdentifiersBasedEbiSearchJson(final String query) {
+    private static List<String> extractIdentifiersBasedEbiSearchJson(final String query) {
         List<String> identifiers = new ArrayList<>()
         String jsonString = JummpHttpService.jsonGetRequest(query)
         JSONObject json = new JSONObject(jsonString)
@@ -2968,7 +2961,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
         identifiers
     }
 
-    private List<String> extractAllModelIdentifiers(JSONObject json) {
+    private static List<String> extractAllModelIdentifiers(JSONObject json) {
         List<String> results = []
         if (json.has("entries")) {
             json.get("entries").each {
