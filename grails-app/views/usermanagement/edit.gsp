@@ -69,7 +69,6 @@
 								</g:else>
 							</td></tr>
 						</g:each>
-                        <input type="text" name="options" id="options" placeholder="store all options" style="display: inline"/>
 					</tbody>
 				</table>
             </div>
