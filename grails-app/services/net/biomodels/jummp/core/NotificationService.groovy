@@ -68,6 +68,7 @@ class NotificationService implements InitializingBean {
     def springSecurityService
     def messageSource
 
+    String serverURL
 
     void sendConfirmationOrNotificationEmail(final String emailFrom, final String emailTo,
                                              final String emailSubject, final String emailBody,
@@ -139,6 +140,8 @@ class NotificationService implements InitializingBean {
     }
 
     void sendNotificationToUser(User user, Notification notification) {
+        final updatedNotifyBody = notification.body.replace("USER_REALNAME", user.person.userRealName)
+        notification.body = updatedNotifyBody
         NTPs pref = getPreference(user, notification.notificationType)
         if (pref.sendMail) {
             final String emailFrom = grailsApplication.config.jummp.security.registration.email.sender
@@ -217,11 +220,14 @@ class NotificationService implements InitializingBean {
 
     void modelPublished(def body) {
         RTC rev  = body.revision as RTC
-        String notifTitle = "notification.model.published.title"
-        String notifBody = "notification.model.published.body"
+        String notifyTitle = "notification.model.published.title"
+        String notifyBody = "notification.model.published.body"
         User user = body.user as User
-        useGenericNotificationStructure(notifTitle, [rev.name] as String[], notifBody,
-            [rev.name, user.username] as String[], NT.PUBLISH, user, getNotificationRecipients(body.perms), rev.model)
+        Set<User> receipts = getNotificationRecipients(body.perms)
+        final String modelURL = rev.url()
+        useGenericNotificationStructure(notifyTitle, [rev.name] as String[],
+            notifyBody, [modelURL, rev.name, user.username, serverURL] as String[],
+            NT.PUBLISH, user, receipts, rev.model)
     }
 
     void readAccessGranted(def body) {
@@ -386,6 +392,7 @@ class NotificationService implements InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
+        serverURL = grailsApplication.config.grails.serverURL
         logger.info("Finished the bean initialisation")
     }
 }
