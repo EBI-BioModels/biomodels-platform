@@ -22,9 +22,11 @@ package net.biomodels.jummp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.*
+import org.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.mail.MailAuthenticationException
@@ -38,7 +40,7 @@ import javax.mail.AuthenticationFailedException
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-class UsermanagementController {
+class UsermanagementController extends CommonController {
     private static final Logger LOGGER = LoggerFactory.getLogger(UsermanagementController.class)
     def simpleCaptchaService
     def userService
@@ -73,11 +75,12 @@ class UsermanagementController {
     @Secured(["isAuthenticated()"])
     def edit() {
         User currentUser = springSecurityService.currentUser
+        List notifications = notificationService.getNotificationPermissions(currentUser.username)
         render  view: "edit",
-                model: [postUrl: "", flashMessage: checkForMessage(),
+                model: [serverURL: serverURL, postUrl: "", flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
                         user: currentUser,
-                        notificationPermissions: notificationService.getNotificationPermissions(currentUser.username)]
+                        notificationPermissions: notifications]
     }
 
     @Secured(["isAuthenticated()"])
@@ -175,6 +178,31 @@ class UsermanagementController {
         redirect(action: "show")
     }
 
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def update(EditUserCommand cmd) {
+        if (!cmd.validate()) {
+            flash.message = "Your provided data are invalid.";
+            render(["message": flash.message, "status": "NOT_OK"] as JSON)
+        }
+        // 1. Save user's info
+        EditUserCommand cmd1 = cmd.sanitise()
+        def user = cmd1.toUser()
+        def user1 = userService.editUser(user)
+
+        // 2. Save preferences
+        String options = cmd.options
+        List preferences = cmd.getPreferences(user1, options)
+        boolean success = notificationService.updatePreferences(preferences)
+        String status, message
+        if (success && user1.id >= 0) {
+            status = "OK"
+            message = "Your profile has been updated successfully!"
+        } else {
+            status = "NOT_OK"
+            message = "Your profile cannot be updated due to unknown errors!"
+        }
+        render([status: status, message: message] as JSON)
+    }
     /**
      * Validates the command object and then uses the user service to
      * edit a user. If an error occurs at any point, the method redirects

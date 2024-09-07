@@ -97,18 +97,21 @@ class NotificationService implements InitializingBean {
         return pref
     }
 
-    void updatePreferences(List<NTPs> preferences) {
+    boolean updatePreferences(List<NTPs> preferences) {
         User user = preferences.first().user
+        boolean success = true
         preferences.each { updated ->
             NTPs existing = getPreference(user, updated.notificationType)
             if (existing.sendMail != updated.sendMail || existing.sendNotification != updated.sendNotification) {
                 existing.sendMail = updated.sendMail
                 existing.sendNotification = updated.sendNotification
                 if (!existing.save(flush: true)) {
+                    success = false
                     logger.error "Failed to update notification preferences ${existing} for user ${user}"
                 }
             }
         }
+        success
     }
 
     void sendNotificationToUser(User user, Notification notification) {

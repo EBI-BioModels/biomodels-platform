@@ -21,6 +21,7 @@
 
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="grails.converters.JSON;" %>
 <html>
     <head>
         <title><g:message code="user.administration.ui.heading.user"/></title>
@@ -30,12 +31,14 @@
     	<div class="content">
     	<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     	<div class="view-content">
+        <form action="editUser" id="edit-user-form">
         <div class="row">
-            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-			<g:form action="editUser">
+            <div class="small-12 medium-6 large-6 columns">
                 <h2>Update user information</h2>
                 <g:render template="userInforInput" model="[user: user]"/>
-				<h2>Notifications</h2>
+            </div>
+            <div class="small-12 medium-6 large-6 columns">
+                <h2>Notifications</h2>
 				<table class="responsive-table">
 					<thead>
 						<th>Notification Type</th>
@@ -44,32 +47,40 @@
 					</thead>
 					<tbody>
 						<g:each status="i" in="${notificationPermissions}" var="perm">
-							<tr><td class='tableLabels'><label>${perm.notificationType.toString()}</label></td>
+							<tr><td class='tableLabels'><label>${perm.notificationType.text()}</label></td>
 							<td>
 								<g:if test="${perm.sendNotification}">
-									<input type="checkbox" name="sendNotification${perm.notificationType.id}" checked/>
+									<input type="checkbox" id="notify-${perm.notificationType.slug()}"
+                                           name="sendNotification${perm.notificationType.id}" checked/>
 								</g:if>
 								<g:else>
-									<input type="checkbox" name="sendNotification${perm.notificationType.id}"/>
+									<input type="checkbox" id="notify-${perm.notificationType.slug()}"
+                                           name="sendNotification${perm.notificationType.id}"/>
 								</g:else>
 							</td>
 							<td>
 								<g:if test="${perm.sendMail}">
-									<input type="checkbox" name="sendMail${perm.notificationType.id}" checked/>
+									<input type="checkbox" id="email-${perm.notificationType.slug()}"
+                                           name="sendMail${perm.notificationType.id}" checked/>
 								</g:if>
 								<g:else>
-									<input type="checkbox" name="sendMail${perm.notificationType.id}"/>
+									<input type="checkbox" id="email-${perm.notificationType.slug()}"
+                                           name="sendMail${perm.notificationType.id}"/>
 								</g:else>
 							</td></tr>
 						</g:each>
+                        <input type="text" name="options" id="options" placeholder="store all options" style="display: inline"/>
 					</tbody>
 				</table>
-				<div class="buttons">
-                    <input type="submit" class="button" value="${g.message(code: 'user.administration.edit.save')}"/>
-				</div>
-			</g:form>
             </div>
         </div>
+        <div class="row">
+            <div class="columns">
+            <div class="buttons">
+                <input type="button" id="btn-save" class="button" value="${g.message(code: 'user.administration.edit.save')}"/>
+            </div></div>
+        </div>
+        </form>
         </div>
         </div>
         </div>
@@ -80,6 +91,61 @@
             var currentRealName = "${user.person.userRealName}";
             var currentOrcid = "${user.person.orcid}";
             var actionName = "${params.action}";
+            let options = {};
+            if (${notificationPermissions != null}) {
+                options = ${notificationPermissions.collect {
+                    ["id": it.notificationType.id, "slug": it.notificationType.slug(),
+                     "text": it.notificationType.text(), "notify": 1, "email": 0]
+                } as JSON }
+            }
+
+            console.log("options are loaded from DB: ", options);
+
+            $('#btn-save').on("click", function() {
+                jQuery.each(options, (index, opt) => {
+                    console.log(opt);
+                    const chkNotify = $("#notify-"+opt["slug"]).is(":checked");
+                    const chkEmail = $("#email-"+opt["slug"]).is(":checked");
+                    console.log(chkNotify, chkEmail);
+                    options[index]['notify'] = chkNotify ? 1 : 0;
+                    options[index]['email'] = chkEmail ? 1 : 0;
+                });
+                console.log("options are updated from Web: ", options);
+                const URL = "${serverURL}/user/update";
+                const data = {
+                    "username": $('#username').val(),
+                    "userRealName": $("#userRealName").val(),
+                    "email": $("#email").val(),
+                    "institution": $("#institution").val(),
+                    "orcid": $("#orcid").val(),
+                    "options": JSON.stringify(options)
+                }
+                fetch(URL, {
+                    method: "POST",
+                    headers: {
+                        "Accept": "application/json; charset=utf-8",
+                        "Content-Type": "application/json; charset=utf-8"
+                    },
+                    body: JSON.stringify(data)
+                }).then((response) => {
+                    if (!response.ok) {
+                        throw new Error('Network response failed or Internal Server Error!!!');
+                    }
+                    return response.json();
+                }).then((data) => {
+                    // console.log(data);
+                    if (data) {
+                        const flashDiv = $(".flashNotificationDiv");
+                        flashDiv.html(data["message"]);
+                        flashDiv.show();
+                    }
+                }).catch(error => {
+                    console.error(error);
+                    const flashDiv = $(".flashNotificationDiv");
+                    flashDiv.html(error);
+                    flashDiv.show();
+                });
+            });
         </g:javascript>
    </body>
 </html>

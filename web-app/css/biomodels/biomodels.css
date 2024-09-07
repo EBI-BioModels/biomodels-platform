@@ -16,6 +16,7 @@ table.center {
 }
 .tableLabels {
     float: right;
+    text-align: right;
 }
 
 .label-floating-left {

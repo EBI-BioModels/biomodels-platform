@@ -119,6 +119,7 @@ class UrlMappings {
         "/user/editUser"(controller:"usermanagement", action:"edit")
         "/user/editPassword"(controller:"usermanagement", action:"editPassword")
         "/user/profile"(controller:"usermanagement", action:"profile")
+        "/user/update"(controller:"usermanagement", action:"update")
         "/user"(controller:"usermanagement", action:"show")
         "/mommanagement"(controller: "modelOfTheMonth", action: "index")
         "/competition/model-of-the-year-2022"(redirect: "/competition/model-of-the-year-2023")
