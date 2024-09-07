@@ -68,6 +68,30 @@ class NotificationService implements InitializingBean {
     def springSecurityService
     def messageSource
 
+
+    void sendConfirmationOrNotificationEmail(final String emailFrom, final String emailTo,
+                                             final String emailSubject, final String emailBody,
+                                             final String emailReplyTo = null) {
+        if (emailReplyTo) {
+            mailService.sendMail {
+                async true
+                to emailTo
+                from emailFrom
+                replyTo emailReplyTo
+                subject emailSubject
+                html emailBody
+            }
+        } else {
+            mailService.sendMail {
+                async true
+                to emailTo
+                from emailFrom
+                subject emailSubject
+                html emailBody
+            }
+        }
+    }
+
     void useGenericNotificationStructure(String notificationTitle,
                                          String[] titleParams, String notificationBody, String[] bodyParams,
                                          NT type, User sender, Set<User> watchers, MTC model) {
@@ -117,14 +141,11 @@ class NotificationService implements InitializingBean {
     void sendNotificationToUser(User user, Notification notification) {
         NTPs pref = getPreference(user, notification.notificationType)
         if (pref.sendMail) {
-            String emailBody = notification.body
+            final String emailFrom = grailsApplication.config.jummp.security.registration.email.sender
+            final String emailTo = user.email
             String emailSubject = notification.title
-            mailService.sendMail {
-                to user.email
-                from grailsApplication.config.jummp.security.registration.email.sender
-                subject emailSubject
-                html emailBody
-            }
+            String emailBody = notification.body
+            sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
         }
         if (pref.sendNotification) {
             NU userNotify = new NU(notification: notification, user: user)
@@ -169,13 +190,7 @@ class NotificationService implements InitializingBean {
             String[] args = [model.id.toString(), model.name, model.submissionId, format,
                              submitterInfo, pubData, submissionTime, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToCurator.body", args, null)
-            mailService.sendMail {
-                async true
-                to emailTo
-                from emailFrom
-                subject emailSubject
-                html emailBody
-            }
+            sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
         }
         /* email notification to the submitter */
         emailTo = body.emails[1]
@@ -196,13 +211,7 @@ class NotificationService implements InitializingBean {
             String askAcknowledgement = noPublicationProvided
             String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
-            mailService.sendMail {
-                async true
-                to emailTo
-                from emailFrom
-                subject emailSubject
-                html emailBody
-            }
+            sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
         }
     }
 
@@ -339,14 +348,7 @@ class NotificationService implements InitializingBean {
         String emailFrom = user.email //grailsApplication.config.jummp.security.registration.email.sender
         String emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
         String emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
-        mailService.sendMail {
-            async true
-            to emailTo
-            from emailFrom
-            replyTo emailFrom
-            subject emailSubject
-            html emailBody
-        }
+        sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody, emailFrom)
 
         // send an email to the user to request a citation to BioModels
         (emailFrom, emailTo) = [emailTo, emailFrom]
@@ -358,14 +360,7 @@ class NotificationService implements InitializingBean {
         notificationBody = "biomodels.howtoCiteUs.reminder.content"
         bodyParams = [serverURL, user?.person?.userRealName ?: user.username, model.submissionId]
         emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
-        mailService.sendMail {
-            async true
-            to emailTo
-            from emailFrom
-            replyTo emailFrom
-            subject emailSubject
-            html emailBody
-        }
+        sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody, emailFrom)
     }
 
     void feedback2Admin(def body) {
