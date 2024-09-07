@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core.model
 
+import grails.util.Holders
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
 import net.biomodels.jummp.core.certification.QcInfoTransportCommand
 import org.springframework.context.ApplicationContext
@@ -52,6 +53,8 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class RevisionTransportCommand implements Serializable {
+    def grailsApplication = Holders.grailsApplication
+
     private static final long serialVersionUID = 1L
     /**
      * The application context. Populated during bootstrap.
@@ -180,5 +183,9 @@ class RevisionTransportCommand implements Serializable {
             case ValidationState.REJECTED:
                 return "Annotations are incorrect"
         }
+    }
+
+    String url() {
+        grailsApplication.config.grails.serverURL + "/" + identifier()
     }
 }
