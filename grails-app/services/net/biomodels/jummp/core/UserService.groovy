@@ -79,7 +79,7 @@ class UserService implements IUserService, InitializingBean {
      */
     private final Random random = new Random(System.currentTimeMillis())
 
-    private void checkUserValid(String user) {
+    private static void checkUserValid(String user) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication()
         if (user != auth.getName() && !SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             throw new AccessDeniedException("User not valid. You do not have rights to modify this user")
@@ -175,8 +175,8 @@ class UserService implements IUserService, InitializingBean {
     @Profiled(tag = "userService.editUser")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
     User editUser(User user) throws UserInvalidException {
-        checkUserValid(user.username.decodeHTML())
-        User origUser = User.findByUsername(user.username.decodeHTML())
+        checkUserValid(user.username.decodeHTML() as String)
+        User origUser = User.findByUsername(user.username.decodeHTML() as String)
         handleOrcidModification(user, origUser)
         origUser.person.userRealName = user.person.userRealName
         origUser.person.institution = user.person.institution
@@ -192,7 +192,8 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     @Profiled(tag="userService.getCurrentUser")
     @PreAuthorize("hasRole('ROLE_USER')")
     User getCurrentUser() {
-        User u = User.findByUsername(springSecurityService.authentication.principal.username)?.sanitizedUser()
+        final String username = springSecurityService.authentication.principal.username as String
+        User u = User.findByUsername(username)?.sanitizedUser()
         LOGGER.debug("Retrieving the current user: ${u?.username}")
         return u
     }
@@ -219,7 +220,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
      */
     @PreAuthorize("isAnonymous() or isAuthenticated()")
     User lookupUser(String query, int column) {
-        User user = null
+        User user
         if (column == 1 || column == 2) {
             user = User.findByUsername(query)
             if (!user) {
@@ -594,7 +595,6 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         User user = lookupUser(usernameOrEmail, 1)
         if (!user) {
             throw new UserNotFoundException(usernameOrEmail)
-            return
         }
         String passwordCode = String.valueOf(random.nextInt()) + user.username
         user.passwordForgottenCode = passwordCode.encodeAsMD5()

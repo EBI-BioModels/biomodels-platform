@@ -166,7 +166,7 @@ class ConfigurationService implements InitializingBean {
      * @param bives the BiVeS configuration
      * @param cms the CMS configuration
      */
-    public void storeConfiguration(DatabaseCommand database, LdapCommand ldap, VcsCommand vcs, SvnCommand svn, FirstRunCommand firstRun,
+    void storeConfiguration(DatabaseCommand database, LdapCommand ldap, VcsCommand vcs, SvnCommand svn, FirstRunCommand firstRun,
                                    ServerCommand server, UserRegistrationCommand userRegistration, ChangePasswordCommand changePassword,
                                    RemoteCommand remote, TriggerCommand trigger, SBMLCommand sbml, BivesCommand bives,
                                    CmsCommand cms, BrandingCommand branding, SearchCommand search, MailCommand mail) {
@@ -231,7 +231,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current BiVeS Configuration.
      * @return A command object encapsulating the current BiVeS configuration
      */
-    public BivesCommand loadBivesConfiguration() {
+    BivesCommand loadBivesConfiguration() {
         Properties properties = loadProperties()
         BivesCommand bives = new BivesCommand()
         bives.diffDir   = properties.getProperty("jummp.plugins.bives.diffdir")
@@ -242,7 +242,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current CMS Configuration.
      * @return A command object encapsulating the current CMS configuration
      */
-    public CmsCommand loadCmsConfiguration() {
+    CmsCommand loadCmsConfiguration() {
         Properties properties = loadProperties()
         CmsCommand cmsCommand = new CmsCommand()
         cmsCommand.policyFile = properties.getProperty("jummp.security.cms.policy")
@@ -253,7 +253,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current database Configuration.
      * @return A command object encapsulating the current database configuration
      */
-    public DatabaseCommand loadDatabaseConfiguration() {
+    DatabaseCommand loadDatabaseConfiguration() {
         Properties properties = loadProperties()
         DatabaseCommand database = new DatabaseCommand()
         switch (properties.getProperty("jummp.database.type")) {
@@ -310,7 +310,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current Remote Configuration.
      * @return A command object encapsulating the current Remote Configuration
      */
-    public RemoteCommand loadRemoteConfiguration() {
+    RemoteCommand loadRemoteConfiguration() {
         Properties properties = loadProperties()
         RemoteCommand remote = new RemoteCommand()
         remote.jummpRemote = properties.getProperty("jummp.remote")
@@ -322,7 +322,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current LDAP Configuration.
      * @return A command object encapsulating the current LDAP configuration
      */
-    public LdapCommand loadLdapConfiguration() {
+    LdapCommand loadLdapConfiguration() {
         Properties properties = loadProperties()
         LdapCommand ldap = new LdapCommand()
         ldap.ldapServer          = properties.getProperty("jummp.security.ldap.server")
@@ -338,7 +338,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current Version Control System Configuration.
      * @return A command object encapsulating the current VCS configuration
      */
-    public VcsCommand loadVcsConfiguration() {
+    VcsCommand loadVcsConfiguration() {
         Properties properties = loadProperties()
         VcsCommand vcs = new VcsCommand()
         vcs.vcs = properties.getProperty("jummp.vcs.plugin") == "subversion" ? "svn" : "git"
@@ -351,7 +351,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current Subversion Configuration.
      * @return A command object encapsulating the current SVN configuration
      */
-    public SvnCommand loadSvnConfiguration() {
+    SvnCommand loadSvnConfiguration() {
         Properties properties = loadProperties()
         SvnCommand svn = new SvnCommand()
         svn.localRepository = properties.getProperty("jummp.plugins.subversion.localRepository")
@@ -362,7 +362,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current Server Configuration.
      * @return A command object encapsulating the current server configuration
      */
-    public ServerCommand loadServerConfiguration() {
+    ServerCommand loadServerConfiguration() {
         Properties properties = loadProperties()
         ServerCommand server = new ServerCommand()
         server.url = properties.getProperty("jummp.server.url")
@@ -374,7 +374,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current user registration Configuration
      * @return A command object encapsulating the current user registration configuration
      */
-    public UserRegistrationCommand loadUserRegistrationConfiguration() {
+    UserRegistrationCommand loadUserRegistrationConfiguration() {
         Properties properties = loadProperties()
         UserRegistrationCommand cmd = new UserRegistrationCommand()
         cmd.registration  = Boolean.parseBoolean(properties.getProperty("jummp.security.anonymousRegistration"))
@@ -395,7 +395,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current change/reset password Configuration
      * @return A command object encapsulating the current change/reset password configuration
      */
-    public ChangePasswordCommand loadChangePasswordConfiguration() {
+    ChangePasswordCommand loadChangePasswordConfiguration() {
         Properties properties = loadProperties()
         ChangePasswordCommand cmd = new ChangePasswordCommand()
         cmd.changePassword = Boolean.parseBoolean(properties.getProperty("jummp.security.ui.changePassword"))
@@ -411,7 +411,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current triggerConfiguration.
      * @return A command object encapsulating the current BiVeS configuration
      */
-    public TriggerCommand loadTriggerConfiguration() {
+    TriggerCommand loadTriggerConfiguration() {
         Properties properties = loadProperties()
         TriggerCommand trigger = new TriggerCommand()
         trigger.startRemoveOffset = Long.parseLong(properties.getProperty("jummp.authenticationHash.startRemoveOffset"))
@@ -424,7 +424,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current SBMLConfiguration.
      * @return A command object encapsulating the current SBML configuration
      */
-    public SBMLCommand loadSBMLConfiguration() {
+    SBMLCommand loadSBMLConfiguration() {
         Properties properties = loadProperties()
         SBMLCommand sbml = new SBMLCommand()
         sbml.validate = Boolean.parseBoolean(properties.getProperty("jummp.plugins.sbml.validation"))
@@ -435,7 +435,7 @@ class ConfigurationService implements InitializingBean {
      * Loads the current branding configuration.
      * @return A command object encapsulating the current branding configuration
      */
-    public BrandingCommand loadBrandingConfiguration() {
+    BrandingCommand loadBrandingConfiguration() {
         Properties properties = loadProperties()
         BrandingCommand branding = new BrandingCommand()
         branding.internalColor = properties.getProperty("jummp.branding.internalColor")
@@ -452,7 +452,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param bives The new BiVeS configuration
      */
-    public void saveBivesConfiguration(BivesCommand bives) {
+    void saveBivesConfiguration(BivesCommand bives) {
         Properties properties = loadProperties()
         updateBivesConfiguration(properties, bives)
         saveProperties(properties)
@@ -465,7 +465,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param cmsCommand The new CMS configuration
      */
-    public void saveCmsConfiguration(CmsCommand cmsCommand) {
+    void saveCmsConfiguration(CmsCommand cmsCommand) {
         Properties properties = loadProperties()
         updateCmsConfiguration(properties, cmsCommand)
         saveProperties(properties)
@@ -478,7 +478,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param database The new database configuration
      */
-    public void saveDatabaseConfiguration(DatabaseCommand database) {
+    void saveDatabaseConfiguration(DatabaseCommand database) {
         Properties properties = loadProperties()
         updateDatabaseConfiguration(properties, database)
         saveProperties(properties)
@@ -491,7 +491,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param remote The new Remote configuration
      */
-    public void saveRemoteConfiguration(RemoteCommand remote) {
+    void saveRemoteConfiguration(RemoteCommand remote) {
         Properties properties = loadProperties()
         updateRemoteConfiguration(properties, remote)
         saveProperties(properties)
@@ -504,7 +504,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param ldap The new LDAP configuration
      */
-    public void saveLdapConfiguration(LdapCommand ldap) {
+    void saveLdapConfiguration(LdapCommand ldap) {
         Properties properties = loadProperties()
         updateLdapConfiguration(properties, ldap)
         saveProperties(properties)
@@ -517,7 +517,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param vcs The new VCS configuration
      */
-    public void saveVcsConfiguration(VcsCommand vcs) {
+    void saveVcsConfiguration(VcsCommand vcs) {
         Properties properties = loadProperties()
         updateVcsConfiguration(properties, vcs)
         saveProperties(properties)
@@ -530,7 +530,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param svn The new Svn configuration
      */
-    public void saveSvnConfiguration(SvnCommand svn) {
+    void saveSvnConfiguration(SvnCommand svn) {
         Properties properties = loadProperties()
         updateSvnConfiguration(properties, svn)
         saveProperties(properties)
@@ -543,7 +543,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param svn The new Svn configuration
      */
-    public void saveServerConfiguration(ServerCommand server) {
+    void saveServerConfiguration(ServerCommand server) {
         Properties properties = loadProperties()
         updateServerConfiguration(properties, server)
         saveProperties(properties)
@@ -556,7 +556,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param cmd The new User Registration settings
      */
-    public void saveUserRegistrationConfiguration(UserRegistrationCommand cmd) {
+    void saveUserRegistrationConfiguration(UserRegistrationCommand cmd) {
         Properties properties = loadProperties()
         updateUserRegistrationConfiguration(properties, cmd)
         saveProperties(properties)
@@ -569,7 +569,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param cmd The new change/reset password settings
      */
-    public void saveChangePasswordConfiguration(ChangePasswordCommand cmd) {
+    void saveChangePasswordConfiguration(ChangePasswordCommand cmd) {
         Properties properties = loadProperties()
         updateChangePasswordConfiguration(properties, cmd)
         saveProperties(properties)
@@ -582,7 +582,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param trigger The new trigger configuration
      */
-    public void saveTriggerConfiguration(TriggerCommand trigger) {
+    void saveTriggerConfiguration(TriggerCommand trigger) {
         Properties properties = loadProperties()
         updateTriggerConfiguration(properties, trigger)
         saveProperties(properties)
@@ -595,7 +595,7 @@ class ConfigurationService implements InitializingBean {
      * a restart of the application!
      * @param sbml The new SBML configuration
      */
-    public void saveSBMLConfiguration(SBMLCommand sbml) {
+    void saveSBMLConfiguration(SBMLCommand sbml) {
         Properties properties = loadProperties()
         updateSBMLConfiguration(properties, sbml)
         saveProperties(properties)
@@ -608,7 +608,7 @@ class ConfigurationService implements InitializingBean {
     * a restart of the application!
     * @param branding The new branding configuration
     */
-   public void saveBrandingConfiguration(BrandingCommand branding) {
+   void saveBrandingConfiguration(BrandingCommand branding) {
        Properties properties = loadProperties()
        updateBrandingConfiguration(properties, branding)
        saveProperties(properties)
