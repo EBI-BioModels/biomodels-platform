@@ -53,7 +53,7 @@ class EditUserCommand implements Serializable {
      * 1 Publish -> Notify: 1, Email: 0
      * 2 Revision Created -> Notify 1, Email: 0
      * 3 Access Granted -> Notify 1, Email: 1
-     * options are patterned as { 1:[1,0]; 2:[1,0]; 3:[1,1]; ... }
+     * options are patterned as {id: 1, slug: 'model-published', text: 'Publish', notify: 1, email: 0}
      */
     String options
 
