@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.core.model
 
+import grails.util.Holders
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.qcinfo.FlagLevel
 import net.biomodels.jummp.qcinfo.QcInfo
@@ -44,6 +45,7 @@ import net.biomodels.jummp.qcinfo.QcInfo
  */
 class ModelTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
+    def grailsApplication = Holders.grailsApplication
     /**
      * The model id.
      */
@@ -132,4 +134,8 @@ class ModelTransportCommand implements Serializable {
      * This flag tells the current submission (i.e., model) is a metadata submission/model or not
      */
     Boolean isMetadataSubmission
+
+    String url() {
+        grailsApplication.config.grails.serverURL + "/" + publicationId ?: submissionId
+    }
 }
