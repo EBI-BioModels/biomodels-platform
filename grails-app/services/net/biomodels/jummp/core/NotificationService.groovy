@@ -232,7 +232,7 @@ class NotificationService implements InitializingBean {
         Set<User> receipts = getNotificationRecipients(body.perms)
         final String modelURL = rev.url()
         useGenericNotificationStructure(notifyTitle, [rev.name] as String[],
-            notifyBody, [modelURL, rev.name, user.username, serverURL] as String[],
+            notifyBody, [rev.name, user.username, modelURL, "${serverURL}/user", serverURL] as String[],
             NT.PUBLISH, user, receipts, rev.model)
     }
 
@@ -263,14 +263,15 @@ class NotificationService implements InitializingBean {
         User grantedTo = body.grantedTo
         Set<User> watchers = getNotificationRecipients(body.perms) - [user]
         useGenericNotificationStructure(notifyTitle, [model.name] as String[], notifyBody,
-            [model.name, user.username, body.grantedTo.username] as String[],
+            [model.name, user.username, grantedTo.username, model.url(), "${serverURL}/user", serverURL] as String[],
             NT.ACCESS_GRANTED, user, watchers , model)
 
         notifyTitle = "notification.model.write.grantedTo.title"
         notifyBody = "notification.model.write.grantedTo.body"
         watchers = [grantedTo] as Set
         useGenericNotificationStructure(notifyTitle, [model.name] as String[], notifyBody,
-            [model.name, user.username] as String[], NT.ACCESS_GRANTED_TO, user, watchers, model)
+            [model.name, user.username, model.url(), "${serverURL}/user", serverURL] as String[],
+            NT.ACCESS_GRANTED_TO, user, watchers, model)
     }
 
     int unreadNotificationCount() {
@@ -318,7 +319,7 @@ class NotificationService implements InitializingBean {
         String notifyBody = "notification.model.deleted.body"
         User user = body.user as User
         useGenericNotificationStructure(notifyTitle, [model.name] as String[], notifyBody,
-            [model.name, user.username, serverURL] as String[],
+            [model.name, user.username, "${serverURL}/user", serverURL] as String[],
             NT.DELETED, user, getNotificationRecipients(body.perms), model)
     }
 
@@ -340,7 +341,7 @@ class NotificationService implements InitializingBean {
         }.toString()
         logger.debug("People will receive the notification: ${tmp}")
         useGenericNotificationStructure(notifyTitle, [model.name] as String[],
-            notifyBody, [revision.url(), model.name, user.username, updates.join("<br/>"), serverURL] as String[],
+            notifyBody, [revision.url(), model.name, user.username, updates.join("<br/>"), "${serverURL}/user", serverURL] as String[],
             NT.VERSION_CREATED, user, recipients, model)
     }
 
