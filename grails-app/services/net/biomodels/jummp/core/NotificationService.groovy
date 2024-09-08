@@ -230,7 +230,7 @@ class NotificationService implements InitializingBean {
             NT.PUBLISH, user, receipts, rev.model)
     }
 
-    void readAccessGranted(def body) {
+    void modelReadAccessGranted(def body) {
         MTC model  = body.model as MTC
         String notifTitle = "notification.model.readgranted.title"
         String notifBody = "notification.model.readgranted.body"
@@ -246,7 +246,7 @@ class NotificationService implements InitializingBean {
             [model.name, user.username] as String[], NT.ACCESS_GRANTED_TO, user, [grantedTo] as Set, model)
     }
 
-    void writeAccessGranted(def body) {
+    void modelWriteAccessGranted(def body) {
         MTC model  = body.model as MTC
         String notifTitle = "notification.model.writegranted.title"
         String notifBody = "notification.model.writegranted.body"
@@ -302,7 +302,7 @@ class NotificationService implements InitializingBean {
         }
     }
 
-    void delete(def body) {
+    void modelDelete(def body) {
         MTC model  = body.model as MTC
         String notifTitle = "notification.model.deleted.title"
         String notifBody = "notification.model.deleted.body"
@@ -315,8 +315,7 @@ class NotificationService implements InitializingBean {
      * Sending a notification to the subscribers when the model is updated.
      * @param body
      */
-    // TODO: should update the body so as to "Dear Mr. Hello," instead of "Dear BioModels user."
-    void update(def body) {
+    void modelUpdate(def body) {
         MTC model  = body.model as MTC
         def updates = []
         body.update.each { updates.add(it) }

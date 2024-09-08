@@ -29,10 +29,10 @@ class NotificationRoute extends RouteBuilder {
         from("seda:model.create").to("bean:notificationService?method=modelCreated")
         from("seda:model.sub4pub").to("bean:notificationService?method=modelSubmitForPublication")
         from("seda:model.publish").to("bean:notificationService?method=modelPublished")
-        from("seda:model.readAccessGranted").to("bean:notificationService?method=readAccessGranted")
-        from("seda:model.writeAccessGranted").to("bean:notificationService?method=writeAccessGranted")
-        from("seda:model.delete").to("bean:notificationService?method=delete")
-        from("seda:model.update").to("bean:notificationService?method=update")
+        from("seda:model.readAccessGranted").to("bean:notificationService?method=modelReadAccessGranted")
+        from("seda:model.writeAccessGranted").to("bean:notificationService?method=modelWriteAccessGranted")
+        from("seda:model.delete").to("bean:notificationService?method=modelDelete")
+        from("seda:model.update").to("bean:notificationService?method=modelUpdate")
         from("seda:jummp.feedback").to("bean:notificationService?method=feedback2Admin")
     }
 }
