@@ -1472,7 +1472,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             model.revisions.each { Revision it ->
                 boolean canRead = aclUtilService.hasPermission(
                         springSecurityService.authentication, it, BasePermission.READ)
-                if ( canRead || isAdmin ) {
+                if (canRead || isAdmin) {
                     aclUtilService.addPermission(it, username, BasePermission.READ)
                 }
             }
@@ -1636,8 +1636,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             }
             model.revisions.each { Revision it ->
                 // may have been granted already through grantReadAccess for instance
-                if (!hasAdminPermission(it, username)) {
-                    aclUtilService.addPermission(it, username, BasePermission.ADMINISTRATION)
+                if (!hasAdminPermission(it, collaborator.username)) {
+                    aclUtilService.addPermission(it, collaborator.username, BasePermission.ADMINISTRATION)
                 }
             }
         }
