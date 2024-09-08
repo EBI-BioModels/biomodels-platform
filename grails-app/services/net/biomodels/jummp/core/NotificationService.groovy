@@ -110,7 +110,12 @@ class NotificationService implements InitializingBean {
 
     Set<User> getNotificationRecipients(def permissionsMap) {
         def writeAccessList = permissionsMap.findAll { ptc -> ptc.write }
-        def recipients = writeAccessList.collect { User.get(it.id as Long) }
+        List<User> recipients = writeAccessList.collect { User.get(it.id as Long) }
+        // Administrator should be notified for administration and tracking
+        User administrator = User.findByUsername("administrator")
+        if (administrator) {
+            recipients.add(administrator)
+        }
         recipients
     }
 
