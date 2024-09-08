@@ -162,7 +162,13 @@ class NotificationService implements InitializingBean {
         if (!notification.save(flush: true)) {
             logger.error("Notification $notification for users $watchers was not persisted due to ${notification.errors.inspect()}")
         } else {
-            watchers.each { sendNotificationToUser(it, notification) }
+            final String originalNotifyBody = notification.body
+            watchers.each {
+                sendNotificationToUser(it, notification)
+                // After sending a notification to the user {it} (i.e., the dear USER_REALNAME has been replaced accordingly,
+                // the body has to be recovered for the next receipt.
+                notification.body = originalNotifyBody
+            }
         }
     }
 
@@ -232,35 +238,39 @@ class NotificationService implements InitializingBean {
 
     void modelReadAccessGranted(def body) {
         MTC model  = body.model as MTC
-        String notifTitle = "notification.model.readgranted.title"
-        String notifBody = "notification.model.readgranted.body"
+        String notifyTitle = "notification.model.read.granted.title"
+        String notifyBody = "notification.model.read.granted.body"
         User user = body.user as User
         User grantedTo = body.grantedTo
-        useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody ,
-            [model.name, user.username, grantedTo.username] as String[],
-            NT.ACCESS_GRANTED, user, getNotificationRecipients(body.perms), model)
+        Set<User> receipts = getNotificationRecipients(body.perms)
+        useGenericNotificationStructure(notifyTitle, [model.name] as String[], notifyBody ,
+            [model.name, user.username, grantedTo.username, model.url(), "${serverURL}/user", serverURL] as String[],
+            NT.ACCESS_GRANTED, user, receipts, model)
 
-        notifTitle = "notification.model.readgrantedTo.title"
-        notifBody = "notification.model.readgrantedTo.body"
-        useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username] as String[], NT.ACCESS_GRANTED_TO, user, [grantedTo] as Set, model)
+        notifyTitle = "notification.model.read.grantedTo.title"
+        notifyBody = "notification.model.read.grantedTo.body"
+        receipts = [grantedTo]
+        useGenericNotificationStructure(notifyTitle, [model.name] as String[], notifyBody,
+            [model.name, user.username, model.url(), "${serverURL}/user", serverURL] as String[],
+            NT.ACCESS_GRANTED_TO, user, receipts, model)
     }
 
     void modelWriteAccessGranted(def body) {
         MTC model  = body.model as MTC
-        String notifTitle = "notification.model.writegranted.title"
-        String notifBody = "notification.model.writegranted.body"
+        String notifyTitle = "notification.model.write.granted.title"
+        String notifyBody = "notification.model.write.granted.body"
         User user = body.user as User
         User grantedTo = body.grantedTo
-        useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
+        Set<User> watchers = getNotificationRecipients(body.perms) - [user]
+        useGenericNotificationStructure(notifyTitle, [model.name] as String[], notifyBody,
             [model.name, user.username, body.grantedTo.username] as String[],
-            NT.ACCESS_GRANTED, user,
-            getNotificationRecipients(body.perms) - [grantedTo, user], model)
+            NT.ACCESS_GRANTED, user, watchers , model)
 
-        notifTitle = "notification.model.writegrantedTo.title"
-        notifBody = "notification.model.writegrantedTo.body"
-        useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username] as String[], NT.ACCESS_GRANTED_TO, user, [grantedTo] as Set, model)
+        notifyTitle = "notification.model.write.grantedTo.title"
+        notifyBody = "notification.model.write.grantedTo.body"
+        watchers = [grantedTo] as Set
+        useGenericNotificationStructure(notifyTitle, [model.name] as String[], notifyBody,
+            [model.name, user.username] as String[], NT.ACCESS_GRANTED_TO, user, watchers, model)
     }
 
     int unreadNotificationCount() {
@@ -304,11 +314,12 @@ class NotificationService implements InitializingBean {
 
     void modelDelete(def body) {
         MTC model  = body.model as MTC
-        String notifTitle = "notification.model.deleted.title"
-        String notifBody = "notification.model.deleted.body"
+        String notifyTitle = "notification.model.deleted.title"
+        String notifyBody = "notification.model.deleted.body"
         User user = body.user as User
-        useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username] as String[], NT.DELETED, user, getNotificationRecipients(body.perms), model)
+        useGenericNotificationStructure(notifyTitle, [model.name] as String[], notifyBody,
+            [model.name, user.username, serverURL] as String[],
+            NT.DELETED, user, getNotificationRecipients(body.perms), model)
     }
 
     /**
@@ -317,18 +328,20 @@ class NotificationService implements InitializingBean {
      */
     void modelUpdate(def body) {
         MTC model  = body.model as MTC
+        RTC revision = body.revision as RTC
         def updates = []
         body.update.each { updates.add(it) }
         User user = body.user as User
-        String notifTitle = "notification.model.updated.title"
-        String notifBody = "notification.model.updated.body"
+        String notifyTitle = "notification.model.updated.title"
+        String notifyBody = "notification.model.updated.body"
         Set<User> recipients = getNotificationRecipients(body.perms)
         String tmp = recipients.collect { User u ->
             "${u.username} (${u.person.userRealName})"
         }.toString()
         logger.debug("People will receive the notification: ${tmp}")
-        useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username, updates.join("<br/>")] as String[], NT.VERSION_CREATED, user, recipients, model)
+        useGenericNotificationStructure(notifyTitle, [model.name] as String[],
+            notifyBody, [revision.url(), model.name, user.username, updates.join("<br/>"), serverURL] as String[],
+            NT.VERSION_CREATED, user, recipients, model)
     }
 
     void modelSubmitForPublication(def body) {

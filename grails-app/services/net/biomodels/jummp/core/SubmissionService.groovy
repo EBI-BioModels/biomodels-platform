@@ -1328,6 +1328,7 @@ an annotation to SBML document.""")
                 String model = working.get("modelId")
                 def notification = [
                     model: modelDelegateService.getModel(model),
+                    revision: modelDelegateService.getLatestRevision(model, false),
                     user: currentUser,
                     update: changesMade,
                     perms : modelDelegateService.getPermissionsMap(model, false)]
