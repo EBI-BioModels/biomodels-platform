@@ -136,6 +136,7 @@ class ModelTransportCommand implements Serializable {
     Boolean isMetadataSubmission
 
     String url() {
-        grailsApplication.config.grails.serverURL + "/" + publicationId ?: submissionId
+        final String modelId = publicationId ?: submissionId
+        grailsApplication.config.grails.serverURL + "/" + modelId
     }
 }
