@@ -23,6 +23,8 @@
 
 
 package net.biomodels.jummp.webapp
+
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 
 class NotificationController {
@@ -48,5 +50,6 @@ class NotificationController {
 	@Secured(["isAuthenticated()"])
 	def markAsRead(int msg) {
 		notificationService.markAsRead(msg, userService.getCurrentUser().username)
+        render([status: "OK"] as JSON)
 	}
 }
