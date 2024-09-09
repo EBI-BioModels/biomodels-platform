@@ -63,7 +63,7 @@ class SbmlController {
         return components
     }
 
-    def show = {
+    def show() {
         Map model = flash.genericModel
         final String perennialId = params.id
         RevisionTC r = model.revision as RevisionTC
