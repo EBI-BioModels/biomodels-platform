@@ -81,17 +81,33 @@ class EditUserCommand implements Serializable {
         user
     }
 
+    /**
+     * Creates a list of notification references for a specific user
+     * @param user {@link User} object
+     * @param options {@link String} object indicating the options selected from Web UI/UX
+     * @return a {@link List} of {@link NTPs} objects which are saved for the user
+     */
     List<NTPs> getPreferences(User user, final String options = null) {
-        def lstOptions = new JsonSlurper().parseText(options)
-        Map<Integer, Object> mapOptions = new HashMap<>()
-        for (option in lstOptions) {
-            //println option
-            JSONObject jsonObject = new JSONObject(option)
-            mapOptions.put(jsonObject['id'] as int, jsonObject)
-            LOGGER.info("${jsonObject['id']}|${jsonObject['slug']}\t\t\t${jsonObject['notify']}|${jsonObject['email']}")
-        }
-        List<NTPs> preferences = new LinkedList<NTPs>()
         final int nbNotificationTypes = NT.values().length
+        Map<Integer, Object> mapOptions = new HashMap<>()
+
+        if (options) {
+            def lstOptions = new JsonSlurper().parseText(options)
+            for (option in lstOptions) {
+                JSONObject jsonObject = new JSONObject(option)
+                mapOptions.put(jsonObject['id'] as int, jsonObject)
+                LOGGER.info("${jsonObject['id']}|${jsonObject['slug']}\t\t\t${jsonObject['notify']}|${jsonObject['email']}")
+            }
+        } else {
+            for (int i = 1; i <= nbNotificationTypes; i++) {
+                JSONObject object = new JSONObject()
+                object.put("notify", 1)
+                object.put("email", 1)
+                mapOptions.put(i, object)
+            }
+        }
+
+        List<NTPs> preferences = new LinkedList<NTPs>()
         boolean sendEmail, sendNotification
         for (int i = 1; i <= nbNotificationTypes; i++) {
             NT type = NT.getById(i)
