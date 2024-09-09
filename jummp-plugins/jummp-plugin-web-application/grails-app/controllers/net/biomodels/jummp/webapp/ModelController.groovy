@@ -334,6 +334,7 @@ ${model.submissionId}. Caused: ${e.message}""")
                         } else {
                             final String fmtId = format.identifier
                             LOGGER.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                            forward(controller: "errors", action: "error400")
                         }
                     } else { //showing an old version, with the default page. Do not allow updates.
                         model["canUpdate"] = false
