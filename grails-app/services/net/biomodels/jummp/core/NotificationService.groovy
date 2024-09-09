@@ -144,6 +144,31 @@ class NotificationService implements InitializingBean {
         success
     }
 
+    /**
+     * Initialises all options of receiving push notifications or emails for a specific user
+     * @param user a {@link User} indicating the specific user
+     * @param preferences a{@link List} of all {@link NTPs} indicating the preferences
+     * @return true|false
+     */
+    boolean initialisePreferences(final User user, final List<NTPs> preferences) {
+        boolean success = true
+        List<String> errors = []
+        for (NTPs ntp in preferences) {
+            def r = ntp.save(flush: true)
+            if (!r) {
+                success = false
+                errors.add("""Failed to create a new notification preferences ${ntp} for user ${user?.username}, \
+caused by ${ntp?.errors?.toString()}""")
+            }
+        }
+        if (!success) {
+            errors.each {
+                logger.error(it)
+            }
+        }
+        success
+    }
+
     void sendNotificationToUser(User user, Notification notification) {
         final updatedNotifyBody = notification.body.replace("USER_REALNAME", user.person.userRealName)
         notification.body = updatedNotifyBody

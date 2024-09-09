@@ -802,7 +802,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             NT type = NT.getById(i)
             sendNotification = mapOptions.get(i)['notify'] == 1
             sendEmail = mapOptions.get(i)['email'] == 1
-            NTPs pref = new NTPs(user: user, NT: type, sendMail: sendEmail, sendNotification: sendNotification)
+            NTPs pref = new NTPs(user: user, notificationType: type, sendMail: sendEmail, sendNotification: sendNotification)
             preferences.add(pref)
         }
         preferences
