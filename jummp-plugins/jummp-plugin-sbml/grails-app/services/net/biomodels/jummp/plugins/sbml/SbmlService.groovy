@@ -1,38 +1,35 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* JSBML, groovy, Apache Commons, JDOM, XStream, Spring Framework, Perf4j, Grails,
-* SBFC Converter (or a modified version of that library), containing parts
-* covered by the terms of GNU GPL v2.0, BSD license, Apache License v2.0,
-* JDOM license, GNU LGPL v2.1, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of JSBML, groovy, Apache Commons,
-* JDOM, XStream, Spring Framework, Perf4j, Grails, SBFC Converter used as well as
-* that of the covered work.}
-**/
-
-
-
+ * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * JSBML, groovy, Apache Commons, JDOM, XStream, Spring Framework, Perf4j, Grails,
+ * SBFC Converter (or a modified version of that library), containing parts
+ * covered by the terms of GNU GPL v2.0, BSD license, Apache License v2.0,
+ * JDOM license, GNU LGPL v2.1, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of JSBML, groovy, Apache Commons,
+ * JDOM, XStream, Spring Framework, Perf4j, Grails, SBFC Converter used as well as
+ * that of the covered work.}
+ **/
 
 
 package net.biomodels.jummp.plugins.sbml
@@ -77,10 +74,10 @@ import java.util.regex.Pattern
 
 /**
  * Service class for handling Model files in the SBML format.
- * @author  Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
- * @author  Raza Ali <raza.ali@ebi.ac.uk>
- * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
- * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
+ * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class SbmlService extends FileFormatServiceAdapter implements ISbmlService, InitializingBean {
     static transactional = true
@@ -142,7 +139,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
 
     @Override
     boolean addModelIdentifiersAsAnnotation(RevisionTC revision, String... identifiers)
-            throws ModelException {
+        throws ModelException {
         Qualifier bqmIs = Qualifier.BQM_IS
         String accessionPattern = "biomodels.db[/:](BIOMD|MODEL)[0-9]{10}"
         addAnnotations2Model(TypeAnno.MODEL_IDENTIFIER, revision, bqmIs, accessionPattern, identifiers)
@@ -272,7 +269,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         // we only check consistency as long as the model file size is less than the maximum upload file limit
         // TODO: externalise this value by defined the property,
         //  e.g. grailsApplication.config.jummp.plugins.sbml.validation.maxFileSize
-        final long MAX_SIZE = 10*1024*1024 // 10MB
+        final long MAX_SIZE = 10 * 1024 * 1024 // 10MB
         long actualSize = model.length()
         if (0 >= actualSize || actualSize > MAX_SIZE) {
             errorMsg = """Your file exceeds the maximum upload size limit that our system currently supports. \
@@ -351,7 +348,7 @@ The system has tried to call the fallback to the SBML offline validator..."""
                     }
                 }
                 areAllSbml &= foundSbmlDeclarationLine
-            } catch(IOException ex) {
+            } catch (IOException ex) {
                 def msg = new StringBuffer("""\
 Could not check if SBML files ${files.inspect()} are valid or not.""")
                 msg.append(" Encountered $ex while reading line $currentLine of file ${files[iFiles]}")
@@ -365,22 +362,22 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
         return areAllSbml
     }
 
-    private SBMLDocument getDocumentFromFiles(final List<File> model, final List<String> errors  = []){
+    private SBMLDocument getDocumentFromFiles(final List<File> model, final List<String> errors = []) {
         SBMLDocument retval = null
         model.each {
             try {
-                SBMLDocument doc  = getFileAsValidatedSBMLDocument(it, errors)
+                SBMLDocument doc = getFileAsValidatedSBMLDocument(it, errors)
                 if (doc) {
                     retval = doc
                 }
-            } catch(Exception e) {
+            } catch (Exception e) {
                 LOGGER.error(e.message, e)
             }
         }
         return retval
     }
 
-    @Profiled(tag="SbmlService.validate")
+    @Profiled(tag = "SbmlService.validate")
     boolean validate(final List<File> model, final List<String> errors) {
         if (!grailsApplication.config.jummp.plugins.sbml.validation) {
             LOGGER.info("Validation for ${model.inspect()} skipped due to configuration option")
@@ -399,9 +396,9 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
      * @param model A list of files in SBML format
      * @return the name of the model or an empty string if no file is supplied.
      */
-    @Profiled(tag="SbmlService.extractName")
+    @Profiled(tag = "SbmlService.extractName")
     String extractName(List<File> model) {
-        model = model.findAll{it && it.exists() && it.canRead()}
+        model = model.findAll { it && it.exists() && it.canRead() }
         if (!model) {
             return ""
         }
@@ -413,7 +410,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
      * {@inheritDoc}
      */
     @Override
-    @Profiled(tag="sbmlService.updateName")
+    @Profiled(tag = "sbmlService.updateName")
     boolean updateName(RevisionTC revision, final String name) {
         if (revision && name.trim()) {
             // update the name of the revision
@@ -458,7 +455,7 @@ the user has attempted to update an blank value for the name attribute.""")
      * @param model A list of files in SBML format
      * @return the description of the model or an empty string if no file is supplied.
      */
-    @Profiled(tag="SbmlService.extractDescription")
+    @Profiled(tag = "SbmlService.extractDescription")
     String extractDescription(final List<File> model) {
         if (!model) {
             String errMsg = "Cannot extract the description from undefined file ${model.properties}"
@@ -478,13 +475,13 @@ the user has attempted to update an blank value for the name attribute.""")
             def builder = new SAXBuilder()
             Document doc = builder.build(model.first())
 
-            for (String namespace: nsList) {
+            for (String namespace : nsList) {
                 Namespace ns = Namespace.getNamespace("ns", namespace)
                 XPath xpath = XPath.newInstance("/ns:sbml/ns:model/ns:notes")
                 xpath.addNamespace(ns)
                 List<Element> noteElements = xpath.selectNodes(doc)
-                if (! noteElements.isEmpty()) {
-                    for (Element elt: noteElements) {
+                if (!noteElements.isEmpty()) {
+                    for (Element elt : noteElements) {
                         // required step as 'notes' contains further XML tags
                         XMLOutputter xmlOut = new XMLOutputter()
                         description.append(xmlOut.outputString(elt))
@@ -494,7 +491,7 @@ the user has attempted to update an blank value for the name attribute.""")
                 }
             }
         } catch (JDOMException e) {
-            String errMsg ="Exception encountered while extracting description from ${model.inspect()}: ${e.message}"
+            String errMsg = "Exception encountered while extracting description from ${model.inspect()}: ${e.message}"
             LOGGER.error(errMsg, e)
             return ""
         } catch (IOException e) {
@@ -509,7 +506,7 @@ the user has attempted to update an blank value for the name attribute.""")
      * {@inheritDoc}
      */
     @Override
-    @Profiled(tag="sbmlService.updateDescription")
+    @Profiled(tag = "sbmlService.updateDescription")
     boolean updateDescription(RevisionTC revision, final String DESC) {
         if (revision && DESC.trim()) {
             // update the description of SBML model file of the revision
@@ -527,41 +524,41 @@ the user has attempted to update an blank value for the name attribute.""")
         return false
     }
 
-    @Profiled(tag="SbmlService.getMetaId")
+    @Profiled(tag = "SbmlService.getMetaId")
     String getMetaId(RevisionTC revision) {
         return getFromCache(revision)?.model?.metaId
     }
 
-    @Profiled(tag="SbmlService.getVersion")
+    @Profiled(tag = "SbmlService.getVersion")
     long getVersion(RevisionTC revision) {
         return fetchModelAttributeFromRevision(revision, "version")
     }
 
-    @Profiled(tag="SbmlService.getLevel")
+    @Profiled(tag = "SbmlService.getLevel")
     long getLevel(RevisionTC revision) {
         return fetchModelAttributeFromRevision(revision, "level")
     }
 
-    @Profiled(tag="SbmlService.getFormatVersion")
+    @Profiled(tag = "SbmlService.getFormatVersion")
     String getFormatVersion(RevisionTC revision) {
         final long LEVEL = getLevel(revision)
         final long VERSION = getVersion(revision)
         return "L${LEVEL}V${VERSION}"
     }
 
-    @Profiled(tag="SbmlService.getNotes")
+    @Profiled(tag = "SbmlService.getNotes")
     String getNotes(RevisionTC revision) {
         String notesString = getFromCache(revision)?.model?.notesString ?: ""
         return notesString
     }
 
-    @Profiled(tag="SbmlService.getAnnotations")
+    @Profiled(tag = "SbmlService.getAnnotations")
     List<Map> getAnnotations(RevisionTC revision) {
         Model model = getFromCache(revision).model
         return convertCVTerms(model.annotation)
     }
 
-    @Profiled(tag="SbmlService.getParameters")
+    @Profiled(tag = "SbmlService.getParameters")
     List<Map> getParameters(RevisionTC revision) {
         Model model = getFromCache(revision).model
         ListOf<Parameter> parameters = model.getListOfParameters()
@@ -572,12 +569,12 @@ the user has attempted to update an blank value for the name attribute.""")
         return list
     }
 
-    @Profiled(tag="SbmlService.getParameter")
+    @Profiled(tag = "SbmlService.getParameter")
     Map getParameter(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         QuantityWithUnit param = model.getParameter(id)
         if (!param) {
-            param = (QuantityWithUnit)model.findLocalParameters(id).find { it.id == id }
+            param = (QuantityWithUnit) model.findLocalParameters(id).find { it.id == id }
         }
         if (!param) {
             return [:]
@@ -588,7 +585,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return map
     }
 
-    @Profiled(tag="SbmlService.getLocalParameters")
+    @Profiled(tag = "SbmlService.getLocalParameters")
     List<Map> getLocalParameters(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> reactions = []
@@ -603,7 +600,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return reactions
     }
 
-    @Profiled(tag="SbmlService.getReactions")
+    @Profiled(tag = "SbmlService.getReactions")
     List<Map> getReactions(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> reactions = []
@@ -613,7 +610,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return reactions
     }
 
-    @Profiled(tag="SbmlService.getReaction")
+    @Profiled(tag = "SbmlService.getReaction")
     Map getReaction(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Reaction reaction = model.getReaction(id)
@@ -627,7 +624,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return reactionMap
     }
 
-    @Profiled(tag="SbmlService.getEvents")
+    @Profiled(tag = "SbmlService.getEvents")
     List<Map> getEvents(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> events = []
@@ -637,7 +634,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return events
     }
 
-    @Profiled(tag="SbmlService.getEvent")
+    @Profiled(tag = "SbmlService.getEvent")
     Map getEvent(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Event event = model.getEvent(id)
@@ -650,7 +647,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return eventMap
     }
 
-    @Profiled(tag="SbmlService.getRules")
+    @Profiled(tag = "SbmlService.getRules")
     List<Map> getRules(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> rules = []
@@ -660,7 +657,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return rules
     }
 
-    @Profiled(tag="SbmlService.getRule")
+    @Profiled(tag = "SbmlService.getRule")
     Map getRule(RevisionTC revision, String variable) {
         Model model = getFromCache(revision).model
         ExplicitRule rule = model.getRuleByVariable(variable)
@@ -695,21 +692,21 @@ the user has attempted to update an blank value for the name attribute.""")
         return functionMap
     }
 
-    @Profiled(tag="SbmlService.getCompartments")
+    @Profiled(tag = "SbmlService.getCompartments")
     List<Map> getCompartments(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> compartments = []
         model.listOfCompartments.each { compartment ->
-             compartments << compartmentToMap(compartment)
+            compartments << compartmentToMap(compartment)
         }
         return compartments
     }
 
-    @Profiled(tag="SbmlService.getCompartment")
+    @Profiled(tag = "SbmlService.getCompartment")
     Map getCompartment(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Compartment compartment = model.getCompartment(id)
-        if(!compartment) {
+        if (!compartment) {
             return [:]
         }
         Map compartmentMap = compartmentToMap(compartment)
@@ -718,7 +715,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return compartmentMap
     }
 
-    @Profiled(tag="SbmlService.getAllSpecies")
+    @Profiled(tag = "SbmlService.getAllSpecies")
     List<Map> getAllSpecies(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> allSpecies = []
@@ -728,7 +725,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return allSpecies
     }
 
-    @Profiled(tag="SbmlService.getAllCompartmentSpecies")
+    @Profiled(tag = "SbmlService.getAllCompartmentSpecies")
     private List<Map> getAllCompartmentSpecies(Compartment compartment) {
         Model model = compartment.model
         List<Map> allSpecies = []
@@ -740,20 +737,20 @@ the user has attempted to update an blank value for the name attribute.""")
         return allSpecies
     }
 
-     @Profiled(tag="SbmlService.getSpecies")
-     Map getSpecies(RevisionTC revision, String id) {
-         Model model =getFromCache(revision).model
-         Species species = model.getSpecies(id)
-         if(!species) {
-             return [:]
-         }
-         Map speciesMap = speciesToMap(species)
-         speciesMap.put("annotation", convertCVTerms(species.annotation))
-         speciesMap.put("notes", species.notesString)
-         return speciesMap
-     }
+    @Profiled(tag = "SbmlService.getSpecies")
+    Map getSpecies(RevisionTC revision, String id) {
+        Model model = getFromCache(revision).model
+        Species species = model.getSpecies(id)
+        if (!species) {
+            return [:]
+        }
+        Map speciesMap = speciesToMap(species)
+        speciesMap.put("annotation", convertCVTerms(species.annotation))
+        speciesMap.put("notes", species.notesString)
+        return speciesMap
+    }
 
-    @Profiled(tag="SbmlService.generateSvg")
+    @Profiled(tag = "SbmlService.generateSvg")
     byte[] generateSvg(RevisionTC revision) {
         File dotFile = File.createTempFile("jummp", "dot")
         PrintWriter writer = new PrintWriter(dotFile)
@@ -771,7 +768,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return bytes
     }
 
-    @Profiled(tag="SbmlService.generateOctave")
+    @Profiled(tag = "SbmlService.generateOctave")
     String generateOctave(RevisionTC revision) {
 //        SBMLModel sbmlModel = resolveSbmlModel(revision)
 //        OctaveModel octaveModel = sbml2OctaveConverter().octaveExport(sbmlModel)
@@ -779,7 +776,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return ""
     }
 
-    @Profiled(tag="SbmlService.generateBioPax")
+    @Profiled(tag = "SbmlService.generateBioPax")
     String generateBioPax(RevisionTC revision) {
 //        SBMLModel sbmlModel = resolveSbmlModel(revision)
 //        BioPaxModel bioPaxModel = sbml2BioPaxConverter().biopaxexport(sbmlModel)
@@ -787,7 +784,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return ""
     }
 
-    @Profiled(tag="SbmlService.getAllAnnotationURNs")
+    @Profiled(tag = "SbmlService.getAllAnnotationURNs")
     List<String> getAllAnnotationURNs(RevisionTC revision) {
         SBMLDocument document = getFromCache(revision)
         List<String> urns = []
@@ -813,7 +810,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return urns
     }
 
-    @Profiled(tag="SbmlService.getPubMedAnnotation")
+    @Profiled(tag = "SbmlService.getPubMedAnnotation")
     List<String> getPubMedAnnotation(RevisionTC revision) {
         List<CVTerm> filters = getIsDescribedByAnnotations(revision)
         List<String> pubMedAnnotation = []
@@ -824,7 +821,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return pubMedAnnotation
     }
 
-    @Profiled(tag="SbmlService.getPublicationAnnotations")
+    @Profiled(tag = "SbmlService.getPublicationAnnotations")
     List<String> getPublicationAnnotations(RevisionTC revision) {
         List<String> annotations = []
         List<CVTerm> filters = getIsDescribedByAnnotations(revision)
@@ -838,7 +835,7 @@ the user has attempted to update an blank value for the name attribute.""")
     private List<CVTerm> getIsDescribedByAnnotations(RevisionTC revision) {
         Model model = getFromCache(revision)?.model
         Annotation annotation = model?.annotation
-        if(!annotation) {
+        if (!annotation) {
             return null
         }
         List<CVTerm> bqbiolIsDescribedByTerms = annotation.filterCVTerms(Qualifier.BQB_IS_DESCRIBED_BY)
@@ -881,7 +878,7 @@ the user has attempted to update an blank value for the name attribute.""")
                     cache.put(revision.id, document)
                     //break
                 }
-            } catch(Exception ignore) {
+            } catch (Exception ignore) {
                 ignore.printStackTrace()
             } finally {
                 LOGGER.info("Finished getting SBML file {} from the revision {}.", document?.locationURI, revision.toString())
@@ -892,13 +889,13 @@ the user has attempted to update an blank value for the name attribute.""")
 
     private Map parameterToMap(QuantityWithUnit parameter) {
         return [
-                id: parameter.id,
-                name: parameter.name,
-                metaId: parameter.metaId,
-                constant: (parameter instanceof Parameter) ? parameter.constant : true,
-                value: parameter.isSetValue() ? parameter.value : null,
-                sbo: sboName(parameter),
-                unit: parameter.units
+            id      : parameter.id,
+            name    : parameter.name,
+            metaId  : parameter.metaId,
+            constant: (parameter instanceof Parameter) ? parameter.constant : true,
+            value   : parameter.isSetValue() ? parameter.value : null,
+            sbo     : sboName(parameter),
+            unit    : parameter.units
         ]
     }
 
@@ -906,14 +903,14 @@ the user has attempted to update an blank value for the name attribute.""")
         List<Map> list = []
         annotation.listOfCVTerms.each { cvTerm ->
             list << [
-                    qualifier: cvTerm.biologicalQualifier ? cvTerm.biologicalQualifierType.toString() : (cvTerm.modelQualifier ? cvTerm.modelQualifierType.toString() : ""),
-                    biologicalQualifier: cvTerm.biologicalQualifier,
-                    modelQualifier: cvTerm.modelQualifier,
-                    resources: cvTerm.resources.collect {
-                        Map data = miriamService.miriamData(it)
-                        data.put("urn", it)
-                        data
-                    }
+                qualifier          : cvTerm.biologicalQualifier ? cvTerm.biologicalQualifierType.toString() : (cvTerm.modelQualifier ? cvTerm.modelQualifierType.toString() : ""),
+                biologicalQualifier: cvTerm.biologicalQualifier,
+                modelQualifier     : cvTerm.modelQualifier,
+                resources          : cvTerm.resources.collect {
+                    Map data = miriamService.miriamData(it)
+                    data.put("urn", it)
+                    data
+                }
             ]
         }
         return list
@@ -933,33 +930,33 @@ the user has attempted to update an blank value for the name attribute.""")
 
     private Map speciesReferenceToMap(SpeciesReference reference) {
         return [
-                species: reference.species,
-                speciesName: reference.model.getSpecies(reference.species).name,
-                constant: reference.constant,
-                stoichiometry: reference.stoichiometry
+            species      : reference.species,
+            speciesName  : reference.model.getSpecies(reference.species).name,
+            constant     : reference.constant,
+            stoichiometry: reference.stoichiometry
         ]
     }
 
     private Map reactionToMap(Reaction reaction) {
 
         return [
-                id: reaction.id,
-                metaId: reaction.metaId,
-                name: reaction.name,
-                reversible: reaction.reversible,
-                sbo: sboName(reaction),
-                reactants: convertSpeciesReferences(reaction.listOfReactants),
-                products: convertSpeciesReferences(reaction.listOfProducts),
-                modifiers: convertSpeciesReferences(reaction.listOfModifiers)
+            id        : reaction.id,
+            metaId    : reaction.metaId,
+            name      : reaction.name,
+            reversible: reaction.reversible,
+            sbo       : sboName(reaction),
+            reactants : convertSpeciesReferences(reaction.listOfReactants),
+            products  : convertSpeciesReferences(reaction.listOfProducts),
+            modifiers : convertSpeciesReferences(reaction.listOfModifiers)
         ]
     }
 
     private Map eventToMap(Event event) {
         return [
-                id: event.id,
-                metaId: event.metaId,
-                name: event.name,
-                assignments: eventAssignmentsToList(event.listOfEventAssignments)
+            id         : event.id,
+            metaId     : event.metaId,
+            name       : event.name,
+            assignments: eventAssignmentsToList(event.listOfEventAssignments)
         ]
     }
 
@@ -968,11 +965,11 @@ the user has attempted to update an blank value for the name attribute.""")
         assignments.each { assignment ->
             Symbol symbol = assignment.model.findSymbol(assignment.variable)
             eventAssignments << [
-                    meataId: assignment.metaId,
-                    math: assignment.mathMLString,
-                    variableId: assignment.variable,
-                    variableName: symbol ? symbol.name : "",
-                    variableType: symbol ? symbol.elementName : ""
+                meataId     : assignment.metaId,
+                math        : assignment.mathMLString,
+                variableId  : assignment.variable,
+                variableName: symbol ? symbol.name : "",
+                variableType: symbol ? symbol.elementName : ""
             ]
         }
         return eventAssignments
@@ -993,34 +990,34 @@ the user has attempted to update an blank value for the name attribute.""")
         }
 
         return [
-                metaId: rule.metaId,
-                math: rule.getMathMLString(),
-                variableId : symbol ? symbol.id : null,
-                variableName: symbol ? symbol.name : null,
-                variableType: symbol ? symbol.elementName : null,
-                type: type
+            metaId      : rule.metaId,
+            math        : rule.getMathMLString(),
+            variableId  : symbol ? symbol.id : null,
+            variableName: symbol ? symbol.name : null,
+            variableType: symbol ? symbol.elementName : null,
+            type        : type
         ]
     }
 
     private Map functionDefinitionToMap(FunctionDefinition function) {
         return [
-                id: function.id,
-                name: function.name,
-                metaId: function.metaId,
-                math: function.mathMLString
+            id    : function.id,
+            name  : function.name,
+            metaId: function.metaId,
+            math  : function.mathMLString
         ]
     }
 
     private Map compartmentToMap(Compartment compartment) {
         return [
-                metaId: compartment.metaId,
-                id: compartment.id,
-                name: compartment.name,
-                size: compartment.size,
-                spatialDimensions: compartment.getSpatialDimensions(),
-                units: compartment.units,
-                sbo: sboName(compartment),
-                allSpecies: getAllCompartmentSpecies(compartment)
+            metaId           : compartment.metaId,
+            id               : compartment.id,
+            name             : compartment.name,
+            size             : compartment.size,
+            spatialDimensions: compartment.getSpatialDimensions(),
+            units            : compartment.units,
+            sbo              : sboName(compartment),
+            allSpecies       : getAllCompartmentSpecies(compartment)
         ]
     }
 
@@ -1038,13 +1035,13 @@ the user has attempted to update an blank value for the name attribute.""")
             initialConcentration = null
         }
         return [
-                metaid: species.metaId,
-                id: species.id,
-                compartment: species.compartment,
-                initialAmount: initialAmount,
-                initialConcentration: initialConcentration,
-                substanceUnits: species.substanceUnits,
-                sbo: sboName(species)
+            metaid              : species.metaId,
+            id                  : species.id,
+            compartment         : species.compartment,
+            initialAmount       : initialAmount,
+            initialConcentration: initialConcentration,
+            substanceUnits      : species.substanceUnits,
+            sbo                 : sboName(species)
         ]
     }
 
@@ -1096,7 +1093,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     private static File fetchMainFileFromRevision(RevisionTC revision) {
-        final String mainFileLocation = revision?.files?.find {it.mainFile}?.path
+        final String mainFileLocation = revision?.files?.find { it.mainFile }?.path
         if (!mainFileLocation) {
             LOGGER.error "The main file of revision ${revision.properties} is undefined."
             return null
@@ -1104,7 +1101,7 @@ the user has attempted to update an blank value for the name attribute.""")
         File mainFile = new File(mainFileLocation)
         if (!mainFile || !mainFile.canRead()) {
             def errMsg = new StringBuilder("None of the files ").append(revision?.files?.inspect()).
-                        append(" of revision ").append(revision.properties).append("is a main file.")
+                append(" of revision ").append(revision.properties).append("is a main file.")
             LOGGER.error errMsg.toString()
             return null
         }
@@ -1120,7 +1117,7 @@ the user has attempted to update an blank value for the name attribute.""")
         }
         if (IS_INFO_ENABLED) {
             def info = new StringBuilder("Extracting attribute ").append(attributeName).
-                        append(" of element ").append(elementName).append(" from ").append(model.properties)
+                append(" of element ").append(elementName).append(" from ").append(model.properties)
             LOGGER.info(info.toString())
         }
         String theResult
@@ -1145,9 +1142,9 @@ the user has attempted to update an blank value for the name attribute.""")
             }
         } catch (XMLStreamException e) {
             def errorMsg = new StringBuilder("Error while extracting property ").append(elementName).
-                        append(".").append(attributeName).append(" from ").append(model.properties)
+                append(".").append(attributeName).append(" from ").append(model.properties)
             errorMsg.append(". The offending file caused ${e.message}.\n")
-            LOGGER.error (errorMsg.toString(), e)
+            LOGGER.error(errorMsg.toString(), e)
         } finally {
             xmlReader?.close()
             fileReader?.close()
@@ -1175,7 +1172,7 @@ the user has attempted to update an blank value for the name attribute.""")
             level = value as long
         } catch (NumberFormatException e) {
             def errMsg = new StringBuilder("Error extracting model attribute from ").append(mainFile.properties).
-                        append(". ").append(name). append(" ").append(value).append(" is not a number.")
+                append(". ").append(name).append(" ").append(value).append(" is not a number.")
             LOGGER.error errMsg.toString(), e
         } finally {
             return level
@@ -1207,12 +1204,12 @@ the user has attempted to update an blank value for the name attribute.""")
      * @return A String representation of the new model encoded in SBML.
      */
     String triggerSubmodelGeneration(
-            RevisionTC revision, String subModelId, String metaId,
-            List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds,
-            List<String> ruleIds, List<String> eventIds) {
+        RevisionTC revision, String subModelId, String metaId,
+        List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds,
+        List<String> ruleIds, List<String> eventIds) {
         Model model = getFromCache(revision).model
         return new SubmodelGenerator().generateSubModel(
-                model, subModelId, metaId, compartmentIds, speciesIds, reactionIds, ruleIds, eventIds)
+            model, subModelId, metaId, compartmentIds, speciesIds, reactionIds, ruleIds, eventIds)
     }
 
     boolean doBeforeSavingAnnotations(File annoFile, RevisionTC rev) {
@@ -1240,7 +1237,7 @@ the user has attempted to update an blank value for the name attribute.""")
         } else {
             Model model = document.model
             Annotation annotation = model?.annotation
-            if(!annotation) {
+            if (!annotation) {
                 return null
             }
             List<CVTerm> filters = annotation.filterCVTerms(Qualifier.BQB_HAS_PROPERTY)
@@ -1278,9 +1275,9 @@ the user has attempted to update an blank value for the name attribute.""")
      * have to go with the identical biological qualifier.
      *
      * @param typeAnno The {@link TypeAnno} denoting the type of annotations
-     * @param revision  The Revision instance denoting the given model
+     * @param revision The Revision instance denoting the given model
      * @param qualifier The Qualifier instance denoting the biological qualifier
-     * @param identifiers   The list of identifiers.org based URLs denoting the input annotations
+     * @param identifiers The list of identifiers.org based URLs denoting the input annotations
      * @return a boolean value indicating whether the service finished successfully or failed.
      */
     private boolean addAnnotations2Model(TypeAnno typeAnno,
@@ -1348,7 +1345,7 @@ the user has attempted to update an blank value for the name attribute.""")
             }
         }.flatten() as List<String>
 
-        for (CVTerm t: cVTerms) {
+        for (CVTerm t : cVTerms) {
             if (!model.removeCVTerm(t)) {
                 throw new ModelException(revision.model, "Could not remove CVTerm $t for revision $rID")
             }

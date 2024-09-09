@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -81,9 +81,9 @@ class SbmlController {
 
     @Secured(['IS_AUTHENTICATED_FULLY'])
     def checkConsistency() {
-        RevisionTC rev
+        RevisionTC rev = null
         try {
-            rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+            rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
             List<String> errors = new ArrayList<String>()
             sbmlService.checkConsistency(rev, errors)
             String message = errors.size() > 0 ? ">> with ${errors.size()} error(s):" : ">> no error"
@@ -116,22 +116,22 @@ There is a problem with this version of the model while trying to check its cons
     }
 
     def reactionMetaOverview = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [reaction: sbmlService.getReaction(rev)]
     }
 
     def compartmentMetaOverview = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [compartment: sbmlService.getCompartment(rev)]
     }
 
     def parameterMetaOverview = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [parameter: sbmlService.getParameter(rev)]
     }
 
     def math = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [
             reactions: sbmlService.getReactions(rev),
             rules: sbmlService.getRules(rev),
@@ -141,27 +141,27 @@ There is a problem with this version of the model while trying to check its cons
     }
 
     def entity = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [compartments: sbmlService.getCompartments(rev)]
     }
 
     def compartmentMeta = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [compartment: sbmlService.getCompartment(rev)]
     }
 
     def speciesMeta = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [species: sbmlService.getSpecies(rev)]
     }
 
     def parameterMeta = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [parameter: sbmlService.getParameter(rev)]
     }
 
     def parameter = {
-        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as String, false)
         [parameters: sbmlService.getParameters(rev), reactionParameters: sbmlService.getLocalParameters(rev)]
     }
 }

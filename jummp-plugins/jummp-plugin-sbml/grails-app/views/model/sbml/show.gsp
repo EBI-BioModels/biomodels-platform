@@ -102,28 +102,23 @@
                         <g:else>
                             No records to display
                         </g:else>
-
                     </div>
-
                 </div>
-
             </div>
         </div>
 
     </div>
 
-    <g:javascript>
-        $(".header").click(function () {
-
-            $header = $(this);
-            //getting the next element
-            $content = $header.next();
-            //open up the content needed - toggle the slide- if visible, slide up, if not slidedown.
+    <script>
+        $(".header").on("click", function() {
+            const $header = $(this);
+            // getting the next element
+            const $content = $header.next();
+            // open the content needed - toggle the slide if it is visible, slide up, if not slided own.
             $content.slideToggle(500, function () {
             });
-
         });
-    </g:javascript>
+    </script>
     </g:if>
 </content>
 
