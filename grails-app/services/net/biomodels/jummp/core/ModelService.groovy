@@ -2302,8 +2302,8 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         }
         model.firstPublished = new Date()
         markRevisionAsPublic(revision)
-        ModelTC cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
         if (!model.save(flush: true)) {
+            ModelTC cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
             throw new ModelException(cmd,
                 "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
         }
