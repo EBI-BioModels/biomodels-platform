@@ -168,7 +168,8 @@ class UsermanagementController extends CommonController {
         try {
             def user = cmd.toUser()
         	User user1 = userService.editUser(user)
-        	notificationService.updatePreferences(cmd.getPreferences(user1))
+            def preferences = userService.getPreferences(user1)
+        	notificationService.updatePreferences(preferences)
         } catch (Exception e) {
             flash.message = e.getMessage()
             LOGGER.error(e.message, e)
@@ -191,7 +192,7 @@ class UsermanagementController extends CommonController {
 
         // 2. Save preferences
         String options = cmd.options
-        List preferences = cmd.getPreferences(user1, options)
+        List preferences = userService.getPreferences(user1, options)
         boolean success = notificationService.updatePreferences(preferences)
         String status, message
         if (success && user1.id >= 0) {

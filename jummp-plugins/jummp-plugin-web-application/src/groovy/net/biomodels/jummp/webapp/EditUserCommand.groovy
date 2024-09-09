@@ -81,44 +81,6 @@ class EditUserCommand implements Serializable {
         user
     }
 
-    /**
-     * Creates a list of notification references for a specific user
-     * @param user {@link User} object
-     * @param options {@link String} object indicating the options selected from Web UI/UX
-     * @return a {@link List} of {@link NTPs} objects which are saved for the user
-     */
-    List<NTPs> getPreferences(User user, final String options = null) {
-        final int nbNotificationTypes = NT.values().length
-        Map<Integer, Object> mapOptions = new HashMap<>()
-
-        if (options) {
-            def lstOptions = new JsonSlurper().parseText(options)
-            for (option in lstOptions) {
-                JSONObject jsonObject = new JSONObject(option)
-                mapOptions.put(jsonObject['id'] as int, jsonObject)
-                LOGGER.info("${jsonObject['id']}|${jsonObject['slug']}\t\t\t${jsonObject['notify']}|${jsonObject['email']}")
-            }
-        } else {
-            for (int i = 1; i <= nbNotificationTypes; i++) {
-                JSONObject object = new JSONObject()
-                object.put("notify", 1)
-                object.put("email", 1)
-                mapOptions.put(i, object)
-            }
-        }
-
-        List<NTPs> preferences = new LinkedList<NTPs>()
-        boolean sendEmail, sendNotification
-        for (int i = 1; i <= nbNotificationTypes; i++) {
-            NT type = NT.getById(i)
-            sendNotification = mapOptions.get(i)['notify'] == 1
-            sendEmail = mapOptions.get(i)['email'] == 1
-            NTPs pref = new NTPs(user: user, notificationType: type, sendMail: sendEmail, sendNotification: sendNotification)
-            preferences.add(pref)
-        }
-        preferences
-    }
-
     EditUserCommand sanitise() {
         EditUserCommand cmd = new EditUserCommand()
         cmd.username = this.username.decodeHTML()
