@@ -202,6 +202,11 @@ class ModelController extends CommonController {
             doShowPreparePrivateRevision(model, rev)
             isPrivateModel = true
         }
+        if (params?.format && params?.format?.toLowerCase() == "html" &&
+            !isUserAgentSupported(request.getHeader("User-Agent"))) {
+            render("Apologise! Your operation is not supported.")
+            return
+        }
         withFormat {
             html {
                 if (!rev) {
@@ -248,6 +253,13 @@ class ModelController extends CommonController {
                 render(view: '/errors/error415', model: [code: 415])
             }
         }
+    }
+
+    private static boolean isUserAgentSupported(final String userAgent) {
+        def having = ["Mozilla", "AppleWebKit", "Chrome", "Safari"].find {
+            userAgent.contains(it)
+        }
+        having != null
     }
 
     private void doShowPreparePrivateRevision(final Model model, RTC rev) {
