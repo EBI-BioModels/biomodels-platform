@@ -88,6 +88,13 @@ caused by ${conn.responseCode}: ${conn.getErrorStream().inspect()}""")
         return result
     }
 
+    static boolean isUserAgentSupported(final String userAgent) {
+        def having = ["Mozilla", "AppleWebKit", "Chrome", "Safari"].find {
+            userAgent.contains(it)
+        }
+        having != null
+    }
+
     @Override
     void afterPropertiesSet() throws Exception {
         proxy = configurationService.verifyHttpProxy()

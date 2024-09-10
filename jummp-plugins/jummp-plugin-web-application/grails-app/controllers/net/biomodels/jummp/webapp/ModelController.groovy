@@ -32,6 +32,7 @@
 package net.biomodels.jummp.webapp
 
 import net.biomodels.jummp.utils.MathUtils
+import net.biomodels.jummp.utils.WebServiceFetcher as WSF
 
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -202,8 +203,9 @@ class ModelController extends CommonController {
             doShowPreparePrivateRevision(model, rev)
             isPrivateModel = true
         }
+        // allowAccessHTMLViaBrowser(request.getHeader("User-Agent") as String, params?.format as String)
         if (params?.format && params?.format?.toLowerCase() == "html" &&
-            !isUserAgentSupported(request.getHeader("User-Agent"))) {
+            !WSF.isUserAgentSupported(request.getHeader("User-Agent"))) {
             render("Apologise! Your operation is not supported.")
             return
         }
@@ -255,11 +257,10 @@ class ModelController extends CommonController {
         }
     }
 
-    private static boolean isUserAgentSupported(final String userAgent) {
-        def having = ["Mozilla", "AppleWebKit", "Chrome", "Safari"].find {
-            userAgent.contains(it)
+    private void allowAccessHTMLViaBrowser(final String userAgent, final String format = null) {
+        if (format && format?.toLowerCase() == "html" && !WSF.isUserAgentSupported(userAgent)) {
+            render(view: '/errors/error415', model: [code: 415])
         }
-        having != null
     }
 
     private void doShowPreparePrivateRevision(final Model model, RTC rev) {
