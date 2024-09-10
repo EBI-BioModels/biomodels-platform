@@ -117,8 +117,8 @@ class ModelController extends CommonController {
     private boolean auditBefore() {
         try {
             // XSS guard for the actions from this controller (excluding submission)
-            params.id = params.id
-            params.revisionId = params.revisionId
+            params.id = params.id.decodeHTML()
+            params.revisionId = params.revisionId.decodeHTML()
             String modelIdParam = params.id
             String revisionIdParam = params.revisionId
             String modelId = null
@@ -193,8 +193,12 @@ class ModelController extends CommonController {
             rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
         } catch (AccessDeniedException e) {
             Model model = Model.findByPublicationIdOrSubmissionId(params.id as String, params.id as String)
-            LOGGER.warn("""An anonymous or restricted access user is trying to retrieve this model: \
-${model?.submissionId}. Caused: ${e.message}""")
+            if (!model) {
+                LOGGER.debug("${params.id} doesn't not exist!")
+                forward(controller: 'errors', action: 'error404')
+                return
+            }
+            LOGGER.warn(e.message)
             int revisionNumber = -1
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
@@ -204,6 +208,7 @@ ${model?.submissionId}. Caused: ${e.message}""")
             Revision revision = revisionNumber >= 0 ?
                 model.revisions[revisionNumber - 1] : model.revisions.last()
             if (!revision) {
+                LOGGER.debug("${params.id}.${revisionNumber} doesn't not exist!")
                 forward(controller: 'errors', action: 'error404')
                 return
             }
