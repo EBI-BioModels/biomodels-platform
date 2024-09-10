@@ -187,7 +187,7 @@ class ModelController extends CommonController {
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     @Transactional
     def show() {
-        RTC rev
+        RTC rev = null
         boolean isPrivateModel = false
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
@@ -199,25 +199,7 @@ class ModelController extends CommonController {
                 return
             }
             LOGGER.warn(e.message)
-            int revisionNumber = -1
-            if (params.revisionId) {
-                revisionNumber = params.int("revisionId")
-            }
-            // TODO need to establish if the requested model revision exists in a way that bypasses
-            // ACLs and that doesn't rely on accessing domain objects from the controller
-            Revision revision = revisionNumber >= 0 ?
-                model.revisions[revisionNumber - 1] : model.revisions.last()
-            if (!revision) {
-                LOGGER.debug("${params.id}.${revisionNumber} doesn't not exist!")
-                forward(controller: 'errors', action: 'error404')
-                return
-            }
-            rev = new RevisionAdapter(revision: revision).toCommandObject()
-            rev.name = rev.model.submissionId
-            model.publication = null
-            rev.format = new ModelFormatTransportCommand()
-            rev.files = new ArrayList<>()
-            rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
+            doShowPreparePrivateRevision(model, rev)
             isPrivateModel = true
         }
         withFormat {
@@ -226,161 +208,219 @@ class ModelController extends CommonController {
                     forward(controller: 'errors', action: 'error404')
                     return
                 }
-                publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_VIEW,
-                    "Accessing the model: ${rev.identifier()}")
+                publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_VIEW, "Accessing the model: ${rev.identifier()}")
                 if (isPrivateModel) {
                     render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-                    String vcsId = modelDelegateService.getVcsIdentifier(PERENNIAL_ID)
-                    String modelParentFolder = ""
-                    if (vcsId) {
-                        modelParentFolder = vcsId.take(3)
-                    }
                     RTC revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+                    List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
+                    repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
+                    /*
+                    // For testing this method with a simple view
                     render(view: "showTest", model: [id: PERENNIAL_ID, revision: revision])
                     return true
-                    boolean showPublishOption = modelDelegateService.canPublish(revision)
-                    boolean showUnpublishOption = modelDelegateService.canUnpublish(revision)
-                    boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
-                    boolean canCertify = modelDelegateService.canCertify(revision)
-                    boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
-                    boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
-                    boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
-                    List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
-                    String flashMessage = ""
-                    if (flash.now["giveMessage"]) {
-                        flashMessage = flash.now["giveMessage"]
-                    }
-                    List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
-                    boolean canCreateOmex = false
-                    if (repoFiles) {
-                        long totalSize = repoFiles.collect { it.size }.sum() as long
-                        canCreateOmex = totalSize <= BioModels.MAX_FILE_SIZE // 500MB
-                    }
-                    repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
-                    List<RTC> revs =
-                        modelDelegateService.getAllRevisions(PERENNIAL_ID)
-                    List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId(PERENNIAL_ID)
-                    CNTC curationNotes =
-                        metadataDelegateService.fetchCurationNotes(rev)
-                    String curationState = rev.curationState.name()
-                    List<String> possibleCurationStates = CurationState.values()*.name()
-                    List<STC> modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(rev)
-                    List<String> originalModels = metadataDelegateService.fetchOriginalModels(modelLevelAnnotations)
-                    Map<String, String[]> modellingApproaches =
-                        metadataDelegateService.fetchModellingApproaches(rev)
-                    boolean hasCuratorRole = userService.isLoggedInUserACurator()
-                    boolean hasAdminRole = userService.isLoggedInUserAAdmin()
-                    boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
-                    List<RFTC> convertedFilesTC = null //modelConversionService.getConvertedFiles(rev)
-                    Set<TagTC> tags = metadataDelegateService.findTagsByModel(rev.model)
-                    String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
-                    String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
-                    def currentUser = springSecurityService.currentUser
-                    boolean canAskReviewerAccount
-                    if (!currentUser) {
-                        canAskReviewerAccount = false
-                    } else {
-                        canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
-                    }
-                    def contributors = modelDelegateService.convertContributors(revision.contributors)
-                    boolean canSeeCurationTab = modelDelegateService.canSeeCurationTab(revision, hasCuratorRole, currentUser)
-                    boolean canManageContributors = hasAdminRole || canAskReviewerAccount
-                    Map model = [
-                        revision               : rev,
-                        reactomeIds            : reactomeIds,
-                        reactomeUrl            : reactomeUrl,
-                        hrefLinkToNewtEditor   : hrefLinkToNewtEditor,
-                        authors                : rev.model.creators,
-                        contributors           : contributors,
-                        allRevs                : revs,
-                        flashMessage           : flashMessage,
-                        canUpdate              : canUpdate,
-                        canDelete              : canDelete,
-                        canShare               : canShare,
-                        showPublishOption      : showPublishOption,
-                        showUnpublishOption    : showUnpublishOption,
-                        canSubmitForPublication: canSubmitForPublication,
-                        canCertify             : canCertify,
-                        repoFiles              : repoFiles,
-                        validationLevel        : rev.getValidationLevelMessage(),
-                        certComment            : rev.getCertificationMessage(),
-                        flags                  : flags,
-                        curationState          : curationState,
-                        possibleCurationStates : possibleCurationStates,
-                        modellingApproaches    : modellingApproaches,
-                        curationNotes          : curationNotes,
-                        modelLevelAnnotations  : modelLevelAnnotations,
-                        originalModels         : originalModels,
-                        hasAdminRole           : hasAdminRole,
-                        hasCuratorRole         : hasCuratorRole,
-                        supportedForConversion : supportedForConversion,
-                        convertedFilesTC       : convertedFilesTC,
-                        bmTags                 : tags,
-                        canAskReviewerAccount  : canAskReviewerAccount,
-                        canSeeCurationTab      : canSeeCurationTab,
-                        modelParentFolder      : modelParentFolder,
-                        canCreateOmex          : canCreateOmex,
-                        hasRosetteLink         : modelDelegateService.retrieveRosetteLink(PERENNIAL_ID),
-                        hasGalaxyLink          : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID),
-                        canAddGalaxyLink       : hasCuratorRole || hasAdminRole,
-                        shouldDisplayDisclaimer: modelDelegateService.shouldDisplayDisclaimer(revision),
-                        canManageContributors  : canManageContributors
-                    ]
+                    */
+
+                    Map model = doShowGetInitialValues(PERENNIAL_ID, rev, revision, repoFiles)
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)
+                    model.putAll(doShowGetCheckConditions(PERENNIAL_ID, rev, repoFiles))
+                    model.putAll(doShowGetCurationData(rev))
+                    model.putAll(doShowGetExternalLinkedData(PERENNIAL_ID, rev, repoFiles))
+                    model.putAll(doShowGetAnnotationsBasedData(PERENNIAL_ID, rev, repoFiles))
+
                     if (rev.id == revision.id) {
-                        flash.genericModel = model
-                        ModelFormatTransportCommand format = revision.format
-                        String formatController = modelFileFormatService.getPluginForFormat(format)
-                        if (formatController) {
-                            forward controller: formatController, action: "show", id: PERENNIAL_ID
-                            return
-                        } else {
-                            final String fmtId = format.identifier
-                            LOGGER.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
-                            forward(controller: "errors", action: "error400")
-                            return
-                        }
-                    } else { //showing an old version, with the default page. Do not allow updates.
-                        model["canUpdate"] = false
-                        model["showPublishOption"] = false
-                        model["showUnpublishOption"] = false
-                        model["oldVersion"] = true
-                        model["canDelete"] = false
-                        model["canShare"] = false
-                        model["canCertify"] = false
-                        model["flags"] = flags
+                        doShowRenderLatestRevision(model, revision, PERENNIAL_ID)
+                    } else { // showing an old version, with the default page. Do not allow updates.
+                        doShowPrepareOldRevision(model)
                         render(view: "show", model: model)
                     }
                 }
             }
             json {
-                if (!rev) {
-                    respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
-                        "An invalid model id was specified")
-                } else {
-                    RestfulModel model = new RestfulModel(rev, isPrivateModel)
-                    String contentType = "application/json"
-                    String jsonModel = model.outputModelAsString(contentType)
-                    render(text: jsonModel, contentType: contentType)
-                }
+                doShowRenderWithFormat(rev, isPrivateModel, "json")
             }
             xml {
-                if (!rev) {
-                    respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
-                        "An invalid model id was specified")
-                } else {
-                    RestfulModel model = new RestfulModel(rev, isPrivateModel)
-                    String contentType = "application/xml"
-                    String xmlModel = model.outputModelAsString(contentType)
-                    render(text: xmlModel, contentType: contentType)
-                }
+                doShowRenderWithFormat(rev, isPrivateModel, "xml")
             }
             '*' {
-                render view: '/errors/error415', status: 415
+                render(view: '/errors/error415', model: [code: 415])
             }
+        }
+    }
+
+    private void doShowPreparePrivateRevision(final Model model, RTC rev) {
+        int revisionNumber = -1
+        if (params.revisionId) {
+            revisionNumber = params.int("revisionId")
+        }
+        // TODO need to establish if the requested model revision exists in a way that bypasses
+        // ACLs and that doesn't rely on accessing domain objects from the controller
+        Revision revision = revisionNumber >= 0 ?
+            model.revisions[revisionNumber - 1] : model.revisions.last()
+        if (!revision) {
+            LOGGER.debug("${params.id}.${revisionNumber} doesn't not exist!")
+            forward(controller: 'errors', action: 'error404')
+            return
+        }
+        rev = new RevisionAdapter(revision: revision).toCommandObject()
+        rev.name = rev.model.submissionId
+        model.publication = null
+        rev.format = new ModelFormatTransportCommand()
+        rev.files = new ArrayList<>()
+        rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
+    }
+
+    private Map doShowGetCheckConditions(final String PERENNIAL_ID, final RTC revision,
+                                         final List<RFTC> repoFiles) {
+        boolean showPublishOption = modelDelegateService.canPublish(revision)
+        boolean showUnpublishOption = modelDelegateService.canUnpublish(revision)
+        boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
+        boolean canCertify = modelDelegateService.canCertify(revision)
+        boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
+        boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
+        boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
+        boolean hasCuratorRole = userService.isLoggedInUserACurator()
+        boolean hasAdminRole = userService.isLoggedInUserAAdmin()
+        boolean supportedForConversion = modelConversionService.isSupportedForConversion(revision)
+
+        def currentUser = springSecurityService.currentUser
+        boolean canAskReviewerAccount
+        if (!currentUser) {
+            canAskReviewerAccount = false
+        } else {
+            canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
+        }
+        boolean canSeeCurationTab = modelDelegateService.canSeeCurationTab(revision, hasCuratorRole, currentUser)
+        boolean canManageContributors = hasAdminRole || canAskReviewerAccount
+
+        boolean canCreateOmex = false
+        if (repoFiles) {
+            long totalSize = repoFiles.collect { it.size }.sum() as long
+            canCreateOmex = totalSize <= BioModels.MAX_FILE_SIZE // 500MB
+        }
+
+        [
+            canUpdate               : canUpdate,
+            canDelete               : canDelete,
+            canShare                : canShare,
+            showPublishOption       : showPublishOption,
+            showUnpublishOption     : showUnpublishOption,
+            canSubmitForPublication : canSubmitForPublication,
+            canCertify              : canCertify,
+            hasAdminRole            : hasAdminRole,
+            hasCuratorRole          : hasCuratorRole,
+            supportedForConversion  : supportedForConversion,
+            canAddGalaxyLink        : hasCuratorRole || hasAdminRole,
+            canAskReviewerAccount   : canAskReviewerAccount,
+            canSeeCurationTab       : canSeeCurationTab,
+            canCreateOmex           : canCreateOmex,
+            canManageContributors   : canManageContributors
+        ]
+    }
+
+    private Map doShowGetAnnotationsBasedData(final String PERENNIAL_ID, final RTC revision,
+                                              final List<RFTC> repoFiles) {
+        List<STC> modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(revision)
+        List<String> originalModels = metadataDelegateService.fetchOriginalModels(modelLevelAnnotations)
+        List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
+        Map<String, String[]> modellingApproaches = metadataDelegateService.fetchModellingApproaches(revision)
+        Set<TagTC> tags = metadataDelegateService.findTagsByModel(revision.model)
+        [
+            modelLevelAnnotations   : modelLevelAnnotations,
+            originalModels          : originalModels,
+            flags                   : flags,
+            modellingApproaches     : modellingApproaches,
+            bmTags                  : tags,
+        ]
+    }
+
+    private Map doShowGetInitialValues(final String PERENNIAL_ID, final RTC revFromParams,
+                                       final RTC lastRev, final List<RFTC> repoFiles) {
+        String vcsId = modelDelegateService.getVcsIdentifier(PERENNIAL_ID)
+        String modelParentFolder = vcsId ? vcsId.take(3) : ""
+        String flashMessage = flash.now["giveMessage"] ?: ""
+        List<RTC> revs = modelDelegateService.getAllRevisions(PERENNIAL_ID)
+        List<RFTC> convertedFilesTC = null //modelConversionService.getConvertedFiles(revFromParams)
+        def contributors = modelDelegateService.convertContributors(lastRev.contributors)
+
+        Map model = [
+            revision               : revFromParams,
+            authors                : revFromParams.model.creators,
+            contributors           : contributors,
+            allRevs                : revs,
+            flashMessage           : flashMessage,
+            repoFiles              : repoFiles,
+            modelParentFolder      : modelParentFolder,
+            convertedFilesTC       : convertedFilesTC,
+        ]
+
+        model
+    }
+
+    private Map doShowGetCurationData(final RTC revision) {
+        String curationState = revision.curationState.name()
+        List<String> possibleCurationStates = CurationState.values()*.name()
+        CNTC curationNotes = metadataDelegateService.fetchCurationNotes(revision)
+        [
+            shouldDisplayDisclaimer : modelDelegateService.shouldDisplayDisclaimer(revision),
+            curationState           : curationState,
+            curationNotes           : curationNotes,
+            possibleCurationStates  : possibleCurationStates,
+            validationLevel         : revision.getValidationLevelMessage(),
+            certComment             : revision.getCertificationMessage(),
+        ]
+    }
+
+    private Map doShowGetExternalLinkedData(final String PERENNIAL_ID, final RTC revision,
+                                            final List<RFTC> repoFiles) {
+        List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId(PERENNIAL_ID)
+        String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
+        String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
+        [
+            reactomeIds             : reactomeIds,
+            reactomeUrl             : reactomeUrl,
+            hrefLinkToNewtEditor    : hrefLinkToNewtEditor,
+            hasRosetteLink          : modelDelegateService.retrieveRosetteLink(PERENNIAL_ID),
+            hasGalaxyLink           : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID)
+        ]
+    }
+
+    private void doShowRenderLatestRevision(final Map model, final RTC revision, final String PERENNIAL_ID) {
+        flash.genericModel = model
+        ModelFormatTransportCommand format = revision.format
+        String formatController = modelFileFormatService.getPluginForFormat(format)
+        if (formatController) {
+            forward controller: formatController, action: "show", id: PERENNIAL_ID
+        } else {
+            final String fmtId = format.identifier
+            LOGGER.error("Could not find any controller for format $fmtId of $PERENNIAL_ID.")
+            forward(controller: "errors", action: "error400")
+        }
+    }
+
+    private static void doShowPrepareOldRevision(Map model) {
+        model["canUpdate"] = false
+        model["showPublishOption"] = false
+        model["showUnpublishOption"] = false
+        model["oldVersion"] = true
+        model["canDelete"] = false
+        model["canShare"] = false
+        model["canCertify"] = false
+    }
+
+    private void doShowRenderWithFormat(final RTC rev, final boolean isPrivateModel,
+                                        final String format) {
+
+        if (!rev) {
+            respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
+                "An invalid model id was specified")
+        } else {
+            RestfulModel model = new RestfulModel(rev, isPrivateModel)
+            String contentType = format.toLowerCase() == "json" ? "application/json" : "application/xml"
+            String output = model.outputModelAsString(contentType)
+            render(text: output, contentType: contentType)
         }
     }
 
