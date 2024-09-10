@@ -45,6 +45,6 @@
 <body>
     <h2>${id}</h2>
     <p>${revision.model.name}</p>
-    <p>${revision.model.description}</p>
+    <p>${revision.model.submissionId}</p>
 </body>
 </html>

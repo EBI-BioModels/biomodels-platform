@@ -194,7 +194,7 @@ class ModelController extends CommonController {
         } catch (AccessDeniedException e) {
             Model model = Model.findByPublicationIdOrSubmissionId(params.id as String, params.id as String)
             LOGGER.warn("""An anonymous or restricted access user is trying to retrieve this model: \
-${model.submissionId}. Caused: ${e.message}""")
+${model?.submissionId}. Caused: ${e.message}""")
             int revisionNumber = -1
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
