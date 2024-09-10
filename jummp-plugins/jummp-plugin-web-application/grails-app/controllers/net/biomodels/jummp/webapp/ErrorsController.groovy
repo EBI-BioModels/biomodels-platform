@@ -20,7 +20,9 @@
 
 package net.biomodels.jummp.webapp
 
+import grails.converters.JSON
 import net.biomodels.jummp.webapp.rest.errors.Error
+import grails.converters.XML
 
 import javax.servlet.http.HttpServletResponse
 
@@ -54,6 +56,8 @@ class ErrorsController {
         response.status = HttpServletResponse.SC_NOT_FOUND
         withFormat {
             html { [resource: request.forwardURI, code: response.status] }
+            json { render([resource: request.forwardURI, code: response.status, message: "Not Found"] as JSON) }
+            xml { render([resource: request.forwardURI, code: response.status, message: "Not Found"] as XML) }
             '*' { respond getError("404", [request.forwardURI]) }
         }
     }
