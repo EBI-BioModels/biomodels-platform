@@ -204,8 +204,10 @@ class ModelController extends CommonController {
             isPrivateModel = true
         }
         // allowAccessHTMLViaBrowser(request.getHeader("User-Agent") as String, params?.format as String)
+        String userAgent = request.getHeader("User-Agent")
         if (params?.format && params?.format?.toLowerCase() == "html" &&
-            !WSF.isUserAgentSupported(request.getHeader("User-Agent"))) {
+            !WSF.isUserAgentSupported(userAgent)) {
+            LOGGER.warn("$userAgent has tried to access HTML format of ${params?.id}.")
             render("Apologise! Your operation is not supported.")
             return
         }
