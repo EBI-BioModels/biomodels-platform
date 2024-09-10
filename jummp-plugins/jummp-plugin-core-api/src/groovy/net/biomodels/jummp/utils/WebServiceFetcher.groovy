@@ -89,7 +89,8 @@ caused by ${conn.responseCode}: ${conn.getErrorStream().inspect()}""")
     }
 
     static boolean isUserAgentSupported(final String userAgent) {
-        def having = ["Mozilla", "AppleWebKit", "Chrome", "Safari"].find {
+        def having = ["AppleWebKit", "Chrome", "Edg", "Edge", "Firefox",
+                "Mozilla", "Opera", "Presto", "Safari"].find {
             userAgent.contains(it)
         }
         having != null
