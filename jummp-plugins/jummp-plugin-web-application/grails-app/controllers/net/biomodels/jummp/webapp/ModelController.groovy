@@ -233,6 +233,8 @@ ${model.submissionId}. Caused: ${e.message}""")
                         modelParentFolder = vcsId.take(3)
                     }
                     RTC revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+                    render(view: "showTest", model: [id: PERENNIAL_ID, revision: revision])
+                    return true
                     boolean showPublishOption = modelDelegateService.canPublish(revision)
                     boolean showUnpublishOption = modelDelegateService.canUnpublish(revision)
                     boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
