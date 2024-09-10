@@ -226,7 +226,6 @@ ${model.submissionId}. Caused: ${e.message}""")
                     "Accessing the model: ${rev.identifier()}")
                 if (isPrivateModel) {
                     render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
-                    return
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
                     String vcsId = modelDelegateService.getVcsIdentifier(PERENNIAL_ID)
@@ -331,10 +330,12 @@ ${model.submissionId}. Caused: ${e.message}""")
                         String formatController = modelFileFormatService.getPluginForFormat(format)
                         if (formatController) {
                             forward controller: formatController, action: "show", id: PERENNIAL_ID
+                            return
                         } else {
                             final String fmtId = format.identifier
                             LOGGER.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
                             forward(controller: "errors", action: "error400")
+                            return
                         }
                     } else { //showing an old version, with the default page. Do not allow updates.
                         model["canUpdate"] = false
@@ -345,7 +346,7 @@ ${model.submissionId}. Caused: ${e.message}""")
                         model["canShare"] = false
                         model["canCertify"] = false
                         model["flags"] = flags
-                        return model
+                        render(view: "show", model: model)
                     }
                 }
             }
