@@ -33,6 +33,7 @@
     <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
 </g:if>
 </content>
+
 <content tag="modelspecifictabs">
 <g:if test="${components}">
     <sbml:decideTabs/>
@@ -112,6 +113,17 @@
     </div>
 
     <script>
+        $(function() {
+            $(".header").first().next().slideDown(500);
+
+            $("#expand-all").on("click", function() {
+                $(".header").next().slideDown(500);
+            });
+            $("#collapse-all").on("click", function() {
+                $(".header").next().slideUp(500);
+            });
+        });
+
         $(".header").on("click", function() {
             const $header = $(this);
             // getting the next element

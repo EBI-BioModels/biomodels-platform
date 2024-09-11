@@ -44,14 +44,6 @@
                 tags: false,
                 multiple: true
             });
-            $(".header").first().next().slideDown(500);
-
-            $("#expand-all").click(function(){
-                $(".header").next().slideDown(500);
-            });
-            $("#collapse-all").click(function(){
-                $(".header").next().slideUp(500);
-            });
         });
     </script>
     <script type="text/x-mathjax-config">
