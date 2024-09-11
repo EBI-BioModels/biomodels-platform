@@ -31,6 +31,7 @@
 
 package net.biomodels.jummp.webapp
 
+import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.utils.MathUtils
 import net.biomodels.jummp.utils.WebServiceFetcher as WSF
 
@@ -127,9 +128,9 @@ class ModelController extends CommonController {
             String accessType = actionUri
             String formatType = response.format
             String changesMade = null
-
+            // not call isPositiveNumber if modelIdParam is null
             final boolean HAS_ONLY_DIGITS = MathUtils.isPositiveNumber(modelIdParam)
-            //perennial model identifiers include literals
+            // perennial model identifiers include literals
             final boolean IS_REVISION_ID = !revisionIdParam && HAS_ONLY_DIGITS
             if (IS_REVISION_ID) {
                 // publish uses revision ids, annoyingly enough.
@@ -168,7 +169,7 @@ class ModelController extends CommonController {
             if (request.lastHistory) {
                 modelDelegateService.updateAuditSuccess(request.lastHistory as Long, true)
                 request.removeAttribute("lastHistory")
-                LOGGER.info("Model in auditAfter: ${model?.dump()}")
+                //LOGGER.info("Model in auditAfter: ${model?.dump()}")
             }
         } catch (Exception e) {
             LOGGER.error e.message, e
@@ -189,10 +190,12 @@ class ModelController extends CommonController {
     @Transactional
     def show() {
         RTC rev = null
+        List<RTC> myList = new ArrayList()
         boolean isPrivateModel = false
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
         } catch (AccessDeniedException e) {
+            // then access the model by bypassing ACLs
             Model model = Model.findByPublicationIdOrSubmissionId(params.id as String, params.id as String)
             if (!model) {
                 LOGGER.debug("${params.id} doesn't not exist!")
@@ -200,7 +203,8 @@ class ModelController extends CommonController {
                 return
             }
             LOGGER.warn(e.message)
-            doShowPreparePrivateRevision(model, rev)
+            doShowPreparePrivateRevision(model, rev, myList)
+            rev = myList.first() as RTC
             isPrivateModel = true
         }
         // allowAccessHTMLViaBrowser(request.getHeader("User-Agent") as String, params?.format as String)
@@ -267,7 +271,7 @@ class ModelController extends CommonController {
         }
     }
 
-    private void doShowPreparePrivateRevision(final Model model, RTC rev) {
+    private void doShowPreparePrivateRevision(final Model model, RTC rtc, List<RTC> list) {
         int revisionNumber = -1
         if (params.revisionId) {
             revisionNumber = params.int("revisionId")
@@ -281,12 +285,14 @@ class ModelController extends CommonController {
             forward(controller: 'errors', action: 'error404')
             return
         }
-        rev = new RevisionAdapter(revision: revision).toCommandObject()
-        rev.name = rev.model.submissionId
+        rtc = new RevisionAdapter(revision: revision).toCommandObject()
+        rtc.model = new ModelAdapter(model: model).toCommandObject()
+        rtc.name = revision.model.submissionId
         model.publication = null
-        rev.format = new ModelFormatTransportCommand()
-        rev.files = new ArrayList<>()
-        rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
+        rtc.format = new ModelFormatTransportCommand()
+        rtc.files = new ArrayList<>()
+        rtc.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
+        list.add(rtc)
     }
 
     private Map doShowGetCheckConditions(final String PERENNIAL_ID, final RTC revision,
