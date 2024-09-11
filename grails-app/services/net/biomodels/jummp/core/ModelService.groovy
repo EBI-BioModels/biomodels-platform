@@ -65,6 +65,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.ObjectFactory
+import org.springframework.context.ApplicationEvent
+import org.springframework.context.ApplicationListener
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
@@ -119,7 +121,7 @@ import java.util.concurrent.locks.ReentrantLock
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
-class ModelService implements InitializingBean {
+class ModelService implements ApplicationListener<ModelOperationEvent> {
     private static final Logger logger = LoggerFactory.getLogger(ModelService.class)
     def springSecurityService
     def aclUtilService
@@ -652,14 +654,15 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 model: model,
                 className: Revision.class.getName(),
                 roles: roles,
-                permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()] ]) as List
-            if (!result) {
-                return null
-            }
-            if (addToHistory) {
-            	modelHistoryService.addModelToHistory(model)
-            }
-            return Revision.get(result[0])
+                permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()] ]) as List<Long>
+        if (!result) {
+            return null
+        }
+        if (addToHistory) {
+            modelHistoryService.addModelToHistory(model)
+        }
+        //ModelPublishedEvent event = new ModelPublishedEvent()
+        return Revision.get(result[0])
     }
 
     /** deduplication method for getting Spring's authorities as Database-Role strings */
@@ -2972,7 +2975,22 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
     }
 
     @Override
-    void afterPropertiesSet() throws Exception {
-        logger.info("Finished the bean initialisation: -- def repositoryFileService")
+    void onApplicationEvent(ModelOperationEvent event) {
+        if (event instanceof ModelPublishedEvent) {
+            // Both publish and unpublish actions are using the same event {@link ModelPublishedEvent}
+            // Therefore, we define a source of "username;published|unpublished" when firing up a ModelPublishedEvent
+            // event when a model is published or unpublished in ModelController.
+            String[] parts = event.source.split(";")
+            String whoDid = parts[0]
+            String whichService = parts[1]
+            ModelTC model = event.model
+            final String msg = "${whoDid} has ${whichService} the model revision ${model.submissionId}: ${model.name}."
+            println(msg)
+            logger.info(msg)
+            // email to or notify biomodels-developers@ebi.ac.uk
+
+        } else if (event instanceof ModelDeletedEvent) {
+            logger.info(event.source.dump() + "\t" + event.model.dump())
+        }
     }
 }
