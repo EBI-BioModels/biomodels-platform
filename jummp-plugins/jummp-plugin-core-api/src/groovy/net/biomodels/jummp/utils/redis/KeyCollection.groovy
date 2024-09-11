@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -49,6 +49,9 @@ final class KeyCollection {
     public static final String REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE_SUFFIX = ":lastUsedValue"
     public static final String REDIS_CHANNEL_MODEL_ID_LAST_COUNT = "RedisChannelModelIdLastCount"
     public static final String REDIS_CHANNEL_MODEL_ID_LAST_COUNT_SUFFIX = ":lastIdCount"
+
+    // We can use true|false; yes|no; 1|0 for this key's value. All these pairs work like a charm!
+    public static final String DEBUGGING_MODE = "debugging-mode-enabled"
 
     private KeyCollection() {}
 

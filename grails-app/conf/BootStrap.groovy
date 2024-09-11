@@ -36,6 +36,7 @@ import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.healthcheck.HealthCheckUtil
+import net.biomodels.jummp.maintenance.Debugging
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.ContributionRole
@@ -222,7 +223,7 @@ class BootStrap {
 
     def init = { servletContext ->
         HealthCheckUtil.registerObjectMarshaller()
-
+        new Debugging().toggleDebuggingMode("false")
         def generatorRegistry = idGeneratorRegistryFactoryBean.object
         println "Using model id generators ${generatorRegistry?.generatorMap}"
 

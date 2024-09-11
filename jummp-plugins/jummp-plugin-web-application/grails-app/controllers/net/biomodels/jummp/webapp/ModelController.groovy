@@ -225,12 +225,14 @@ class ModelController extends CommonController {
                     RTC revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
-                    /*
-                    // For testing this method with a simple view
-                    render(view: "showTest", model: [id: PERENNIAL_ID, revision: revision])
-                    return true
-                    */
-
+                    if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE)) {
+                        if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
+                            // For testing and debugging this method with a simple view
+                            LOGGER.debug("Debugging mode is ON")
+                            render(view: "showTest", model: [id: PERENNIAL_ID, revision: revision])
+                            return true
+                        }
+                    }
                     Map model = doShowGetInitialValues(PERENNIAL_ID, rev, revision, repoFiles)
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)
