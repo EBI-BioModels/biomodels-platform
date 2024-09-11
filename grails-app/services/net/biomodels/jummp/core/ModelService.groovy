@@ -1982,6 +1982,30 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         return succeed
     }
 
+    @PostLogging(LoggingEventType.DELETION)
+    @Profiled(tag="modelService.undeleteModel")
+    boolean undeleteModel(Model model) {
+        println model?.dump()
+        if (!model) {
+            throw new IllegalArgumentException("Cannot undelete a null model")
+        }
+        /*if (model.deleted) {
+            throw new IllegalArgumentException("The model ${model?.submissionId} has been already deleted")
+        }
+        boolean canDelete = canDelete(model)
+        if (!canDelete) {
+            throw new IllegalStateException("Cannot delete the model ${model.submissionId}")
+        }*/
+        model.deleted = false
+        boolean succeed = model.save(flush: true)
+        if (succeed) {
+            logger.info("${model.submissionId} has been deleted (aka. archived).")
+            ModelDeletedEvent event = new ModelDeletedEvent(this, new ModelAdapter(model: model).toCommandObject())
+            grailsApplication.mainContext.publishEvent(event)
+        }
+        return succeed
+    }
+
     void deleteModelWorkingDirectory(final Model model) throws IOException {
         String workingDirectory = grailsApplication.config.jummp.vcs.workingDirectory
         String modelDirectory = model.vcsIdentifier
