@@ -50,6 +50,7 @@ import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.jdbc.BadSqlGrammarException
 
 /**
  * @short Service to handle Model files.
@@ -172,7 +173,7 @@ class ModelFileFormatService implements InitializingBean {
             } else {
                 modelElementType = new MET(modelFormat: modelFormat, name: name)
                 if (!modelElementType.save(flush: true)) {
-                    def err = modelElementType.errors.allErrors()
+                    def err = modelElementType.errors.allErrors
                     String msg = "Illegal element type $name for fmt ${modelFormat.id}: ${err}"
                     throw new IllegalArgumentException(msg)
                 }
@@ -180,8 +181,8 @@ class ModelFileFormatService implements InitializingBean {
                     return modelElementType.toCommandObject()
                 }
             }
-        } catch (org.springframework.jdbc.BadSqlGrammarException exception) {
-            throw new IllegalStateException("Model element type table does not exist")
+        } catch (BadSqlGrammarException exception) {
+            throw new IllegalStateException("Model element type table does not exist. Caused ${exception.message}")
         }
     }
 
@@ -248,9 +249,14 @@ class ModelFileFormatService implements InitializingBean {
      * @return true if the operation was successful, false otherwise.
      */
     boolean updateName(RTC revision, final String name) {
-        FileFormatService service = serviceForFormat(revision.format)
-        assert service
-        service.updateName(revision, name)
+        try {
+            FileFormatService service = serviceForFormat(revision.format)
+            assert service
+            service.updateName(revision, name)
+        } catch (Exception exception) {
+            LOGGER.error("Failed to update the model name. Caused ${exception.message}")
+            return false
+        }
     }
 
     /**
@@ -288,7 +294,8 @@ class ModelFileFormatService implements InitializingBean {
      */
     String getFormatVersion(def revision) {
         FileFormatService service = serviceForFormat(revision?.format)
-        return service ? service.getFormatVersion(revision) : "*"
+        RTC rtc = new RevisionAdapter(revision: revision).toCommandObject()
+        return service ? service.getFormatVersion(rtc) : "*"
     }
 
     /**
@@ -300,7 +307,8 @@ class ModelFileFormatService implements InitializingBean {
     List<String> getAllAnnotationURNs(Revision rev) {
         FileFormatService service = serviceForFormat(rev.format)
         if (service) {
-            return service.getAllAnnotationURNs(new ModelFormatAdapter(format:rev).toCommandObject())
+            RTC rtc = new RevisionAdapter(revision: rev).toCommandObject()
+            return service.getAllAnnotationURNs(rtc)
         } else {
             return []
         }
@@ -399,7 +407,9 @@ class ModelFileFormatService implements InitializingBean {
             }
             Map<String,String> services = getServices()
             if (services.containsKey(formatIdentifier)) {
-                return grailsApplication.mainContext.getBean((String)services.getAt(formatIdentifier))
+                return grailsApplication.mainContext.getBean((String) services[formatIdentifier])
+            } else {
+                return null
             }
         } else {
             return null
