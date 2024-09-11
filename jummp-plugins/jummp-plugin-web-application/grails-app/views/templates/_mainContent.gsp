@@ -94,8 +94,8 @@
                         <div class="small-1 medium-1 large-1 columns chk-download">
                             <g:if test="${model.state == ModelState.PUBLISHED}">
                                 <g:if test="${action == 'search'}">
-%{--                                    <label for="chkDownload"></label>--}%
-                                    <input type="checkbox" value="${id}"
+                                    <label for="chk-download-${id}" style="display: none"></label>
+                                    <input type="checkbox" value="${id}" id="chk-download-${id}" class="chk-download"
                                            style="float: right; margin-top: 10px">
                                 </g:if>
                                 <g:else>
