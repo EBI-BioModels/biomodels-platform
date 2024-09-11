@@ -2254,50 +2254,6 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
-/*
-
-        //validating publish process
-        if(!revision.validationLevel.equals(ValidationState.APPROVED)){
-            throw new PublishException("You cannot publish this model. Please check the annotations.")
-        }
-
-        Qualifier qualifier = Qualifier.findByUri("http://www.ddmore.org/ontologies/webannotationtool#model-implementation-conforms-to-literature-controlled")
-        def stmtsWithQualifier = revision.annotations*.statement.findAll { it.qualifier == qualifier }
-        def qualifierXrefs = stmtsWithQualifier.collect { Statement s -> s.object }
-
-        boolean originalModel = true
-        if(qualifierXrefs) {
-            ResourceReference resourceReference = qualifierXrefs.first()
-            if (resourceReference.name.toLowerCase().equals("no")) {
-                originalModel = false
-            }
-        }
-
-        PublishInfo pubInfo = new PublishInfo(originalModel)
-        revision.repoFiles.each {
-            String description = null;
-            if (it.mainFile) {
-                description = it.revision.description
-            }else {
-                description = it.description
-            }
-            if (description == null || description.empty) {
-                throw new PublishException("Please provide a description for the file: " + it.path)
-            }
-
-            pubInfo.addToFileSet(it.path, description);
-        }
-
-        if(!pubInfo.validModelAccomodation()){
-            throw new PublishException("Model is not compliant with original publication. Please provide a Model_Accommodations.txt file.")
-        }
-
-        def scenario = publishValidator.validatePublish(pubInfo)
-        if(!scenario) {
-            throw new PublishException("Submission did not match any of the scenarios. Please upload all required files")
-        }
-*/
-
         boolean curatedModel = isCurated(revision)
         boolean missingPerennialId = !model.publicationId || model.publicationId == ""
         if (MAKE_PUBLICATION_ID && curatedModel && missingPerennialId) {
