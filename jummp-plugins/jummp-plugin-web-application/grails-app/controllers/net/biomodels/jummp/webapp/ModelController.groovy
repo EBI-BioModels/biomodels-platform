@@ -32,6 +32,8 @@
 package net.biomodels.jummp.webapp
 
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.events.ModelOperationEvent
+import net.biomodels.jummp.core.events.ModelPublishedEvent
 import net.biomodels.jummp.utils.MathUtils
 import net.biomodels.jummp.utils.WebServiceFetcher as WSF
 
@@ -530,7 +532,12 @@ class ModelController extends CommonController {
                 " with the publication identifier ${published.modelIdentifier()}." : "."
             redirect(action: "showWithMessage", id: published.identifier(),
                 params: [flashMessage: "Model has been published${extraMsg}"])
-            //doCopyFilesToEBIFTP(published)
+
+            // doCopyFilesToEBIFTP(published)
+
+            // fire a published event up so that listeners/subscribers can see it
+            ModelOperationEvent event = new ModelPublishedEvent("${userService.username};published", published.model)
+            applicationContext.publishEvent(event)
         } catch (AccessDeniedException e) {
             LOGGER.error(e.message, e)
             forward(controller: "errors", action: "error403")
@@ -556,6 +563,10 @@ Please contact the developers team for support!"""])
             modelDelegateService.unpublishModelRevision(rev)
             redirect(action: "showWithMessage",
                 params: [id: "${params.id}.${params.revisionId}", flashMessage: "Model has been moved back to the private zone!"])
+
+            // fire a published event up so that listeners/subscribers can see it
+            ModelPublishedEvent event = new ModelPublishedEvent("${userService.username};unpublished", rev.model)
+            grailsApplication.mainContext.publishEvent(event)
         } catch (AccessDeniedException e) {
             LOGGER.error(e.message, e)
             forward(controller: "errors", action: "error403")
