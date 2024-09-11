@@ -29,7 +29,9 @@
 
 <meta name="layout" content="${session['branding.style']}/modelDisplay"/>
 <content tag="genericAnnotations">
+<g:if test="${genericAnnotations}">
     <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
+</g:if>
 </content>
 <content tag="modelspecifictabs">
 <g:if test="${components}">
@@ -37,7 +39,7 @@
 </g:if>
 </content>
 <content tag="modelspecifictabscontent">
-    <g:if test="${components}">
+<g:if test="${components}">
     <div id="Components" class="row">
         <div class="small-12 columns">
             <div class="row">
@@ -119,6 +121,6 @@
             });
         });
     </script>
-    </g:if>
+</g:if>
 </content>
 

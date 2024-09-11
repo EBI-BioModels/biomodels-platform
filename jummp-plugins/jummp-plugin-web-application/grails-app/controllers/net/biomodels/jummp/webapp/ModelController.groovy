@@ -131,7 +131,7 @@ class ModelController extends CommonController {
             String formatType = response.format
             String changesMade = null
             // not call isPositiveNumber if modelIdParam is null
-            final boolean HAS_ONLY_DIGITS = MathUtils.isPositiveNumber(modelIdParam)
+            final boolean HAS_ONLY_DIGITS = modelIdParam ? MathUtils.isPositiveNumber(modelIdParam) : false
             // perennial model identifiers include literals
             final boolean IS_REVISION_ID = !revisionIdParam && HAS_ONLY_DIGITS
             if (IS_REVISION_ID) {
