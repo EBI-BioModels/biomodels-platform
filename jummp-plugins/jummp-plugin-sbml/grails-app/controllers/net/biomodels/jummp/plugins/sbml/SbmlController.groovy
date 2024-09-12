@@ -40,8 +40,9 @@ import org.springframework.security.access.AccessDeniedException
 class SbmlController {
     def modelDelegateService
     def metadataDelegateService
-    def sbmlService
     def parameterSearchService
+    def redisService
+    def sbmlService
 
     private boolean existsPS(final String perennialId) {
         parameterSearchService.existsPS(perennialId)
@@ -67,10 +68,17 @@ class SbmlController {
         Map model = flash.genericModel
         final String perennialId = params.id
         RevisionTC r = model.revision as RevisionTC
-        List<STC> statements = model.modelLevelAnnotations as List<STC>
-        Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
-        if (annotations) {
-            model["genericAnnotations"] = annotations
+        if (redisService.doRedisHGet(perennialId, "show-model-level-annotations")?.toBoolean()) {
+            println("On model level annotations")
+            log.info("On model level annotations")
+            List<STC> statements = model.modelLevelAnnotations as List<STC>
+            Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
+            if (annotations) {
+                model["genericAnnotations"] = annotations
+            }
+        } else {
+            println("Off model level annotations")
+            log.info("Off model level annotations")
         }
         // fetch Parameters Search
         fetchComponents(model, perennialId)
