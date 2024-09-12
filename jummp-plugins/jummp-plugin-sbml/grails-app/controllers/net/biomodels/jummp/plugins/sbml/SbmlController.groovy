@@ -29,6 +29,7 @@ import net.biomodels.jummp.core.annotation.QualifierTransportCommand as Qualifie
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
+import net.biomodels.jummp.utils.redis.KeyCollection as KC
 import org.springframework.security.access.AccessDeniedException
 
 /**
@@ -69,11 +70,11 @@ class SbmlController {
         final String perennialId = params.id
         RevisionTC r = model.revision as RevisionTC
         boolean showed = true
-        if (!redisService.doRedisHGet(perennialId, "show-model-level-annotations")) {
-            if (!redisService.doRedisGet("show-model-level-annotations")) {
+        if (!redisService.doRedisHGet(perennialId, KC.SHOW_MODEL_LEVEL_ANNOTATIONS)) {
+            if (!redisService.doRedisGet(KC.SHOW_MODEL_LEVEL_ANNOTATIONS)) {
                 showed = false
             } else {
-                showed = redisService.doRedisGet("show-model-level-annotations").toBoolean()
+                showed = redisService.doRedisGet(KC.SHOW_MODEL_LEVEL_ANNOTATIONS).toBoolean()
             }
         }
 

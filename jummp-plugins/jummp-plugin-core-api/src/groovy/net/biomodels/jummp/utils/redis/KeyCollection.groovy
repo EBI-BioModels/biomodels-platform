@@ -52,6 +52,7 @@ final class KeyCollection {
 
     // We can use true|false; yes|no; 1|0 for this key's value. All these pairs work like a charm!
     public static final String DEBUGGING_MODE = "debugging-mode-enabled"
+    public static final String SHOW_MODEL_LEVEL_ANNOTATIONS = "show-model-level-annotations"
 
     private KeyCollection() {}
 
