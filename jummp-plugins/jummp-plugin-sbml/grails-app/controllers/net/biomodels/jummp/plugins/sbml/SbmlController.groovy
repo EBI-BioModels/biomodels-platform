@@ -68,7 +68,16 @@ class SbmlController {
         Map model = flash.genericModel
         final String perennialId = params.id
         RevisionTC r = model.revision as RevisionTC
-        if (redisService.doRedisHGet(perennialId, "show-model-level-annotations")?.toBoolean()) {
+        boolean showed = true
+        if (!redisService.doRedisHGet(perennialId, "show-model-level-annotations")) {
+            if (!redisService.doRedisGet("show-model-level-annotations")) {
+                showed = false
+            } else {
+                showed = redisService.doRedisGet("show-model-level-annotations").toBoolean()
+            }
+        }
+
+        if (showed) {
             println("On model level annotations")
             log.info("On model level annotations")
             List<STC> statements = model.modelLevelAnnotations as List<STC>
