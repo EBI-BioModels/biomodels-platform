@@ -812,7 +812,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Revision addRevision(final List<RFTC> repoFiles,
                          final List<RFTC> deleteFiles,
-                         final RevisionTransportCommand rev,
+                         final RevisionTC rev,
                          final Map working = null) throws ModelException {
         Revision revision = null
         def txDefinition = [
@@ -834,7 +834,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Revision amendRevision(final List<RFTC> repoFiles,
                            final List<RFTC> deleteFiles,
-                           final RevisionTransportCommand rev,
+                           final RevisionTC rev,
                            final Map working = null) throws ModelException {
         logger.debug("Amending the revision: ${rev.dump()}")
         Revision revision = null
@@ -865,7 +865,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      */
     Revision doPersistRevision(List<RFTC> repoFiles,
                                List<RFTC> deleteFiles,
-                               RevisionTransportCommand rev) throws ModelException {
+                               RevisionTC rev) throws ModelException {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doPersistRevision")
         // TODO: the method should be thread safe, add a lock
         validateModelRevision(rev)
@@ -911,7 +911,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
     Revision doAmendRevision(List<RFTC> repoFiles,
                              List<RFTC> deleteFiles,
-                             RevisionTransportCommand rev) throws ModelException {
+                             RevisionTC rev) throws ModelException {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doAmendRevision")
         validateModelRevision(rev)
 
@@ -996,7 +996,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Profiled(tag="modelService.uploadValidatedModel")
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Model uploadValidatedModel(final List<RFTC> repoFiles,
-            RevisionTransportCommand rev, final Map working = null) throws ModelException {
+            RevisionTC rev, final Map working = null) throws ModelException {
         Model model
         // this tx will use a different session than the current one
         def txDefinition = [propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW]
@@ -1019,7 +1019,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.doUploadValidatedModel")
     Model doUploadValidatedModel(final List<RFTC> repoFiles,
-            RevisionTransportCommand rev) throws ModelException {
+            RevisionTC rev) throws ModelException {
         logger.debug "About to store the following model: ${rev.name}"
         // TODO: to support anonymous submissions, this method has to be changed
         if (Revision.findByName(rev.name)) {
@@ -2588,13 +2588,13 @@ during the submission or update process. Hence, we have added `$username` as a m
      * @param   cmd The representation of revision whereby search service will be updated its indexes
      * @return
      */
-    private indexModelRevision(RevisionTransportCommand cmd) {
+    private indexModelRevision(RevisionTC cmd) {
         // can't inject searchService -- cyclic dependency
         def searchService = grailsApplication.mainContext.searchService
         searchService.updateIndex(cmd)
     }
 
-    private convertModelToOtherFormats(RevisionTransportCommand cmd) {
+    private convertModelToOtherFormats(RevisionTC cmd) {
         logger.info("""\
 Try to connect with Conversion service to export the model ${cmd.model.submissionId} under the other formats""")
         modelConversionService.generateExports(cmd)
@@ -2612,11 +2612,11 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
 
     /**
      * Adds a {@link ModellingApproach} considered as an annotation to a specific revision.
-     * @param revisionTC    a {@link RevisionTransportCommand} object representing the revision.
+     * @param revisionTC    a {@link RevisionTC} object representing the revision.
      * @param approach      a {@link ModellingApproach} object representing the modelling approach.
      * @throws ModelException
      */
-    void addModellingApproachAsAnnotation(RevisionTransportCommand revisionTC, ModellingApproach approach) throws
+    void addModellingApproachAsAnnotation(RevisionTC revisionTC, ModellingApproach approach) throws
             ModelException {
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
         boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
@@ -2636,11 +2636,11 @@ There has been error while adding $approach to the model ${revisionTC.identifier
 
     /**
      * Adds a publication identifier {@link Publication} as an annotation to the SBML file of the given model revision
-     * @param revisionTC   A {@link RevisionTransportCommand} instance indicating the model revision
+     * @param revisionTC   A {@link RevisionTC} instance indicating the model revision
      * @param pubTC A {@link PublicationTransportCommand} instance indicating the publication details
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    void addPublicationAsAnnotation(RevisionTransportCommand revisionTC, PublicationTransportCommand pubTC) throws
+    void addPublicationAsAnnotation(RevisionTC revisionTC, PublicationTransportCommand pubTC) throws
         ModelException {
         if (pubTC) {
             def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
@@ -2660,9 +2660,9 @@ an annotation to SBML document.""")
      * {@link net.biomodels.jummp.core.subscribers.ShareRevisionToFellowCurators}
      * can detect and share the newly created revision to the fellow curators with the writable permission.
      *
-     * @param command {@link RevisionTransportCommand} object
+     * @param command {@link RevisionTC} object
      */
-    private void shareRevision2FellowCurators(RevisionTransportCommand command) {
+    private void shareRevision2FellowCurators(RevisionTC command) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.shareRevision2FellowCurators")
         Revision revision = Revision.get(command.id)
         // Check authorities
@@ -2703,7 +2703,7 @@ an annotation to SBML document.""")
                 return null
             }
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision, latest: true)
-            RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
+            RevisionTC cmd = revisionAdapter.toCommandObject()
             try {
                 // TODO: catch exceptions of each post-submission processes to report to the submitter and BioModels cura
                 addContributors(attachedRevision, working)
@@ -2753,7 +2753,7 @@ an annotation to SBML document.""")
         stopWatch.stop()
     }
 
-    private void validateModelRevision(final RevisionTransportCommand rev) throws ModelException {
+    private void validateModelRevision(final RevisionTC rev) throws ModelException {
         StopWatch stopWatch = new Log4JStopWatch("modelService.validateModelRevision")
         if (!rev.model) {
             throw new ModelException(null, "Model may not be null")
@@ -2767,7 +2767,7 @@ an annotation to SBML document.""")
         stopWatch.stop()
     }
 
-    private Model doUpdateModelMetadata(final Model model, final RevisionTransportCommand revision) {
+    private Model doUpdateModelMetadata(final Model model, final RevisionTC revision) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateModelMetadata")
         model.modellingApproach = revision.model.modellingApproach
         model.otherInfo = revision.model.otherInfo
@@ -2826,7 +2826,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
         throw new ModelException(m, "Revision stored in VCS, but not in database")
     }
 
-    private Revision doUpdateRevision(Revision revision, RevisionTransportCommand rev) {
+    private Revision doUpdateRevision(Revision revision, RevisionTC rev) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateRevision")
         final User currentUser = User.findByUsername(springSecurityService.authentication.name)
         final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
