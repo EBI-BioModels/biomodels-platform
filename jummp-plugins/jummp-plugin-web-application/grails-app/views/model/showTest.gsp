@@ -36,16 +36,3 @@
 --%>
 
 <meta name="layout" content="${session['branding.style']}/modelDisplay"/>
-<%@ page contentType="text/html;charset=UTF-8" %>
-<html>
-<head>
-    <title>Simple View for ${id} | BioModels</title>
-</head>
-
-<body>
-    <h2>${id}</h2>
-    <p>${revision.model.name}</p>
-    <p>${revision.model.submissionId}</p>
-    <div>${revision.model.description}</div>
-</body>
-</html>

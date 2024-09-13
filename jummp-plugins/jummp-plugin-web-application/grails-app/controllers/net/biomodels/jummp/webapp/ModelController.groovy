@@ -231,14 +231,7 @@ class ModelController extends CommonController {
                     RTC revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
-                    if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE)) {
-                        if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
-                            // For testing and debugging this method with a simple view
-                            LOGGER.debug("Debugging mode is ON")
-                            render(view: "showTest", model: [id: PERENNIAL_ID, revision: revision])
-                            return true
-                        }
-                    }
+
                     Map model = doShowGetInitialValues(PERENNIAL_ID, rev, revision, repoFiles)
                     Map cmmProps = COMMON_PROPERTIES
                     model.putAll(cmmProps)
@@ -247,6 +240,14 @@ class ModelController extends CommonController {
                     model.putAll(doShowGetExternalLinkedData(PERENNIAL_ID, rev, repoFiles))
                     model.putAll(doShowGetAnnotationsBasedData(PERENNIAL_ID, rev, repoFiles))
 
+                    if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE)) {
+                        if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
+                            // For testing and debugging this method with a simple view
+                            LOGGER.debug("Debugging mode is ON")
+                            render(view: "showTest", model: model)
+                            return true
+                        }
+                    }
                     if (rev.id == revision.id) {
                         doShowRenderLatestRevision(model, revision, PERENNIAL_ID)
                     } else { // showing an old version, with the default page. Do not allow updates.
@@ -255,15 +256,9 @@ class ModelController extends CommonController {
                     }
                 }
             }
-            json {
-                doShowRenderWithFormat(rev, isPrivateModel, "json")
-            }
-            xml {
-                doShowRenderWithFormat(rev, isPrivateModel, "xml")
-            }
-            '*' {
-                render(view: '/errors/error415', model: [code: 415])
-            }
+            json { doShowRenderWithFormat(rev, isPrivateModel, "json") }
+            xml { doShowRenderWithFormat(rev, isPrivateModel, "xml") }
+            '*' { render(view: '/errors/error415', model: [code: 415]) }
         }
     }
 
