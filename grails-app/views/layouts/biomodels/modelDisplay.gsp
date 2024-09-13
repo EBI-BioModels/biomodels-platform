@@ -29,12 +29,11 @@
 --%>
 
 <g:applyLayout name="biomodels/main">
-<%@ page import="net.biomodels.jummp.core.constants.BioModels; grails.converters.JSON; java.text.DateFormat"%>
+<%@ page import="net.biomodels.jummp.core.constants.BioModels"%>
+<%@ page import="grails.converters.JSON; java.text.DateFormat"%>
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
-<%
-    JSON tagsJSON = bmTags as grails.converters.JSON
-%>
+<% JSON tagsJSON = bmTags as JSON %>
 <head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name} | BioModels</title>
     <script type="text/javascript">
@@ -105,25 +104,25 @@
                     jQuery(this).css('overflow', 'visible');
                     }
             });
-            $("#tabs ul li a").click(function (e) {
-                var anchor=$(this).attr('href');
-                var anchorClass = $(this).attr('class');
-                var anchorId = $(this).attr('id');
+            $("#tabs ul li a").on("click", function (e) {
+                const anchor = $(this).attr('href');
+                const anchorClass = $(this).attr('class');
+                const anchorId = $(this).attr('id');
                 if (anchorClass === "ui-tabs-anchor") {
                     e.preventDefault();
                     location.hash = anchor;
-                    var toggleHelp=0;
-                    if (helpHidden!=1) {
+                    let toggleHelp = 0;
+                    if (helpHidden !== 1) {
                         toggleHelp=1;
                     }
-                    if (toggleHelp==1) {
+                    if (toggleHelp === 1) {
                         hideHelp();
                     }
                     window.scrollTo(0, 0);
-                    if (toggleHelp==1) {
+                    if (toggleHelp === 1) {
                         showHelp();
                     }
-                    if (anchor.startsWith("#mdl") && anchor.length == 14) {
+                    if (anchor.startsWith("#mdl") && anchor.length === 14) {
                         hideQuestionMark();
                     }
                 }
@@ -184,7 +183,7 @@
                 modal: true,
                 buttons: {
                     Confirm: function() {
-                        var url = "${g.createLink(controller: 'conversion', action: 'convert')}";
+                        let url = "${g.createLink(controller: 'conversion', action: 'convert')}";
                         url += "?id=${revision.model.submissionId}&revisionId=${revision.revisionNumber}"
                         $.jummp.openPage(url);
                         $(this).dialog("close");
@@ -268,8 +267,8 @@
             $("body").append("<div id='modelToolbar' class='collapsibleContainer' title='Model Toolbar'>" +
                 "<button title='Expand Toolbar' data-showing='0' id='panelToggle'>Expand</button></div>	");
             $("#buttonContainer").prependTo("#modelToolbar");
-            var panelToggle = $("#panelToggle");
-            panelToggle.click(function (evt){
+            const panelToggle = $("#panelToggle");
+            panelToggle.on("click", function (evt){
                 displayToolbar(panelToggle.data("showing") === '0', true);
             });
             $( "#download" ).button({
@@ -365,7 +364,7 @@
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px', 'float':'right'  });
 
             $("#curation_state_change").on('change', function () {
-                var curationState = this.value;
+                const curationState = this.value;
                 $.ajax({
                     type: "PUT",
                     url: $.jummp.createLink("model", "updateCurationState"),
@@ -587,7 +586,7 @@
                             id: revision.modelIdentifier())}')">Reviewer</button>
                     </li>
                 </g:if>
-                <g:if test="${canAskReviewerAccount || hasAdminRole}">
+                <g:if test="${canAskReviewerAccount}">
                     <!-- canAddContributor is the same canAskReviewerAccount -->
                     <li>
                         <button class='toolbutton' id="manage-contributors"
@@ -697,7 +696,7 @@
                         curation notes do not be included at all the time.
                     -->
 		            <g:if test="${ curationNotes != null || hasCuratorRole || canSeeCurationTab }">
-                    <li><a href='#Curation'>Curation</a></li></g:if>
+                    <li><a href="#Curation">Curation</a></li></g:if>
                     </ul>
 
                     <!-- Overview tab -->
@@ -746,9 +745,9 @@
                                 <div class="small-12 medium-6 large-4 columns">Curation status</div>
                                 <div class="small-12 medium-6 large-8 columns">
                                 <g:if test="${canUpdate && hasCuratorRole && curationNotes != null}">
-                                    <select id="curation_state_change">
+                                    <label for="curation_state_change"></label><select id="curation_state_change">
                                         <g:each in="${possibleCurationStates}" var="possibleCurationState">
-                                            <g:if test="${possibleCurationState.equals(curationState)}">
+                                            <g:if test="${possibleCurationState == curationState}">
                                                 <option value="${possibleCurationState}" selected>
                                                     <jummp:camelCase message="${possibleCurationState}" />
                                                 </option>
@@ -902,6 +901,7 @@
                 </div>
             </div>
         </div>
+
     <script>
         $('#btnSaveTags').on("click", function (event) {
             "use strict";
@@ -923,7 +923,7 @@
                         tags: buildTagSet()
                     },
                     beforeSend: function () {
-                        let msg = "";
+                        let msg;
                         if (updatedTags.length === 0) {
                             msg = "No tags applied to the model.";
                         } else {
@@ -933,8 +933,8 @@
                         toastr.info(msg);
                     }
                 }).done(function (data, txtStatus, jqXHR) {
-                        var msg = data.message;
-                        var statusCode = data.status
+                        const msg = data.message;
+                        const statusCode = data.status
                         toastr.clear();
                         if (statusCode === 200) {
                             toastr.success(msg);
@@ -950,7 +950,7 @@
                         initialTags = updatedTags;
 
                 }).fail(function (jqXHR, status, errorThrown) {
-                        var msg = jqXHR.statusText;
+                        const msg = jqXHR.statusText;
                         toastr.clear();
                         toastr.error(msg);
                 });
@@ -963,8 +963,7 @@
             $.each(data, function (index, value) {
                 updatedTags.push({"id": value.id, "name": value.text});
             });
-            var jsonStr = JSON.stringify(updatedTags, ['id', 'name']);
-            return jsonStr;
+            return JSON.stringify(updatedTags, ['id', 'name']);
         }
 
         function getDataFromSelect2() {
@@ -975,7 +974,8 @@
             });
             return updatedTags;
         }
-        $('#chkPublishWithoutPublication').change(function () {
+
+        $('#chkPublishWithoutPublication').on("change", function() {
             let whichButton = '';
             if (this.checked) {
                 whichButton = '<span class="ui-button-text">Proceed</span>';
@@ -1001,8 +1001,7 @@
         function indexModelRevision() {
             $.jummp.openPage('${g.createLink(controller: 'search', action: 'reindex', params: ["models": [revision.identifier()]])}');
         }
-    </script>
-    <g:javascript>
+
         $(document).ready(function() {
             const qualifiers = $("#all-qualifier-accessions").text().split(",");
             jQuery.each(qualifiers, (index, item) => {
@@ -1022,7 +1021,7 @@
         });
 
         $(".each-qualifier-block").on("click", ".show-more", function() {
-            // there is a <br/> between blocks of 5 elements
+            // a <br/> tag is inserted between blocks of 5 elements
             const nextElement = $(this).next();
             nextElement.remove();
             const id = $(this).prop("id");
@@ -1035,7 +1034,6 @@
             $('<a id="' + qualAccession + 'ShowMore" class="show-more">Show more...</a><br/>').insertAfter(newEle);
             $(this).remove();
         });
-    </g:javascript>
     </script>
     <!-- loading the script to create a link to Reactome's DiagramJs widget when the model is eligible -->
     <g:if test="${reactomeIds}">
@@ -1043,7 +1041,7 @@
     </g:if>
 </body>
 <content tag="contexthelp">
-        display
+display
 </content>
 </g:applyLayout>
 
