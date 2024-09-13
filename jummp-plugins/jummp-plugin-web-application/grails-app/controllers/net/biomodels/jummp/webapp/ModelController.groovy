@@ -417,7 +417,8 @@ class ModelController extends CommonController {
         ModelFormatTransportCommand format = revision.format
         String formatController = modelFileFormatService.getPluginForFormat(format)
         if (formatController) {
-            forward controller: formatController, action: "show", id: PERENNIAL_ID
+            render(view: "show", model: model)
+            //forward controller: formatController, action: "show", id: PERENNIAL_ID
         } else {
             final String fmtId = format.identifier
             LOGGER.error("Could not find any controller for format $fmtId of $PERENNIAL_ID.")
