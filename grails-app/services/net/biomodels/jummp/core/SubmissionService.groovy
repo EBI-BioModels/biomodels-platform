@@ -41,7 +41,10 @@ import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter as MFAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPAdapter
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
+import net.biomodels.jummp.core.model.CurationState
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.ModelState
+
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
@@ -726,6 +729,7 @@ an annotation to SBML document.""")
                     hidden: false, description: description)
         }
 
+        // TODO: cut the method down and move some codes to smaller methods/functions because it is too long
         @CompileStatic(TypeCheckingMode.SKIP)
         void buildFromJSONFile(String metadata, Map working) {
             def slurper = new JsonSlurper()
@@ -762,10 +766,13 @@ an annotation to SBML document.""")
             String modellingApproach = jsonObj["modelling_approach"] ?: ""
             def otherMA = ModellingApproach.findByAccession("OTHER")
             PubTC suppliedPublication = buildPublicationTCFromJSON(jsonObj["publication"])
-            def modelTC = new MTC(name: modelName, description: modelDescription, submitter: userRealName)
-            def revisionTC = new RTC(model: modelTC, owner: userRealName, name: modelName,
-                format: formatTC, files: allFiles, minorRevision: false, validated: true)
 
+            // initialise a completely new Transport Command for Model and Revision if it is a new submission
+            MTC modelTC = new MTC(name: modelName, description: modelDescription, submitter: userRealName)
+            RTC revisionTC = new RTC(model: modelTC, owner: userRealName, name: modelName,
+                state: ModelState.UNPUBLISHED, curationState: CurationState.NON_CURATED,
+                format: formatTC, files: allFiles, minorRevision: false, validated: true)
+            boolean isAmend = jsonObj["isAmend"] ?: false
             if (working["isUpdate"]) {
                 String submissionId = jsonObj["submissionId"] as String
                 if (!submissionId) {
@@ -777,7 +784,7 @@ an annotation to SBML document.""")
                 // get the latest revision
                 revisionTC = modelDelegateService.getLatestRevision(submissionId, true)
                 modelTC = revisionTC.model
-                String comment = jsonObj["comment"] ?: revisionTC.comment
+                String comment = jsonObj["comment"] ?: (isAmend ? revisionTC.comment : "Updated the model revision.")
                 revisionTC.comment = comment
                 if (modelTC.name != modelName && modelName) {
                     modelTC.name = modelName
@@ -801,14 +808,12 @@ an annotation to SBML document.""")
                     revisionTC.owner = userRealName
                 }
 
-                if (modelTC.modellingApproach?.name != modellingApproach && modellingApproach) {
+                if (modellingApproach && modellingApproach?.toLowerCase() != "other") {
                     modelTC.modellingApproach = ModellingApproach.findByName(modellingApproach) ?: otherMA
                     changesMade.add("MODEL INFO: The modelling approach has been updated.")
-                } else if (!modellingApproach && modelTC.modellingApproach?.name) {
-                    modellingApproach = modelTC.modellingApproach?.name
-                } else {
-                    modellingApproach = otherMA.name
                 }
+                // we need to reassign the variable modellingApproach because it is propagated later
+                modellingApproach = modelTC.modellingApproach.name
 
                 revisionTC.files = allFiles
                 // TODO: write a private service to check the modifications made on the files. Here, we just use hard code
@@ -827,17 +832,16 @@ an annotation to SBML document.""")
                 working.put("modelId", submissionId)
                 working.put("changesMade", changesMade)
             } else {
-                revisionTC.files = allFiles
-
                 // By default, the modelling approach will be assigned 'other' if it is omitted or empty
                 if (!modellingApproach) {
                     modellingApproach = otherMA.name
                 }
                 if (!modelName || !formatTC) {
-                    working.put("cause", "Cannot leave these properties empty!")
-                    throw new IllegalAccessException("Cannot leave these properties empty!")
+                    working.put("cause", "Cannot leave the model name and format properties empty!")
+                    throw new IllegalAccessException("Cannot leave the model name and format properties empty!")
                 }
             }
+
             String submitterInfo = "[${working['submitterInfo']['username']}, ${working['submitterInfo']['email']}]"
             working["submitterInfo"] = submitterInfo
             working.put("RevisionTC", revisionTC)
@@ -854,7 +858,7 @@ an annotation to SBML document.""")
             working.put("readme_submission", jsonObj["readme_submission"] ?: revisionTC.readmeSubmission ?: "")
             working.put("shouldCreateNewRevision", true)
             working.put("isMetadataSubmission", jsonObj["isMetadataSubmission"] ?: modelTC.isMetadataSubmission ?: false)
-            working.put("isAmend", jsonObj["isAmend"] ?: false)
+            working.put("isAmend", isAmend)
             // If the contributor role isn't provided, adding "Modeller" as the default role
             working.put("contributorRole", jsonObj["contributorRole"] ?: "Modeller")
 
@@ -1528,6 +1532,12 @@ an annotation to SBML document.""")
         getStrategyFromContext(working).doValidateSyntax(uploadFile, format, errors)
     }
 
+    /**
+     * This function is used to build a {@link Map} of all submission info/data for
+     * the submission performed via REST API call.
+     * @param metadata is a JSON String
+     * @param working is the map
+     */
     void buildFromJSONFile(String metadata, Map working) {
         getStrategyFromContext(working).buildFromJSONFile(metadata, working)
     }
