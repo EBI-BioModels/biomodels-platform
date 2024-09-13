@@ -62,7 +62,7 @@ class ReactomeServiceFactoryBean implements FactoryBean<ReactomeService>, Applic
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream("models2pathways.tsv")
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))
         try {
-            String line = "";
+            String line
             while ((line = reader.readLine())) {
                 parseLineAndPrepareMap(line)
             }

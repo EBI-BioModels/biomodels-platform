@@ -415,12 +415,7 @@
                 });
             });
         });
-        function setReactomeId(reactomeId) {
-            this.reactomeId = reactomeId;
-        }
-        function openDialogBox() {
-            $("#dialog").dialog("open");
-        }
+
         function displayToolbar(show, firstTime) {
             if (show) {
                 $("#panelToggle").data("showing", '1');
@@ -464,67 +459,6 @@
             </sec:ifNotLoggedIn>
             // displayToolbar(true, true);
         });
-        var size = {
-            width: window.innerWidth || document.body.clientWidth,
-            height: window.innerHeight || document.body.clientHeight
-        };
-
-            var global_diagram;
-            var reactomeId ="";
-            var base_height = Math.floor(size.height/2);
-            var base_width = Math.floor(size.width/2);
-            var REACTOME_HEIGHT = base_height;
-            var REACTOME_WEIGHT = base_width;
-            var DIALOG_WEIGHT = base_width+100;
-            var DIALOG_HEIGHT = base_height+150;
-
-            $(document).ready(function () {
-                $("#dialog").dialog({
-                    width: DIALOG_WEIGHT,
-                    height: DIALOG_HEIGHT,
-                    modal: true,
-                    open: function( event, ui ) {
-                        global_diagram.resize(REACTOME_WEIGHT,REACTOME_HEIGHT);
-                        global_diagram.resetSelection();
-                        global_diagram.selectItem(reactomeId);
-                    },
-                    autoOpen: false
-                });
-
-                $("#opener").on("change", function () {
-                    setReactomeId(this.value);
-                    if(reactomeId) {
-                        loadDiagram();
-                        openDialogBox();
-                    }
-                });
-            });
-
-            //Creating the Reactome Diagram widget
-            //Take into account a proxy needs to be set up in your server side pointing to www.reactome.org
-            function loadDiagram() {
-                var diagram = Reactome.Diagram.create({
-                    "placeHolder": "diagramHolder",
-                    "width": REACTOME_WEIGHT,
-                    "height": REACTOME_HEIGHT
-                });
-                diagram.loadDiagram(reactomeId);
-
-                // store this in a global variable so we can call resetSelection() from
-                // the callback for opening the Reactome popup. Calling it here results
-                // in a popup window with an invisible pathway, even though the widget
-                // control buttons are rendered just fine.
-                //Adding different listeners
-                global_diagram = diagram;
-
-                diagram.onObjectHovered(function (hovered) {
-                    console.info("Hovered ", hovered);
-                });
-
-                diagram.onObjectSelected(function (selected) {
-                    console.info("Selected ", selected);
-                });
-            }
     </script>
     <g:layoutHead/>
 </head>
@@ -734,6 +668,11 @@
                               optionValue="${{((String)it).split('\\|')[0]}}" />
                 </div>
                 </g:if>
+            </div>
+
+            <!-- Render the selection box to choose Reactions which are visualised with Reactome Pathways Viewer -->
+            <div id="reactome-dialog" title="Reactome pathway">
+                <div id="diagramHolder"></div>
             </div>
 
             <!-- Render the model tabs -->
@@ -1097,11 +1036,14 @@
             $(this).remove();
         });
     </g:javascript>
+    </script>
+    <!-- loading the script to create a link to Reactome's DiagramJs widget when the model is eligible -->
+    <g:if test="${reactomeIds}">
+    <script src="${resource(dir: 'js/biomodels', file: 'reactome.diagram.viewer.js')}"></script>
+    </g:if>
 </body>
 <content tag="contexthelp">
         display
 </content>
 </g:applyLayout>
-<div id="dialog" title="Reactome pathway">
-    <div id="diagramHolder"></div>
-</div>
+
