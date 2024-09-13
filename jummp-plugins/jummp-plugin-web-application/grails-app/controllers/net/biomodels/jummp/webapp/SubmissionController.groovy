@@ -541,8 +541,10 @@ ${pubURIs?.join(";")}""")
         temporaryStorage.mkdirs()
         if (working.containsKey("repository_files")) {
             List repFiles = working.get("repository_files")
-            if (repFiles) {
+            if (repFiles && submissionFiles.exists()) {
                 FileUtils.copyDirectory(submissionFiles, temporaryStorage)
+            } else {
+                logger.error("The submission files are not available for now!")
             }
         }
 
