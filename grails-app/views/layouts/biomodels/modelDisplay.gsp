@@ -738,7 +738,10 @@
 
                         <div class="small-12 medium-4 large-4 columns">
                             <div class="row rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
-                            <g:pageProperty name="page.genericAnnotations"/>
+                            %{--<g:pageProperty name="page.genericAnnotations"/>--}%
+                            <g:if test="${genericAnnotations}">
+                                <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
+                            </g:if>
                             <g:if test="${curationState}">
                             <biomd:insertSectionSeparator/>
                             <div class='row'>

@@ -343,12 +343,14 @@ class ModelController extends CommonController {
     private Map doShowGetAnnotationsBasedData(final String PERENNIAL_ID, final RTC revision,
                                               final List<RFTC> repoFiles) {
         List<STC> modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(revision)
+        Map genericAnnotations = metadataDelegateService.fetchGenericAnnotations(modelLevelAnnotations)
         List<String> originalModels = metadataDelegateService.fetchOriginalModels(modelLevelAnnotations)
         List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
         Map<String, String[]> modellingApproaches = metadataDelegateService.fetchModellingApproaches(revision)
         Set<TagTC> tags = metadataDelegateService.findTagsByModel(revision.model)
         [
             modelLevelAnnotations   : modelLevelAnnotations,
+            genericAnnotations      : genericAnnotations,
             originalModels          : originalModels,
             flags                   : flags,
             modellingApproaches     : modellingApproaches,
