@@ -289,13 +289,12 @@ class ModelFileFormatService implements InitializingBean {
 
     /**
      * Retrieves the version of the format in which {@link RTC} is encoded.
-     * @param revision the RevisionTransportCommand/Revision for which to extract the format version.
+     * @param revision the {@link RTC} for which to extract the format version.
      * @return The format version, or '*' if this cannot be extracted.
      */
-    String getFormatVersion(def revision) {
+    String getFormatVersion(final RTC revision) {
         FileFormatService service = serviceForFormat(revision?.format)
-        RTC rtc = new RevisionAdapter(revision: revision).toCommandObject()
-        return service ? service.getFormatVersion(rtc) : "*"
+        return service ? service.getFormatVersion(revision) : "*"
     }
 
     /**

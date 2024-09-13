@@ -1139,11 +1139,12 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 description: modelFileFormatService.extractDescription(modelFiles, format),
                 comment: meta.comment,
                 uploadDate: new Date())
+        RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
 
         // keep a list of RFs closely, as we may need to discard all of them
         List<RepositoryFile> domainObjects =
             repositoryFileService.convertRFTCToRF(repoFiles, revision)
-        String formatVersion = modelFileFormatService.getFormatVersion(revision)
+        String formatVersion = modelFileFormatService.getFormatVersion(revisionTC)
         revision.format = ModelFormat.findByIdentifierAndFormatVersion(meta.format.identifier, formatVersion)
         assert formatVersion != null && revision.format != null
         try {
@@ -1309,8 +1310,10 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                         description: modelFileFormatService.extractDescription(modelFiles, format), comment: comment,
                         uploadDate: new Date(), owner: currentUser,
                 minorRevision: false, validated:valid)
+        RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
-        String formatVersion = modelFileFormatService.getFormatVersion(revision)
+        String formatVersion = modelFileFormatService.getFormatVersion(revisionTC)
         revision.format = ModelFormat.findByIdentifierAndFormatVersion(format.identifier, formatVersion)
 
         // save the new model in the database
@@ -1346,7 +1349,6 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 }
             }
             revision.refresh()
-            RevisionTC revisionTC = new RevisionAdapter(revision: revision, latest: true).toCommandObject()
             RevisionCE revisionCE = new RevisionCE(this, revisionTC, vcsService.retrieveFiles(revision))
             grailsApplication.mainContext.publishEvent(revisionCE)
         } else {
@@ -2346,7 +2348,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         // TODO move out of here and invoke via e.g. grailsApplication.mainContext.publishEvent()
         String format = revision.format.identifier
         if ("SBML" == format) {
-            RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+            RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
             // TODO externalise generation of canonical model URIs?
             String[] idXRefs = [revision.model.submissionId, publicationId].collect { String id ->
                 "https://identifiers.org/biomodels.db:$id".toString()
@@ -2360,14 +2362,14 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
             revisionTC.comment = "Automatically added model identifier $publicationId"
 
             Revision toPublish = doPersistRevision(revisionTC.files, [], revisionTC)
-            RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
+            RevisionTC toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
             indexModelRevision(toPublishTC)
             shareRevision2FellowCurators(toPublishTC)
             return toPublish
         } else {
             logger.warn("""We are publishing $revision encoded in $format, but won't be able to add \
 the perennial publication identifier to the model file.""")
-            RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: revision).toCommandObject()
+            RevisionTC toPublishTC = new RevisionAdapter(revision: revision).toCommandObject()
             indexModelRevision(toPublishTC)
         }
 
