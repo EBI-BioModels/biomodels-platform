@@ -13,6 +13,7 @@
 <g:javascript src="common.js"/>
 <!-- end scripts-->
 
+%{--
 <g:if test="${!Environment.developmentMode}">
     <!-- Google Analytics details... -->
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -25,3 +26,4 @@
         gtag('config', 'UA-39747892-1');
     </script>
 </g:if>
+--}%
