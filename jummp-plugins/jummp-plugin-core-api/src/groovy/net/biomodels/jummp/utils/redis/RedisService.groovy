@@ -93,9 +93,17 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         }
     }
 
+    // TODO: rename doRedisHGet, Set for hget, hset; doRedisHMGet, Set for hmget, hmset,
+
     synchronized static void doRedisHSet(final String key, final Map<String, String> data) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.hmset(key, data)
+        }
+    }
+
+    synchronized static void doRedisHSet(final String key, final String field, final String value) {
+        jedisPool.getResource().withCloseable { Jedis jedis ->
+            jedis.hset(key, field, value)
         }
     }
 
