@@ -240,16 +240,17 @@ class ModelController extends CommonController {
                     model.putAll(doShowGetExternalLinkedData(PERENNIAL_ID, rev, repoFiles))
                     model.putAll(doShowGetAnnotationsBasedData(PERENNIAL_ID, rev, repoFiles))
 
-                    if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE)) {
-                        if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
-                            // For testing and debugging this method with a simple view
-                            LOGGER.debug("Debugging mode is ON")
-                            render(view: "showTest", model: model)
-                            return true
-                        }
-                    }
                     if (rev.id == revision.id) {
-                        doShowRenderLatestRevision(model, revision, PERENNIAL_ID)
+                        if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE)) {
+                            if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
+                                // For testing and debugging this method with a simple view
+                                LOGGER.debug("Debugging mode is ON")
+                                render(view: "showTest", model: model)
+                                return true
+                            }
+                        } else {
+                            doShowRenderLatestRevision(model, revision, PERENNIAL_ID)
+                        }
                     } else { // showing an old version, with the default page. Do not allow updates.
                         doShowPrepareOldRevision(model)
                         render(view: "show", model: model)
