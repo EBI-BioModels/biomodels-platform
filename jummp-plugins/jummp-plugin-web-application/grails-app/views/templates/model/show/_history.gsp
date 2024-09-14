@@ -47,8 +47,7 @@
     <g:if test="${allRevs.size() > 1}">
         <p style="font-style: italic; font-size: smaller">(*) You might be seeing discontinuous
         revisions as only public revisions are displayed here. Any private revisions
-            <img title="unpublished model revision" alt="unpublished model revision"
-                 src="${serverURL}/images/lock.png"/>
+            <i class="icon icon-common icon-lock" style="font-size: large"></i>
             of this model will only be shown to the submitter and their collaborators.</p>
     </g:if>
 </div>
