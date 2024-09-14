@@ -84,7 +84,7 @@ class BioModelsTagLib {
      * Rendering CurationNotes tab for the curated models
      */
     def renderCurationNotesTab = { attrs ->
-        out << "<div id='Curation' class='row'>"
+        out << "<div class='row'>"
         def modelId =  attrs.model
         Map requiredParams = ["model": modelId]
         boolean hasCuratorRole = attrs.hasCuratorRole

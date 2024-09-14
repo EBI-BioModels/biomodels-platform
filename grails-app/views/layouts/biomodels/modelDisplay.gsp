@@ -622,57 +622,10 @@
             </g:if>
 
             <!-- Show model revision name, model of the month, icons, flags, Reactome connected pathways, etc. -->
-            <div id="topBar" class="row">
-                <div class="message" style="display: block"></div>
-
-                <div style="float:left" class="columns medium-10 large-10 small-12">
-                    <h2>${revision.name}</h2>
-                    <biomd:renderModelOfMonth modelId="${revision.model.id}" />
-                </div>
-
-                <div style="float:right; text-align: right" class="columns medium-2 large-2 small-12">
-                    <g:if test="${!flags.empty}">
-                        <biomd:renderModelFlags flags="${flags}"/>
-                    </g:if>
-                    <g:if test="${revision.qcInfo != null}">
-                        <jummp:renderStarLevels flag="${revision.qcInfo.flag}" />
-                    </g:if>
-                    <h2>
-                    <a href="${g.createLink(controller: 'model', action: 'show', id: revision.identifier(), params: ['format': 'json'])}"
-                       target="_blank" title="Click here to view JSON format of this model">
-                        <i class="icon icon-fileformats icon-JSON"></i></a>
-                    <a href="${g.createLink(controller: 'model', action: 'show', id: revision.identifier(), params: ['format': 'xml'])}"
-                       target="_blank" title="Click here to view XML format of this model">
-                        <i class="icon icon-fileformats icon-XML"></i></a>
-                    <g:if test="${revision.model.isMetadataSubmission}">
-                        <i class="icon icon-common icon-code" title="This is a metadata-only submission"></i>
-                        <span>&nbsp;</span>
-                    </g:if>
-                    <g:if test="${revision.state==ModelState.PUBLISHED}">
-                        <i class="icon icon-common icon-unlock" title="This version of the model is public"></i>
-                    </g:if>
-                    <g:else>
-                        <i class="icon icon-common icon-lock" title="This version of the model is unpublished"></i>
-                    </g:else></h2>
-                </div>
-
-                <g:if test="${reactomeIds}">
-                <!-- Render the selection box to choose Reactions which are visualised with Reactome Pathways Viewer -->
-                <div id="reactome-dialog" title="Reactome pathway">
-                    <div id="diagramHolder"></div>
-                </div>
-                <div style="margin-right: 50%;">
-                    <g:select name="reactome_pathways"
-                              id="opener"
-                              onchange="setReactomeId(this.value);"
-                              from="${reactomeIds}"
-                              noSelection="['':'Choose Reactome Pathway']"
-                              optionKey = "${{null != it && !((String)it).isEmpty()?((String)it).split('\\|')[1]:((String)it).split('\\|')[0]}}"
-                              optionValue="${{((String)it).split('\\|')[0]}}" />
-                </div>
-                </g:if>
+            <div id="topBar">
+            <g:render template="/templates/model/show/topbar" plugin="jummp-plugin-web-application"/>
             </div>
-    
+
             <!-- Render the model tabs -->
             <div id="tablewrapper">
                 <div id="tabs">
@@ -699,184 +652,19 @@
                     </ul>
 
                     <!-- Overview tab -->
-                    <div id="Overview" class="row">
-                        <div class="small-12 medium-8 large-8 columns">
-                            <div class="row">
-                                <div class="small-12 medium-2 large-2 columns">
-                                    <span class="overview-tab-attribute">Model Identifier</span>
-                                </div>
-                                <div class="small-12 medium-10 large-10 columns">
-                                    ${revision.modelIdentifier()}
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="small-12 medium-2 large-2 columns">
-                                    <jummp:displayModelDescriptionLabel>
-                                        <span class="overview-tab-attribute">${description}</span>
-                                    </jummp:displayModelDescriptionLabel>
-                                </div>
-                                <div class="small-12 medium-10 large-10 columns">
-                                    <div id="description">
-                                        ${raw(revision.description)}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="small-12 medium-2 large-2 columns">
-                                    <span class="overview-tab-attribute"><g:message code="model.model.format"/></span>
-                                </div>
-                                <div class="small-12 medium-10 large-10 columns">
-                                    ${revision.format.name}
-                                        ${revision.format.formatVersion!="*"?"(${revision.format.formatVersion})":""}
-                                </div>
-                            </div>
-                            <g:render template="/templates/renderPublication" />
-                            <g:render template="/templates/renderContributors"
-                                      model="${contributors}"/>
-                        </div>
-
-                        <div class="small-12 medium-4 large-4 columns">
-                            <div class="row rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
-                            <g:if test="${genericAnnotations}">
-                                <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
-                            </g:if>
-                            <g:if test="${curationState}">
-                            <biomd:insertSectionSeparator/>
-                            <div class='row'>
-                                <div class="small-12 medium-6 large-4 columns">Curation status</div>
-                                <div class="small-12 medium-6 large-8 columns">
-                                <g:if test="${canUpdate && hasCuratorRole && curationNotes != null}">
-                                    <label for="curation_state_change"></label><select id="curation_state_change">
-                                        <g:each in="${possibleCurationStates}" var="possibleCurationState">
-                                            <g:if test="${possibleCurationState == curationState}">
-                                                <option value="${possibleCurationState}" selected>
-                                                    <jummp:camelCase message="${possibleCurationState}" />
-                                                </option>
-                                            </g:if>
-                                            <g:else>
-                                                <option value="${possibleCurationState}">
-                                                    <jummp:camelCase message="${possibleCurationState}" />
-                                                </option>
-                                            </g:else>
-                                        </g:each>
-                                    </select>
-                                </g:if>
-                                <g:else>
-                                    <jummp:camelCase message="${curationState}" />
-                                </g:else>
-                                </div>
-                            </div></g:if>
-                            <g:if test="${modellingApproaches}">
-                            <biomd:insertSectionSeparator/>
-                            <div class='row'>
-                                <div class="small-12 medium-6 large-4 columns">Modelling approach(es)</div>
-                                <div class="small-12 medium-6 large-8 columns">
-                                    <biomd:renderModellingApproaches modellingApproaches="${modellingApproaches}"/>
-                                </div>
-                            </div></g:if>
-                            <g:if test="${originalModels}">
-                            <biomd:insertSectionSeparator/>
-                            <div class='row'>
-                                <div class="small-12 medium-6 large-4 columns">Original model(s)</div>
-                                <div class="small-12 medium-6 large-8 columns">
-                                    <biomd:renderOriginalModels sources="${originalModels}"/></div>
-                            </div></g:if>
-                            <!-- Show all tags assigned to the model -->
-                            <biomd:insertSectionSeparator/>
-                            <g:if test="${bmTags}">
-                                <g:if test="${canUpdate && hasCuratorRole}">
-                                    <biomd:showEditableTags bmTags="${bmTags}"/>
-                                </g:if>
-                                <g:else>
-                                    <biomd:showTags bmTags="${bmTags}"/>
-                                </g:else>
-                            </g:if>
-                            <g:else>
-                                <g:if test="${canUpdate && hasCuratorRole}">
-                                    <biomd:showEditableTags bmTags="${bmTags}"/>
-                                </g:if>
-                            </g:else>
-                            <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
-                            <g:if test="${shouldDisplayDisclaimer}">
-                            <biomd:displayDisclaimer revision="${revision}"/></g:if>
-                            <div class="row rounded-header" style="margin-top: 1.0em"><h4 style="color: #ffffee">Connected external resources</h4></div>
-                            <g:if test="${true}">
-                            <biomd:renderLinkOmicsDiRosette /></g:if>
-                            <g:if test="${hrefLinkToNewtEditor}">
-                            <biomd:renderLinkToNewtEditor serverURL="${serverURL}"
-                                                          hrefLinkToNewtEditor="${hrefLinkToNewtEditor}"/>
-                            </g:if>
-                            <biomd:doRenderOrAddGalaxyLink hasGalaxyLink="${hasGalaxyLink}" serverURL="${serverURL}"
-                                                           modelId="${revision.modelIdentifier()}"
-                                                           canAddGalaxyLink="${canAddGalaxyLink}"/>
-                            %{--<div class='row'>
-                                <div class="medium-3 columns">Validation Status</div>
-                                <div class="medium-9 columns">${validationLevel}</div>
-                            </div>
-                            <div class='row'>
-                                <div class="medium-3 columns">Certification Comment</div>
-                                <div class="medium-9 columns">${certComment}</div>
-                            </div>--}%
-                        </div>
+                    <div id="Overview" >
+                    <g:render template="/templates/model/show/overview" plugin="jummp-plugin-web-application"/>
                     </div>
 
                     <!-- Files tab -->
                     <div id="Files" class="row">
-                        <% Map model = ["repoFiles": repoFiles] %>
-                        <g:render template="/templates/biomodels/modelDisplay/tabFiles"
-                                  model="${model}" />
+                    <% Map model = ["repoFiles": repoFiles] %>
+                    <g:render template="/templates/biomodels/modelDisplay/tabFiles" model="${model}" />
                     </div>
 
                     <!-- History tab -->
                     <div id="History">
-                        <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
-                        <ul>
-                            <li>Model originally submitted by : ${revision.model.submitter}</li>
-                            <li>Submitted: ${dateFormat.format(allRevs.first().uploadDate)}</li>
-                            <li>Last Modified: ${dateFormat.format(allRevs.last().uploadDate)}</li>
-                        </ul>
-                        <h5>Revisions</h5>
-                        <ul>
-                            <g:each status="i" var="rv" in="${allRevs.sort{a,b -> a.revisionNumber > b.revisionNumber ? -1 : 1}}">
-                                <li style="${revision.id == rv.id ?"background-color:#FFFFCC;":""}margin-top:5px">
-                                    Version: ${rv.revisionNumber}
-                                    <g:if test="${rv.state==ModelState.PUBLISHED}">
-                                            <img style="width:12px;margin:2px;float:none;"
-                                                 title="This version of the model is public" alt="public model"
-                                                 src="${serverURL}/images/unlock.png"/>
-                                    </g:if>
-                                    <g:else>
-                                            <img style="width:12px;margin:2px;float:none;"
-                                                 title="This version of the model is unpublished" alt="unpublished model"
-                                                 src="${serverURL}/images/lock.png"/>
-                                    </g:else>
-                                    <g:if test="${revision.id!=rv.id}">
-                                        <a class="versionDownload" title="go to version ${rv.revisionNumber}" target="_blank"
-                                           href="${g.createLink(controller: 'model', action: 'show', id: rv.identifier())}">
-                                            <img style="width:12px;margin:2px;float:none"
-                                                 src="${serverURL}/images/external_link.png"/>
-                                        </a>
-                                    </g:if>
-                                            <a class="versionDownload" title="download" target="_blank"
-                                               href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
-                                                <img alt="Download this version" style="width:15px;float:none"
-                                                     src="${serverURL}/images/download.png"/>
-                                            </a>
-                                        <ul>
-                                            <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>
-                                            <li>Submitted by: ${rv.owner}</li>
-                                            <li>With comment: ${rv.comment}</li>
-                                        </ul>
-                                </li>
-                            </g:each>
-                        </ul>
-                        <g:if test="${allRevs.size() > 1}">
-                            <p style="font-style: italic; font-size: smaller">(*) You might be seeing discontinuous
-                                revisions as only public revisions are displayed here. Any private revisions
-                                <img title="unpublished model revision" alt="unpublished model revision"
-                                     src="${serverURL}/images/lock.png"/>
-                                 of this model will only be shown to the submitter and their collaborators.</p>
-                        </g:if>
+                    <g:render template="/templates/model/show/history" plugin="jummp-plugin-web-application"/>
                     </div>
 
                     <!-- Exports tab -->
@@ -892,12 +680,14 @@
 
                     <!-- Curation tab -->
                     <g:if test="${curationNotes != null || hasCuratorRole || canSeeCurationTab }">
+                    <div id="Curation">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
                                                       model="${revision.modelIdentifier()}"
                                                       modelName="${revision.name}"
                                                       canSeeCurationTab="${canSeeCurationTab}"
                                                       hasCuratorRole="${hasCuratorRole}"
                                                       hasAdminRole="${hasAdminRole}"/>
+                    </div>
                     </g:if>
                 </div>
             </div>

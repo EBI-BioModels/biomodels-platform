@@ -37,21 +37,52 @@
                 onclick="openTab('Files')">Files</button>
         <button class="w3-bar-item w3-button tablink" id="btn-History"
                 onclick="openTab('History')">History</button>
+        <g:if test="${convertedFilesTC}">
+        <button class="w3-bar-item w3-button tablink" id="btn-Exports"
+                onclick="openTab('Exports')">Exports</button>
+        </g:if>
+        <div id="specific-tabs"></div>
+        <g:if test="${curationNotes != null || hasCuratorRole || canSeeCurationTab }">
+        <button class="w3-bar-item w3-button tablink" id="btn-Curation"
+                onclick="openTab('Curation')">Curation</button>
+        </g:if>
     </div>
-
+    <!-- Overview tab -->
     <div id="Overview" class="w3-container w3-border display-tab">
         <g:render template="/templates/model/show/overview" plugin="jummp-plugin-web-application"/>
     </div>
-
+    <!-- Files tab -->
     <div id="Files" class="w3-container w3-border display-tab" style="display:none">
         <% Map model = ["repoFiles": repoFiles] %>
         <g:render template="/templates/biomodels/modelDisplay/tabFiles"
                   model="${model}" />
     </div>
-
+    <!-- History tab -->
     <div id="History" class="w3-container w3-border display-tab" style="display:none">
         <g:render template="/templates/model/show/history" plugin="jummp-plugin-web-application"/>
     </div>
+
+    <!-- Exports tab -->
+    <g:if test="${convertedFilesTC}">
+    <div id="Exports" class="w3-container w3-border display-tab" style="display:none">
+        <h3>Below are the converted model files where you could download</h3>
+        <biomd:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
+    </div>
+    </g:if>
+    <!-- Some specific tabs -->
+    <div id="specific-tabs-content" style="display: none">
+
+    </div>
+    <!-- Curation tab -->
+    <g:if test="${curationNotes != null || hasCuratorRole || canSeeCurationTab }">
+    <div id="Curation" class="w3-container w3-border display-tab" style="display:none">
+        <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
+                                      model="${revision.modelIdentifier()}"
+                                      modelName="${revision.name}"
+                                      canSeeCurationTab="${canSeeCurationTab}"
+                                      hasCuratorRole="${hasCuratorRole}"
+                                      hasAdminRole="${hasAdminRole}"/>
+    </div></g:if>
 </div>
 </div>
 
