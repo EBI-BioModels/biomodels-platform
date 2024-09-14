@@ -79,8 +79,6 @@
         $("#btn-"+tabName).addClass("w3-red");
 
         const currentHref = window.location.href;
-        const segments = currentHref.split("/");
-        console.log(segments);
         let rootURL = rootModelURL;
         let url;
         if (currentHref.indexOf("#") > 0) {
@@ -94,18 +92,6 @@
             // prevents browser from storing history with each change:
             window.history.replaceState(stateData, titlePage, url);
         }
-        /*let i, x, tabLinks;
-        x = document.getElementsByClassName("display-tab");
-        for (i = 0; i < x.length; i++) {
-            x[i].style.display = "none";
-        }
-        tabLinks = document.getElementsByClassName("tablink");
-        for (i = 0; i < x.length; i++) {
-            tabLinks[i].className = tabLinks[i].className.replace(" w3-red", "");
-        }
-        document.getElementById(tabName).style.display = "block";
-        event.currentTarget.className += " w3-red";
-         */
     }
 </script>
 </body>

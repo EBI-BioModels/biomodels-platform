@@ -48,7 +48,7 @@
     opacity: 1 !important;
 }
 .rounded-header {
-    background-color: rgb(0, 124, 150);
+    background-color: rgb(0, 124, 130) !important;
     border-bottom: 0 none;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
@@ -63,6 +63,6 @@
 /* left and center the simple text explaining external resource icon */
 .ext-rsc-text {
     margin: auto;
-    padding: 0.9375rem 0.9375rem 0.9375rem 0rem;
+    padding: 0.9375rem 0.9375rem 0.9375rem 0;
     font-size: 85%;
 }
