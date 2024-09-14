@@ -23,11 +23,6 @@
 
 
 package net.biomodels.jummp.plugins.combine
-
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
-import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
-
 /**
  * Controller for handling Model files in the Combine Archive format.
  * @author  Raza Ali <raza.ali@ebi.ac.uk>
@@ -35,15 +30,9 @@ import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class CombineController {
-    def metadataDelegateService
 
     def show = {
         def model = flash.genericModel
-        List<STC> statements = model.modelLevelAnnotations as List<STC>
-        Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
-        if (annotations) {
-            model["genericAnnotations"] = annotations
-        }
         render(view: "/model/combine/show", model: model)
     }
 }

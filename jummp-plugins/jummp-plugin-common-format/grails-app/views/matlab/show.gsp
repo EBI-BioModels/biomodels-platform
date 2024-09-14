@@ -24,6 +24,3 @@
 <content tag="modelspecifictabscontent">
 
 </content>
-<content tag="genericAnnotations">
-    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
-</content>

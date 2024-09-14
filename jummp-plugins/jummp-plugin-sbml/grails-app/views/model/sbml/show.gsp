@@ -28,12 +28,6 @@
 
 
 <meta name="layout" content="${session['branding.style']}/modelDisplay"/>
-<content tag="genericAnnotations">
-<g:if test="${genericAnnotations}">
-    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
-</g:if>
-</content>
-
 <content tag="modelspecifictabs">
 <g:if test="${components}">
     <sbml:decideTabs/>

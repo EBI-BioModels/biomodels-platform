@@ -19,12 +19,6 @@
  */
 
 package net.biomodels.jummp.plugins.format
-
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
-import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
-import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
-
 /**
  * <p>Controls the way of rendering format specific views</p>
  * <p style="font-weight: bold">Authors:</p>
@@ -34,16 +28,8 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
  *  </ul>
  */
 class CommonFormatController {
-    def metadataDelegateService
 
     def show() {
-        def model = flash.genericModel
-        final RevisionTC revision = model.revision as RevisionTC
-        List<STC> statements = model.modelLevelAnnotations as List<STC>
-        Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
-        if (annotations) {
-            model["genericAnnotations"] = annotations
-        }
-        model
+        flash.genericModel
     }
 }

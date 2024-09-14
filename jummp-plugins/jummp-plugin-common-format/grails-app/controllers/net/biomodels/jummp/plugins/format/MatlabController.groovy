@@ -34,11 +34,6 @@ class MatlabController {
         def model = flash.genericModel
         final RevisionTC revision = model.revision as RevisionTC
         Set<File> matlabFiles = matlabFormatService.getMatlabFilesFromRevision revision
-        List<STC> statements = model.modelLevelAnnotations as List<STC>
-        Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
-        if (annotations) {
-            model["genericAnnotations"] = annotations
-        }
         model['matlabFiles'] = matlabFiles
         model
     }

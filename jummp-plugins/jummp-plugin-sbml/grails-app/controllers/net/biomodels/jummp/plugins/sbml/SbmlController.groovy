@@ -25,11 +25,7 @@
 package net.biomodels.jummp.plugins.sbml
 
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
-import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
-import net.biomodels.jummp.utils.redis.KeyCollection as KC
 import org.springframework.security.access.AccessDeniedException
 
 /**
@@ -40,9 +36,7 @@ import org.springframework.security.access.AccessDeniedException
  */
 class SbmlController {
     def modelDelegateService
-    def metadataDelegateService
     def parameterSearchService
-    def redisService
     def sbmlService
 
     private boolean existsPS(final String perennialId) {
@@ -69,27 +63,6 @@ class SbmlController {
         Map model = flash.genericModel
         final String perennialId = params.id
         RevisionTC r = model.revision as RevisionTC
-        boolean showed = true
-        if (!redisService.doRedisHGet(perennialId, KC.SHOW_MODEL_LEVEL_ANNOTATIONS)) {
-            if (!redisService.doRedisGet(KC.SHOW_MODEL_LEVEL_ANNOTATIONS)) {
-                showed = false
-            } else {
-                showed = redisService.doRedisGet(KC.SHOW_MODEL_LEVEL_ANNOTATIONS).toBoolean()
-            }
-        }
-
-        if (showed) {
-            println("On model level annotations")
-            log.info("On model level annotations")
-            List<STC> statements = model.modelLevelAnnotations as List<STC>
-            Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
-            if (annotations) {
-                model["genericAnnotations"] = annotations
-            }
-        } else {
-            println("Off model level annotations")
-            log.info("Off model level annotations")
-        }
         // fetch Parameters Search
         fetchComponents(model, perennialId)
         boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
