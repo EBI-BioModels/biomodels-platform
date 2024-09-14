@@ -22,6 +22,7 @@ package net.biomodels.jummp
 
 import grails.util.Environment
 import grails.util.Holders
+import net.biomodels.jummp.utils.WebServiceFetcher as WSF
 import net.biomodels.jummp.core.constants.BioModels
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 
@@ -64,7 +65,7 @@ class CommonController implements GrailsConfigurationAware {
             // local or dev target
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
         }
-        EBI_BM_FTP_REPO = EBI_BM_FTP + File.separator + "repository"
+        EBI_BM_FTP_REPO = WSF.addPath(new URI(EBI_BM_FTP), "repository").toString()
         theme = grailsApplication.config.jummp.branding.style
         if (!theme) theme = "default"
         COMMON_PROPERTIES = [
