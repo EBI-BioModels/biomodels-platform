@@ -245,12 +245,15 @@ class ModelController extends CommonController {
                             if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
                                 // For testing and debugging this method with a simple view
                                 LOGGER.debug("Debugging mode is ON")
+                                model.putAll(["newLook": true, announcement: "Back to the old interface"])
                                 render(view: "display", model: model)
                                 return true
                             }
                         }
+                        model.putAll(["newLook": false, announcement: "Try with a new look and feel of this page"])
                         doShowRenderLatestRevision(model, revision, PERENNIAL_ID)
                     } else { // showing an old version, with the default page. Do not allow updates.
+                        model.putAll(["newLook": false, announcement: "Try with a new look and feel of this page"])
                         doShowPrepareOldRevision(model)
                         render(view: "show", model: model)
                     }

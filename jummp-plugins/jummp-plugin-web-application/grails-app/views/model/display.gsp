@@ -14,8 +14,7 @@
     <title>${revision.name} | BioModels</title>
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css/biomodels', file: 'model-display.css')}">
-    <g:render template="/templates/model/show/loadjs"
-              plugin="jummp-plugin-web-application"/>
+    <g:render template="/templates/model/show/loadjs" plugin="jummp-plugin-web-application"/>
     <g:javascript>
         const serverURL = "${serverURL}";
         const titlePage = "${revision.name}" + " | BioModels";
@@ -23,9 +22,12 @@
     </g:javascript>
 </head>
 <body>
+<!-- Show warning messages: archived models, old versions, etc. -->
+<div class="warnings">
+    <g:render template="/templates/model/show/warning" plugin="jummp-plugin-web-application"/>
+</div>
 <div id="top-bar">
-    <g:render template="/templates/model/show/topbar"
-              plugin="jummp-plugin-web-application"/>
+    <g:render template="/templates/model/show/topbar" plugin="jummp-plugin-web-application"/>
 </div>
 
 <div class="row">
@@ -54,14 +56,12 @@
     <!-- Files tab -->
     <div id="Files" class="w3-container w3-border display-tab" style="display:none">
         <% Map model = ["repoFiles": repoFiles] %>
-        <g:render template="/templates/biomodels/modelDisplay/tabFiles"
-                  model="${model}" />
+        <g:render template="/templates/biomodels/modelDisplay/tabFiles" model="${model}" />
     </div>
     <!-- History tab -->
     <div id="History" class="w3-container w3-border display-tab" style="display:none">
         <g:render template="/templates/model/show/history" plugin="jummp-plugin-web-application"/>
     </div>
-
     <!-- Exports tab -->
     <g:if test="${convertedFilesTC}">
     <div id="Exports" class="w3-container w3-border display-tab" style="display:none">

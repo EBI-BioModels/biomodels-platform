@@ -29,9 +29,13 @@ import grails.plugin.springsecurity.annotation.Secured
 import groovy.xml.MarkupBuilder
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.constants.BioModels
+import net.biomodels.jummp.utils.redis.KeyCollection as KC
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
 class JummpController extends CommonController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JummpController.class)
     def springSecurityService
     def userService
     def teamService
@@ -39,6 +43,7 @@ class JummpController extends CommonController {
     def messageSource
     def reviewerAccountService
     def modelService
+    def redisService
 
     final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
                                            'autoCompleteUser', 'teamLookup']
@@ -211,6 +216,15 @@ class JummpController extends CommonController {
             addOtherUrls(mkb)
         }
         render(text: writer.toString(),contentType: "text/xml", encoding: "UTF-8")
+    }
+
+    @Secured(['ROLE_ADMIN'])
+    def switchLookAndFeelForModelDisplay() {
+        String newLook = request.getJSON()["newLook"]
+        String value = newLook == "true" ? "false" : "true"
+        LOGGER.info("newLook: $newLook to $value")
+        redisService.doRedisSet(KC.DEBUGGING_MODE, value)
+        render(["message": "Switched the interface"] as JSON)
     }
 
     private void addAllUrlsOfModels(MarkupBuilder mkb) {

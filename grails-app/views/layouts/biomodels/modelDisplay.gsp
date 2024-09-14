@@ -607,19 +607,7 @@
         <!-- Render the main content of the model display page -->
         <div class="ebiLayout_reduceWidth">
             <!-- Show warning messages: archived models, old versions, etc. -->
-            <g:if test="${revision.model.deleted}">
-                <div class='PermanentMessage'>
-                    This is an archived model.
-                </div>
-            </g:if>
-            <g:if test="${oldVersion}">
-                <div class='PermanentMessage'>
-                    You are viewing a version of a model that has been updated.
-                    To access the latest version, and a more detailed display please
-                    go <a href="${createLink(controller: "model", action: "show", id:
-                        revision.modelIdentifier())}">here</a>.
-                </div>
-            </g:if>
+            <g:render template="/templates/model/show/warning" plugin="jummp-plugin-web-application"/>
 
             <!-- Show model revision name, model of the month, icons, flags, Reactome connected pathways, etc. -->
             <div id="topBar">

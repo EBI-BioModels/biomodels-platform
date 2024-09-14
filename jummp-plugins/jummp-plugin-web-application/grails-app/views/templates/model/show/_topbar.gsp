@@ -3,12 +3,12 @@
 <div class="row">
     <div class="message" style="display: block"></div>
 
-    <div style="float:left" class="columns medium-10 large-10 small-12">
+    <div style="float:left" class="columns medium-9 large-9 small-12">
         <h2>${revision.name}</h2>
         <biomd:renderModelOfMonth modelId="${revision.model.id}" />
     </div>
 
-    <div style="float:right; text-align: right" class="columns medium-2 large-2 small-12">
+    <div style="float:right; text-align: right" class="columns medium-3 large-3 small-12">
         <g:if test="${!flags.empty}">
             <biomd:renderModelFlags flags="${flags}"/>
         </g:if>
