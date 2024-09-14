@@ -657,6 +657,10 @@
                 </div>
 
                 <g:if test="${reactomeIds}">
+                <!-- Render the selection box to choose Reactions which are visualised with Reactome Pathways Viewer -->
+                <div id="reactome-dialog" title="Reactome pathway">
+                    <div id="diagramHolder"></div>
+                </div>
                 <div style="margin-right: 50%;">
                     <g:select name="reactome_pathways"
                               id="opener"
@@ -668,12 +672,7 @@
                 </div>
                 </g:if>
             </div>
-
-            <!-- Render the selection box to choose Reactions which are visualised with Reactome Pathways Viewer -->
-            <div id="reactome-dialog" title="Reactome pathway">
-                <div id="diagramHolder"></div>
-            </div>
-
+    
             <!-- Render the model tabs -->
             <div id="tablewrapper">
                 <div id="tabs">
