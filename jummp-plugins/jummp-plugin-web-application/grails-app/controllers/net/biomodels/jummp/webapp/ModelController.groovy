@@ -248,9 +248,8 @@ class ModelController extends CommonController {
                                 render(view: "display", model: model)
                                 return true
                             }
-                        } else {
-                            doShowRenderLatestRevision(model, revision, PERENNIAL_ID)
                         }
+                        doShowRenderLatestRevision(model, revision, PERENNIAL_ID)
                     } else { // showing an old version, with the default page. Do not allow updates.
                         doShowPrepareOldRevision(model)
                         render(view: "show", model: model)
