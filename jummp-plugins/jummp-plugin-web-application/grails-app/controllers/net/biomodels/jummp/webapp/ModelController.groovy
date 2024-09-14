@@ -245,7 +245,7 @@ class ModelController extends CommonController {
                             if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
                                 // For testing and debugging this method with a simple view
                                 LOGGER.debug("Debugging mode is ON")
-                                render(view: "showTest", model: model)
+                                render(view: "display", model: model)
                                 return true
                             }
                         } else {
