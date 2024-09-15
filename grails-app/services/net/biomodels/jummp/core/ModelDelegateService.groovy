@@ -1,35 +1,32 @@
 /**
-* Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* Spring Security (or a modified version of that library), containing parts
-* covered by the terms of Apache License v2.0, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of Spring Security used as well as
-* that of the covered work.}
-**/
-
-
-
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * Spring Security (or a modified version of that library), containing parts
+ * covered by the terms of Apache License v2.0, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of Spring Security used as well as
+ * that of the covered work.}
+ **/
 
 
 package net.biomodels.jummp.core
@@ -37,6 +34,7 @@ package net.biomodels.jummp.core
 import com.google.common.io.Files
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
+import grails.util.Holders
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -169,7 +167,7 @@ class ModelDelegateService implements IModelService, InitializingBean {
             parts[0] == "Other"
         }.collect { it.split(" - ")[1] }
 
-        Map retRes = [:]
+        Map<String, List> retRes = [:]
         retRes.put("modellers", modellers)
         retRes.put("curators", curators)
         retRes.put("others", others)
@@ -241,7 +239,9 @@ class ModelDelegateService implements IModelService, InitializingBean {
     }
 
     RevisionTC getOldestRevision(final RevisionTC revisionTC) {
-        if (!revisionTC) { return null }
+        if (!revisionTC) {
+            return null
+        }
         ModelTC modelTC = revisionTC.model
         getOldestRevision(modelTC.submissionId)
     }
@@ -250,11 +250,12 @@ class ModelDelegateService implements IModelService, InitializingBean {
         def model = modelService.findByPerennialIdentifier(modelId)
         def revs = modelService.getAllRevisions(model)
         def msg = """Fetching revisions ${revs*.id} for $modelId. Attachment to current session: ${revs*.isAttached()}
-transactionStatus: ${transactionStatus /* injected by org.codehaus.groovy.grails.transaction.transform.TransactionalTransform*/} ;
-session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.applicationContext.sessionFactory)
+transactionStatus: ${transactionStatus
+            /* injected by org.codehaus.groovy.grails.transaction.transform.TransactionalTransform*/} ;
+session: ${TransactionSynchronizationManager.getResource(Holders.applicationContext.sessionFactory)
             .session.persistenceContext.entitiesByKey.collect {
             def instance = it.value
-            "{${instance.class.name} ${instance.hasProperty('id') ? instance.id : instance.toString() }}" }.toString()}
+            "{${instance.class.name} ${instance.hasProperty('id') ? instance.id : instance.toString()}}" }.toString()}
 """
         LOGGER.info(msg.toString())
 
@@ -271,13 +272,13 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     RevisionTC getRevision(String modelId, int revisionNumber) {
         return new RevisionAdapter(revision: modelService.getRevision(
-                    modelService.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
+            modelService.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
     }
 
     PublicationTransportCommand getPublication(String modelId) throws AccessDeniedException,
-                IllegalArgumentException {
+        IllegalArgumentException {
         def publication = modelService.getPublication(
-                               modelService.findByPerennialIdentifier(modelId))
+            modelService.findByPerennialIdentifier(modelId))
         if (publication) {
             return new PublicationAdapter(publication: publication).toCommandObject()
         }
@@ -304,27 +305,29 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             }
         }
 
-        ["vcsId": vcsId, "publishedRevs": publishedRevs,
+        ["vcsId"      : vcsId, "publishedRevs": publishedRevs,
          "privateRevs": privateRevs, "submissionId": model.submissionId]
     }
 
-    ModelTC uploadModel(List<File> modelFiles, ModelTC meta) throws
-                ModelException {
-        return new ModelAdapter(model: modelService.uploadModelAsList(modelFiles, meta)).toCommandObject()
+    ModelTC uploadModel(List<File> modelFiles, ModelTC meta) throws ModelException {
+        Model model = modelService.uploadModelAsList(modelFiles as List<RFTC>, meta)
+        return new ModelAdapter(model: model).toCommandObject()
     }
 
     RevisionTC addRevision(String modelId, File file,
-                MFTC format, String comment) throws ModelException {
+                           MFTC format, String comment) throws ModelException {
         Model model = modelService.findByPerennialIdentifier(modelId)
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
             format.formatVersion)
-        Revision revision = modelService.addRevisionAsFile(model, file, modelFormat, comment)
+        RFTC transportCommand = new RFTC(path: file.path, filename: file.name, size: file.size(),
+            description: file.name)
+        Revision revision = modelService.addRevisionAsFile(model, transportCommand, modelFormat, comment)
         return new RevisionAdapter(revision: revision).toCommandObject()
     }
 
     RevisionTC addRevision(final List<RFTC> repoFiles,
-                                         final List<RFTC> deleteFiles,
-                                         final RevisionTC rev) throws ModelException {
+                           final List<RFTC> deleteFiles,
+                           final RevisionTC rev) throws ModelException {
         Revision revision = modelService.addRevision(repoFiles, deleteFiles, rev)
         RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
         return revisionTC
@@ -356,7 +359,9 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         } finally {
             // nothing happens here
         }
-        if (!baos) { return null }
+        if (!baos) {
+            return null
+        }
         return new ByteArrayInputStream(baos.toByteArray())
     }
 
@@ -366,7 +371,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         if (files) {
             return serveModelFilesAsZip(files)
         } else
-        return null
+            return null
     }
 
     List<String> getAllModelIdentifiers() {
@@ -414,7 +419,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     /**
      * Checks that the given user is the owner or not of the model which revisionTC is among its revisions
      * @param revisionTC A RevisionTransportCommand object
-     * @param user  A user
+     * @param user A user
      * @return true or false
      */
     @NotTransactional
@@ -445,8 +450,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         if (revision.state == ModelState.UNPUBLISHED) {
             try {
                 return modelService.canPublish(Revision.get(revision.id))
-            }
-            catch(Exception e) {
+            } catch (Exception e) {
+                LOGGER.error("Cannot check canPublish because of ${e.message}.")
                 return false
             }
         }
@@ -464,7 +469,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         if (revision.state == ModelState.PUBLISHED) {
             try {
                 return modelService.canUnpublish(Revision.get(revision.id))
-            } catch(Exception e) {
+            } catch (Exception e) {
+                LOGGER.error("Cannot check canUnpublish because of ${e.message}.")
                 return false
             }
         }
@@ -495,6 +501,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             try {
                 return modelService.canSubmitForPublication(Revision.get(revision.id))
             } catch (Exception e) {
+                LOGGER.error("Cannot check canSubmitForPublication because of ${e.message}.")
                 return false
             }
         }
@@ -507,8 +514,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         canSubmitForPublication(revision)
     }
 
-    List<RFTC> retrieveModelFiles(RevisionTC revision)
-            throws ModelException {
+    List<RFTC> retrieveModelFiles(RevisionTC revision) throws ModelException {
         Revision theRevision = Revision.get(revision.id)
         List<RFTC> files = modelService.retrieveModelFiles(theRevision)
         if (!files?.isEmpty()) {
@@ -528,27 +534,27 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     void grantReadAccess(String modelId, User collaborator) {
         modelService.grantReadAccess(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     void grantWriteAccess(String modelId, User collaborator) {
         modelService.grantWriteAccess(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     boolean revokeReadAccess(String modelId, User collaborator) {
         return modelService.revokeReadAccess(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     boolean revokeWriteAccess(String modelId, User collaborator) {
         return modelService.revokeWriteAccess(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     void transferOwnerShip(String modelId, User collaborator) {
         modelService.transferOwnership(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     boolean deleteModel(String modelId) {
@@ -580,7 +586,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         if (!revision) {
             throw new IllegalArgumentException("Revision with id $REV_ID does not exist")
         }
-        return new ModelAdapter(model: model, latest: revision).toCommandObject()
+        new RevisionAdapter(revision: revision).toCommandObject()
     }
 
     RevisionTC publishModelRevision(RevisionTC cmd) {
@@ -607,12 +613,12 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     /**
      * Update curation status of specific model revision
-     * @param modelId: submissionId of model
-     * @param revisionNumber: revision number
-     * @param curationState: curation status
+     * @param modelId : submissionId of model
+     * @param revisionNumber : revision number
+     * @param curationState : curation status
      */
     RevisionTC updateCurationStateRevision(String modelId, int revisionNumber,
-            CurationState curationState) {
+                                           CurationState curationState) {
         Revision revision = modelService.getRevision(
             modelService.findByPerennialIdentifier(modelId), revisionNumber)
         revision = modelService.updateRevisionCurationState(revision, curationState)
@@ -649,7 +655,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     boolean haveMultiplePerennialIdentifierTypes() {
         def publicationIdGenerator = modelService.publicationIdGenerator
         final boolean HAVE_PERENNIAL_PUBLICATION_ID = !(publicationIdGenerator instanceof
-                    NullModelIdentifierGenerator)
+            NullModelIdentifierGenerator)
 
         final Set<String> ID_TYPES = modelService.getPerennialIdentifierTypes()
         final boolean MANY_IDENTIFIERS = HAVE_PERENNIAL_PUBLICATION_ID || ID_TYPES.size() >= 2
@@ -657,7 +663,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     Map<Long, String> findModelsByPerennialId(List<String> identifiers) {
-        Map results = [:]
+        Map<Long, String> results = [:]
         for (String id : identifiers) {
             Model model = modelService.findByPerennialIdentifier(id)
             if (model) {
@@ -680,11 +686,11 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     int updateHistory(ModelTC model, String user, String accessType,
                       String formatType, String changesMade, boolean success = false) {
-        accessType = accessType.replace("/model/","")
+        accessType = accessType.replace("/model/", "")
         AccessFormat format = AccessFormat.HTML
         try {
             format = AccessFormat.valueOf(formatType.toUpperCase())
-        } catch(Exception ignore) {
+        } catch (Exception ignore) {
 
         }
         ModelATC audit = new ModelATC(
@@ -713,14 +719,14 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
      */
     boolean canSeeCurationTab(RevisionTC revision, boolean hasCuratorRole, def currentUser) {
         def curationNotes = curationNotesService.fetchCurationNotesForModel(revision.model.id)
-        boolean isPublicModel = revision.curationState == ModelState.PUBLISHED
+        boolean isPublicModel = revision.state == ModelState.PUBLISHED
         if (!curationNotes && !currentUser) {
             // don't show the Curation tab if there hasn't been any curation results and logged in user
             return false
         } else if (curationNotes && !currentUser) {
             // only show the Curation tab if there has been the curation results and the model is public
             return isPublicModel
-        } else  {
+        } else {
             // otherwise, display it to curators
             return hasCuratorRole
         }

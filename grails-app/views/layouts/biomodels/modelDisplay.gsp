@@ -44,7 +44,6 @@
     <script type='text/javascript'
             src="${serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
-    <g:javascript></g:javascript>
     <g:javascript src="syntax/shCore.js"/>
     <g:javascript src="syntax/shBrushMdl.js"/>
     <g:javascript src="syntax/shBrushXml.js"/>

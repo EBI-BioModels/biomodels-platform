@@ -109,7 +109,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
 
     // TODO: move initialization into afterPropertiesSet and make it configuration dependent
     @SuppressWarnings("GrailsStatelessService")
-    /** keys are {@link net.biomodels.jummp.core.model.RevisionTC}s */
+    /** keys are {@link RevisionTC}s */
     SbmlCache cache = new SbmlCache(100)
 
     void afterPropertiesSet() {

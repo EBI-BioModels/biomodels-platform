@@ -58,7 +58,7 @@ class ParameterSearchService {
     @Cacheable(value = "csvRecords", key = "#command.query.concat(#command.is_curated)")
     String exportData(ParamSC command) {
         int MAX_RECORDS = 100
-        String csvRecords = null
+        String csvRecords
         ParamSR parameterSearchResults = getJSONData(command)
         command.size = MAX_RECORDS
         int recordsTotal = parameterSearchResults.recordsTotal
@@ -70,7 +70,7 @@ class ParameterSearchService {
         }
 
         if(!csvRecords.isEmpty()) {
-            csvRecords = "\"" + columnNames.join("\",\"") + "\"\n" +csvRecords;
+            csvRecords = "\"" + columnNames.join("\",\"") + "\"\n" +csvRecords
         }
 
         return csvRecords
@@ -130,7 +130,7 @@ WHERE M.deleted = :deleted \
 
     private static String getData(ParamSC command, String format) {
         if (!command) {
-            throw new IllegalArgumentException("Couldn't read the request parameters");
+            throw new IllegalArgumentException("Couldn't read the request parameters")
         }
         def url = command.getSearchUrl(format)
         HttpURLConnection conn
@@ -166,10 +166,6 @@ WHERE M.deleted = :deleted \
                 } catch (IOException e) {
                     LOGGER.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of \
 the error ${e.message}""")
-                } catch (SocketTimeoutException ste) {
-                    String msg = """Error while trying to retrieve BioModels Paramters from EBI Search due to \
-"${ste.getMessage()}" with the query info wrapped in the command: ${command}""".toString()
-                    LOGGER.error(msg, ste)
                 } finally {
                     return result
                 }

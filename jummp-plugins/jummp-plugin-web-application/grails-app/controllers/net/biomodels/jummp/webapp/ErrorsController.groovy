@@ -83,6 +83,16 @@ class ErrorsController {
         }
     }
 
+    def error415() {
+        response.status = HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE
+        withFormat {
+            html { [resource: request.forwardURI, code: response.status, "message": "UNSUPPORTED"] }
+            json { render([resource: request.forwardURI, code: response.status, message: "UNSUPPORTED"] as JSON) }
+            xml { render([resource: request.forwardURI, code: response.status, message: "UNSUPPORTED"] as XML) }
+            '*' { respond getError("404", [request.forwardURI]) }
+        }
+    }
+
     def error500() {
         response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
         def exception = request.getAttribute('exception')

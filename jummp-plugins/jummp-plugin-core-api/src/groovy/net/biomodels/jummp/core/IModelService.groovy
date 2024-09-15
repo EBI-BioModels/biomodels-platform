@@ -1,35 +1,32 @@
 /**
-* Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* Spring Security (or a modified version of that library), containing parts
-* covered by the terms of Apache License v2.0, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of Spring Security used as well as
-* that of the covered work.}
-**/
-
-
-
+ * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * Spring Security (or a modified version of that library), containing parts
+ * covered by the terms of Apache License v2.0, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of Spring Security used as well as
+ * that of the covered work.}
+ **/
 
 
 package net.biomodels.jummp.core
@@ -76,7 +73,7 @@ interface IModelService {
      * Convenient method for sorting by the id column.
      *
      * @return List of Models sorted ascending
-     * @see getAllModels(int offset, int count, boolean sortOrder)
+     * @see getAllModels(intoffset,intcount,booleansortOrder)
      */
     List<ModelTC> getAllModels(int offset, int count, boolean sortOrder)
 
@@ -84,7 +81,7 @@ interface IModelService {
      * Convenient method for ascending sorting.
      *
      * @return List of Models sorted ascending by @p sortColumn
-     * @see getAllModels(int offset, int count, boolean sortOrder)
+     * @see getAllModels(intoffset,intcount,booleansortOrder)
      */
     List<ModelTC> getAllModels(int offset, int count, ModelListSorting sortColumn)
 
@@ -92,7 +89,7 @@ interface IModelService {
      * Convenient method for ascending sorting by id.
      *
      * @return List of Models sorted ascending by id
-     * @see getAllModels(int offset, int count, boolean sortOrder)
+     * @see getAllModels(intoffset,intcount,booleansortOrder)
      */
     List<ModelTC> getAllModels(int offset, int count)
 
@@ -101,7 +98,7 @@ interface IModelService {
      *
      * @param sortColumn the column which should be sorted
      * @return List of first 10 Models sorted ascending by @p sortColumn
-     * @see getAllModels(int offset, int count, boolean sortOrder)
+     * @see getAllModels(intoffset,intcount,booleansortOrder)
      */
     List<ModelTC> getAllModels(ModelListSorting sortColumn)
 
@@ -109,7 +106,7 @@ interface IModelService {
      * Convenient method for ascending sorting of first ten models by id.
      *
      * @return List of first 10 Models sorted ascending by id
-     * @see getAllModels(int offset, int count, boolean sortOrder)
+     * @see getAllModels(intoffset,intcount,booleansortOrder)
      */
     List<ModelTC> getAllModels()
 
@@ -139,13 +136,13 @@ interface IModelService {
      * which revision number is greater than 1. Thus, the first or oldest revision will be the one which revision
      * number is the smallest.
      *
-     * @param modelId   indicating the model
-     * @return  the revision transport command
+     * @param modelId indicating the model
+     * @return the revision transport command
      */
     RevisionTC getOldestRevision(String modelId)
 
     /**
-     * @see getOldestRevision(String modelId)
+     * @see getOldestRevision(StringmodelId)
      *
      * @param revisionTC
      * @return
@@ -207,9 +204,9 @@ interface IModelService {
      * the file does not exists or is a directory
      */
     RevisionTC addRevision(final String modelId,
-                                         final File file,
-                                         final MFTC format,
-                                         final String comment) throws ModelException
+                           final File file,
+                           final MFTC format,
+                           final String comment) throws ModelException
 
     /**
      * @short Adds a new Revision to the model, to be used by SubmissionService
@@ -229,8 +226,8 @@ interface IModelService {
      * or are directories.
      */
     RevisionTC addRevision(final List<RFTC> repoFiles,
-                                         final List<RFTC> deleteFiles,
-                                         final RevisionTC rev) throws ModelException
+                           final List<RFTC> deleteFiles,
+                           final RevisionTC rev) throws ModelException
 
     /**
      * Returns whether the current user has the right to add a revision to the model.
@@ -350,11 +347,12 @@ interface IModelService {
      * Removes the deleted flag from the model and all its Revisions.
      * @param modelId The id of the deleted Model to restore
      * @return @c true, whether the state was restored, @c false otherwise.
-     * @see deleteModel
-     * @todo might belong in an administration service?
+     * @see deleteModel* @todo might belong in an administration service?
      */
     boolean restoreModel(String modelId)
+
     boolean deleteRevision(RevisionTC revision)
+
     RevisionTC publishModelRevision(RevisionTC revision)
 
 //    public void validateModelRevision(RevisionTC revision)
@@ -404,12 +402,12 @@ interface IModelService {
 
     /**
      * @short Creates a model audit object to update the history of activities on a specific model given by its identifier
-     * @param modelId       a String denoting the model identifier
-     * @param user          a String denoting the username
-     * @param accessType    a String denoting the type of accession, {@see AccessType}
-     * @param formatType    a String denoting the type of format. It is defined from ["json", "html"]
-     * @param changesMade   a String referring to comments what have been changed
-     * @param success       true/false
+     * @param modelId a String denoting the model identifier
+     * @param user a String denoting the username
+     * @param accessType a String denoting the type of accession, {@see AccessType}
+     * @param formatType a String denoting the type of format. It is defined from ["json", "html"]
+     * @param changesMade a String referring to comments what have been changed
+     * @param success true/false
      * @return an integer value indicating the id of ModelAudit record created successfully
      */
     int updateHistory(String modelId, String user, String accessType,
