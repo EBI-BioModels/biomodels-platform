@@ -145,6 +145,19 @@
 <div class="row spacing-row even-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
+            Contributor Role
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="detected-contributor-role">
+
+        </div>
+    </div>
+</div>
+
+<div class="row spacing-row odd-row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
             <g:message code="submission.summary.revisionLabel"/>
         </span>
     </div>
@@ -183,6 +196,8 @@
         } else {
             $('#detectedAdditionalFiles').text("No additional files provided");
         }
+
+        $('#detected-contributor-role').text(latestContributorRole);
 
         // Publication details
         // invoke an ajax call to the server to render _publication template
