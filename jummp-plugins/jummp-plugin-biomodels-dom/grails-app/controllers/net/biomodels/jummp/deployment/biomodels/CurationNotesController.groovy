@@ -22,6 +22,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.ModelAdapter
@@ -124,7 +125,11 @@ class CurationNotesController {
                 result['message'] = command.errors.allErrors.inspect()
             }
         }
-        render(result as JSON)
+        withFormat {
+            json { render result as JSON }
+            xml { render result as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
     }
 
     def reset() {

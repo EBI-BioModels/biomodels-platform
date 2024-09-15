@@ -154,6 +154,7 @@ class UrlMappings {
         "/api/user/list"(controller:'userAdministration', action:'list')
         "/api/submission/create"(controller: "submission", action: "create")
         "/api/submission/update"(controller: "submission", action: "update")
+        "/api/curationnotes/manage"(controller: "curationNotes", action: "doAddOrUpdate")
 
         def cmsPrefix = "/cms"
         "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
