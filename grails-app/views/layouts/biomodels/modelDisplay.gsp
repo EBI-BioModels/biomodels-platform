@@ -53,25 +53,7 @@
     <script type='text/javascript'
             src="${serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
-    <g:javascript>
-        let canUpdate = ${canUpdate};
-        // initialTags is the list of tags associated with the model
-        // as the page is completely loaded
-        let initialTags = [];
-        Object.values = function(object) {
-            let values = [];
-            for(let property in object) {
-                values.push(object[property]);
-            }
-            return values;
-        }
-        let tagsJSON = Object.values(${tagsJSON});
-        if (tagsJSON.length !== 0) {
-            $.each(tagsJSON, function (index, value) {
-                initialTags.push(value);
-            });
-        }
-    </g:javascript>
+    <g:javascript></g:javascript>
     <g:javascript src="syntax/shCore.js"/>
     <g:javascript src="syntax/shBrushMdl.js"/>
     <g:javascript src="syntax/shBrushXml.js"/>
@@ -93,7 +75,7 @@
     <script  defer="defer" type="text/javascript" language="javascript" src="${reactomeUrl}"></script>
     <script>
         $(function() {
-            $( "#tabs" ).tabs({
+            $("#tabs").tabs({
                 fx: { opacity: 'toggle' },
                 select: function(event, ui) {
                     jQuery(this).css('height', jQuery(this).height());
