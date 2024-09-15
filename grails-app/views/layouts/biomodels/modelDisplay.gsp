@@ -216,7 +216,15 @@
         </div>
 
     <script>
-
+        $(function() {
+            <sec:ifLoggedIn>
+            displayToolbar(true, true);
+            </sec:ifLoggedIn>
+            <sec:ifNotLoggedIn>
+            displayToolbar(false, true);
+            </sec:ifNotLoggedIn>
+            // displayToolbar(true, true);
+        });
     </script>
     <!-- loading the script to create a link to Reactome's DiagramJs widget when the model is eligible -->
     <g:if test="${reactomeIds}">

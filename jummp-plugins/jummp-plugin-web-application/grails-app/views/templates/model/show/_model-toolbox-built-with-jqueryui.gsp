@@ -1,13 +1,5 @@
 <script>
     $(function() {
-        <sec:ifLoggedIn>
-        displayToolbar(true, true);
-        </sec:ifLoggedIn>
-        <sec:ifNotLoggedIn>
-        displayToolbar(false, true);
-        </sec:ifNotLoggedIn>
-        // displayToolbar(true, true);
-
         // Handler for .ready() called.
         $('#confirm-model-consistency-check').dialog({
             resizable: false,
