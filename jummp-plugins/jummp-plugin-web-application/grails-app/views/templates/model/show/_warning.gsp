@@ -1,4 +1,4 @@
-<g:if test="${hasAdminRole || hasCuratorRole}">
+<g:if test="${hasAdminRole}">
 <p id="new-look-and-feel-switcher"
    style="color: #ffff00 !important; background-color: rgb(0, 124, 130); text-align: center; cursor: pointer; padding: 0.5em
     0 0.5em 0" data-new-look="${newLook}">
