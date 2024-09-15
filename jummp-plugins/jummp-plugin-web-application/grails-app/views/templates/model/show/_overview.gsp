@@ -117,6 +117,31 @@
         </div>--}%
     </div>
 </div>
+<g:javascript>
+    let canUpdate = ${canUpdate};
+    // initialTags is the list of tags associated with the model
+    // as the page is completely loaded
+    let initialTags = [];
+    Object.values = function(object) {
+        let values = [];
+        for(let property in object) {
+            values.push(object[property]);
+        }
+        return values;
+    }
+    let tagsJSON = Object.values(${tagsJSON});
+    if (tagsJSON.length !== 0) {
+        $.each(tagsJSON, function (index, value) {
+            initialTags.push(value);
+        });
+    }
+
+    $('.model-tags-select2').select2({
+        placeholder: "Type here to search a tag",
+        tags: false,
+        multiple: true
+    });
+</g:javascript>
 <script>
     $(document).ready(function() {
         const qualifiers = $("#all-qualifier-accessions").text().split(",");
@@ -198,7 +223,7 @@
                 const publicationId = response.publicationId;
                 const criteria = publicationId !== null;
                 if (criteria) {
-                    var message = response.message;
+                    let message = response.message;
                     message += ". Please wait a few seconds while the web page is being refreshed.";
                     $('.flashNotificationDiv').html(message).show();
                     const modelDisplayPage = $.jummp.createURI(publicationId);
@@ -212,4 +237,77 @@
             }
         });
     });
+
+    $('#btnSaveTags').on("click", function (event) {
+        "use strict";
+        event.preventDefault();
+        let updatedTags = getDataFromSelect2();
+        if (initialTags.length === updatedTags.length && !initialTags.length) {
+            toastr.clear();
+            toastr.warning("No tag applied to the model. Alternatively, select at least one tag from the list.");
+        } else {
+            $.ajax({
+                type: "POST",
+                url: $.jummp.createLink("modelTag", "saveModelTag"),
+                cache: true,
+                async: true,
+                processData: true,
+                dataType: "json",
+                data: {
+                    modelId: "${revision.model.submissionId}",
+                    tags: buildTagSet()
+                },
+                beforeSend: function () {
+                    let msg;
+                    if (updatedTags.length === 0) {
+                        msg = "No tags applied to the model.";
+                    } else {
+                        msg = "The tags applied to the model are being saved into our database. Please wait...";
+                    }
+                    toastr.clear();
+                    toastr.info(msg);
+                }
+            }).done(function (data, txtStatus, jqXHR) {
+                const msg = data.message;
+                const statusCode = data.status
+                toastr.clear();
+                if (statusCode === 200) {
+                    toastr.success(msg);
+                    // update select2 data
+
+                } else if (statusCode === 400) {
+                    toastr.error(msg);
+                } else if (statusCode === 422) {
+                    toastr.warn(msg);
+                } else {
+                    toastr.error("Cannot determine the reason for the unexpected error");
+                }
+                initialTags = updatedTags;
+
+            }).fail(function (jqXHR, status, errorThrown) {
+                const msg = jqXHR.statusText;
+                toastr.clear();
+                toastr.error(msg);
+            });
+        }
+    });
+
+    function buildTagSet() {
+        let data = $('.model-tags-select2').select2('data');
+        let updatedTags = [];
+        $.each(data, function (index, value) {
+            updatedTags.push({"id": value.id, "name": value.text});
+        });
+        return JSON.stringify(updatedTags, ['id', 'name']);
+    }
+
+    function getDataFromSelect2() {
+        let data = $('.model-tags-select2').select2('data');
+        let updatedTags = [];
+        $.each(data, function (index, value) {
+            updatedTags.push(value.text);
+        });
+        return updatedTags;
+    }
+
 </script>

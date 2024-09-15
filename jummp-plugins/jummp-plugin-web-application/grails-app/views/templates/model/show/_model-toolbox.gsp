@@ -1,3 +1,4 @@
+<!-- TODO: create dialog boxes to confirm -->
 <div id="model-toolbox" class="sidenav">
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
     <a href="javascript:void(0)" onclick="linkServeOmex()">Download</a>
