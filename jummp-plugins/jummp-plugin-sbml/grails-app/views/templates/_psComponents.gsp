@@ -1,3 +1,4 @@
+<%@ page import="net.biomodels.jummp.core.constants.BioModels" %>
 <g:if test="${components}">
     <div id="Components" class="row">
         <div class="small-12 columns">
@@ -73,8 +74,8 @@
     <div class="row">
 
         <div class="columns small-12 medium-12 large-12">
-            Above are the first reactions and species of this model. To get more results, please search for 
-            <a href="https://www.ebi.ac.uk/biomodels/parameterSearch/index?query=${perennialId}&start=0&size=100&sort=model%3Aascending&is_curated=true" target="_blank">${perennialId}</a> on Parameter Search Portal.
+            Above are the first reactions and species of this model. To get more results, please search for
+            <a href="${BioModels.BM_ROOT_URL}/parameterSearch/index?query=${perennialId}&start=0&size=100&sort=model%3Aascending&is_curated=true" target="_blank">${perennialId}</a> on Parameters Search Portal.
         </div>
     </div>
     <br/>

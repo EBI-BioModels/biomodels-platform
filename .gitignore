@@ -76,3 +76,4 @@ wrapper/grails-wrapper.properties
 *.sh
 !backuplog.sh
 !docker-build.sh
+lib/classpath.index
