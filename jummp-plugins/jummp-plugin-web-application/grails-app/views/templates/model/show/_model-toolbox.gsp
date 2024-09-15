@@ -47,35 +47,31 @@
            onclick="return $('#confirm-model-unpublish').dialog('open');">Unpublish</a>
     </g:if>
     <g:if test="${canShare}">
-        <a class='toolbutton' id="share"
-           onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
-                            action: 'share', id: revision.identifier())}')">Share</a>
+        <a class='toolbutton' id="share" onclick="share()">Share</a>
     </g:if>
     <g:if test="${canCertify}">
-        <a class='toolbutton' id="certify"
-           onclick="return $.jummp.openPage('${g.createLink(controller: 'qcInfo', action: 'edit',
-                        id: revision.modelIdentifier())}')">Certify</a>
+        <a class='toolbutton' id="certify" onclick="certify()">Certify</a>
     </g:if>
     <g:if test="${canCheckConsistency}">
         <div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
             <p>Checking model consistency uses an online validator. This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
         </div>
         <a id="checkConsistency"
-                class="toolbutton"
-                title="Check consistency"
-                onclick="return $('#confirm-model-consistency-check').dialog('open');">
+           class="toolbutton"
+           title="Check consistency"
+           onclick="return $('#confirm-model-consistency-check').dialog('open');">
             Check
         </a>
     </g:if>
     <g:if test="${hasCuratorRole && supportedForConversion}">
-%{--        <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">--}%
-%{--            <p>Exporting this model to other formats uses an online service. This might take time for--}%
-%{--            uploading and exporting the model. Do you want to proceed the model conversion?</p>--}%
-%{--        </div>--}%
+        <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">
+            <p>Exporting this model to other formats uses an online service. This might take time for
+            uploading and exporting the model. Do you want to proceed the model conversion?</p>
+        </div>
         <a id="convert"
-                class="toolbutton"
-                title="Convert This Model To The Other Formats"
-                onclick="return $('#confirm-model-conversion').dialog('open');">
+           class="toolbutton"
+           title="Convert This Model To The Other Formats"
+           onclick="return $('#confirm-model-conversion').dialog('open');">
             Convert
         </a>
     </g:if>
@@ -95,7 +91,6 @@
 </div>
 <span style="font-size:20px;cursor:pointer" onclick="openNav()">&#9776; Model ToolBox</span>
 <style>
-
 .sidenav {
     height: 50%;
     width: 0;
@@ -141,7 +136,7 @@
 }
 </style>
 <script>
-    $("#model-toolbox").on("mouseleave", function() {
+    $("#model-toolbox").on("mouseleave", function () {
         /*$("#model-toolbox").animate({
             display: "none"
         });*/
@@ -166,8 +161,16 @@
         $.jummp.openPage(link);
     }
 
+    function certify() {
+        $.jummp.openPage('${g.createLink(controller: 'qcInfo', action: 'edit', id: revision.modelIdentifier())}');
+    }
+
     function update() {
         $.jummp.openPage("${g.createLink(controller: 'model', action: 'update', id: revision.modelIdentifier())}")
+    }
+
+    function share() {
+        $.jummp.openPage('${g.createLink(controller: 'model', action: 'share', id: revision.identifier())}')
     }
 
     function archive() {
