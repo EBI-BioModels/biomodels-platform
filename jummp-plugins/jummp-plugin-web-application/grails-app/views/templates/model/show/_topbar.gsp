@@ -9,13 +9,16 @@
     </div>
 
     <div style="float:right; text-align: right" class="columns medium-3 large-3 small-12">
+        <h2>
         <g:if test="${!flags.empty}">
             <biomd:renderModelFlags flags="${flags}"/>
         </g:if>
         <g:if test="${revision.qcInfo != null}">
             <jummp:renderStarLevels flag="${revision.qcInfo.flag}" />
         </g:if>
-        <h2>
+            <a href="javascript:void(0)" onclick="linkServeOmex()"
+               title="Click here to download OMEX format of this model">
+                <i class="icon icon-common icon-download"></i></a>
             <a href="${g.createLink(controller: 'model', action: 'show', id: revision.identifier(), params: ['format': 'json'])}"
                target="_blank" title="Click here to view JSON format of this model">
                 <i class="icon icon-fileformats icon-JSON"></i></a>
@@ -31,7 +34,8 @@
             </g:if>
             <g:else>
                 <i class="icon icon-common icon-lock" title="This version of the model is unpublished"></i>
-            </g:else></h2>
+            </g:else>
+        </h2>
     </div>
 
 

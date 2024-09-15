@@ -1,3 +1,4 @@
+<sec:ifLoggedIn>
 <!-- TODO: create dialog boxes to confirm -->
 <!-- Load an icon library -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -160,16 +161,6 @@
         document.getElementById("model-toolbox").style.width = "0";
     }
 
-    /**
-     * This function computes a proper link for the download button depending on the size/total size of the model
-     * files in the submission in request.
-     * @returns {string|void}
-     */
-    function linkServeOmex() {
-        const link = "${createLink(controller: 'model', action: 'download', id: revision.identifier())}";
-        $.jummp.openPage(link);
-    }
-
     function certify() {
         $.jummp.openPage('${g.createLink(controller: 'qcInfo', action: 'edit', id: revision.modelIdentifier())}');
     }
@@ -197,4 +188,17 @@
     function openReviewerAccount() {
         $.jummp.openPage('${g.createLink(controller: 'jummp', action: 'createReviewerAccount', id: revision.modelIdentifier())}');
     }
+</script>
+</sec:ifLoggedIn>
+<script>
+    /**
+     * This function computes a proper link for the download button depending on the size/total size of the model
+     * files in the submission in request.
+     * @returns {string|void}
+     */
+    function linkServeOmex() {
+        const link = "${createLink(controller: 'model', action: 'download', id: revision.identifier())}";
+        $.jummp.openPage(link);
+    }
+
 </script>
