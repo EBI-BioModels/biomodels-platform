@@ -22,7 +22,7 @@
 <script src="${resource(contextPath: serverURL, dir: 'js/syntax', file: 'shBrushMdl.js')}"></script>
 <script src="${resource(contextPath: serverURL, dir: 'js/syntax', file: 'shBrushXml.js')}"></script>
 <script src="${resource(contextPath: serverURL, dir: 'js', file: 'toastr.min.js')}"></script>
-<script src="${resource(contextPath: serverURL, dir: 'js', file: 'jquery.handsontable.full.js')}"/>
+<script src="${resource(contextPath: serverURL, dir: 'js', file: 'jquery.handsontable.full.js')}"></script>
 <script src="${resource(contextPath: serverURL, dir: 'js/biomodels', file: 'omicsdi.service.js')}"></script>
 <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
 <script  defer="defer" type="text/javascript" language="javascript" src="${reactomeUrl}"></script>
