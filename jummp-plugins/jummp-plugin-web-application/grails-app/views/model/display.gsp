@@ -45,6 +45,12 @@
                 onclick="openTab('Exports')">Exports</button>
         </g:if>
         <div id="specific-tabs"></div>
+        <g:if test="${specificTabs}">
+            <g:each in="${specificTabs}" var="tab">
+                <button class="w3-bar-item w3-button tablink" id="btn-${tab.key}"
+                        onclick='openTab("${tab.key}")'>${tab.key}</button>
+            </g:each>
+        </g:if>
         <g:if test="${curationNotes != null || hasCuratorRole || canSeeCurationTab }">
         <button class="w3-bar-item w3-button tablink" id="btn-Curation"
                 onclick="openTab('Curation')">Curation</button>
@@ -70,10 +76,14 @@
         <biomd:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
     </div>
     </g:if>
-    <!-- Some specific tabs -->
-    <div id="specific-tabs-content" style="display: none">
-
-    </div>
+    <!-- Rendering the contents of the specific tabs -->
+    <div id="specific-tabs-content" style="display: none"></div>
+    <g:if test="${specificTabs}">
+    <g:each in="${specificTabs}" var="tabContent">
+        <div id="${tabContent.key}" class="w3-container w3-border display-tab" style="display:none">
+            ${tabContent.value}
+        </div>
+    </g:each></g:if>
     <!-- Curation tab -->
     <g:if test="${curationNotes != null || hasCuratorRole || canSeeCurationTab }">
     <div id="Curation" class="w3-container w3-border display-tab" style="display:none">

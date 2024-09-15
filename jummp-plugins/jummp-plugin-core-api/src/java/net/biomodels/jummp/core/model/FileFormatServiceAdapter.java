@@ -25,6 +25,7 @@ import net.biomodels.jummp.model.ModellingApproach;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class FileFormatServiceAdapter implements FileFormatService {
     // TODO: implement InitializingBean here
@@ -60,6 +61,16 @@ public class FileFormatServiceAdapter implements FileFormatService {
 
     @Override
     public List<String> getPubMedAnnotation(RevisionTransportCommand revision) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Map<String, String> getContentsOfSpecificTabs(RevisionTransportCommand revision) {
+        return null;
+    }
+
+    @Override
+    public List<String> getNamesOfSpecificTabs(RevisionTransportCommand revision) {
         return Collections.emptyList();
     }
 

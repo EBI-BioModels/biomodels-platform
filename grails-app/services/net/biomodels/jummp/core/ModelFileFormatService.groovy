@@ -337,6 +337,24 @@ class ModelFileFormatService implements InitializingBean {
         }
     }
 
+    Map<String, String> getContentsOfSpecificTabs(final RTC rev) {
+        FileFormatService service = serviceForFormat(rev.format.identifier)
+        if (service) {
+            service.getContentsOfSpecificTabs(rev)
+        } else {
+            return null
+        }
+    }
+
+    List<String> getNamesOfSpecificTabs(final RTC rev) {
+        FileFormatService service = serviceForFormat(rev.format.identifier)
+        if (service) {
+            return service.getNamesOfSpecificTabs(rev)
+        } else {
+            return []
+        }
+    }
+
     List<String> getPublicationAnnotations(final RTC rev) {
         FileFormatService service = serviceForFormat(rev.format.identifier)
         if (service) {

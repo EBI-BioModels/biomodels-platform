@@ -46,6 +46,7 @@ import net.biomodels.jummp.model.ModellingApproach as MA
 import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.apache.commons.io.FileUtils
 import org.codehaus.groovy.grails.plugins.codecs.URLCodec
+import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -82,6 +83,7 @@ import java.util.regex.Pattern
 class SbmlService extends FileFormatServiceAdapter implements ISbmlService, InitializingBean {
     static transactional = true
     def bpToModelDisplayService
+    def parameterSearchService
     private static final Logger LOGGER = LoggerFactory.getLogger(this)
     private static final boolean IS_INFO_ENABLED = LOGGER.isInfoEnabled()
     /**
@@ -819,6 +821,31 @@ the user has attempted to update an blank value for the name attribute.""")
             pubMedAnnotation.addAll(cvTerm.filterResources("pubmed"))
         }
         return pubMedAnnotation
+    }
+
+    @Profiled(tag = "SbmlService.getContentsOfSpecificTabs")
+    Map<String, String> getContentsOfSpecificTabs(RevisionTC rev) {
+        final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+        String componentsStr = ""
+        // ignore PDGSM and Path2Models models
+        if (!PERENNIAL_ID.startsWith("BMID")
+            && !PERENNIAL_ID.startsWith("MODEL170711")
+            && parameterSearchService.existsPS(PERENNIAL_ID)) {
+            try {
+                Map components = extractComponentsFromBP(PERENNIAL_ID)
+                ApplicationTagLib appTagLib = new ApplicationTagLib()
+                componentsStr = appTagLib.render(template: "/templates/psComponents",
+                    model: [components: components], plugin: "jummp-plugin-sbml")
+            } catch (RuntimeException re) {
+                LOGGER.error("Error while extracting components from BP for $PERENNIAL_ID", re)
+            }
+        }
+        ["Components": componentsStr] as Map<String, String>
+    }
+
+    @Profiled(tag = "SbmlService.getNamesOfSpecificTabs")
+    List<String> getNamesOfSpecificTabs(RevisionTC revision) {
+        ["Components"]
     }
 
     @Profiled(tag = "SbmlService.getPublicationAnnotations")

@@ -239,12 +239,13 @@ class ModelController extends CommonController {
                     model.putAll(doShowGetCurationData(rev))
                     model.putAll(doShowGetExternalLinkedData(PERENNIAL_ID, rev, repoFiles))
                     model.putAll(doShowGetAnnotationsBasedData(PERENNIAL_ID, rev, repoFiles))
-
                     if (rev.id == revision.id) {
                         if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE)) {
                             if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
                                 // For testing and debugging this method with a simple view
                                 LOGGER.debug("Debugging mode is ON")
+                                // will more the next call out of the here later
+                                model.putAll(doShowInferSpecificTabs(PERENNIAL_ID, rev))
                                 model.putAll(["newLook": true, announcement: "Back to the old interface"])
                                 render(view: "display", model: model)
                                 return true
@@ -423,6 +424,16 @@ class ModelController extends CommonController {
             LOGGER.error("Could not find any controller for format $fmtId of $PERENNIAL_ID.")
             forward(controller: "errors", action: "error400")
         }
+    }
+
+    private Map doShowInferSpecificTabs(final String PERENNIAL_ID, final RTC rev) {
+        ModelFormatTransportCommand format = rev.format
+        String formatController = modelFileFormatService.getPluginForFormat(format)
+        if (formatController) {
+            Map specificTabs = modelFileFormatService.getContentsOfSpecificTabs(rev)
+            return [specificTabs: specificTabs]
+        }
+        [:]
     }
 
     private static void doShowPrepareOldRevision(Map model) {

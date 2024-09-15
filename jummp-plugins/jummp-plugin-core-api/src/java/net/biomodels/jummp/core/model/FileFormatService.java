@@ -25,6 +25,7 @@ import net.biomodels.jummp.model.ModellingApproach;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>Service interface for handling a specific ModelFormat.</p>
@@ -98,6 +99,10 @@ public interface FileFormatService {
     List<String> getPublicationAnnotations(final File modelFile);
 
     List<String> getPublicationAnnotations(RevisionTransportCommand revision);
+
+    List<String> getNamesOfSpecificTabs(RevisionTransportCommand revision);
+
+    Map<String, String> getContentsOfSpecificTabs(RevisionTransportCommand revision);
 
     /*
      * Checks whether the files passed comprise a model of this format
