@@ -112,7 +112,7 @@ class ModelController extends CommonController {
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
                                            'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
-                                           'create', 'about', 'revisionsState', 'show']
+                                           'create', 'about', 'revisionsState']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
