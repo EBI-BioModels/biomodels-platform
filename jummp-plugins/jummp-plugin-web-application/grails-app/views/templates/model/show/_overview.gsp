@@ -1,3 +1,5 @@
+<%@ page import="grails.converters.JSON"%>
+<% JSON tagsJSON = bmTags as JSON %>
 <div class="row">
     <div class="small-12 medium-8 large-8 columns">
         <div class="row">
@@ -144,6 +146,12 @@
 </g:javascript>
 <script>
     $(document).ready(function() {
+        $('.model-tags-select2').select2({
+            placeholder: "Type here to search a tag",
+            tags: false,
+            multiple: true
+        });
+
         const qualifiers = $("#all-qualifier-accessions").text().split(",");
         jQuery.each(qualifiers, (index, item) => {
             const pQualifier = $("#" + item + "Qualifier").text();

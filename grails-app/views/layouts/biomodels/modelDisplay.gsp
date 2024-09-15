@@ -33,18 +33,9 @@
 <%@ page import="grails.converters.JSON; java.text.DateFormat"%>
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
-<% JSON tagsJSON = bmTags as JSON %>
+
 <head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name} | BioModels</title>
-    <script type="text/javascript">
-        $(document).ready(function() {
-            $('.model-tags-select2').select2({
-                placeholder: "Type here to search a tag",
-                tags: false,
-                multiple: true
-            });
-        });
-    </script>
     <script type="text/x-mathjax-config">
         MathJax.Hub.Config({
             tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] }
