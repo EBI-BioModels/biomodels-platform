@@ -47,8 +47,10 @@
         <div id="specific-tabs"></div>
         <g:if test="${specificTabs}">
             <g:each in="${specificTabs}" var="tab">
+                <g:if test="${tab.value}">
                 <button class="w3-bar-item w3-button tablink" id="btn-${tab.key}"
                         onclick='openTab("${tab.key}")'>${tab.key}</button>
+                </g:if>
             </g:each>
         </g:if>
         <g:if test="${curationNotes != null || hasCuratorRole || canSeeCurationTab }">
@@ -80,9 +82,10 @@
     <div id="specific-tabs-content" style="display: none"></div>
     <g:if test="${specificTabs}">
     <g:each in="${specificTabs}" var="tabContent">
+        <g:if test="${tabContent.value}">
         <div id="${tabContent.key}" class="w3-container w3-border display-tab" style="display:none">
             ${tabContent.value}
-        </div>
+        </div></g:if>
     </g:each></g:if>
     <!-- Curation tab -->
     <g:if test="${curationNotes != null || hasCuratorRole || canSeeCurationTab }">
