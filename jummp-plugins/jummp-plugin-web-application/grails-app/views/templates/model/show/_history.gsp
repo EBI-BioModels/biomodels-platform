@@ -15,26 +15,20 @@
             <li style="${revision.id == rv.id ?"background-color:#FFFFCC;":""}margin-top:5px">
                 Version: ${rv.revisionNumber}
                 <g:if test="${rv.state==ModelState.PUBLISHED}">
-                    <img style="width:12px;margin:2px;float:none;"
-                         title="This version of the model is public" alt="public model"
-                         src="${serverURL}/images/unlock.png"/>
+                    <i class="icon icon-common icon-unlock" title="This version of the model is public"></i>
                 </g:if>
                 <g:else>
-                    <img style="width:12px;margin:2px;float:none;"
-                         title="This version of the model is unpublished" alt="unpublished model"
-                         src="${serverURL}/images/lock.png"/>
+                    <i class="icon icon-common icon-lock" title="This version of the model is unpublished"></i>
                 </g:else>
-                <g:if test="${revision.id!=rv.id}">
+                <g:if test="${revision.id != rv.id}">
                     <a class="versionDownload" title="go to version ${rv.revisionNumber}" target="_blank"
                        href="${g.createLink(controller: 'model', action: 'show', id: rv.identifier())}">
-                        <img style="width:12px;margin:2px;float:none"
-                             src="${serverURL}/images/external_link.png"/>
+                        <i class="icon icon-common icon-external-link-alt"></i>
                     </a>
                 </g:if>
                 <a class="versionDownload" title="download" target="_blank"
                    href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
-                    <img alt="Download this version" style="width:15px;float:none"
-                         src="${serverURL}/images/download.png"/>
+                    <i class="icon icon-common icon-download" title="Download this version"></i>
                 </a>
                 <ul>
                     <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>
