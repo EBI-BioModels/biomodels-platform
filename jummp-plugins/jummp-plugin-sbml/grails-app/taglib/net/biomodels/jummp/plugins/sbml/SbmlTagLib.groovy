@@ -171,7 +171,9 @@ class SbmlTagLib {
 
     def renderParameterSearchComponents = { attrs ->
         Map components = attrs.components as Map
-        out << render(template: "/templates/psComponents", plugin: "jummp-plugin-sbml", model: components)
+        final String perennialId = attrs.perennialId
+        out << render(template: "/templates/psComponents", plugin: "jummp-plugin-sbml",
+            model: [components: components, perennialId: perennialId])
     }
 
     /**

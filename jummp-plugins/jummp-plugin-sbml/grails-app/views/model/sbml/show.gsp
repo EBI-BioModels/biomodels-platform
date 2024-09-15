@@ -34,6 +34,6 @@
 </g:if>
 </content>
 <content tag="modelspecifictabscontent">
-    <sbml:renderParameterSearchComponents components="${components}"/>
+    <sbml:renderParameterSearchComponents components="${components}" perennialId="${perennialId}"/>
 </content>
 

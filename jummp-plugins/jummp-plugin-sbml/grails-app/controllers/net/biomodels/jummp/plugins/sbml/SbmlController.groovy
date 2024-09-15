@@ -67,6 +67,7 @@ class SbmlController {
         fetchComponents(model, perennialId)
         boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
         model["canCheckConsistency"] = canCheckConsistency
+        model["perennialId"] = perennialId
         render(view: "/model/sbml/show", model: model)
     }
 

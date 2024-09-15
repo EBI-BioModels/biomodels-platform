@@ -835,7 +835,7 @@ the user has attempted to update an blank value for the name attribute.""")
                 Map components = extractComponentsFromBP(PERENNIAL_ID)
                 ApplicationTagLib appTagLib = new ApplicationTagLib()
                 componentsStr = appTagLib.render(template: "/templates/psComponents",
-                    model: [components: components], plugin: "jummp-plugin-sbml")
+                    model: [components: components, perennialId: PERENNIAL_ID], plugin: "jummp-plugin-sbml")
             } catch (RuntimeException re) {
                 LOGGER.error("Error while extracting components from BP for $PERENNIAL_ID", re)
             }
