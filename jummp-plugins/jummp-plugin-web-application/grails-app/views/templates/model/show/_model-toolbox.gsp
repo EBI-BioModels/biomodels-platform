@@ -1,12 +1,17 @@
 <!-- TODO: create dialog boxes to confirm -->
+<!-- Load an icon library -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 <div id="model-toolbox" class="sidenav">
     <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-    <a href="javascript:void(0)" onclick="linkServeOmex()">Download</a>
+    <a href="javascript:void(0)" onclick="linkServeOmex()" title="Download the model in OMEX format">
+        <i class="fa fa-download" aria-hidden="true"></i> Download</a>
     <g:if test="${canUpdate}">
-        <a href="javascript:void(0)" onclick="update()">Update</a>
+        <a href="javascript:void(0)" onclick="update()" title="Update the model">
+            <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Update</a>
     </g:if>
     <g:if test="${canDelete}">
-        <a href="javascript:void(0)" onclick="archive()">Delete</a>
+        <a href="javascript:void(0)" onclick="archive()" title="Archive the model">
+            <i class="fa fa-archive" aria-hidden="true"></i> Delete</a>
     </g:if>
     <g:if test="${canSubmitForPublication}">
         <% def dialog_id %>
@@ -28,7 +33,7 @@
         <a class='toolbutton' id="peer-review"
            title="Submit for publication"
            onclick='return $("#${dialog_id}").dialog("open");'>
-            Publish</a>
+            <i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
     </g:if>
     <g:if test="${showPublishOption}">
         <div id="confirm-model-publish" title="You are about to publish this model version"
@@ -36,33 +41,35 @@
             <p>Make this version of the model visible to anyone without logging in?</p>
         </div>
 
-        <a class='toolbutton' id="publish"
-           onclick="return $('#confirm-model-publish').dialog('open');">Publish</a>
+        <a class='toolbutton' id="publish" title="Publish the model"
+           onclick="return $('#confirm-model-publish').dialog('open');">
+            <i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
 
     </g:if>
     <g:if test="${showUnpublishOption}">
         <div id="confirm-model-unpublish" title="Confirm!!!" style="display:none">
             <p>You are about to unpublish this model version. Are you sure?</p>
         </div>
-        <a id="unpublish"
-           onclick="return $('#confirm-model-unpublish').dialog('open');">Unpublish</a>
+        <a id="unpublish" title="Unpublish the model"
+           onclick="return $('#confirm-model-unpublish').dialog('open');">
+            <i class="fa fa-lock" aria-hidden="true"></i> Unpublish</a>
     </g:if>
     <g:if test="${canShare}">
-        <a class='toolbutton' id="share" onclick="share()">Share</a>
+        <a class='toolbutton' id="share" onclick="share()" title="Share your model with contributors">
+            <i class="fa fa-share-square-o" aria-hidden="true"></i> Share</a>
     </g:if>
     <g:if test="${canCertify}">
-        <a class='toolbutton' id="certify" onclick="certify()">Certify</a>
+        <a class='toolbutton' id="certify" title="Certify model" onclick="certify()">
+            <i class="fa fa-certificate" aria-hidden="true"></i> Certify</a>
     </g:if>
     <g:if test="${canCheckConsistency}">
         <div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
             <p>Checking model consistency uses an online validator. This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
         </div>
         <a id="checkConsistency"
-           class="toolbutton"
            title="Check consistency"
            onclick="return $('#confirm-model-consistency-check').dialog('open');">
-            Check
-        </a>
+            <i class="fa fa-check-circle-o" aria-hidden="true"></i> Check</a>
     </g:if>
     <g:if test="${hasCuratorRole && supportedForConversion}">
         <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">
@@ -70,24 +77,25 @@
             uploading and exporting the model. Do you want to proceed the model conversion?</p>
         </div>
         <a id="convert"
-           class="toolbutton"
            title="Convert This Model To The Other Formats"
            onclick="return $('#confirm-model-conversion').dialog('open');">
-            Convert
-        </a>
+            <i class="fa fa-exchange" aria-hidden="true"></i> Convert</a>
     </g:if>
     <g:if test="${canAskReviewerAccount}">
         <a href="javascript:void(0)" onclick="openReviewerAccount()"
-           title="Click on this button to open a reviewer account for this model">Reviewer</a>
+           title="Open a reviewer account for this model">
+            <i class="fa fa-tasks" aria-hidden="true"></i> Reviewer</a>
     </g:if>
     <g:if test="${canAskReviewerAccount}">
         <!-- canAddContributor is the same canAskReviewerAccount -->
         <a href="javascript:void(0)" onclick="manageContributors()"
-           title="Click on this button to manage the list of contributors of your model">Members</a>
+           title="Manage the list of contributors of your model">
+            <i class="fa fa-users" aria-hidden="true"></i> Members</a>
     </g:if>
     <g:if test="${hasCuratorRole}"><!-- canIndex is the same hasCuratorRole -->
         <a href="javascript:void(0)" onclick="indexModelRevision()"
-           title="Click on this button to reindex your model">Index</a>
+           title="Reindex your model">
+            <i class="fa fa-database" aria-hidden="true"></i> Index</a>
     </g:if>
 </div>
 <span style="font-size:20px;cursor:pointer" onclick="openNav()">&#9776; Model ToolBox</span>
