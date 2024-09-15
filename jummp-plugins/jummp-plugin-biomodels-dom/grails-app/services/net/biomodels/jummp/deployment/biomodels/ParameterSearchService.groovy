@@ -110,12 +110,16 @@ WHERE M.deleted = :deleted \
         final int POOL_SIZE = 8
         GParsPool.withPool(POOL_SIZE) {
             listOfModels.eachParallel { String modelId ->
-                ParamSC cmd = new ParamSC(size: 10, start: 0, sort: 'model:ascending')
-                cmd.query = modelId
-                String searchResults = getData(cmd, "JSON")
-                doCacheSearchResultsOnRedis(searchResults, modelId)
+                updateRedisCache(modelId)
             }
         }
+    }
+
+    void updateRedisCache(final String modelId) {
+        ParamSC cmd = new ParamSC(size: 10, start: 0, sort: 'model:ascending')
+        cmd.query = modelId
+        String searchResults = getData(cmd, "JSON")
+        doCacheSearchResultsOnRedis(searchResults, modelId)
     }
 
     private static String removeHeader(String csvData) {
