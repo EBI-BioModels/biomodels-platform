@@ -18,7 +18,13 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
+<div class="title-bar" data-responsive-toggle="biomodels-menu" data-hide-for="medium">
+    <button class="menu-icon" type="button" data-toggle="biomodels-menu"></button>
+    <div class="title-bar-title">Menu</div>
+</div>
 <nav>
+<div id="biomodels-menu">
+<div class="top-bar-left">
 <ul id="local-nav" class="main-menu dropdown menu"
     data-description="navigational" data-dropdown-menu role="menubar">
     <li <g:if test="${actionName == null}"> class="first active main-menu-item" </g:if>
@@ -151,6 +157,10 @@
     <!-- If you need to include functional (as opposed to purely navigational) links in your local menu,
        add them here, and give them a class of "functional". Remember: you'll need a class of "last" for
        whichever one will show up last... For example: -->
+</ul></div>
+<div class="top-bar-right">
+<ul class="main-menu dropdown menu"
+        data-description="navigational" data-dropdown-menu role="menubar">
     <sec:ifLoggedIn>
         <li <g:if test="${selectedMyAccountItems}">
             class="active functional first float-right opens-left main-menu-item"</g:if>
@@ -215,4 +225,5 @@
         </li>
     </sec:ifNotLoggedIn>
 </ul>
+</div></div>
 </nav>
