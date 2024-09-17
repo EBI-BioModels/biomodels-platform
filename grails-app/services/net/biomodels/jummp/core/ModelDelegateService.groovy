@@ -790,11 +790,14 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
 
     @NotTransactional
     boolean retrieveRosetteLink(final String modelId) {
-        String value = redisService.doRedisHGet(modelId, "hasRosetteLink")
+        if (!redisService.doRedisHGet(modelId, "hasRosetteLink")) {
+            return false
+        }
+        String value = redisService.doRedisHGet(modelId, "hasRosetteLink").toBoolean()
         if (!value) {
             value = cacheRosetteLink(modelId)
         }
-        value == "Yes"
+        value
     }
 
     @NotTransactional
