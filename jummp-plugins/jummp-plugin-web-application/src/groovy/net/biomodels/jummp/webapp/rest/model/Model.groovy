@@ -24,11 +24,14 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import grails.util.Holders
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.user.PersonTransportCommand
-import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
+import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
+import net.biomodels.jummp.deployment.biomodels.TagTransportCommand as TagTC
 
 class Model {
     String name
@@ -37,7 +40,7 @@ class Model {
     Publication publication
     ModelFiles files
     History history
-    Date firstPublished
+    Long firstPublished // seconds in Unix epoch
     /** perennial model identifiers */
     String submissionId
     String publicationId
@@ -46,40 +49,73 @@ class Model {
     List<String> modelTags
     Map contributors
     String vcsIdentifier
+    List<Annotation> modelLevelAnnotations
 
-    Model(RevisionTransportCommand revision, boolean isPrivate) {
-        ModelTransportCommand model = revision.model
+    Model(RTC revision, boolean isPrivate) {
+        MTC model = revision.model
+        submissionId = model.submissionId
         name = revision.name
         description = revision.description
         format = new Format(revision.format)
-        if (model.publication) {
-            PublicationTransportCommand pubTC = model.publication
-            publication = new Publication(pubTC)
-            pubTC.authors.each { PersonTransportCommand personTC ->
-                publication.authors << new PublicationAuthor(personTC)
-            }
-        }
-        if (isPrivate) {
-            files = new ModelFiles()
-        } else {
-            files = new ModelFiles(revision.files.findAll{ !it.hidden })
-        }
-        history = new History(model.submissionId)
-        submissionId = model.submissionId
-        publicationId = model.publicationId
-        firstPublished = model.firstPublished
         if (model.modellingApproach) {
             modellingApproach = new ModellingApproach(model.modellingApproach)
         }
-        curationStatus = revision.curationState.toString() //revision.curationState.name()
-        def mdds = Holders.grailsApplication.mainContext.getBean("metadataDelegateService")
-        Set<TagTransportCommand> tags = mdds.findTagsByModel(revision.model)
-        List<String> tagList = tags.collect { it.name }
-        modelTags = tagList
+        if (!isPrivate) {
+            if (model.publication) {
+                PubTC pubTC = model.publication
+                publication = new Publication(pubTC)
+                pubTC.authors.each { PersonTC personTC ->
+                    publication.authors << new PublicationAuthor(personTC)
+                }
+            }
+            files = new ModelFiles(revision.files.findAll { !it.hidden })
+            history = new History(model.submissionId)
+            publicationId = model.publicationId
+            firstPublished = model.firstPublished.getTime()/1_000 as Long
 
-        def mds = Holders.grailsApplication.mainContext.getBean("modelDelegateService")
-        contributors = mds.convertContributors(revision.contributors)
-        vcsIdentifier = mds.getRevisionsState(revision.model.submissionId)["vcsId"]
+            curationStatus = revision.curationState.toString() //revision.curationState.name()
+            def mdds = Holders.grailsApplication.mainContext.getBean("metadataDelegateService")
+            Set<TagTC> tags = mdds.findTagsByModel(revision.model)
+            List<String> tagList = tags.collect { it.name }
+            modelTags = tagList
+
+            def mds = Holders.grailsApplication.mainContext.getBean("modelDelegateService")
+            contributors = mds.convertContributors(revision.contributors)
+            vcsIdentifier = mds.getRevisionsState(revision.model.submissionId)["vcsId"]
+            modelLevelAnnotations = retrieveModelLevelAnnotations(revision, mdds)
+        } else {
+            files = new ModelFiles()
+        }
+    }
+
+    /*private List<Annotation> getModelLevelAnnotations(final RTC revision, def redisService, def metaDS) {
+        List<Annotation> result = redisService
+    }*/
+
+    private static List<Annotation> retrieveModelLevelAnnotations(final RTC revision, def metaDS) {
+        List<STC> modelLevelAnnotations = metaDS.getModelLevelAnnotations(revision)
+        Map<QualifierTC, List<RRTC>> genericAnnotations = metaDS.fetchGenericAnnotations(modelLevelAnnotations)
+        List<Annotation> result = new ArrayList<>()
+        genericAnnotations.each { QualifierTC qualifierTC, List<RRTC> references ->
+            String type = "unknown"
+            if (qualifierTC.type == "ModelQualifier" ||
+                qualifierTC.type == "http://biomodels.net/model-qualifiers/") {
+                type = "bqmodel"
+            } else if (qualifierTC.type == "BiologicalQualifier" ||
+                qualifierTC.type == "http://biomodels.net/biology-qualifiers/") {
+                type = "bqbiol"
+            }
+            String qualifier = qualifierTC.accession
+            if (type != "unknown") {
+                qualifier = type + ":" + qualifierTC.accession
+            }
+            references.each { RRTC ref ->
+                Annotation annotation = new Annotation(qualifier: qualifier, name: ref.name,
+                    accession: ref.accession, resource: ref.collectionName, uri: ref.uri)
+                result.add(annotation)
+            }
+        }
+        return result
     }
 
     String outputModelAsString(String contentType) {

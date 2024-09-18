@@ -24,13 +24,13 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 
 class Revision {
     int version
-    long submitted
+    long submitted // seconds in Unix epoch
     String submitter
     String comment
 
     public Revision(RevisionTransportCommand revision) {
         version = revision.revisionNumber
-        submitted = revision.uploadDate.getTime()
+        submitted = revision.uploadDate.getTime()/1_000 as Long
         submitter = revision.owner
         comment = revision.comment
     }
