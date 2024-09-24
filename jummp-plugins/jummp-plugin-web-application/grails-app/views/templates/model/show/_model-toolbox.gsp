@@ -15,29 +15,13 @@
             <i class="fa fa-archive" aria-hidden="true"></i> Delete</a>
     </g:if>
     <g:if test="${canSubmitForPublication}">
-        <% def dialog_id %>
-        <g:if test="${revision.model.publication}">
-            <div id="confirm-model-notify"
-                 title="<jummp:renderSubmitForPublicationConfirmDialogTitle/>"
-                 style="display:none;">
-                <p><jummp:renderSubmitForPublicationConfirmDialogMessage/></p>
-            </div>
-            <% dialog_id = "confirm-model-notify" %>
-        </g:if>
-        <g:else>
-            <div id="warn-publication-details"
-                 title="<jummp:renderSubmitForPublicationWarningDialogTitle/>" style="display: none">
-                <p><jummp:renderSubmitForPublicationWarningDialogMessage/></p>
-            </div>
-            <% dialog_id = "warn-publication-details" %>
-        </g:else>
         <a class='toolbutton' id="peer-review"
            title="Submit for publication"
-           onclick='return $("#${dialog_id}").dialog("open");'>
+           onclick="submitForPublication()">
             <i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
     </g:if>
     <g:if test="${showPublishOption}">
-        <div id="confirm-model-publish" title="You are about to publish this model version"
+        <!-- <div id="confirm-model-publish" title="You are about to publish this model version"
              style="display:none;">
             <p>Make this version of the model visible to anyone without logging in?</p>
         </div>
@@ -45,14 +29,20 @@
         <a class='toolbutton' id="publish" title="Publish the model"
            onclick="return $('#confirm-model-publish').dialog('open');">
             <i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
+        -->
+        <a class='toolbutton' id="publish" title="Publish the model"
+           onclick="publish()"><i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
 
     </g:if>
     <g:if test="${showUnpublishOption}">
-        <div id="confirm-model-unpublish" title="Confirm!!!" style="display:none">
+        <!--<div id="confirm-model-unpublish" title="Confirm!!!" style="display:none">
             <p>You are about to unpublish this model version. Are you sure?</p>
         </div>
         <a id="unpublish" title="Unpublish the model"
            onclick="return $('#confirm-model-unpublish').dialog('open');">
+            <i class="fa fa-lock" aria-hidden="true"></i> Unpublish</a> -->
+        <a id="unpublish" title="Unpublish the model"
+           onclick="unpublish()">
             <i class="fa fa-lock" aria-hidden="true"></i> Unpublish</a>
     </g:if>
     <g:if test="${canShare}">
@@ -64,22 +54,22 @@
             <i class="fa fa-certificate" aria-hidden="true"></i> Certify</a>
     </g:if>
     <g:if test="${canCheckConsistency}">
-        <div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
+        <!--<div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
             <p>Checking model consistency uses an online validator. This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
         </div>
         <a id="checkConsistency"
            title="Check consistency"
            onclick="return $('#confirm-model-consistency-check').dialog('open');">
+            <i class="fa fa-check-circle-o" aria-hidden="true"></i> Check</a>-->
+        <a id="checkConsistency"
+           title="Check consistency"
+           onclick="checkConsistency()">
             <i class="fa fa-check-circle-o" aria-hidden="true"></i> Check</a>
     </g:if>
     <g:if test="${hasCuratorRole && supportedForConversion}">
-        <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">
-            <p>Exporting this model to other formats uses an online service. This might take time for
-            uploading and exporting the model. Do you want to proceed the model conversion?</p>
-        </div>
         <a id="convert"
            title="Convert This Model To The Other Formats"
-           onclick="return $('#confirm-model-conversion').dialog('open');">
+           onclick="convert()">
             <i class="fa fa-exchange" aria-hidden="true"></i> Convert</a>
     </g:if>
     <g:if test="${canAskReviewerAccount}">
@@ -187,6 +177,29 @@
 
     function openReviewerAccount() {
         $.jummp.openPage('${g.createLink(controller: 'jummp', action: 'createReviewerAccount', id: revision.modelIdentifier())}');
+    }
+
+    function publish() {
+        $.jummp.openPage("${g.createLink(controller: 'model', action: 'publish', id: revision.identifier() )}");
+    }
+
+    function unpublish() {
+        $.jummp.openPage("${g.createLink(controller: 'model', action: 'unpublish', id: revision.identifier() )}");
+    }
+
+    function checkConsistency() {
+        const url = "${g.createLink(controller: 'sbml', action: 'checkConsistency', id: revision.identifier())}";
+        $.jummp.openPage(url);
+    }
+
+    function convert() {
+        let url = "${g.createLink(controller: 'conversion', action: 'convert')}";
+        url += "?id=${revision.model.submissionId}&revisionId=${revision.revisionNumber}"
+        $.jummp.openPage(url);
+    }
+
+    function submitForPublication() {
+        $.jummp.openPage("${g.createLink(controller: 'model', action: 'submitForPublication', id: revision.identifier())}");
     }
 </script>
 </sec:ifLoggedIn>
