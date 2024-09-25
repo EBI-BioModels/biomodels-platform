@@ -11,38 +11,24 @@
             <i class="fa fa-pencil-square-o" aria-hidden="true"></i> Update</a>
     </g:if>
     <g:if test="${canDelete}">
-        <a href="javascript:void(0)" onclick="archive()" title="Archive the model">
+        <a href="javascript:void(0)" data-open="popup-confirm-archive-model" title="Archive the model">
             <i class="fa fa-archive" aria-hidden="true"></i> Delete</a>
     </g:if>
+
     <g:if test="${canSubmitForPublication}">
         <a class='toolbutton' id="peer-review"
            title="Submit for publication"
-           onclick="submitForPublication()">
+           data-open="popup-confirm-submit-publication">
             <i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
     </g:if>
+
     <g:if test="${showPublishOption}">
-        <!-- <div id="confirm-model-publish" title="You are about to publish this model version"
-             style="display:none;">
-            <p>Make this version of the model visible to anyone without logging in?</p>
-        </div>
-
         <a class='toolbutton' id="publish" title="Publish the model"
-           onclick="return $('#confirm-model-publish').dialog('open');">
-            <i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
-        -->
-        <a class='toolbutton' id="publish" title="Publish the model"
-           onclick="publish()"><i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
-
+           data-open="popup-confirm-publish"><i class="fa fa-unlock" aria-hidden="true"></i> Publish</a>
     </g:if>
     <g:if test="${showUnpublishOption}">
-        <!--<div id="confirm-model-unpublish" title="Confirm!!!" style="display:none">
-            <p>You are about to unpublish this model version. Are you sure?</p>
-        </div>
         <a id="unpublish" title="Unpublish the model"
-           onclick="return $('#confirm-model-unpublish').dialog('open');">
-            <i class="fa fa-lock" aria-hidden="true"></i> Unpublish</a> -->
-        <a id="unpublish" title="Unpublish the model"
-           onclick="unpublish()">
+           data-open="popup-confirm-unpublish">
             <i class="fa fa-lock" aria-hidden="true"></i> Unpublish</a>
     </g:if>
     <g:if test="${canShare}">
@@ -54,16 +40,9 @@
             <i class="fa fa-certificate" aria-hidden="true"></i> Certify</a>
     </g:if>
     <g:if test="${canCheckConsistency}">
-        <!--<div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
-            <p>Checking model consistency uses an online validator. This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
-        </div>
         <a id="checkConsistency"
            title="Check consistency"
-           onclick="return $('#confirm-model-consistency-check').dialog('open');">
-            <i class="fa fa-check-circle-o" aria-hidden="true"></i> Check</a>-->
-        <a id="checkConsistency"
-           title="Check consistency"
-           onclick="checkConsistency()">
+           data-open="popup-confirm-check-consistency">
             <i class="fa fa-check-circle-o" aria-hidden="true"></i> Check</a>
     </g:if>
     <g:if test="${hasCuratorRole && supportedForConversion}">
@@ -90,6 +69,82 @@
     </g:if>
 </div>
 <span style="font-size:20px;cursor:pointer" onclick="openNav()">&#9776; Model ToolBox</span>
+
+<!-- Define the modal dialogs to confirm the operations -->
+<div>
+    <!-- Confirm to delete the model -->
+    <div class="reveal" id="popup-confirm-archive-model" data-reveal>
+        <h1>Confirm!</h1>
+        <p class="lead">Are you sure you want to delete (e.g., archive) the model?</p>
+        <button class="close-button" data-close aria-label="Close reveal" type="button">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="button-group primary">
+            <button class="button secondary" id="btn-no-to-archive-model">No</button>
+            <button class="button" id="btn-yes-to-archive-model">Yes</button>
+        </div>
+    </div>
+
+    <!-- Confirm to submit for model publication -->
+    <div class="reveal" id="popup-confirm-submit-publication" data-reveal>
+    <g:if test="${revision.model.publication}">
+        <h1><jummp:renderSubmitForPublicationConfirmDialogTitle/></h1>
+        <p class="lead"><jummp:renderSubmitForPublicationConfirmDialogMessage/></p>
+    </g:if>
+    <g:else>
+        <h1><jummp:renderSubmitForPublicationWarningDialogTitle/></h1>
+        <p class="lead"><jummp:renderSubmitForPublicationWarningDialogMessage/></p>
+    </g:else>
+        <button class="close-button" data-close aria-label="Close reveal" type="button">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="button-group primary">
+            <button class="button secondary" id="btn-no-to-submit-publication">No</button>
+            <button class="button" id="btn-yes-to-submit-publication">Yes</button>
+        </div>
+    </div>
+
+    <!-- Confirm to check consistency -->
+    <div class="reveal" id="popup-confirm-check-consistency" data-reveal>
+        <h1>Confirm!</h1>
+        <p class="lead">Checking model consistency uses an online validator.
+        This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
+        <button class="close-button" data-close aria-label="Close reveal" type="button">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="button-group primary">
+            <button class="button secondary" id="btn-no-to-check-consistency">No</button>
+            <button class="button" id="btn-yes-to-check-consistency">Yes</button>
+        </div>
+    </div>
+
+    <!-- Confirm to publish -->
+    <div class="reveal" id="popup-confirm-publish" data-reveal>
+        <h1>Confirm!</h1>
+        <p class="lead">Make this version of the model visible to anyone without logging in?</p>
+        <button class="close-button" data-close aria-label="Close reveal" type="button">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="button-group primary">
+            <button class="button secondary" id="btn-no-to-publish">No</button>
+            <button class="button" id="btn-yes-to-publish">Yes</button>
+        </div>
+    </div>
+
+    <!-- Confirm to unpublish  -->
+    <div class="reveal" id="popup-confirm-unpublish" data-reveal>
+        <h1>Confirm!</h1>
+        <p class="lead">You're about to unpublish the model. Are you sure?</p>
+        <button class="close-button" data-close aria-label="Close reveal" type="button">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <div class="button-group primary">
+            <button class="button secondary" id="btn-no-to-unpublish">No</button>
+            <button class="button" id="btn-yes-to-unpublish">Yes</button>
+        </div>
+    </div>
+</div>
+
 <style>
 .sidenav {
     height: 50%;
@@ -149,6 +204,45 @@
 
     function closeNav() {
         document.getElementById("model-toolbox").style.width = "0";
+    }
+
+    $('#btn-yes-to-archive-model').on("click", function() {
+        archive();
+    });
+    $('#btn-no-to-archive-model').on("click", function() {
+        closePopup("popup-confirm-archive-model");
+    });
+
+    $('#btn-yes-to-submit-publication').on("click", function() {
+        submitForPublication();
+    });
+    $('#btn-no-to-submit-publication').on("click", function() {
+        closePopup("popup-confirm-submit-publication");
+    });
+
+    $('#btn-yes-to-check-consistency').on("click", function() {
+        checkConsistency();
+    });
+    $('#btn-no-to-check-consistency').on("click", function() {
+        closePopup("popup-confirm-check-consistency");
+    });
+
+    $('#btn-yes-to-publish').on("click", function() {
+        publish();
+    });
+    $('#btn-no-to-publish').on("click", function() {
+        closePopup("popup-confirm-publish");
+    });
+
+    $('#btn-yes-to-unpublish').on("click", function() {
+        unpublish();
+    });
+    $('#btn-no-to-unpublish').on("click", function() {
+        closePopup("popup-confirm-unpublish");
+    });
+
+    function closePopup(modalDialogId) {
+        $('#'+modalDialogId).foundation('close');
     }
 
     function certify() {

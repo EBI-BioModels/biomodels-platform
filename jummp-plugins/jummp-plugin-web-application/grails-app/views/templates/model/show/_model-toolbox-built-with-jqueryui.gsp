@@ -304,7 +304,7 @@
     </g:if>
     <g:if test="${canDelete}">
         <div id="confirm-model-deletion" title="Confirm Delete Model" style="display:none;">
-            <p>Are you sure you want to delete the model?</p>
+            <p>Are you sure you want to delete (e.g., archive) the model?</p>
         </div>
         <li>
             <button class='toolbutton' id="delete"
