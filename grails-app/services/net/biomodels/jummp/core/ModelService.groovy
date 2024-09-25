@@ -2398,10 +2398,12 @@ the perennial publication identifier to the model file.""")
         aclUtilService.deletePermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.deletePermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state = ModelState.UNPUBLISHED
-        revision.model.firstPublished = null
-        revision.model.publicationId = null
-        if (!revision.save(flush:true)) {
-            logger.error("Revision ${revision.id} was not made private: ${revision.errors.allErrors}")
+        // preserve two following properties for history and tracking because the perennial id was already issued
+        // also, the first published date is also retained to know which date was the model published first
+        // revision.model.firstPublished = null
+        // revision.model.publicationId = null
+        if (!revision.save(flush: true)) {
+            logger.error("Revision ${revision.id} cannot be turned private due to: ${revision.errors.allErrors.toString()}")
         }
     }
 
