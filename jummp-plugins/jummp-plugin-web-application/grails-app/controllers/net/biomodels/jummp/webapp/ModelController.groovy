@@ -112,7 +112,7 @@ class ModelController extends CommonController {
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
                                            'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
-                                           'create', 'about', 'revisionsState']
+                                           'create', 'about', 'revisionsState', 'generateOmex']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
@@ -524,6 +524,24 @@ class ModelController extends CommonController {
         }
     }
 
+    def generateOmex() {
+        if (!(response.format in ['json', 'xml'])) {
+            render view: '/errors/error415', status: 415
+            return
+        }
+        Map models = doGenerateOmex(params.id as String, params.revisionId as Integer)
+        try {
+            withFormat {
+                json { render models as JSON }
+                xml { render models as XML }
+                '*' { render status: 415, view: "/errors/error415" }
+            }
+        } catch (Exception err) {
+            LOGGER.error(err.message, err)
+            forward controller: 'errors', action: 'error404'
+        }
+    }
+
     def publish() {
         RTC rev = null
         RTC published = null
@@ -752,7 +770,7 @@ Please contact the developers team for support!"""])
             return
         }
         Integer revisionId = params.getInt("revisionId")
-        Map m = generateOmex(modelId, revisionId)
+        Map m = doGenerateOmex(modelId, revisionId)
 
         withFormat {
             html {
@@ -770,7 +788,7 @@ Please contact the developers team for support!"""])
         }
     }
 
-    private Map generateOmex(String modelId, Integer revisionNumber) {
+    private Map doGenerateOmex(String modelId, Integer revisionNumber) {
         RTC revisionTC
         String filePath = ""
         try {
@@ -997,7 +1015,7 @@ Please contact the developers team for support!"""])
         String DOWNLOAD_SERVICE_URL = grailsApplication.config.jummp.model.download.server
         String url = "${DOWNLOAD_SERVICE_URL}/get-files/$filePath"
         if (!omexFile.exists()) {
-            Map result = generateOmex(revision.model.submissionId, revision.revisionNumber) as Map
+            Map result = doGenerateOmex(revision.model.submissionId, revision.revisionNumber) as Map
             String omexLocation = result.get("location")
             if (omexLocation && revision.state != ModelState.PUBLISHED) {
                 String msg = """Your file might be big. It is being generated. Please be patient and check the download \
