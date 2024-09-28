@@ -107,7 +107,8 @@ caused by ${conn.responseCode}: ${conn.getErrorStream().inspect()}""")
             newPath = uri.getPath() + "/" + path.replaceAll("//+", "/")
         }
 
-        return uri.resolve(newPath).normalize()
+        // replace spaces with %20, see https://stackoverflow.com/a/2593319/865603
+        return uri.resolve(newPath.replaceAll(" ", "%20")).normalize()
 
     }
 

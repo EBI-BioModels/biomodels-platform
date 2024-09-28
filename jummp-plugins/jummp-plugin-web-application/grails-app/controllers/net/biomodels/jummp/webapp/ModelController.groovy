@@ -1066,7 +1066,7 @@ after a few seconds. If you have any trouble in downloading the file after about
         String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
         String[] parts = defineMrPathAndFileNameForOmex(revision)
         String mrPath = parts[2]
-        String url = WSF.addPath(new URI(EBI_BM_FTP_REPO), "${modelParentFolder}/${mrPath}/${fileName}")
+        String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/${mrPath}/${fileName}"
         if (JummpHttpService.isReachable(url)) {
             LOGGER.info("Downloading from FTP: ${url}")
             redirect(url: url)
