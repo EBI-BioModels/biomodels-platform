@@ -41,6 +41,12 @@ class FeatureService {
     RedisService redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
     def groovyPageRenderer
 
+    String getContentForBioModelsTerms() {
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'biomodels-terms'], [max: 1])
+        newsItem[0]?.content
+    }
+
     /**
      * Retrieves the content of the COVID-19 page under Browse menu
      *
