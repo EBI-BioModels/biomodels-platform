@@ -708,7 +708,7 @@
                 "revisions": {
                     "type": "array",
                     "items": {
-                        "$ref": "#definitions/Revision"
+                        "$ref": "#/definitions/Revision"
                     },
                     "description": "The list of the revisions"
                 }
