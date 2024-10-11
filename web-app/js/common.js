@@ -63,8 +63,8 @@ $('#submitButtonRate').on("click", function(event) {
             $('#feedback_panel').html("There is an error when trying to submit your feedback. Please fresh the page and try again!");
         },
         success: function (response) {
-            if (response.status == "200") {
-                var thankyouMessage = '<div style="text-align:center;">';
+            if (response.status === "200") {
+                let thankyouMessage = '<div style="text-align:center;">';
                 thankyouMessage += '<img style="text-align: center;" src="' +
                     $.serverUrl + '/images/img_done_check_2x_1.png" />';
                 thankyouMessage += '</div>';
