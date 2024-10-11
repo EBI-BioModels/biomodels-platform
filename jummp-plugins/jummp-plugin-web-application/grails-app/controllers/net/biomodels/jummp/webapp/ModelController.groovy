@@ -112,7 +112,8 @@ class ModelController extends CommonController {
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
                                            'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
-                                           'create', 'about', 'revisionsState', 'generateOmex']
+                                           'create', 'about', 'revisionsState', 'generateOmex',
+                                           'generateOmexMetadataRDF']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
@@ -542,6 +543,12 @@ class ModelController extends CommonController {
         }
     }
 
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def generateOmexMetadataRDF() {
+        String result = doGenerateOmexMetadataRDF(params.id as String, params.revisionId as Integer)
+        render(contentType: 'application/xml', text: result)
+    }
+
     def publish() {
         RTC rev = null
         RTC published = null
@@ -836,6 +843,40 @@ Please contact the developers team for support!"""])
         // TODO: send the map of parameters below to the server to copy this file to FTP public (for the public ones)
         // and the location that will be expired within 1 hour (for the private ones)
         [modelId: modelId, revisionNumber: revisionNumber, location: filePath]
+    }
+
+    private String doGenerateOmexMetadataRDF(final String modelId, final Integer revisionId) {
+        final String DEFAULT_FS_SVR = "http://localhost:8090/biomodels/services/file-format/api/v1.0"
+        final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
+        CloseableHttpClient httpClient = HttpClientBuilder.create().build()
+        String identifier = modelId + (revisionId != null ? ".${revisionId}" : "")
+        String rdfContent = "Under construction $identifier"
+        try {
+            HttpPost request = new HttpPost("${FS_SVR_URL}/create-omex-metadata-rdf/${identifier}")
+            JSONObject object = new JSONObject()
+            object.put("revisionId", identifier)
+            JSONArray array = new JSONArray()
+            array.put(object)
+            StringEntity params = new StringEntity(array.toString(), "UTF-8")
+            request.addHeader("content-type", "application/json")
+            request.setEntity(params)
+
+            CloseableHttpResponse response = httpClient.execute(request)
+            try {
+                HttpEntity entity = response.getEntity()
+                if (entity != null) {
+                    rdfContent = EntityUtils.toString(entity)
+                }
+            } finally {
+                response.close()
+            }
+        } catch (Exception ignored) {
+            // handle exception here
+            ignored.printStackTrace()
+        } finally {
+            httpClient.close()
+        }
+        return rdfContent
     }
 
     def delete() {
