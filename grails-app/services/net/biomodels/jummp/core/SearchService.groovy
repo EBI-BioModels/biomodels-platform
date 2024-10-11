@@ -240,6 +240,10 @@ class SearchService implements InitializingBean {
         strategy.checkIndexedData()
     }
 
+    void indexDB() {
+        strategy.indexDB()
+    }
+
     String[] getSearchFields() {
         strategy.getSortFields()
     }

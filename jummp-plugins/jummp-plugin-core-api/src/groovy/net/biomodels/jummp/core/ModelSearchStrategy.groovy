@@ -44,4 +44,5 @@ interface ModelSearchStrategy {
     void updateIndex(RevisionTransportCommand revision)
     String[] getSortFields()
     Map checkIndexedData()
+    void indexDB()
 }

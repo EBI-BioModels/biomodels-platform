@@ -43,6 +43,7 @@ import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.utils.EbiSearchHelper
 import net.biomodels.jummp.utils.FileHelper
+import net.biomodels.jummp.utils.WebServiceFetcher
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware as GCA
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -164,6 +165,24 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     Map checkIndexedData() {
         LOGGER.debug("Checking whether BioModels duplicated entries on EBI Search Server...")
         EbiSearchHelper.checkIndexedData()
+    }
+
+    @Override
+    void indexDB() {
+        // Export OmicsDI XML Files and leave them processed by DDI Team and EBI Search Team
+        // This job will call a service running on the ebi-mol-sys-dev machine to launch a job on SLURM cluster
+        // It will generate all OmicsDI XML files.
+        boolean inProdMode = Environment.current == Environment.PRODUCTION
+        inProdMode = true // test it before committing
+        if (inProdMode) {
+            LOGGER.info("Submitted the job for exporting OmicsDI XML files...")
+            final String SVC_URL = "http://ebi-mol-sys-dev.ebi.ac.uk:8000/search/export/omicsdi"
+            WebServiceFetcher fetcher = new WebServiceFetcher(SVC_URL)
+            def result = fetcher.getText()
+            LOGGER.info(result as String)
+        } else {
+            LOGGER.info("No need to export OmicsDI XML files for the local development.")
+        }
     }
 
     @NotTransactional

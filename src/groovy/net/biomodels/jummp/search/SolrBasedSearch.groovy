@@ -429,7 +429,12 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
     Map checkIndexedData() {
         null
     }
-    /**
+
+    @Override
+    void indexDB() {
+
+    }
+/**
      * Internal method to execute a query.
      *
      * Queries Solr and returns the results.
