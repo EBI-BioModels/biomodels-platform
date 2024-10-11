@@ -31,17 +31,6 @@
 
 package net.biomodels.jummp.webapp
 
-import net.biomodels.jummp.core.adapters.ModelAdapter
-import net.biomodels.jummp.core.events.ModelOperationEvent
-import net.biomodels.jummp.core.events.ModelPublishedEvent
-import net.biomodels.jummp.utils.MathUtils
-import net.biomodels.jummp.utils.WebServiceFetcher as WSF
-
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
-
-import static grails.async.Promises.*
 import grails.async.Promise
 import grails.converters.JSON
 import grails.converters.XML
@@ -51,9 +40,12 @@ import grails.util.Environment
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.ModelException
+import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.constants.BioModels
+import net.biomodels.jummp.core.events.ModelOperationEvent
+import net.biomodels.jummp.core.events.ModelPublishedEvent
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
@@ -65,17 +57,14 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.utils.MathUtils
+import net.biomodels.jummp.utils.WebServiceFetcher as WSF
 import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.ModelFiles
-import org.apache.http.HttpEntity
-import org.apache.http.client.methods.CloseableHttpResponse
-import org.apache.http.client.methods.HttpPost
-import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
-import org.apache.http.util.EntityUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.json.JSONArray
 import org.slf4j.Logger
@@ -84,6 +73,11 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import javax.servlet.http.HttpServletResponse
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
+
+import static grails.async.Promises.task
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController extends CommonController {
@@ -524,7 +518,7 @@ class ModelController extends CommonController {
             forward controller: 'errors', action: 'error404'
         }
     }
-
+    // TODO: merge with createCombineArchive above
     def generateOmex() {
         if (!(response.format in ['json', 'xml'])) {
             render view: '/errors/error415', status: 415
@@ -809,30 +803,9 @@ Please contact the developers team for support!"""])
             JSONArray array = modelDelegateService.buildJsonArray(deployTarget,
                 parentDir, modelId, revisionNumber, FILES, modelExportsDir, MODEL_CACHE, revisionTC.state.name())
 
-            CloseableHttpClient httpClient = HttpClientBuilder.create().build()
             final String DEFAULT_FS_SVR = "http://localhost:8090/biomodels/services/file-format/api/v1.0"
             final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
-            try {
-                HttpPost request = new HttpPost("${FS_SVR_URL}/create-omex")
-                StringEntity params = new StringEntity(array.toString(), "UTF-8")
-                request.addHeader("content-type", "application/json")
-                request.setEntity(params)
-
-                CloseableHttpResponse response = httpClient.execute(request)
-                try {
-                    HttpEntity entity = response.getEntity()
-                    if (entity != null) {
-                        filePath = EntityUtils.toString(entity)
-                    }
-                } finally {
-                    response.close()
-                }
-            } catch (Exception ignored) {
-                // handle exception here
-                ignored.printStackTrace()
-            } finally {
-                httpClient.close()
-            }
+            filePath = WSF.executePostRequest(FS_SVR_URL, array.toString())
         } catch (ModelException ignored) {
             ignored.printStackTrace()
         } finally {
@@ -850,26 +823,14 @@ Please contact the developers team for support!"""])
         final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
         CloseableHttpClient httpClient = HttpClientBuilder.create().build()
         String identifier = modelId + (revisionId != null ? ".${revisionId}" : "")
-        String rdfContent = "Under construction $identifier"
+        String rdfContent = "Cannot generate metadata.rdf file for this model revision $identifier"
         try {
-            HttpPost request = new HttpPost("${FS_SVR_URL}/create-omex-metadata-rdf/${identifier}")
             JSONObject object = new JSONObject()
             object.put("revisionId", identifier)
             JSONArray array = new JSONArray()
             array.put(object)
-            StringEntity params = new StringEntity(array.toString(), "UTF-8")
-            request.addHeader("content-type", "application/json")
-            request.setEntity(params)
-
-            CloseableHttpResponse response = httpClient.execute(request)
-            try {
-                HttpEntity entity = response.getEntity()
-                if (entity != null) {
-                    rdfContent = EntityUtils.toString(entity)
-                }
-            } finally {
-                response.close()
-            }
+            String uri = "${FS_SVR_URL}/create-omex-metadata-rdf/${identifier}"
+            rdfContent = WSF.executePostRequest(uri, array.toString())
         } catch (Exception ignored) {
             // handle exception here
             ignored.printStackTrace()
@@ -1179,7 +1140,7 @@ after a few seconds. If you have any trouble in downloading the file after about
             LOGGER.info("Moved the OMEX file: ${source}")
             println("Moved the OMEX file: ${source}")
             Files.copy(Paths.get(source.absolutePath),
-                Paths.get(target.absolutePath), StandardCopyOption.REPLACE_EXISTING);
+                Paths.get(target.absolutePath), StandardCopyOption.REPLACE_EXISTING)
 
             //Thread.sleep 5000
         }
@@ -1304,7 +1265,7 @@ after a few seconds. If you have any trouble in downloading the file after about
                 String name = approach[2]
                 String resource = approach[3]
                 String label = name
-                approaches << [id: id, name: name, resource: resource, value: id, label: label]
+                approaches << [id: id, name: name, resource: resource, value: id, label: label, accession: accession]
             }
             render(approaches as JSON)
         } else if (request == RequestType.SELECT_VALUE.value) {
