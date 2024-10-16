@@ -27,6 +27,7 @@ import grails.util.Holders
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+import net.biomodels.jummp.core.model.ContributorDto
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
@@ -47,7 +48,7 @@ class Model {
     ModellingApproach modellingApproach
     String curationStatus
     List<String> modelTags
-    Map contributors
+    Map<String, Set<ContributorDto>> contributors
     String vcsIdentifier
     List<Annotation> modelLevelAnnotations
 
@@ -80,7 +81,7 @@ class Model {
             modelTags = tagList
 
             def mds = Holders.grailsApplication.mainContext.getBean("modelDelegateService")
-            contributors = mds.convertContributors(revision.contributors)
+            contributors = mds.buildDetailedContributors(revision.contributors)
             vcsIdentifier = mds.getRevisionsState(revision.model.submissionId)["vcsId"]
             modelLevelAnnotations = retrieveModelLevelAnnotations(revision, mdds)
         } else {

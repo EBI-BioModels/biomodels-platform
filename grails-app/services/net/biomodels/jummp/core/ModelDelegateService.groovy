@@ -194,6 +194,31 @@ class ModelDelegateService implements IModelService, InitializingBean {
     }
 
     @NotTransactional
+    Map<String, Set<ContributorDto>> buildDetailedContributors(Map<String, CTC> contributors) {
+        // use TreeMap to sort the keys in a natural order
+        Map<String, Set<ContributorDto>> mapResult = new TreeMap<>()
+
+        for (Map.Entry<String, CTC> entry : contributors.entrySet()) {
+            CTC value = entry.getValue()
+            String roleName = value.role.name
+            ContributorDto info = new ContributorDto(
+                name: value.person.userRealName,
+                email: value.user.email,
+                affiliation: value.person.institution,
+                orcid: value.person.orcid,
+                external: value.external
+            )
+            if (mapResult.containsKey(roleName)) {
+                mapResult.get(roleName).add(info)
+            } else {
+                mapResult.put(roleName, [info] as Set)
+            }
+        }
+
+        return mapResult
+    }
+
+    @NotTransactional
     long createAuditItem(ModelATC cmd) {
         return modelService.createAuditItem(cmd)
     }
