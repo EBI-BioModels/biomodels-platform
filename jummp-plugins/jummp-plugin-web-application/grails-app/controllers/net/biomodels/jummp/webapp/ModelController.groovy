@@ -518,7 +518,8 @@ class ModelController extends CommonController {
             forward controller: 'errors', action: 'error404'
         }
     }
-    // TODO: merge with createCombineArchive above
+    // TODO: merge with createCombineArchive above? should we keep both?
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     def generateOmex() {
         if (!(response.format in ['json', 'xml'])) {
             render view: '/errors/error415', status: 415

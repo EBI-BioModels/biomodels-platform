@@ -157,7 +157,7 @@ class UrlMappings {
             }
         }
         "/api/model/create"(controller:'model', action:'create')
-        "/api/model/generate-omex"(controller:'model', action:'generateOmex')
+        "/api/model/generate-omex/$id(.$revisionId)?"(controller:'model', action:'generateOmex')
         "/api/model/revisionsState/$id?(.$format)?"(controller:'model', action:'revisionsState')
         "/api/post/create"(controller:'post', action:'createNewPost')
         "/api/user/list"(controller:'userAdministration', action:'list')
