@@ -805,7 +805,7 @@ Please contact the developers team for support!"""])
 
             final String DEFAULT_FS_SVR = "http://localhost:8090/biomodels/services/file-format/api/v1.0"
             final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
-            filePath = WSF.executePostRequest(FS_SVR_URL, array.toString())
+            filePath = WSF.executePostRequest("$FS_SVR_URL/create-omex", array.toString())
         } catch (ModelException ignored) {
             ignored.printStackTrace()
         } finally {
