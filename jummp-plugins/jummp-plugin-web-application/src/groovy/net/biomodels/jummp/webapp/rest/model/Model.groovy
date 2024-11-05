@@ -72,8 +72,9 @@ class Model {
             files = new ModelFiles(revision.files.findAll { !it.hidden })
             history = new History(model.submissionId)
             publicationId = model.publicationId
-            firstPublished = model.firstPublished.getTime()/1_000 as Long
-
+            if (model.firstPublished) {
+                firstPublished = model.firstPublished.getTime() / 1_000 as Long
+            }
             curationStatus = revision.curationState.toString() //revision.curationState.name()
             def mdds = Holders.grailsApplication.mainContext.getBean("metadataDelegateService")
             Set<TagTC> tags = mdds.findTagsByModel(revision.model)

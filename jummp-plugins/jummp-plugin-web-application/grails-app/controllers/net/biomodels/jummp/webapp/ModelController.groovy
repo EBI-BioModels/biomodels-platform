@@ -190,6 +190,11 @@ class ModelController extends CommonController {
         List<RTC> myList = new ArrayList()
         boolean isPrivateModel = false
         try {
+            /**
+             * When a privileged user such as model owner or admin accesses the private revision, the isPrivateModel
+             * flag should be assigned true. However, to keep the logic simply, we handle the private revision as
+             * the public one with the super users.
+             */
             rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
         } catch (AccessDeniedException e) {
             // then access the model by bypassing ACLs
