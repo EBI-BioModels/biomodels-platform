@@ -329,8 +329,8 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
                 privateRevs.add(revision.revisionNumber)
             }
         }
-        publishedRevs = Collections.sort(publishedRevs, Collections.reverseOrder())
-        privateRevs = Collections.sort(privateRevs, Collections.reverseOrder())
+        Collections.sort(publishedRevs, Collections.reverseOrder())
+        Collections.sort(privateRevs, Collections.reverseOrder())
         ["vcsId"      : vcsId, "publishedRevs": publishedRevs,
          "privateRevs": privateRevs, "submissionId": model.submissionId]
     }
