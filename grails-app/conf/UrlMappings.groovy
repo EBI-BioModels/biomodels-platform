@@ -35,14 +35,6 @@ class UrlMappings {
         "/model/publish"(controller: "model", action: "publish")
         "/share"(controller: "model", action: "share")
         "/model/identifiers"(controller: "model", action: "identifiers")
-        "/model/generate-omex-metadata-rdf/$id(.$revisionId)?" {
-            controller = "model"
-            action = "generateOmexMetadataRDF"
-            constraints {
-                id(nullable: false, matches: /[a-zA-Z\\-_0-9]+/)
-                revisionId(matches: /\d+/)
-            }
-        }
         "/model/$action/$id(.$revisionId)?" {
             controller = 'model'
             action = action
