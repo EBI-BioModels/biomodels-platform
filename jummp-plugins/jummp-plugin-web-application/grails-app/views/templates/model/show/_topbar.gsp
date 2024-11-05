@@ -19,11 +19,7 @@
             <a href="javascript:void(0)" onclick="linkServeOmex()"
                title="Click here to download OMEX format of this model">
                 <i class="icon icon-common icon-download"></i></a>
-<<<<<<< HEAD
             <a href="${g.createLink(controller: "model", action: "metadatardf", id: revision.identifier())}"
-=======
-            <a href="${g.createLink(controller: "model", action: "generateOmexMetadataRDF", id: revision.identifier())}"
->>>>>>> 4fa9c34 (JBM-661 unnecessary mapping)
                target="_blank" title="Click here to view metadata.rdf this model">
                 <i class="icon icon-fileformats icon-RDF_XML"></i></a>
             <a href="${g.createLink(controller: 'model', action: 'show', id: revision.identifier(), params: ['format': 'json'])}"
