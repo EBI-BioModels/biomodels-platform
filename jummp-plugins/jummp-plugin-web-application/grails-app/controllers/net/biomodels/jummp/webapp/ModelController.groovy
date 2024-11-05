@@ -107,7 +107,7 @@ class ModelController extends CommonController {
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
                                            'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
                                            'create', 'about', 'revisionsState', 'generateOmex',
-                                           'generateOmexMetadataRDF']
+                                           'metadatardf']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
@@ -544,7 +544,7 @@ class ModelController extends CommonController {
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-    def generateOmexMetadataRDF() {
+    def metadatardf() {
         String result = doGenerateOmexMetadataRDF(params.id as String, params.revisionId as Integer)
         render(contentType: 'application/xml', text: result)
     }
