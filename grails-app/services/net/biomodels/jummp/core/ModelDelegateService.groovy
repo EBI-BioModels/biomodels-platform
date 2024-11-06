@@ -201,6 +201,7 @@ class ModelDelegateService implements IModelService, InitializingBean {
         for (Map.Entry<String, CTC> entry : contributors.entrySet()) {
             CTC value = entry.getValue()
             String roleName = value.role.name
+            roleName = roleName.replaceAll(" ", "")
             ContributorDto info = new ContributorDto(
                 name: value.person.userRealName,
                 email: value.user.email,

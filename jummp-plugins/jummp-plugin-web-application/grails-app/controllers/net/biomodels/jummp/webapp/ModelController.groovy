@@ -107,7 +107,7 @@ class ModelController extends CommonController {
                                            'searchModellingApproach', 'submit', 'terms', 'uploadFile',
                                            'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
                                            'create', 'about', 'revisionsState', 'generateOmex',
-                                           'generateOmexMetadataRDF']
+                                           'metadatardf']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
@@ -524,13 +524,14 @@ class ModelController extends CommonController {
         }
     }
     // TODO: merge with createCombineArchive above? should we keep both?
+    // Using this action to generate OMEX files for the older versions to submit to BioStudies
     @Secured(['IS_AUTHENTICATED_FULLY'])
     def generateOmex() {
         if (!(response.format in ['json', 'xml'])) {
             render view: '/errors/error415', status: 415
             return
         }
-        Map models = doGenerateOmex(params.id as String, params.revisionId as Integer)
+        Map models = doGenerateOmex(params.id as String, params.revisionId as Integer, true)
         try {
             withFormat {
                 json { render models as JSON }
@@ -544,7 +545,7 @@ class ModelController extends CommonController {
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-    def generateOmexMetadataRDF() {
+    def metadatardf() {
         String result = doGenerateOmexMetadataRDF(params.id as String, params.revisionId as Integer)
         render(contentType: 'application/xml', text: result)
     }
@@ -795,7 +796,7 @@ Please contact the developers team for support!"""])
         }
     }
 
-    private Map doGenerateOmex(String modelId, Integer revisionNumber) {
+    private Map doGenerateOmex(String modelId, Integer revisionNumber, final boolean biomodelsMetadataAdded = false) {
         RTC revisionTC
         String filePath = ""
         try {
@@ -811,7 +812,8 @@ Please contact the developers team for support!"""])
 
             final String DEFAULT_FS_SVR = "http://localhost:8090/biomodels/services/file-format/api/v1.0"
             final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
-            filePath = WSF.executePostRequest("$FS_SVR_URL/create-omex", array.toString())
+            final String serviceURI = "$FS_SVR_URL/create-omex?metadata=${biomodelsMetadataAdded.toString()}"
+            filePath = WSF.executePostRequest(serviceURI, array.toString())
         } catch (ModelException ignored) {
             ignored.printStackTrace()
         } finally {
