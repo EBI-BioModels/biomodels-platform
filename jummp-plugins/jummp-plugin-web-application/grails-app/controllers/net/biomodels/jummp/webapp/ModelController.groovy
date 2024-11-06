@@ -527,11 +527,13 @@ class ModelController extends CommonController {
     // Using this action to generate OMEX files for the older versions to submit to BioStudies
     @Secured(['IS_AUTHENTICATED_FULLY'])
     def generateOmex() {
+        // if the params.metadata is unavailable, it means false.
+        boolean metadata = params.getBoolean("metadata")
         if (!(response.format in ['json', 'xml'])) {
             render view: '/errors/error415', status: 415
             return
         }
-        Map models = doGenerateOmex(params.id as String, params.revisionId as Integer, true)
+        Map models = doGenerateOmex(params.id as String, params.revisionId as Integer, metadata)
         try {
             withFormat {
                 json { render models as JSON }
