@@ -200,7 +200,9 @@ class ContributorService implements InitializingBean {
         for (CTC ctc: contributors.values()) {
             CD cd = CD.findOrSaveWhere(contributor: ctc.user, revision: revision, role: ctc.role)
             if (cd.save(flush: true)) {
-                println ctc.toString()
+                String s = "Succeeded to save the first contributor(s)" + ctc.dump()
+                println(s)
+                LOGGER.info(s)
                 result.put(ctc.toString(), cd)
             }
         }

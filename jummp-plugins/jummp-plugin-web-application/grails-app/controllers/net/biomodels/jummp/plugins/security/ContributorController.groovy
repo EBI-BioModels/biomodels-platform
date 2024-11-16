@@ -339,7 +339,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         String message = "Under construction"
 
         String modelId = params.get("modelId")
-        String revisionNumber = params.get("revisionNumber")
+        Integer revisionNumber = params.getInt("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
         Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
 
@@ -396,8 +396,8 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
             message = contributorService.removeExternalContributor(parsedParameters)
         } else {
             String revisionIdentifier = parsedParameters["revisionIdentifier"]
-            User contributor = parsedParameters["contributor"]
-            Revision revision = parsedParameters["revision"]
+            User contributor = parsedParameters["contributor"] as User
+            Revision revision = parsedParameters["revision"] as Revision
             CD details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
             try {
                 details?.delete(flush: true)
@@ -414,13 +414,13 @@ from the model ${revisionIdentifier} has been removed successfully."""
                 }
                 LOGGER.debug(message)
             } catch (OptimisticLockingFailureException exception) {
-                throw exception
                 message = """\
 An error happened when removing the contributor \
 ${contributor.person.userRealName} (${contributor.username}, ${contributor.email}) \
 from the model ${revisionIdentifier}."""
                 LOGGER.error(message, exception)
                 println "$message: ${exception.toString()}"
+                throw exception
             }
         }
 
@@ -431,8 +431,8 @@ from the model ${revisionIdentifier}."""
     private Map parseParameters() {
         User contributor = null
         boolean externalContributor = params.getBoolean("externalContributor")
-        String email
-        String orcid
+        String email = ""
+        String orcid = ""
         if (params.containsKey("usernameAndEmail")) {
             String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
             String[] parts = usernameAndEmail.split(", ")
@@ -451,7 +451,7 @@ from the model ${revisionIdentifier}."""
         }
         String displayName = params.get("userRealName").decodeHTML()
         String modelId = params.get("modelId").decodeHTML()
-        String revisionNumber = params.getInt("revisionNumber")
+        Integer revisionNumber = params.getInt("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
         Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
 
