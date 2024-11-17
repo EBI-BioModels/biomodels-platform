@@ -412,7 +412,7 @@
                             id: revision.modelIdentifier())}')">Reviewer</button>
         </li>
     </g:if>
-    <g:if test="${canAskReviewerAccount}">
+    <g:if test="${canManageContributors}">
         <!-- canAddContributor is the same canAskReviewerAccount -->
         <li>
             <button class='toolbutton' id="manage-contributors"

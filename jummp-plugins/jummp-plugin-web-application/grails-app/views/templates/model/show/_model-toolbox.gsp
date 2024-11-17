@@ -56,7 +56,7 @@
            title="Open a reviewer account for this model">
             <i class="fa fa-tasks" aria-hidden="true"></i> Reviewer</a>
     </g:if>
-    <g:if test="${canAskReviewerAccount}">
+    <g:if test="${canManageContributors}">
         <!-- canAddContributor is the same canAskReviewerAccount -->
         <a href="javascript:void(0)" onclick="manageContributors()"
            title="Manage the list of contributors of your model">
