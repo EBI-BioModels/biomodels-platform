@@ -125,6 +125,7 @@ class UrlMappings {
         "/competition/model-of-the-year-2022"(redirect: "/competition/model-of-the-year-2023")
         "/competition/model-of-the-year-2023"(controller: "competition", action: "modelOfTheYear2023")
         "/competition/model-of-the-year-2024"(controller: "competition", action: "modelOfTheYear2024")
+        "/competition/model-of-the-year-2025"(controller: "competition", action: "modelOfTheYear2025")
 
         "/content/model-of-the-month"(
             controller: "content", action: "showModelOfTheMonth"

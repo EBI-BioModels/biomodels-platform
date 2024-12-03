@@ -97,6 +97,13 @@ order by createdOn desc"""
         [newsItem[0]?.id, newsItem[0]?.content]
     }
 
+    List getContentForModelOfTheYear2025CompetitionPage() {
+        def newsQuery = """FROM CmsContent where aliasURI = :aliasuri \
+order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2025-competition'], [max: 1])
+        [newsItem[0]?.id, newsItem[0]?.content]
+    }
+
     String getSvgAgedBrain() {
         final String SVG_AGED_BRAIN = "svg-aged-brain"
         // load the SVG content from Redis cache
