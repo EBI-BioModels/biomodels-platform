@@ -61,38 +61,38 @@
                     <g:each status="i" in="${models}" var="model">
                     <div class="column row modelPlaceHolder">
                     <%
-                        def id = model.publicationId ?: model.submissionId
+                        def id = model?.publicationId ?: model?.submissionId
                         def modelUrl = createLink(controller: 'model', id: id, action: 'show')
-                        def description = model.description ?: ""
+                        def description = model?.description ?: ""
                         int maxNumChar = 255
-                        boolean haveMoreDetails = description.length() > maxNumChar
+                        boolean haveMoreDetails = description?.length() > maxNumChar
                         def descriptionShown = description
                         def moreDetails = ""
                         if (haveMoreDetails) {
                             moreDetails = "<a href=${modelUrl}>... See more</a>"
-                            descriptionShown = description.substring(1,maxNumChar) + moreDetails
+                            descriptionShown = description?.substring(1,maxNumChar) + moreDetails
                         }
                         // TODO: deal with HTML elements
                         descriptionShown = description
                     %>
                         <div class="small-11 medium-11 large-11 columns">
                             <h4>
-                                <a href="${modelUrl}" target="_blank">${model.name}</a>
+                                <a href="${modelUrl}" target="_blank">${model?.name}</a>
                                 <br/>
                                 <span style="font-size: small; margin: -25px 0;">
                                 ID: ${id}
-                                <g:if test="${model.state == ModelState.PUBLISHED}">|
-                                Submitter: ${model.submitter} |
+                                <g:if test="${model?.state == ModelState.PUBLISHED}">|
+                                Submitter: ${model?.submitter} |
                                 </g:if>
-                                Format: ${model.format.name} |
-                                Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
-                                Last modified date: ${model.lastModifiedDate.format('dd/MM/yyyy')}
-                                <g:if test="${model.publication}"> | Published in: ${model.publication.year}</g:if>
+                                Format: ${model?.format?.name} |
+                                Uploaded date: ${model?.submissionDate?.format('dd/MM/yyyy')} |
+                                Last modified date: ${model?.lastModifiedDate?.format('dd/MM/yyyy')}
+                                <g:if test="${model?.publication}"> | Published in: ${model?.publication?.year}</g:if>
                                 </span>
                             </h4>
                         </div>
                         <div class="small-1 medium-1 large-1 columns chk-download">
-                            <g:if test="${model.state == ModelState.PUBLISHED}">
+                            <g:if test="${model?.state == ModelState.PUBLISHED}">
                                 <g:if test="${action == 'search'}">
                                     <label for="chk-download-${id}" style="display: none"></label>
                                     <input type="checkbox" value="${id}" id="chk-download-${id}" class="chk-download"
