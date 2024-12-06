@@ -527,21 +527,13 @@ class ModelController extends CommonController {
     }
     // TODO: merge with createCombineArchive above? should we keep both?
     // Using this action to generate OMEX files for the older versions to submit to BioStudies
-    @Secured(['IS_AUTHENTICATED_FULLY'])
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def generateOmex() {
         // if the params.metadata is unavailable, it means false.
         boolean metadata = params.getBoolean("metadata")
-        if (!(response.format in ['json', 'xml'])) {
-            render view: '/errors/error415', status: 415
-            return
-        }
-        Map models = doGenerateOmex(params.id as String, params.revisionId as Integer, metadata)
         try {
-            withFormat {
-                json { render models as JSON }
-                xml { render models as XML }
-                '*' { render status: 415, view: "/errors/error415" }
-            }
+            Map models = doGenerateOmex(params.id as String, params.revisionId as Integer, metadata)
+            handleRestApi(models)
         } catch (Exception err) {
             LOGGER.error(err.message, err)
             forward controller: 'errors', action: 'error404'
@@ -554,6 +546,7 @@ class ModelController extends CommonController {
         render(contentType: 'application/xml', text: result)
     }
 
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def publish() {
         RTC rev = null
         RTC published = null
@@ -596,6 +589,7 @@ Please contact the developers team for support!"""])
         }
     }
 
+    @Secured(['ROLE_ADMIN'])
     def unpublish() {
         LOGGER.info("Unpublishing ${params.id}.${params.revisionId}...")
         RTC rev = null
@@ -1362,7 +1356,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         if (e instanceof AccessDeniedException) {
             forward(controller: "errors", action: "error403")
         }
-        String errDesc = ""
+        String errDesc
         if (e instanceof IOException) {
             errDesc = "The client has probably aborted the download request."
         } else {

@@ -21,6 +21,7 @@
 package net.biomodels.jummp.plugins.security
 
 import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
@@ -332,6 +333,20 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         println(msg)
 
         render(result as JSON)
+    }
+
+    @Secured(['ROLE_ADMIN'])
+    def load() {
+        try {
+            String modelId = params.id as String
+            Model model = modelService.getModel(modelId)
+            Revision revision = modelService.getLatestRevision(model, false)
+            Map mapResult = ContributorService.getContributors(revision)
+            handleRestApi(mapResult)
+        } catch (Exception err) {
+            LOGGER.error err.message, err
+            forward controller: 'errors', action: 'error404'
+        }
     }
 
     def updateRole() {

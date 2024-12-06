@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp
 
+import grails.converters.JSON
+import grails.converters.XML
 import grails.util.Environment
 import grails.util.Holders
 import net.biomodels.jummp.utils.WebServiceFetcher as WSF
@@ -78,5 +80,18 @@ class CommonController implements GrailsConfigurationAware {
             "EBI_BM_FTP": EBI_BM_FTP,
             "EBI_BM_FTP_REPO": EBI_BM_FTP_REPO
         ]
+    }
+
+    protected handleRestApi(final Map resultMap) {
+        // PageFragmentCachingFilter throws a NPE for unsupported format parameter values
+        if (!(response.format in ['json', 'xml'])) {
+            render view: '/errors/error415', status: 415
+            return
+        }
+        withFormat {
+            json { render resultMap as JSON }
+            xml { render resultMap as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
     }
 }
