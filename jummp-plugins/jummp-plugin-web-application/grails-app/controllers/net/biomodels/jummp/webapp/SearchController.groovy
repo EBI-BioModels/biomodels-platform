@@ -259,7 +259,7 @@ under the format: ${response.format}"""
             String modelLink = createLink(controller: "model", action: "show", id: model, absolute: true)
             msgMap[modelLink] = message
         }
-        [msgMap: msgMap]
+        handleRestApi(msgMap)
     }
 
     @Secured(['ROLE_ADMIN'])

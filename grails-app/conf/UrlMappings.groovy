@@ -159,6 +159,7 @@ class UrlMappings {
         "/api/curationnotes/manage"(controller: "curationNotes", action: "doAddOrUpdate")
         "/api/contributor/init"(controller: "contributor", action: "init")
         "/api/contributor/load/$id?(.$format)?"(controller: "contributor", action: "load")
+        "/api/search/index"(controller: "search", action: "reindex")
 
         def cmsPrefix = "/cms"
         "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
