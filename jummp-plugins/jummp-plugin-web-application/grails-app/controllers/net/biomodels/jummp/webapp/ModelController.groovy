@@ -204,10 +204,10 @@ class ModelController extends CommonController {
                 forward(controller: 'errors', action: 'error404')
                 return
             }
-            LOGGER.warn(e.message)
+            LOGGER.warn("You are trying to retrieve a private model: " + e.message)
+            isPrivateModel = true
             doShowPreparePrivateRevision(model, rev, myList)
             rev = myList.first() as RTC
-            isPrivateModel = true
         }
         // allowAccessHTMLViaBrowser(request.getHeader("User-Agent") as String, params?.format as String)
         String userAgent = request.getHeader("User-Agent")
