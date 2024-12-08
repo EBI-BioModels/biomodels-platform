@@ -102,12 +102,13 @@ class ModelController extends CommonController {
     /**
      * The list of actions for which we should not automatically create an audit item.
      */
-    final List<String> AUDIT_EXCEPTIONS = ['showWithMessage',
-                                           'getFileDetails', 'submitForPublication', 'updateCurationState',
-                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile',
-                                           'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
-                                           'create', 'about', 'revisionsState', 'generateOmex',
-                                           'metadatardf']
+    final List<String> AUDIT_EXCEPTIONS = ['showWithMessage', 'getFileDetails',
+       'submitForPublication', 'updateCurationState',
+       'searchModellingApproach', 'submit', 'terms', 'uploadFile',
+       'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
+       'create', 'about', 'revisionsState', 'generateOmex', 'metadatardf',
+       'retrieveModelLevelMetadata'
+    ]
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
@@ -544,6 +545,16 @@ class ModelController extends CommonController {
     def metadatardf() {
         String result = doGenerateOmexMetadataRDF(params.id as String, params.revisionId as Integer)
         render(contentType: 'application/xml', text: result)
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def retrieveModelLevelMetadata() {
+        RTC revision = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+        List<STC> modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(revision)
+        Map genericAnnotations = metadataDelegateService.fetchGenericAnnotations(modelLevelAnnotations)
+        Map mapResult = [:] as HashMap
+        mapResult.putAll(genericAnnotations)
+        handleRestApi(mapResult)
     }
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
