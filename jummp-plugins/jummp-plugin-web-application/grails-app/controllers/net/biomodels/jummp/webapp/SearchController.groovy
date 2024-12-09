@@ -231,6 +231,12 @@ under the format: ${response.format}"""
     }
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def indexViaAPI() {
+        Map mapResult = reindex()
+        handleRestApi(mapResult)
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def reindex() {
         def models = params.models.split(",")
         Map<String, String> msgMap = [:]
@@ -259,7 +265,7 @@ under the format: ${response.format}"""
             String modelLink = createLink(controller: "model", action: "show", id: model, absolute: true)
             msgMap[modelLink] = message
         }
-        handleRestApi(msgMap)
+        [msgMap: msgMap]
     }
 
     @Secured(['ROLE_ADMIN'])
