@@ -88,15 +88,15 @@ class RedisCacheManager {
         if (strOfAnnotations) {
             strOfAnnotations = strOfAnnotations.substring(0, strOfAnnotations.length() - 1)
         }
-        redis.doRedisHSetNX(model.submissionId, "annotations", strOfAnnotations)
+        redis.doRedisHSet(model.submissionId, "annotations", strOfAnnotations)
         if (model.publicationId) {
-            redis.doRedisHSetNX(model.publicationId, "annotations", strOfAnnotations)
+            redis.doRedisHSet(model.publicationId, "annotations", strOfAnnotations)
         }
 
         if (hasTaxon) {
-            redis.doRedisHSetNX(model.submissionId, "organism", hasTaxon)
+            redis.doRedisHSet(model.submissionId, "organism", hasTaxon)
             if (model.publicationId) {
-                redis.doRedisHSetNX(model.publicationId, "organism", hasTaxon)
+                redis.doRedisHSet(model.publicationId, "organism", hasTaxon)
             }
         }
 
