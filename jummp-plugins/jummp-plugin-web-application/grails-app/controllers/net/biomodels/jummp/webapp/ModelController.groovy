@@ -42,6 +42,7 @@ import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.events.ModelOperationEvent
@@ -107,7 +108,7 @@ class ModelController extends CommonController {
        'searchModellingApproach', 'submit', 'terms', 'uploadFile',
        'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
        'create', 'about', 'revisionsState', 'generateOmex', 'metadatardf',
-       'retrieveModelLevelMetadata'
+       'retrieveModelLevelMetadata', 'cacheAnnotationsAndOrganismOnRedis', 'loadAllAnnotations'
     ]
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
@@ -545,6 +546,29 @@ class ModelController extends CommonController {
     def metadatardf() {
         String result = doGenerateOmexMetadataRDF(params.id as String, params.revisionId as Integer)
         render(contentType: 'application/xml', text: result)
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def loadAllAnnotations() {
+        Boolean fromRedis = true
+        if (params.containsKey("fromRedis")) {
+            fromRedis = params.getBoolean("fromRedis")
+        }
+        RTC revision = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+        Map mapResult
+        if (fromRedis) {
+            mapResult = metadataDelegateService.getAnnotationsAndOrganismFromRedis(revision.model.submissionId)
+        } else {
+            mapResult = metadataDelegateService.stringifyAnnotations(revision)
+        }
+        handleRestApi(mapResult)
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def cacheAnnotationsAndOrganismOnRedis() {
+        RTC revision = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+        Map mapResult = metadataDelegateService.cacheAnnotationsAndOrganismOnRedis(revision)
+        handleRestApi(mapResult)
     }
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])

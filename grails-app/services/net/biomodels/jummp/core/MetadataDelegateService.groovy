@@ -78,7 +78,6 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
      */
     def curationNotesService
     def modelTagService
-    def modelDelegateService
     def redisService
     /**
      * {@inheritDoc}
@@ -226,6 +225,24 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         mapResult.put("annotations", strOfAnnotations)
         if (hasTaxon) {
             mapResult.put("organism", hasTaxon)
+        }
+        return mapResult
+    }
+
+    /**
+     * Gets the annotations and organism from Redis Cache Server
+     * @param modelId
+     * @return
+     */
+    Map<String, String> getAnnotationsAndOrganismFromRedis(final String modelId) {
+        Map<String, String> mapResult = new HashMap<>()
+        String organism = redisService.doRedisHGet(modelId, "organism")
+        if (organism) {
+            mapResult.put("organism", organism)
+        }
+        String strOfAnnotations = redisService.doRedisHGet(modelId, "annotations")
+        if (strOfAnnotations) {
+            mapResult.put("annotations", strOfAnnotations)
         }
         return mapResult
     }

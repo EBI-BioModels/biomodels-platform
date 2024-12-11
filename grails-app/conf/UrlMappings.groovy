@@ -152,7 +152,12 @@ class UrlMappings {
         "/api/model/create"(controller:'model', action:'create')
         "/api/model/generate-omex/$id(.$revisionId)?"(controller:'model', action:'generateOmex')
         "/api/model/revisionsState/$id?(.$format)?"(controller:'model', action:'revisionsState')
-        "/api/model/model-level-metadata/$id?(.$format)?"(controller:'model', action:'retrieveModelLevelMetadata')
+        "/api/model/model-level-metadata/$id?(.$format)?"(controller:'model',
+                action:'retrieveModelLevelMetadata')
+        "/api/model/annotations/$id?(.$format)?"(controller: 'model',
+                action: 'loadAllAnnotations')
+        "/api/model/cache-annotations-organism-on-redis/$id?(.$format)?"(controller: 'model',
+                action: 'cacheAnnotationsAndOrganismOnRedis')
         "/api/post/create"(controller:'post', action:'createNewPost')
         "/api/user/list"(controller:'userAdministration', action:'list')
         "/api/submission/create"(controller: "submission", action: "create")
