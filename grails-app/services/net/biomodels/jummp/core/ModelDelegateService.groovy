@@ -845,6 +845,22 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
         retVal
     }
 
+    /**
+     * Returns the first and last revision of the given model without checking
+     * ACLs as well as permissions. This method will be called by admins or 
+     * any privileges. In other words, admins use this method to manage data.
+     * @param model {@link Model} instance
+     * @return a pair of two {@link Revision} instances
+     */
+    Revision[] getFirstAndLastRevision(Model model) {
+        Set<Revision> revisions = model.revisions.sort { Revision r1, Revision r2 ->
+            r1.revisionNumber <=> r2.revisionNumber
+        }
+        Revision firstRevision = revisions.first() as Revision
+        Revision lastRevision = revisions.last() as Revision
+        [firstRevision, lastRevision] as Revision[]
+    }
+
     @Override
     void afterPropertiesSet() throws Exception {
         LOGGER.info("Finished the bean initialisation")

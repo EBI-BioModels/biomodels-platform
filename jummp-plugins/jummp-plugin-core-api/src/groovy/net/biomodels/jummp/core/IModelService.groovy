@@ -38,6 +38,7 @@ import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
 import org.springframework.security.access.AccessDeniedException as ADEx
 
@@ -123,6 +124,15 @@ interface IModelService {
      * @return The Model if available
      */
     ModelTC getModel(String modelId)
+
+    /**
+     * Returns the first and last revision of the given model without checking
+     * ACLs as well as permissions. This method will be called by admins or
+     * any privileges. In other words, admins use this method to manage data.
+     * @param model {@link Model} instance
+     * @return a pair of two {@link net.biomodels.jummp.model.Revision} instances
+     */
+    Revision[] getFirstAndLastRevision(Model model)
 
     /**
      * Queries the model for the latest available revision the user has read access to.

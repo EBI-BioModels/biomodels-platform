@@ -21,7 +21,6 @@ class RedisCacheManager {
         //List tenFirstIds = listAllIdentifiers.take(5)
         //String modelId = "MODEL8389825246"
         listAllIdentifiers = listAllIdentifiers.subList(1900, 2000)
-        listAllIdentifiers = ["BIOMD0000000001"]
         // 0..99: subList(0, 100)
         // 100..199: subList(100, 200)
         // 199..499: subList(200, 500)
@@ -37,7 +36,9 @@ class RedisCacheManager {
         // 2900..3084: subList(2900, 3084)
         //listAllIdentifiers = listAllIdentifiers.subList(2900, 3084)
         //listAllIdentifiers = ["BIOMD0000000001", "BIOMD0000000002"]
-        listAllIdentifiers = listAllIdentifiers.findAll { it.startsWith("BIOMD") }
+        //listAllIdentifiers = listAllIdentifiers.findAll { it.startsWith
+        //("BIOMD") }
+        listAllIdentifiers = ["BIOMD0000000001"]
         listAllIdentifiers.each { String modelId ->
             List stmts = doRetrieveAnnotations modelId
             if (stmts.isEmpty()) {
@@ -47,6 +48,7 @@ class RedisCacheManager {
     }
 
     List doRetrieveAnnotations(String modelId) {
+        def mDS = ctx.getBean("modelDelegateService")
         def mdDS = ctx.getBean("metadataDelegateService")
         def redis = ctx.getBean("redisService")
         println "Retrieving annotations of $modelId"
@@ -62,7 +64,7 @@ class RedisCacheManager {
             println("$modelId doesn't exist.")
             return
         }
-        Revision[] pairFirstLastRev = getFirstAndLastRevision(model)
+        Revision[] pairFirstLastRev = mDS.getFirstAndLastRevision(model)
         Revision latest = pairFirstLastRev[1]
         println "${modelId}.${latest.revisionNumber}"
         def revTC = new RevisionAdapter(revision: latest, latest: true).toCommandObject()
@@ -72,11 +74,14 @@ class RedisCacheManager {
         String hasTaxon = ""
         String strOfAnnotations = ""
         statements.each {
-            println "${model.submissionId}\t${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}"
+            println """${model.submissionId}\t${it.predicate.accession}\t${it.
+                    object.datatype}\t${it.object.accession}\t${it.object.uri}"""
             if (it.predicate.accession == "hasTaxon" && it.object.datatype == "taxonomy") {
                 hasTaxon = "${it.object.accession}|${it.object.name}|${it.object.uri}"
             }
-            strOfAnnotations += "${it.predicate.accession}\t${it.object.datatype}\t${it.object.uri}\t${it.object.name}|"
+            strOfAnnotations += """${it.predicate.accession}\t${it.object.
+                    datatype}\t${it.object.accession}\t${it.object.uri}\t${it.
+                    object.name}|"""
         }
 
         // remove the last pile - vertical line
@@ -96,15 +101,6 @@ class RedisCacheManager {
         }
 
         statements
-    }
-
-    protected Revision[] getFirstAndLastRevision(Model model) {
-        Set<Revision> revisions = model.revisions.sort { Revision r1, Revision r2 ->
-            r1.revisionNumber <=> r2.revisionNumber
-        }
-        Revision firstRevision = revisions.first() as Revision
-        Revision lastRevision = revisions.last() as Revision
-        [firstRevision, lastRevision] as Revision[]
     }
 }
 
