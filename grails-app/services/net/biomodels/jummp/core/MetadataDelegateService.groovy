@@ -77,8 +77,9 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
      * Dependency injection for the curation notes service.
      */
     def curationNotesService
-
     def modelTagService
+    def modelDelegateService
+    def redisService
     /**
      * {@inheritDoc}
      */
@@ -172,6 +173,61 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
     @Profiled(tag = "metadataDelegateService.getMetadataNamespaces")
     List<String> getMetadataNamespaces() {
         metadataService.getMetadataNamespaces()
+    }
+
+    /**
+     * Caches annotations and organism of a given model revision on Redis server
+     * @param revisionTC
+     * @return the list of statements
+     */
+    Map<String, String> cacheAnnotationsAndOrganismOnRedis(final RevisionTC revisionTC) {
+        Map<String, String> mapResult = stringifyAnnotations(revisionTC)
+        String strOfAnnotations = mapResult.get("annotations")
+        redisService.doRedisHSet(revisionTC.model.submissionId, "annotations", strOfAnnotations)
+        if (revisionTC.model.publicationId) {
+            redisService.doRedisHSet(revisionTC.model.publicationId, "annotations", strOfAnnotations)
+        }
+        if (mapResult.containsKey("organism")) {
+            String organism = mapResult.get("organism")
+            redisService.doRedisHSet(revisionTC.model.submissionId, "organism", organism)
+            if (revisionTC.model.publicationId) {
+                redisService.doRedisHSet(revisionTC.model.publicationId, "organism", organism)
+            }
+        }
+
+        return mapResult
+    }
+
+    /**
+     * Converts the list of {@link EATC} objects to a map of strings. It is used for REST API calls and caches.
+     * @param revisionTC a {@link RevisionTC} object
+     * @return a map
+     */
+    Map<String, String> stringifyAnnotations(final RevisionTC revisionTC) {
+        List<EATC> annotations = fetchAnnotations(revisionTC)
+        List statements = annotations*.statement
+        statements = statements.unique { it.object.uri }
+        String hasTaxon = ""
+        String strOfAnnotations = ""
+        Map mapResult = new HashMap()
+        statements.each {
+            if (it.predicate.accession == "hasTaxon" && it.object.datatype ==
+                    "taxonomy") {
+                hasTaxon = "${it.object.accession}|${it.object.name}|${it.object.uri}"
+            }
+            strOfAnnotations += """${it.predicate.accession}\t${it.object.datatype} \t${it.object.accession}\t${it.
+                    object.uri}\t${it.object.name}|"""
+        }
+
+        // remove the last pile - vertical line
+        if (strOfAnnotations) {
+            strOfAnnotations = strOfAnnotations.substring(0, strOfAnnotations.length() - 1)
+        }
+        mapResult.put("annotations", strOfAnnotations)
+        if (hasTaxon) {
+            mapResult.put("organism", hasTaxon)
+        }
+        return mapResult
     }
 
     List<EATC> fetchAnnotations(final RevisionTC revisionTC) {

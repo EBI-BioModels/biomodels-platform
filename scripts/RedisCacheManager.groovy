@@ -40,18 +40,13 @@ class RedisCacheManager {
         //("BIOMD") }
         listAllIdentifiers = ["BIOMD0000000001"]
         listAllIdentifiers.each { String modelId ->
-            List stmts = doRetrieveAnnotations modelId
-            if (stmts.isEmpty()) {
-                println modelId
-            }
+            doRetrieveAnnotations modelId
         }
     }
 
-    List doRetrieveAnnotations(String modelId) {
+    void doRetrieveAnnotations(String modelId) {
         def mDS = ctx.getBean("modelDelegateService")
         def mdDS = ctx.getBean("metadataDelegateService")
-        def redis = ctx.getBean("redisService")
-        println "Retrieving annotations of $modelId"
 
         Model model
         if (modelId.startsWith("MODEL")) {
@@ -66,41 +61,17 @@ class RedisCacheManager {
         }
         Revision[] pairFirstLastRev = mDS.getFirstAndLastRevision(model)
         Revision latest = pairFirstLastRev[1]
-        println "${modelId}.${latest.revisionNumber}"
+        println "Retrieving the organism and annotations of $modelId.${latest.revisionNumber}, caching them on Redis Server"
         def revTC = new RevisionAdapter(revision: latest, latest: true).toCommandObject()
-        List<EATC> annotations = mdDS.fetchAnnotations(revTC)
-        List statements = annotations*.statement
-        statements = statements.unique { it.object.uri }
-        String hasTaxon = ""
-        String strOfAnnotations = ""
-        statements.each {
-            println """${model.submissionId}\t${it.predicate.accession}\t${it.
-                    object.datatype}\t${it.object.accession}\t${it.object.uri}"""
-            if (it.predicate.accession == "hasTaxon" && it.object.datatype == "taxonomy") {
-                hasTaxon = "${it.object.accession}|${it.object.name}|${it.object.uri}"
-            }
-            strOfAnnotations += """${it.predicate.accession}\t${it.object.
-                    datatype}\t${it.object.accession}\t${it.object.uri}\t${it.
-                    object.name}|"""
+        Map mapResult = mdDS.cacheAnnotationsAndOrganismOnRedis(revTC)
+        if (mapResult.containsKey("organism")) {
+            println("Organism: ${mapResult.get('organism')}")
         }
-
-        // remove the last pile - vertical line
-        if (strOfAnnotations) {
-            strOfAnnotations = strOfAnnotations.substring(0, strOfAnnotations.length() - 1)
+        String strAnnotations = mapResult.get("annotations")
+        List<String> annotations = strAnnotations.tokenize("|")
+        annotations.each {
+            println(it)
         }
-        redis.doRedisHSet(model.submissionId, "annotations", strOfAnnotations)
-        if (model.publicationId) {
-            redis.doRedisHSet(model.publicationId, "annotations", strOfAnnotations)
-        }
-
-        if (hasTaxon) {
-            redis.doRedisHSet(model.submissionId, "organism", hasTaxon)
-            if (model.publicationId) {
-                redis.doRedisHSet(model.publicationId, "organism", hasTaxon)
-            }
-        }
-
-        statements
     }
 }
 
