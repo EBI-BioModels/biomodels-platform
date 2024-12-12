@@ -21,7 +21,6 @@
 package net.biomodels.jummp.plugins.security
 
 import grails.converters.JSON
-import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
@@ -48,13 +47,13 @@ class ContributorController extends CommonController {
     static allowedMethods = [update: "POST"]
 
     def userService
+    def modelDelegateService
     def modelService
     def mailService
     def contributorService
 
     private final Random random = new Random(System.currentTimeMillis())
 
-    //@Secured(["ROLE_ADMIN", "ROLE_CURATOR"])
     def init() {
         // create the first contributors based on the existing model revisions
         Map parameters = parseParameters()
@@ -338,9 +337,11 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
     @Secured(['ROLE_ADMIN'])
     def load() {
         try {
+            Map mapResult
             String modelId = params.id as String
+            String revisionId = params.revisionId as String
             Model model = modelService.getModel(modelId)
-            Map mapResult = ContributorService.getContributorsForModel(model)
+            mapResult = ContributorService.getContributorsForModel(model, revisionId)
             handleRestApi(mapResult)
         } catch (Exception err) {
             LOGGER.error err.message, err

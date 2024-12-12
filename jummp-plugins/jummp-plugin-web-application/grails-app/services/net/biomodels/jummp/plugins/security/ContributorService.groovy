@@ -232,10 +232,15 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
      * @param model {@link Model} instance
      * @return a map showing the relationships between users and models/revisions
      */
-    static Map<String, CTC> getContributorsForModel(Model model) {
+    static Map<String, CTC> getContributorsForModel(Model model, final String revisionId = null) {
         Map<String, CTC> mapResult = new HashMap<>()
         // this implementation isn't optimised but is greedy
-        for (Revision revision: model.revisions) {
+        Set<Revision> allRevs = model.revisions
+        if (revisionId) {
+            int revisionNumber = Integer.parseInt(revisionId)
+            allRevs = allRevs.findAll {it.revisionNumber <= revisionNumber }
+        }
+        for (Revision revision: allRevs) {
             Map result = getContributors(revision)
             mapResult.putAll(result)
         }
@@ -251,7 +256,9 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
         Model model = revision.model
         if (!model) { return null }
         Map<String, CTC> contributorMap = [:]
-        List revisions = model.revisions.toList()
+        List revisions = model.revisions.toList().findAll {
+            it.revisionNumber <= revision.revisionNumber
+        }
 
         Set authors = revisions*.owner?.collect { it.username }?.toSet()
 

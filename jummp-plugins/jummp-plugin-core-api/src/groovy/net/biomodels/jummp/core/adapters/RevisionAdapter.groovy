@@ -73,7 +73,8 @@ sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isC
             qcInfoCmd = revision.qcInfo?.toCommandObject()
         }
         def contributorService = Holders.grailsApplication.mainContext.contributorService
-        Map<String, CTC> contributors = contributorService.getContributors(revision)
+        Map<String, CTC> contributors
+        contributors = contributorService.getContributorsForModel(revision.model, revision.revisionNumber.toString())
         RevisionTransportCommand rev = new RevisionTransportCommand(
                 id: revision.id,
                 state: revision.state,
