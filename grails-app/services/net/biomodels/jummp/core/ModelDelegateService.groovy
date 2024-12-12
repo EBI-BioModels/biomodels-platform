@@ -332,8 +332,14 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
         }
         Collections.sort(publishedRevs, Collections.reverseOrder())
         Collections.sort(privateRevs, Collections.reverseOrder())
-        ["vcsId"      : vcsId, "publishedRevs": publishedRevs,
-         "privateRevs": privateRevs, "submissionId": model.submissionId]
+        Map mapReturned = [
+            "vcsId": vcsId, "publishedRevs": publishedRevs, "privateRevs": privateRevs,
+            "submissionId": model.submissionId
+        ]
+        if (model.publicationId) {
+            mapReturned.put("publicationId", model.publicationId)
+        }
+        return mapReturned
     }
 
     ModelTC uploadModel(List<File> modelFiles, ModelTC meta) throws ModelException {
