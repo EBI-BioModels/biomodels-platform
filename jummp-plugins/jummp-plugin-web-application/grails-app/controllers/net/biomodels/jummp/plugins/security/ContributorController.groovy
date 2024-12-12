@@ -340,8 +340,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         try {
             String modelId = params.id as String
             Model model = modelService.getModel(modelId)
-            Revision revision = modelService.getLatestRevision(model, false)
-            Map mapResult = ContributorService.getContributors(revision)
+            Map mapResult = ContributorService.getContributorsForModel(model)
             handleRestApi(mapResult)
         } catch (Exception err) {
             LOGGER.error err.message, err

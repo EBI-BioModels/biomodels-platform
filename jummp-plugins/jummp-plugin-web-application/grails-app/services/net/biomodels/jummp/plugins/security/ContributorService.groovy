@@ -227,8 +227,27 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
         return cd
     }
 
-    static Map<String, CTC> getContributors(Revision revision) {
+    /**
+     * Consolidates the contributors from all revisions
+     * @param model {@link Model} instance
+     * @return a map showing the relationships between users and models/revisions
+     */
+    static Map<String, CTC> getContributorsForModel(Model model) {
+        Map<String, CTC> mapResult = new HashMap<>()
+        // this implementation isn't optimised but is greedy
+        for (Revision revision: model.revisions) {
+            Map result = getContributors(revision)
+            mapResult.putAll(result)
+        }
+        return mapResult
+    }
 
+    /**
+     * Gets the contributors of a given revision
+     * @param revision {@link Revision} instance
+     * @return a map showing the relationships between users and models/revisions
+     */
+    static Map<String, CTC> getContributors(Revision revision) {
         Model model = revision.model
         if (!model) { return null }
         Map<String, CTC> contributorMap = [:]
