@@ -20,7 +20,7 @@
 
 package net.biomodels.jummp.webapp.rest.model
 
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 
 class Revision {
     int version
@@ -28,7 +28,7 @@ class Revision {
     String submitter
     String comment
 
-    public Revision(RevisionTransportCommand revision) {
+    Revision(RevisionTC revision) {
         version = revision.revisionNumber
         submitted = revision.uploadDate.getTime()/1_000 as Long
         submitter = revision.owner

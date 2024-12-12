@@ -72,9 +72,6 @@ sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isC
         use(QcInfoCategory) {
             qcInfoCmd = revision.qcInfo?.toCommandObject()
         }
-        def contributorService = Holders.grailsApplication.mainContext.contributorService
-        Map<String, CTC> contributors
-        contributors = contributorService.getContributorsForModel(revision.model, revision.revisionNumber.toString())
         RevisionTransportCommand rev = new RevisionTransportCommand(
                 id: revision.id,
                 state: revision.state,
@@ -93,7 +90,6 @@ sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isC
                 validationReport: revision.validationReport,
                 qcInfo: qcInfoCmd,
                 readmeSubmission: revision.readmeSubmission,
-                contributors: contributors
         )
         return rev
     }

@@ -36,9 +36,11 @@ package net.biomodels.jummp.core.model
 
 import grails.util.Holders
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
-import net.biomodels.jummp.core.certification.QcInfoTransportCommand
-import org.springframework.context.ApplicationContext
+import net.biomodels.jummp.core.certification.QcInfoTransportCommand as QcInfoTC
+import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.model.Model
+import org.springframework.context.ApplicationContext
 
 /**
  * @short Wrapper for a Revision to be transported through JMS.
@@ -115,7 +117,7 @@ class RevisionTransportCommand implements Serializable {
 
     String validationReport
 
-    QcInfoTransportCommand qcInfo
+    QcInfoTC qcInfo
 
     /**
      * Capture the extra info about the submission. For example, if the model format is unknown,
@@ -123,7 +125,12 @@ class RevisionTransportCommand implements Serializable {
      */
     String readmeSubmission
 
-    Map contributors
+    Map<String, CTC> contributors
+    Map<String, CTC> getContributors() {
+        Model m = Model.findBySubmissionId(this.model.submissionId)
+        contributors = context.contributorService.getContributorsForModel(m, this.revisionNumber.toString())
+        return contributors
+    }
 
     /**
      * The curation state of this revision
