@@ -151,7 +151,7 @@ class UrlMappings {
         }
         "/api/model/create"(controller:'model', action:'create')
         "/api/model/generate-omex/$id(.$revisionId)?"(controller:'model', action:'generateOmex')
-        "/api/model/revisionsState/$id?(.$format)?"(controller:'model', action:'revisionsState')
+        "/api/model/revisionsState/$id?"(controller:'model', action:'revisionsState')
         "/api/model/model-level-metadata/$id?(.$format)?"(controller:'model',
                 action:'retrieveModelLevelMetadata')
         "/api/model/annotations/$id?(.$format)?"(controller: 'model',
