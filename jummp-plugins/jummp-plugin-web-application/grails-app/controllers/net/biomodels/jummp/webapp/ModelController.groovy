@@ -374,6 +374,7 @@ class ModelController extends CommonController {
         def contributors = modelDelegateService.convertContributors(lastRev.contributors)
 
         Map model = [
+            perennialId            : PERENNIAL_ID,
             revision               : revFromParams,
             authors                : revFromParams.model.creators,
             contributors           : contributors,
