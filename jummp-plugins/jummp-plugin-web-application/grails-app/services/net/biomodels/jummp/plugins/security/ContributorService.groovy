@@ -50,11 +50,12 @@ class ContributorService implements InitializingBean {
         roles = CR.getAll().collect { it.name }.sort { it }
     }
 
-    static User createDummyUserPerson(final String displayName, final String email,
+    static User createDummyUserPerson(final String displayName, final String email, final String affiliation,
                                       final String orcid = "") {
         String username = MathUtils.generatePassword((('A'..'Z')+('0'..'9')+('a'..'z')).join(), 6)
         User user = new User(email: email, username: "ext_$username")
         Person person = new Person(userRealName: displayName)
+        if (affiliation) { person.institution = affiliation }
         if (orcid) { person.orcid = orcid }
         user.person = person
         user
@@ -272,7 +273,7 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
         }
         List lstContWtoInvite = CDWI.findAllByRevision(revision)
         lstContWtoInvite.each {
-            User user = createDummyUserPerson(it.displayName, it.email)
+            User user = createDummyUserPerson(it.displayName, it.email, it.affiliation, it.orcid)
             Person person = user.person
             if (it.orcid) { person.orcid = it.orcid }
             CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false, external: true)
