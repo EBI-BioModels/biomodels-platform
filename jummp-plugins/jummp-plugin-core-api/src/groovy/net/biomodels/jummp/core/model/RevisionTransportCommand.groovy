@@ -125,8 +125,8 @@ class RevisionTransportCommand implements Serializable {
      */
     String readmeSubmission
 
-    Map<String, CTC> contributors
-    Map<String, CTC> getContributors() {
+    Map<String, List<CTC>> contributors
+    Map<String, List<CTC>> getContributors() {
         Model m = Model.findBySubmissionId(this.model.submissionId)
         contributors = context.contributorService.getContributorsForModel(m, this.revisionNumber.toString())
         return contributors

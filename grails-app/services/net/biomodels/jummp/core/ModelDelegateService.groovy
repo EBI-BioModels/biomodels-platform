@@ -194,25 +194,32 @@ class ModelDelegateService implements IModelService, InitializingBean {
     }
 
     @NotTransactional
-    Map<String, Set<ContributorDto>> buildDetailedContributors(Map<String, CTC> contributors) {
+    Map<String, Set<ContributorDto>> buildDetailedContributors(Map<String, List<CTC>> contributors) {
         // use TreeMap to sort the keys in a natural order
         Map<String, Set<ContributorDto>> mapResult = new TreeMap<>()
 
-        for (Map.Entry<String, CTC> entry : contributors.entrySet()) {
-            CTC value = entry.getValue()
-            String roleName = value.role.name
-            roleName = roleName.replaceAll(" ", "")
-            ContributorDto info = new ContributorDto(
-                name: value.person.userRealName,
-                email: value.user.email,
-                affiliation: value.person.institution,
-                orcid: value.person.orcid,
-                external: value.external
-            )
-            if (mapResult.containsKey(roleName)) {
-                mapResult.get(roleName).add(info)
-            } else {
-                mapResult.put(roleName, [info] as Set)
+        for (List<CTC> values: contributors.values()) {
+            for (CTC value: values) {
+                String roleName = value.role.name
+                roleName = roleName.replaceAll(" ", "")
+                ContributorDto info = new ContributorDto(
+                        name: value.person.userRealName,
+                        email: value.user.email,
+                        affiliation: value.person.institution,
+                        orcid: value.person.orcid,
+                        external: value.external
+                )
+                if (mapResult.containsKey(roleName)) {
+                    boolean existed = mapResult.get(roleName).find {
+                        it.name == info.name && it.email == info.email && it.affiliation == it.affiliation && it.
+                                orcid == info.orcid && it.role == info.role
+                    }
+                    if (!existed) {
+                        mapResult.get(roleName).add(info)
+                    }
+                } else {
+                    mapResult.put(roleName, [info] as Set)
+                }
             }
         }
 

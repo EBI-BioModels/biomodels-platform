@@ -394,10 +394,12 @@ class JummpTagLib {
    }
 
     def renderContributors = { attrs ->
-        Map contributors = attrs.contributors as Map
+        Map<String, List<CTC>> contributors = attrs.contributors as Map
         if (contributors) {
-            for (CTC cont: contributors.values()) {
-                out << render(template: "/contributor/showContributor", model: [cont: cont])
+            for (List list: contributors.values()) {
+                list.each { def cont ->
+                    out << render(template: "/contributor/showContributor", model: [cont: cont])
+                }
             }
         } else {
             out << render(template: "/contributor/showNoContributor")

@@ -233,8 +233,8 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
      * @param model {@link Model} instance
      * @return a map showing the relationships between users and models/revisions
      */
-    static Map<String, CTC> getContributorsForModel(Model model, final String revisionId = null) {
-        Map<String, CTC> mapResult = new HashMap<>()
+    static Map<String, List<CTC>> getContributorsForModel(Model model, final String revisionId = null) {
+        Map<String, List<CTC>> mapResult = new HashMap<>()
         // this implementation isn't optimised but is greedy
         Set<Revision> allRevs = model.revisions
         if (revisionId) {
@@ -243,7 +243,13 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
         }
         for (Revision revision: allRevs) {
             Map result = getContributors(revision)
-            mapResult.putAll(result)
+            result.each { String key, List<CTC> value ->
+                if (mapResult.containsKey(key)) {
+                    mapResult.get(key).addAll(value)
+                } else {
+                    mapResult.put(key, value)
+                }
+            }
         }
         return mapResult
     }
@@ -253,10 +259,10 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
      * @param revision {@link Revision} instance
      * @return a map showing the relationships between users and models/revisions
      */
-    static Map<String, CTC> getContributors(Revision revision) {
+    static Map<String, List<CTC>> getContributors(Revision revision) {
         Model model = revision.model
         if (!model) { return null }
-        Map<String, CTC> contributorMap = [:]
+        Map<String, List<CTC>> contributorMap = [:]
         List revisions = model.revisions.toList().findAll {
             it.revisionNumber <= revision.revisionNumber
         }
@@ -269,7 +275,11 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
             boolean locked = username in authors
             CTC ctc = new CTC(user: detail.contributor,
                 role: detail.role, person: detail.contributor.person, locked: locked, external: false)
-            contributorMap.put(username, ctc)
+            if (contributorMap.containsKey(username)) {
+                contributorMap.get(username).add(ctc)
+            } else {
+                contributorMap.put(username, [ctc] as List<CTC>)
+            }
         }
         List lstContWtoInvite = CDWI.findAllByRevision(revision)
         lstContWtoInvite.each {
@@ -277,7 +287,11 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
             Person person = user.person
             if (it.orcid) { person.orcid = it.orcid }
             CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false, external: true)
-            contributorMap.put(user.username, ctc)
+            if (contributorMap.containsKey(user.username)) {
+                contributorMap.get(user.username).add(ctc)
+            } else {
+                contributorMap.put(user.username, [ctc] as List<CTC>)
+            }
         }
 
         contributorMap

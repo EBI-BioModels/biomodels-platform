@@ -129,7 +129,7 @@ class ContributorController extends CommonController {
         Revision revision = map["revision"] as Revision
 
         String message = ""
-        Map<String, CTC> contributors = contributorService.getContributors(revision)
+        Map<String, List<CTC>> contributors = contributorService.getContributors(revision)
         List contributorEmailList = contributors.values().collect { it.user.email }
         String currentUserEmail = userService.getEmailAddress()
         String currentUsername = userService.username
