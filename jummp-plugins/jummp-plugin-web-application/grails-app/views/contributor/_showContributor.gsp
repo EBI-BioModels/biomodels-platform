@@ -14,6 +14,9 @@
             <span style="color: black">${displayName}</span>
             </g:else>
         </h4>
+        <g:if test="${cont?.person.institution}">
+            <span style="font-weight: bolder">${cont?.person.institution}</span>
+        </g:if>
         <p class="username-email">
         <g:if test="${cont}">
             ${cont.user.username.startsWith("ext_") ?

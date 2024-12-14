@@ -69,20 +69,25 @@
 <div class="invite-contributor">
     <h3 class="padding-top-xlarge">Add an external contributor without sending an invitation</h3>
     <div class="row">
-        <div class="columns small-12 medium-3 large-3">
+        <div class="columns small-12 medium-2 large-2">
             <label for="txt-display-name">Display Name</label>
             <input type="text" id="txt-display-name" name="txt-display-name"
                    placeholder="Type a full  or scientific name">
         </div>
-        <div class="columns small-12 medium-3 large-3">
+        <div class="columns small-12 medium-2 large-2">
             <label for="txt-email-address">Email</label>
             <input type="text" id="txt-email-address" name="txt-email-address"
                    placeholder="Type a valid email address">
         </div>
-        <div class="columns small-12 medium-3 large-3">
+        <div class="columns small-12 medium-2 large-2">
             <label for="txt-orcid">ORCID</label>
             <input type="text" id="txt-orcid" name="txt-orcid"
                    placeholder="Type the orcid id">
+        </div>
+        <div class="columns small-12 medium-3 large-3">
+            <label for="txt-affiliation">Affiliation</label>
+            <input type="text" id="txt-affiliation" name="txt-affiliation"
+                   placeholder="Your affiliation">
         </div>
         <div class="columns small-12 medium-2 large-2">
             <label for="select-defined-roles">Roles</label>
@@ -265,6 +270,7 @@
         }*/
         let displayName = $('input[name=txt-display-name]').val();
         let orcid = $('input[name=txt-orcid]').val();
+        let affiliation = $('input[name=txt-affiliation]').val();
         let role = $("#select-defined-roles option:selected").text();
         const urlPost = $.jummp.createLink("contributor", "addWithoutInvitation");
         let data = new FormData();
@@ -273,6 +279,7 @@
         data.append("displayName", displayName);
         data.append("email", email);
         data.append("orcid", orcid);
+        data.append("affiliation", affiliation);
         data.append("role", role);
         fetch(urlPost, {
             method: "POST",

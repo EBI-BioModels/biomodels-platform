@@ -283,6 +283,7 @@ Failed to add ${revision.owner.username} as a ${role.name} for the revision ${re
         lstContWtoInvite.each {
             User user = createDummyUserPerson(it.displayName, it.email, it.affiliation, it.orcid)
             Person person = user.person
+            if (it.affiliation) { person.institution = it.affiliation }
             if (it.orcid) { person.orcid = it.orcid }
             CTC ctc = new CTC(user: user, role: it.role, person: person, locked: false, external: true)
             if (contributorMap.containsKey(user.username)) {

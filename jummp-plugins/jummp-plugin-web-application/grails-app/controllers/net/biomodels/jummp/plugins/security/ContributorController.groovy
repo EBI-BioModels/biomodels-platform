@@ -213,15 +213,18 @@ class ContributorController extends CommonController {
         String displayName = params["displayName"]?.decodeHTML()
         String email = params["email"]?.decodeHTML()
         String orcid = params["orcid"]?.decodeHTML()
+        String affiliation = params["affiliation"]?.decodeHTML()
         String roleName = params["role"]?.decodeHTML()
         Map result = [:]
         result["displayName"] = displayName
         result["email"] = email
         result["orcid"] = orcid
+        result["affiliation"] = affiliation
 
         // SAVE INPUT TO DB
         CR role = CR.findByName(roleName)
         CDWI cDWI = new CDWI(displayName: displayName, email: email, revision: revision, role: role)
+        if (affiliation) { cDWI.affiliation = affiliation }
         if (orcid) { cDWI.orcid = orcid }
         if (!cDWI.save()) {
             LOGGER.error("""An occurred when saving [$displayName, $email, $orcid, $modelId, $revisionNumber, \
@@ -234,7 +237,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         CTC ctc = new CTC(user: user, role: role, person: user.person, locked: false, external: true)
         String htmlString = g.render(template: "/contributor/showContributor",
             plugin: "jummp-plugin-web-application",
-            model: [cont: ctc, email: email, displayName: displayName, orcid: orcid,
+            model: [cont: ctc, email: email, displayName: displayName, orcid: orcid, affiliation: affiliation,
                     serverURL: serverURL, roles: contributorService.roles])
         result.put("htmlBasedStringForNewContributor", htmlString)
         result.put("message", "The contributor has been added successfully!")
