@@ -122,8 +122,9 @@ class ContributorController extends CommonController {
         }
 
         // Handle the id param to split the model and revision id
-        Map map = doAnalyseAndExtractParameters(id, model)
-        String modelId = map["modelId"] as String
+        String modelId = params.get("id")
+        String revisionId = params.get("revisionId")
+        Map map = doAnalyseAndExtractParameters(model, modelId, revisionId)
         Integer revisionNumber = map['revisionNumber'] as Integer
         Revision revision = map["revision"] as Revision
 
@@ -144,34 +145,26 @@ class ContributorController extends CommonController {
         render(view: "manage", model: retMap)
     }
 
-    private static Map<String, Object> doAnalyseAndExtractParameters(final String id, final Model model) {
+    private static Map<String, Object> doAnalyseAndExtractParameters(final Model model, final String modelId, final
+            String revisionId = null) {
         Map<String, Object> map = [:]
-        String modelId = id
         Integer revisionNumber = 0
-        if (id.indexOf(".") > 0) {
-            // having the revision number
-            modelId = id.substring(0, id.indexOf("."))
-            String revisionId = id.substring(id.lastIndexOf(".") + 1)
-            revisionNumber  = revisionId.toInteger()
-        }
-
-        Set<Revision> revisions = model.revisions
-        ArrayList<Integer> revisionNumbers = revisions.sort { r1, r2 ->
-                r2.revisionNumber <=> r1.revisionNumber }*.revisionNumber
-        if (revisionNumber == 0) {
+        if (revisionId) {
+            revisionNumber = revisionId.toInteger()
+        } else {
             // Get the latest revision
             // Sort the revisions descending by the revision number
+            Set<Revision> revisions = model.revisions
+            ArrayList<Integer> revisionNumbers = revisions.sort { r1, r2 ->
+                    r2.revisionNumber <=> r1.revisionNumber }*.revisionNumber
             revisionNumber = revisionNumbers[0]
-        } else {
-            // Get the revision which revision number equals revisionNumber
-            // do nothing
         }
 
         // TODO: handle 1 <= revisionNumber <= max
-        map["modelId"] = modelId
+        map["modelId"] = model.submissionId
         map["revisionNumber"] = revisionNumber
 
-        Revision revision = revisions.find { it.revisionNumber == revisionNumber }
+        Revision revision = model.revisions.find { it.revisionNumber == revisionNumber }
         map["revision"] = revision
         return map
     }

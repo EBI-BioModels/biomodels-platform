@@ -44,6 +44,15 @@ class UrlMappings {
                 revisionId(matches: /\d+/)
             }
         }
+        "/contributor/$action/$id(.$revisionId)?" {
+            controller = "contributor"
+            action = action
+            constraints {
+                id(nullable: false, matches: /[a-zA-Z\\-_0-9]+/)
+                action(nullable: false)
+                revisionId(matches: /\d+/)
+            }
+        }
         "/$controller/$action?/$id?" {
             constraints {
                 controller(notEqual: 'model')
