@@ -49,7 +49,7 @@ class ContributorService implements InitializingBean {
         roles = CR.getAll().collect { it.name }.sort { it }
     }
 
-    static User createDummyUserPerson(final String displayName, final String email, final String affiliation,
+    static User createDummyUserPerson(final String displayName, final String email, final String affiliation = "",
                                       final String orcid = "") {
         User user = new User(email: email, username: email)
         Person person = new Person(userRealName: displayName)

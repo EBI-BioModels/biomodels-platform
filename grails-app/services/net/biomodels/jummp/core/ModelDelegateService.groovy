@@ -175,18 +175,24 @@ class ModelDelegateService implements IModelService, InitializingBean {
     }
 
     @NotTransactional
-    Map<String, List> convertContributors(Map<String, CTC> contributors) {
+    Map<String, List> convertContributors(Map<String, List<CTC>> contributors) {
         // use TreeMap to sort the keys in a natural order
         Map<String, List> mapResult = new TreeMap<>()
 
-        for (Map.Entry<String, CTC> entry : contributors.entrySet()) {
-            CTC value = entry.getValue()
-            String roleName = value.role.name
-            String contributorName = value.person.userRealName
-            if (mapResult.containsKey(roleName)) {
-                mapResult.get(roleName).add(contributorName)
-            } else {
-                mapResult.put(roleName, [contributorName] as List)
+        for (List<CTC> list : contributors.values()) {
+            for (CTC value: list) {
+                String roleName = value.role.name
+                String contributorName = value.person.userRealName
+                if (mapResult.containsKey(roleName)) {
+                    boolean existed = mapResult.get(roleName).find {
+                        it == contributorName
+                    }
+                    if (!existed) {
+                        mapResult.get(roleName).add(contributorName)
+                    }
+                } else {
+                    mapResult.put(roleName, [contributorName] as List)
+                }
             }
         }
 
