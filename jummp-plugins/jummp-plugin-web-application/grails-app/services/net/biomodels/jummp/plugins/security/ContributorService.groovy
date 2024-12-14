@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -30,7 +30,6 @@ import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.ContributionRole
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.utils.MathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -52,8 +51,7 @@ class ContributorService implements InitializingBean {
 
     static User createDummyUserPerson(final String displayName, final String email, final String affiliation,
                                       final String orcid = "") {
-        String username = MathUtils.generatePassword((('A'..'Z')+('0'..'9')+('a'..'z')).join(), 6)
-        User user = new User(email: email, username: "ext_$username")
+        User user = new User(email: email, username: email)
         Person person = new Person(userRealName: displayName)
         if (affiliation) { person.institution = affiliation }
         if (orcid) { person.orcid = orcid }
