@@ -11,7 +11,7 @@
     <div style="float:right; text-align: right" class="columns medium-3 large-3 small-12">
         <h2>
         <g:if test="${hasAdminRole}">
-            <a href="${g.createLink(controller: 'model', action: 'revisionsState', id: perennialId,
+            <a href="${g.createLink(controller: 'model', action: 'retrieveRevisionsState', id: perennialId,
                     params: ['format': 'json'])}"
                target="_blank" title="Click here to view the revisions state in JSON format">
                 <i class="icon icon-common icon-history"></i></a>

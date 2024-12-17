@@ -107,7 +107,7 @@ class ModelController extends CommonController {
        'submitForPublication', 'updateCurationState',
        'searchModellingApproach', 'submit', 'terms', 'uploadFile',
        'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
-       'create', 'about', 'revisionsState', 'generateOmex', 'metadatardf',
+       'create', 'about', 'revisionsState', 'generateOmex', 'metadatardf', 'retrieveRevisionsState',
        'retrieveModelLevelMetadata', 'cacheAnnotationsAndOrganismOnRedis', 'loadAllAnnotations'
     ]
 
@@ -504,6 +504,11 @@ class ModelController extends CommonController {
             LOGGER.error err.message, err
             forward controller: 'errors', action: 'error404'
         }
+    }
+
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    def retrieveRevisionsState() {
+        revisionsState()
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
