@@ -182,7 +182,8 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      **/
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="searchService.updateIndex")
-    void updateIndex(RevisionTransportCommand revision, final String level = "full") {
+    void updateIndex(RevisionTransportCommand revision,
+                     Map<String, String> options = ["level": "full", "indexer": ""] as Map) {
         Revision.withSession {
             String name = revision.name ?: ""
             String description = revision.description ?: ""
@@ -238,7 +239,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
                 'miriamExportFile': registryExport,
                 'searchStrategy': searchStrategy,
                 'database': dbSettings,
-                'level': level)
+                'level': options["level"], 'indexer': options["indexer"])
             File indexingData = new File(exchangeFolder, "indexData.json")
             indexingData.setText(builder.toPrettyString())
 

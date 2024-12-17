@@ -135,9 +135,10 @@ class SearchService implements InitializingBean {
      **/
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="searchService.updateIndex")
-    void updateIndex(RevisionTransportCommand revision, String level = "full") {
+    void updateIndex(RevisionTransportCommand revision,
+                     Map<String, String> options = ["level": "full", "indexer": ""] as Map) {
         clearIndex(revision)
-        strategy.updateIndex(revision, level)
+        strategy.updateIndex(revision, options)
     }
 
     /**

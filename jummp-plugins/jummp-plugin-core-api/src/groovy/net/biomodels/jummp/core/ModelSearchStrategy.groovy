@@ -48,9 +48,11 @@ interface ModelSearchStrategy {
      * Those URIs break the indexing pipeline, so we only have to index the model-level annotations.
      *
      * @param revision A Revision instance
-     * @param level either 'full' if indexing the full set of annotations or 'bare' for only model-level ones
+     * @param options an array of indexing options. For example: options = ['level': 'full', 'indexer': 'generic']
+     *  level: either 'full' if indexing the full set of annotations or 'bare' for only model-level ones
+     *  indexer: 'generic' means that the indexing will be the GenericModelIndexer
      */
-    void updateIndex(RevisionTransportCommand revision, String level)
+    void updateIndex(RevisionTransportCommand revision, Map<String, String> options)
     String[] getSortFields()
     Map checkIndexedData()
     void indexDB()

@@ -367,8 +367,9 @@ The root cause is ${e.toString()}""")
         return searchResponse
     }
 
-    void updateIndex(RevisionTC revision, final String level = "full") {
-        LOGGER.info("Indexing level for this revsion ${revision.identifier()}: $level")
+    void updateIndex(RevisionTC revision,
+                     Map<String, String> options = ["level": "full", "indexer": ""] as Map) {
+        LOGGER.info("Indexing options for this revsion ${revision.identifier()}: $options")
         Revision.withSession {
             def partialData = buildPartialData(revision)
             String exchangeFolder = grailsApplication.config.jummp.vcs.exchangeDirectory
@@ -390,7 +391,8 @@ The root cause is ${e.toString()}""")
                 'miriamExportFile': registryExport,
                 'searchStrategy': searchStrategy,
                 'database': dbSettings,
-                "level": level)
+                'level': options["level"],
+                'indexer': options["indexer"])
             String sep = File.separator
 
             String indexingFolder = "$exchangeFolder${sep}indexing${sep}${revision.identifier()}"
