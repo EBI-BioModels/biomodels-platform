@@ -368,6 +368,7 @@ The root cause is ${e.toString()}""")
     }
 
     void updateIndex(RevisionTC revision, final String level = "full") {
+        LOGGER.info("Indexing level for this revsion ${revision.identifier()}: $level")
         Revision.withSession {
             def partialData = buildPartialData(revision)
             String exchangeFolder = grailsApplication.config.jummp.vcs.exchangeDirectory

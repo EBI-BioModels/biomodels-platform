@@ -238,6 +238,17 @@ under the format: ${response.format}"""
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def reindex() {
+        /**
+         * The option is one of the following values
+         * full: indexing the entire set of annotations by default because we assume that there isn't a lot of
+         * annotations
+         * bare: indexing the model level annotations only.
+         */
+        String level = "full"
+        if (params.containsKey("level")) {
+            level = params.get("level")
+            level = level in ["full", "bare"] ? level : "full"
+        }
         def models = params.models.split(",")
         Map<String, String> msgMap = [:]
         models.each { def model ->
@@ -258,7 +269,7 @@ under the format: ${response.format}"""
                 }
                 if (revision) {
                     model = revision.identifier()
-                    searchService.updateIndex(revision)
+                    searchService.updateIndex(revision, level)
                     message = "Started re-indexing the model"
                 }
             }
