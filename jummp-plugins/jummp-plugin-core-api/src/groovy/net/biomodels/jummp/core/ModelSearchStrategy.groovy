@@ -40,8 +40,17 @@ import net.biomodels.jummp.search.SortOrder
 interface ModelSearchStrategy {
     void clearIndex()
     void clearIndex(RevisionTransportCommand revision)
-    SearchResponse searchModels(String query, String domain, SortOrder sortOrder, Map<String, Integer> paginationCriteria)
-    void updateIndex(RevisionTransportCommand revision)
+    SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
+                                Map<String, Integer> paginationCriteria)
+    /**
+     * Re-indexes all annotations or model-level annotations of a given revision.
+     * Some model revisions are coded a massive amount of annotations but there are some invalid URIs.
+     * Those URIs break the indexing pipeline, so we only have to index the model-level annotations.
+     *
+     * @param revision A Revision instance
+     * @param level either 'full' if indexing the full set of annotations or 'bare' for only model-level ones
+     */
+    void updateIndex(RevisionTransportCommand revision, String level)
     String[] getSortFields()
     Map checkIndexedData()
     void indexDB()
