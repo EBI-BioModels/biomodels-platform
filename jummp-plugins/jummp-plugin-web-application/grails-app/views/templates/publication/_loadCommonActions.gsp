@@ -90,9 +90,10 @@ function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
         let comesFromDB = ("true" === $('#comesFromDB').html());
         let messages = [];
         if (comesFromDB) {
+            console.log("message: ", data["message"]);
             msg = data["message"];
             toastr.warning(msg);
-            messages.push(msg);
+            if (msg !== undefined || msg) { messages.push(msg); }
         }
         let status = $('#status').html();
         msg = $('#message').html();

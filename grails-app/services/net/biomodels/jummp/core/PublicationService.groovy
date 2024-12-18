@@ -153,8 +153,8 @@ class PublicationService implements IPublicationService, InitializingBean {
                 status = "OK"
                 cmd = createPTCWithMinimalInformation(pubLinkProvider, pubLink, [])
                 Map m = loadOrFetchOrCreatePublication(cmd, pubLinkProvider)
-                PDEC ctx = m["pubCtx"]
-                message += "<br/>" + m["message"]
+                PDEC ctx = m["pubCtx"] as PDEC
+                if (m["message"]) { message += "<br/>" + m["message"] }
                 // reassign cmd to a newly refreshed one
                 cmd = ctx?.publication
                 if (!cmd) {
@@ -346,8 +346,8 @@ There has been errors when assembling authors $authors into the publication '${p
     }
 
     private Map loadOrFetchOrCreatePublication(PubTC pubTC, String pubLinkProvider) {
-        String message
-        PDEC publicationContext
+        String message = null
+        PDEC publicationContext = null
         try {
             publicationContext = getPublicationExtractionContext(pubTC)
             if (publicationContext.publication) {
@@ -366,10 +366,10 @@ There has been errors when assembling authors $authors into the publication '${p
         } catch (Exception e) {
             message = e.message
             log.error(message, e)
-            publicationContext = null
         } finally {
-            return [message: message, pubCtx: publicationContext]
+            log.info("Finished loading and creating a publication holder for...")
         }
+        return [message: message, pubCtx: publicationContext]
     }
 
     private static PubTC bindJSONData(PubTC pubTC, def jsonData) {
