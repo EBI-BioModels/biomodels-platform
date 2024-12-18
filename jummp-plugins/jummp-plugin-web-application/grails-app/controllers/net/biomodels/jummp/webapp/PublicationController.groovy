@@ -66,15 +66,18 @@ class PublicationController implements GrailsConfigurationAware {
      * @return HTML codes to display in the publication add and edit view
      */
     def fetchPublicationFromPubMedAndRenderPublicationForm() {
-        Map data = publicationService.doVerifyPubLinkAndFetchData()
+        String pubLinkProvider = params.get("pubLinkProvider")
+        String pubLink = params.get("pubLink")
+        Map data = publicationService.doVerifyPubLinkAndFetchData(pubLinkProvider, pubLink)
         String operation = params.get("operation")
 
         if (data["comesFromDB"] && operation == "add") {
-            data["message"] = "The publication exists!"
+            data["message"] = "The publication has been reloaded from our system!"
             data["status"] = "Failed"
         } else if (!data["publication"]?.isEmpty() && operation == "edit") {
             boolean ID_EXISTS = params.containsKey("id")
             if (ID_EXISTS) {
+                data["message"] = "The publiction has been fetched from the remote location!"
                 data["publication"]?.id = params.long("id")
             }
         }
