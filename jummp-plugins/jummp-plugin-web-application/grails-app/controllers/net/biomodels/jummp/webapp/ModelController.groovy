@@ -539,8 +539,9 @@ class ModelController extends CommonController {
     def generateOmex() {
         // if the params.metadata is unavailable, it means false.
         boolean metadata = params.getBoolean("metadata")
+        boolean noLargeFiles = params.get("nolargefiles") ? params.getBoolean("nolargefiles") : false
         try {
-            Map models = doGenerateOmex(params.id as String, params.revisionId as Integer, metadata)
+            Map models = doGenerateOmex(params.id as String, params.revisionId as Integer, metadata, noLargeFiles)
             handleRestApi(models)
         } catch (Exception err) {
             LOGGER.error(err.message, err)
@@ -835,7 +836,9 @@ Please contact the developers team for support!"""])
         }
     }
 
-    private Map doGenerateOmex(String modelId, Integer revisionNumber, final boolean biomodelsMetadataAdded = false) {
+    private Map doGenerateOmex(String modelId, Integer revisionNumber,
+                               final boolean biomodelsMetadataAdded = false,
+                               final boolean noLargeFiles = false) {
         RTC revisionTC
         String filePath = ""
         try {
@@ -851,7 +854,9 @@ Please contact the developers team for support!"""])
 
             final String DEFAULT_FS_SVR = "http://localhost:8090/biomodels/services/file-format/api/v1.0"
             final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
-            final String serviceURI = "$FS_SVR_URL/create-omex?metadata=${biomodelsMetadataAdded.toString()}"
+            String userParams = "metadata=${biomodelsMetadataAdded.toString()}"
+            userParams += "&nolargefiles=${noLargeFiles}"
+            final String serviceURI = "$FS_SVR_URL/create-omex?${userParams}"
             filePath = WSF.executePostRequest(serviceURI, array.toString())
         } catch (ModelException ignored) {
             ignored.printStackTrace()
