@@ -23,6 +23,7 @@ package net.biomodels.jummp.utils
 import org.apache.http.HttpEntity
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.conn.params.ConnRoutePNames
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
@@ -97,6 +98,7 @@ caused by ${conn.responseCode}: ${conn.getErrorStream().inspect()}""")
 
     static String executePostRequest(final String serviceURI, final String requestBody) {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build()
+        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy)
         String result = null
         try {
             HttpPost request = new HttpPost(serviceURI)

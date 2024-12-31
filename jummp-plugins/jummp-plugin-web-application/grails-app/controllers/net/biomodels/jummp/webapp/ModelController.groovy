@@ -42,7 +42,6 @@ import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
-import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.events.ModelOperationEvent
@@ -64,8 +63,6 @@ import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.ModelFiles
-import org.apache.http.impl.client.CloseableHttpClient
-import org.apache.http.impl.client.HttpClientBuilder
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.json.JSONArray
 import org.slf4j.Logger
@@ -880,7 +877,6 @@ Please contact the developers team for support!"""])
     private String doGenerateOmexMetadataRDF(final String modelId, final Integer revisionId) {
         final String DEFAULT_FS_SVR = "http://localhost:8090/biomodels/services/file-format/api/v1.0"
         final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
-        CloseableHttpClient httpClient = HttpClientBuilder.create().build()
         String identifier = modelId + (revisionId != null ? ".${revisionId}" : "")
         String rdfContent = "Cannot generate metadata.rdf file for this model revision $identifier"
         try {
@@ -894,7 +890,6 @@ Please contact the developers team for support!"""])
             // handle exception here
             ignored.printStackTrace()
         } finally {
-            httpClient.close()
         }
         return rdfContent
     }
