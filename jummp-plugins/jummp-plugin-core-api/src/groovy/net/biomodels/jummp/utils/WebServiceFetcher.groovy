@@ -98,13 +98,16 @@ caused by ${conn.responseCode}: ${conn.getErrorStream().inspect()}""")
 
     static String executePostRequest(final String serviceURI, final String requestBody) {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build()
-        InetSocketAddress addr = (InetSocketAddress) proxy.address()
-        if (addr != null) {
-            System.out.println("proxy hostname : " + addr.getHostName());
-            System.out.println("proxy port : " + addr.getPort());
-            HttpHost host = new HttpHost(addr.getHostName(), addr.getPort())
-            httpClient = HttpClientBuilder.create().setProxy(host).build()
-        }
+//        InetSocketAddress addr = (InetSocketAddress) proxy.address()
+//        if (addr != null) {
+//            System.out.println("proxy hostname : " + addr.getHostName());
+//            System.out.println("proxy port : " + addr.getPort());
+//            HttpHost host = new HttpHost(addr.getHostName(), addr.getPort())
+        def hostName = System.getenv("HTTP_PROXY_HOST")
+        def hostPort = System.getenv("HTTP_PROXY_PORT") as int
+        HttpHost host = new HttpHost(hostName, hostPort)
+        httpClient = HttpClientBuilder.create().setProxy(host).build()
+//        }
         String result = null
         try {
             HttpPost request = new HttpPost(serviceURI)
