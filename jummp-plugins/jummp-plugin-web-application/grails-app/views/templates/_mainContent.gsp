@@ -24,11 +24,11 @@
             <div class="small-12 medium-12 large-6 columns" id="sorting" style="padding: 0">
                 <!-- Show Sort by box on the search page only for now-->
                 <g:if test="${action == "search"}">
-                    <g:render template="/templates/sorting" />
+                    <g:render template="/templates/search/sorting" />
                 </g:if>
             </div>
             <div class="small-12 medium-12 large-6 columns" style="padding: 0">
-                <g:render template="/templates/pageSize"
+                <g:render template="/templates/search/pageSize"
                           model="[resultOptions: resultOptions, length: length,
                                   action: action, query: query, domain: domain]"/>
             </div>
@@ -54,7 +54,7 @@
             <section>
                 <div class="modelList">
                     <div class="column row">
-                        <g:render template="/templates/resultHeader"
+                        <g:render template="/templates/search/resultHeader"
                                   model="[totalCount: totalCount, action: action]"/>
                     </div>
                     <div class="column row">
@@ -345,6 +345,6 @@
         </div>
     </g:if>
     <g:else>
-        <g:render template="/templates/searchNotFound" model="[params: params]"/>
+        <g:render template="/templates/search/searchNotFound" model="[params: params]"/>
     </g:else>
 </div>

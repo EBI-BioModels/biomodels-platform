@@ -43,11 +43,11 @@
 	 			<table id="modelTable">
     	    	<thead>
                 <tr>
-                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'name','msgCode':'model.list.name']"/>
-                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'format','msgCode':'model.list.format']"/>
-                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitter','msgCode':'model.list.submitter']"/>
-                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitted','msgCode':'model.list.submissionDate']"/>
-                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'modified','msgCode':'model.list.modifiedDate']"/>
+                    <g:render template="/templates/search/tableheader" model="[action: action, 'sortColumn': 'name', 'msgCode':'model.list.name']"/>
+                    <g:render template="/templates/search/tableheader" model="[action: action, 'sortColumn': 'format', 'msgCode':'model.list.format']"/>
+                    <g:render template="/templates/search/tableheader" model="[action: action, 'sortColumn': 'submitter', 'msgCode':'model.list.submitter']"/>
+                    <g:render template="/templates/search/tableheader" model="[action: action, 'sortColumn': 'submitted', 'msgCode':'model.list.submissionDate']"/>
+                    <g:render template="/templates/search/tableheader" model="[action: action, 'sortColumn': 'modified', 'msgCode':'model.list.modifiedDate']"/>
                     <th>Certification</th>
                     <sec:ifLoggedIn>
                         <th>Status</th>

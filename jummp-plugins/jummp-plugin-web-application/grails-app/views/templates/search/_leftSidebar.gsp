@@ -48,7 +48,7 @@
                            value="${fv.value}" title="${fv.value}"
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <span class="facetLabel" onclick="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                        <g:render template="/templates/singleFacetShow" model="[fv: fv, method: jsMethod]" /></span>
+                        <g:render template="/templates/search/singleFacetShow" model="[fv: fv, method: jsMethod]" /></span>
                 </g:if>
                 <g:else>
                     <%
@@ -85,7 +85,7 @@
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <g:link controller="search" action="${actionName}" params="${newParams}" class="facetLabel">
                         <span class="facetLabel">
-                            <g:render template="/templates/singleFacetShow" model="[fv: fv, method: jsMethod]" />
+                            <g:render template="/templates/search/singleFacetShow" model="[fv: fv, method: jsMethod]" />
                         </span>
                     </g:link>
                 </g:else>

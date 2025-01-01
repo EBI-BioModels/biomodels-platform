@@ -40,11 +40,11 @@
     </body>
     <content tag="sidebar">
         <!-- quick links -->
-        <g:render template="/templates/listRightSidebar" />
+        <g:render template="/templates/search/listRightSidebar" />
     </content>
     <content tag="facetsearch">
         <!-- show facets search on the left sidebar -->
-        <g:render template="/templates/leftSidebar" />
+        <g:render template="/templates/search/leftSidebar" />
     </content>
     <content tag="mymodels">
         selected

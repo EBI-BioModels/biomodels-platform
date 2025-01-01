@@ -37,14 +37,14 @@
     </head>
     <content tag="facetsearch">
         <!-- show facets search on the left sidebar -->
-        <g:render template="/templates/leftSidebar" />
+        <g:render template="/templates/search/leftSidebar" />
     </content>
     <body activetab="search">
         <g:render template="/templates/mainContent" model="['action': 'search']"/>
     </body>
     <content tag="sidebar">
         <!-- show descriptive statistics, GO chart, etc. -->
-        <g:render template="/templates/rightSidebar" model="['action': 'search']"/>
+        <g:render template="/templates/search/rightSidebar" model="['action': 'search']"/>
     </content>
     <content tag="search">
         ${query}
