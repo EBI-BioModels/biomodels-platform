@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2023 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2025 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,10 +20,10 @@
 
 package net.biomodels.jummp.utils
 
+import org.apache.http.HttpHost
 import org.apache.http.HttpEntity
 import org.apache.http.client.methods.CloseableHttpResponse
 import org.apache.http.client.methods.HttpPost
-import org.apache.http.conn.params.ConnRoutePNames
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.CloseableHttpClient
 import org.apache.http.impl.client.HttpClientBuilder
@@ -98,7 +98,13 @@ caused by ${conn.responseCode}: ${conn.getErrorStream().inspect()}""")
 
     static String executePostRequest(final String serviceURI, final String requestBody) {
         CloseableHttpClient httpClient = HttpClientBuilder.create().build()
-        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy)
+        InetSocketAddress addr = (InetSocketAddress) proxy.address()
+        if (addr != null) {
+            System.out.println("proxy hostname : " + addr.getHostName());
+            System.out.println("proxy port : " + addr.getPort());
+            HttpHost host = new HttpHost(addr.getHostName(), addr.getPort())
+            httpClient = HttpClientBuilder.create().setProxy(host).build()
+        }
         String result = null
         try {
             HttpPost request = new HttpPost(serviceURI)
