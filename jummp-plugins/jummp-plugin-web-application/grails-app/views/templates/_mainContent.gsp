@@ -43,7 +43,7 @@
                     <span id="resetSearch" style="margin-left: 1em; font-size: 85%"></span>
                 </g:else>
         </div>
-        <div class="row grid_18 omega" id="search-results">
+        <div class="row" id="search-results">
             <section>
                 <div class="modelList">
                     <div class="column row">
@@ -113,14 +113,15 @@
                         }
 
                         function showFlashMessage(message) {
-                            const shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
+                            const $alert = $('.alert');
+                            const shouldShown = typeof $alert.val() === "undefined" || $alert.val() === "";
                             if (shouldShown) {
                                 $(message).insertBefore('#flashMessage');
                             }
                             $('.closetbn').on("click", function() {
                                 $(this).slideUp();
                             });
-                            $('.alert').on("click", function() {
+                            $alert.on("click", function() {
                                 $(this).slideUp();
                             });
                         }
@@ -229,12 +230,13 @@
                 rightPage = numPages + 1
             }
             int leftPage = currentPage
+
         %>
-        <div class="row" style="background-color: #00aaaa; margin-top: 3px">
-        <div class="dataTables_info">
-            Showing ${modelStart} to ${modelEnd} of ${totalCount} models
-        </div>
-        <div class="dataTables_paginate">
+        <div class="row" style="background-color: #00aaaa; padding-top: 5px; padding-bottom: 5px">
+            <div class="dataTables_info">
+                Showing ${modelStart} to ${modelEnd} of ${totalCount} models
+            </div>
+            <div class="dataTables_paginate">
             <%
                 Map pagedParams = [:]
             %>
@@ -334,7 +336,7 @@
             <g:else>
                 Last
             </g:else>
-        </div>
+            </div>
         </div>
     </g:if>
     <g:else>
