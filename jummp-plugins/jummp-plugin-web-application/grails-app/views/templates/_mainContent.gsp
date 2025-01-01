@@ -3,20 +3,13 @@
     def totalCount
     if (matches) {
         totalCount = matches
-    }
-    else {
+    } else {
         totalCount = modelsAvailable
     }
-    def imagePath = "/images"
     def resultOptions = Preferences.getOptions("numResults")
     if (!params.sort) {
         params.sort = "relevance-desc"
     }
-    def domain = params.domain
-    if (!domain) {
-        domain = "biomodels"
-    }
-    String queryString = query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">

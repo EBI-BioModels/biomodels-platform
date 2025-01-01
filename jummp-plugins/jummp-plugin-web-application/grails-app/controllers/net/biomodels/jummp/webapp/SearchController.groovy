@@ -343,23 +343,28 @@ under the format: ${response.format}"""
 
     private Map searchCore(String query, String domain, String sortBy,
                            String sortDirection, int offset = 0, int length = 20) {
-
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
-
+        Map<String, Object> results = initSearchResults(query)
         if (query == "*:*") {
             Map cached = searchService.retrieveCachedSearchAllResult()
             if (cached["models"]) {
-                return [query : query, offset: offset, length: length,
+                LOGGER.info("Load the search result from the cached: query ${query}, offset $offset, length $length")
+                results.putAll([query : query, offset: offset, length: length,
                         sortBy: sortBy, sortDirection: sortDirection, models: cached["models"],
                         facets: cached["facets"], facetStats: cached["facetStats"], matches: cached["matches"]
-                ]
+                ])
             } else {
-                doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy, sortDirection)
+                LOGGER.info("Hit EBI search due to the empty cached: query ${query}, offset $offset, length  $length")
+                results.putAll(doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy,
+                        sortDirection))
             }
         } else {
-            doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy, sortDirection)
+            LOGGER.info("Hit the EBI Search due to searching for query ${query}, offset $offset, length $length")
+            results.putAll(doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy,
+                    sortDirection))
         }
+        return results
     }
 
     private Map doSearch(String query, String domain,
@@ -452,6 +457,18 @@ under the format: ${response.format}"""
         sort
     }
 
+    private Map<String, Object> initSearchResults(final String query) {
+        Map<String, Object> result = ["imagePath": "/images"]
+        def domain = params.domain
+        if (!domain) {
+            domain = "biomodels"
+            result.put("domain", domain)
+        }
+        String queryString = query?.replaceAll('([^\\\\])"', '$1\\\\"')
+        result.put("queryString", queryString)
+
+        return result
+    }
     def lastAccessedModels = {
         List data = modelHistoryService.history()
         def dataToRender = []
