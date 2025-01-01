@@ -381,15 +381,6 @@ under the format: ${response.format}"""
             models = extractedSearchModels["models"] as List<MTC>
             facets = extractedSearchModels["facets"] as List<Facet>
             facetStats = extractedSearchModels["facetStats"]
-            if (offset > 0 && offset < models?.size()) {
-                models = models[offset..-1]
-            } else {
-                // reset the offset to the default value
-                offset = 0
-            }
-            if (models?.size() > length) {
-                models = models[0..length - 1]
-            }
             /**
              * By default, the query was encoded as HTML due to security vulnerability until here.
              * After using encoded query into search modules, we should decode it into the original

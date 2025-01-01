@@ -213,8 +213,8 @@
 
         <%
             int currentPage = 1
-            if (offset != 0) {
-                currentPage = (int) Math.ceil((double) (offset + 1) / (double) length)
+            if (params.containsKey("offset")) {
+                currentPage = (int) Math.ceil((double) offset / (double) length) + 1
             }
             int modelStart = 1 + (currentPage - 1)*length
             int modelEnd = length < models.size() ? length : models.size()
