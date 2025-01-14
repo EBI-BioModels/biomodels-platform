@@ -82,7 +82,7 @@ class CmsContentController {
                 id = content.id
             } else {
                 status = "Failed"
-                message = "Failed to save content"
+                message = "Failed to save content because ${contentMap.get('errors')}"
             }
         } else {
             status = "Failed"

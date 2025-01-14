@@ -85,6 +85,7 @@ Please correct it manually.""", cmd.parentAliasURI, cmd)
             result.put("message", "Success")
         } else {
             result.put("message", "Failure")
+            result.put("errors", content?.errors?.getAllErrors()*.defaultMessage)
         }
         result.put("content", content)
         result
