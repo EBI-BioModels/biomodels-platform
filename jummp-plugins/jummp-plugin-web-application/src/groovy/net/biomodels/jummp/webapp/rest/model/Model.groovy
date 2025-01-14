@@ -21,7 +21,10 @@
 package net.biomodels.jummp.webapp.rest.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.util.DefaultIndenter
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import grails.util.Holders
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
@@ -56,7 +59,7 @@ class Model {
         MTC model = revision.model
         submissionId = model.submissionId
         name = revision.name
-        description = revision.description
+        description = revision?.description?.replaceAll("\\r", "")?.replaceAll("\\n", "")
         format = new Format(revision.format)
         if (model.modellingApproach) {
             modellingApproach = new ModellingApproach(model.modellingApproach)
@@ -122,10 +125,20 @@ class Model {
 
     String outputModelAsString(String contentType) {
         // the contentType is either "application/json" or "application/xml"
-        ObjectMapper mapper = contentType == "application/json" ? new ObjectMapper() : new XmlMapper()
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
-        String result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this)
+        ObjectMapper mapper = new XmlMapper()
+        if (contentType == "application/json") {
+            mapper = new ObjectMapper()
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+            DefaultPrettyPrinter p = new DefaultPrettyPrinter()
+            DefaultPrettyPrinter.Indenter i = new DefaultIndenter("  ", "\r\n")
+            p.indentArraysWith(i)
+            p.indentObjectsWith(i)
+            mapper.setDefaultPrettyPrinter(p)
+        }
+
+        ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter()
+        String result = writer.writeValueAsString(this)
         result
     }
 }
