@@ -352,6 +352,13 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
         if (model.publicationId) {
             mapReturned.put("publicationId", model.publicationId)
         }
+        Revision revision
+        if (publishedRevs) {
+            revision = model.revisions.find { it.revisionNumber == publishedRevs[0] }
+        } else {
+            revision = model.revisions.find { it.revisionNumber == privateRevs[0] }
+        }
+        mapReturned.put("curationStatus", revision.curationState.name())
         return mapReturned
     }
 
