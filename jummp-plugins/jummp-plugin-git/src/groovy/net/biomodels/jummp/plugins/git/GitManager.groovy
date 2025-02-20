@@ -456,7 +456,7 @@ class GitManager implements VcsManager {
                 // return current HEAD revision
                 downloadFiles(modelDirectory, returnedFiles)
             } else {
-                if (!getRevisionsPrivate(modelDirectory, false).contains(revision))
+                if (!getRevisionsPrivate(modelDirectory, false).containsKey(revision))
                     throw new VcsException("Revision '$revision' not found in model directory '$modelDirectory' !")
                 String branchName = ""
                 try {
@@ -500,11 +500,11 @@ has not been initialised any VCS yet."""
      * Retrieves the revisions associated with the model by looking at the git log.
      *
      * Locks model directory. Iterates through the git log, adding the revision
-     * id associated with each commit to the returned list.
+     * id associated with each commit to the returned map.
      * @param modelDirectory The model directory
      */
     @Profiled(tag = "gitManager.getRevisions")
-    List<String> getRevisions(File modelDirectory) throws VcsException {
+    Map getRevisions(File modelDirectory) throws VcsException {
         return getRevisionsPrivate(modelDirectory, true)
     }
 
@@ -518,23 +518,29 @@ has not been initialised any VCS yet."""
      * @param acquireLocks Whether or not to acquire locks.
      */
     @Profiled(tag = "gitManager.getRevisionsPrivate")
-    private List<String> getRevisionsPrivate(File modelDirectory, boolean acquireLocks) {
+    private Map getRevisionsPrivate(File modelDirectory, boolean acquireLocks) {
         ensureRepInited(modelDirectory)
-        List<String> myList = new LinkedList<String>()
+        Map mapRev = new HashMap()
         if (acquireLocks) {
             lockModelRepository(modelDirectory)
         }
         try {
             Iterator<RevCommit> log = initedRepositories.get(modelDirectory).log().call().iterator()
             log.each {
-                myList.add(it.getName())
+                PersonIdent authorIdent = it.getAuthorIdent()
+                Date authorDate = authorIdent.getWhen()
+                // TimeZone authorTimeZone = authorIdent.getTimeZone()
+                // PersonIdent committerIdent = it.getCommitterIdent()
+                LOGGER.debug "${it.name}: ${authorDate}: ${it.shortMessage}"
+                Map map = [date: authorDate, message: it.fullMessage]
+                mapRev.put(it.name, map)
             }
         } finally {
             if (acquireLocks) {
                 unlockModelRepository(modelDirectory)
             }
         }
-        return myList
+        return mapRev
     }
 
     /**

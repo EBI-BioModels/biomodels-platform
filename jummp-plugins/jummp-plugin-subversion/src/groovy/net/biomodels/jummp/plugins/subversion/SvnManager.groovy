@@ -286,7 +286,7 @@ public class SvnManager implements VcsManager {
         throw new UnsupportedOperationException("This is a stub.")
     }
 
-    List getRevisions(File d) {
+    Map getRevisions(File d) {
         throw new UnsupportedOperationException("This is a stub.")
     }
 

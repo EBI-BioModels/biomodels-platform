@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2025 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -23,6 +23,7 @@ package net.biomodels.jummp.core.vcs;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @short Interface for a manager of a version control system (VCS).
@@ -34,7 +35,7 @@ import java.util.List;
  * the files in the working copy. All files are copied into the working copy for import/update
  * operations and copied to an exchange location for retrieval operations. This is required due to
  * the fact that another update operation might overwrite a retrieved file and the File handle
- * returned previously would not point to the retrieved revision anymore.
+ * returned previously would not point to the retrieved revision any more.
  *
  * To use a VcsManager the init method has to be invoked.
  *
@@ -125,10 +126,10 @@ public interface VcsManager {
 
     /**
      * Retrieves the revision ids from @p modelDirectory
-     * Returns the revision ids associated with the modelDirectory in the repository
+     * Returns the revision ids/hashes and their properties associated with the modelDirectory in the repository
      * @param modelDirectory the model directory
      */
-    List<String> getRevisions(File modelDirectory) throws VcsException;
+    Map getRevisions(File modelDirectory) throws VcsException;
 
     /**
      * Updates the working copy to the latest remote HEAD.

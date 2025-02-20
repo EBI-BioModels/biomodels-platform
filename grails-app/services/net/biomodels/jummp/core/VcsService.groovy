@@ -190,7 +190,7 @@ class VcsService implements GrailsConfigurationAware, InitializingBean {
     Map fixVcsIds(Model model) {
         Map returned = new HashMap()
         final File MODEL_FOLDER = new File(modelContainerRoot, model.vcsIdentifier)
-        List<String> commitHashes = vcsManager.getRevisions(MODEL_FOLDER)
+        Map commitHashes = vcsManager.getRevisions(MODEL_FOLDER)
         if (model.revisions.size() != commitHashes.size()) {
             String msg = "The number of commits and revisions aren't identical. Cannot fix VCS commits for the model ${model.submissionId}."
             returned["success"] = false
@@ -218,13 +218,18 @@ class VcsService implements GrailsConfigurationAware, InitializingBean {
         modelContainerRoot = fileSystemService.root.canonicalPath
     }
 
-    private Map updateVcsIds(Model model, List<String> hashes) {
+    private Map updateVcsIds(Model model, Map hashes) {
+        // sort the revisions descending their ids because the hashes are linear by time
+        Set<Revision> revisions = model.revisions.sort { r1, r2 ->
+            r2.id <=> r1.id
+        }
+
         int index = 0
-        List<String> revHashes = hashes.reverse()
-        // sort the revisions ascending their ids
-        Set<Revision> revisions = model.revisions.sort { it.id }
-        for (String hash : revHashes) {
-            revisions[index++].vcsId = hash
+        hashes.each { hash, value ->
+            revisions[index].vcsId = hash
+            revisions[index].uploadDate = value["date"] as Date
+            revisions[index].comment = value["message"]
+            index++
         }
         boolean success
         String msg
