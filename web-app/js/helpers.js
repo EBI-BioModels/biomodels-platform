@@ -61,7 +61,7 @@ function hideFlashMessages() {
  * @returns {boolean}   A logical value showing that the file name only contains the acceptable characters or not
  */
 function checkAcceptableCharactersForFileName(filename) {
-    let regexp = /^[\w\s\.\+\-]+\.[\w]+$/;
-    let retVal = filename.search(regexp) === -1 ? false : true;
-    return retVal;
+    const regexp = /^[a-zA-Z0-9._-]+$/;
+    const RE = new RegExp(regexp);
+    return RE.test(filename);
 }

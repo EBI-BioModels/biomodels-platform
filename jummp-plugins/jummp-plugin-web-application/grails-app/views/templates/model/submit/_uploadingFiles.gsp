@@ -254,7 +254,7 @@
             let isValid = checkAcceptableCharactersForFileName(filename);
             if (!isValid) {
                 let msg = "Please make sure the file name \'" + filename +
-                    "\' only containing alphanumeric characters, spaces, hyphens, plus signs and underscores. " +
+                    "\' only containing alphanumeric characters, hyphens and underscores. " +
                     "It should be followed by a proper file extension.";
                 messages.push(msg);
             }
