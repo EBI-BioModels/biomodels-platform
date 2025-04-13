@@ -667,12 +667,13 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
 
     Long fetchStatisticsTotalGOClasses() {
         // fetch the figure from Redis cache
-        Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-go-classes") as Long
+        /*Long total = redisService.doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-go-classes") as Long
         if (!total) {
             // call the fall back
             total = retrieveTotalGOClassesFromBioModels()
         }
-        total
+        total*/
+        0
     }
 
     Long fetchStatisticsTotalParametersEntries() {
