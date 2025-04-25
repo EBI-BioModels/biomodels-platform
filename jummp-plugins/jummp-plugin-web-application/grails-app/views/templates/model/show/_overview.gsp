@@ -109,6 +109,9 @@
         <biomd:doRenderOrAddGalaxyLink hasGalaxyLink="${hasGalaxyLink}" serverURL="${serverURL}"
                                        modelId="${revision.modelIdentifier()}"
                                        canAddGalaxyLink="${canAddGalaxyLink}"/>
+        <g:if test="${hasMenelmacarLink}">
+            <biomd:renderMenelmacarLink modelId="${revision.modelIdentifier()}" serverURL="${serverURL}"/>
+        </g:if>
         %{--<div class='row'>
             <div class="medium-3 columns">Validation Status</div>
             <div class="medium-9 columns">${validationLevel}</div>

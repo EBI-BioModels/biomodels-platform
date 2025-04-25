@@ -401,4 +401,13 @@ class BioModelsTagLib {
                 canRemoveGalaxyLink : attrs.canAddGalaxyLink
             ] as Map)
     }
+    def renderMenelmacarLink = { Map attrs ->
+        String modelId = attrs?.modelId as String
+        String href = "https://biomodels.bacpop.org/view/${modelId}"
+        out << render(template: "/templates/biomodels/modelDisplay/linkMenelmacar",
+            model: [
+                href: href,
+                externalResourceIcon: "${attrs.serverURL}/images/biomodels/menelmacar-logo.png"
+            ])
+    }
 }

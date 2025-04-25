@@ -860,6 +860,12 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
     }
 
     @NotTransactional
+    boolean retrieveMenelmacarLink(final String modelId) {
+        def value = redisService.doRedisHGet(modelId, "hasMenelmacarLink")
+        value ? true : false
+    }
+
+    @NotTransactional
     boolean doAddOrRemoveGalaxyLink(String modelId, String value) {
         LOGGER.info("Adding or removing GALAXY link $modelId -- $value")
         redisService.doRedisHSet(modelId, ["galaxyLink": value] as Map)

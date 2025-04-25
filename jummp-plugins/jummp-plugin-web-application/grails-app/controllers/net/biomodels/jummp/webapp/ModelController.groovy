@@ -409,7 +409,8 @@ class ModelController extends CommonController {
             reactomeUrl             : reactomeUrl,
             hrefLinkToNewtEditor    : hrefLinkToNewtEditor,
             hasRosetteLink          : modelDelegateService.retrieveRosetteLink(PERENNIAL_ID),
-            hasGalaxyLink           : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID)
+            hasGalaxyLink           : modelDelegateService.retrieveGalaxyLink(PERENNIAL_ID),
+            hasMenelmacarLink       : modelDelegateService.retrieveMenelmacarLink(PERENNIAL_ID)
         ]
     }
 
