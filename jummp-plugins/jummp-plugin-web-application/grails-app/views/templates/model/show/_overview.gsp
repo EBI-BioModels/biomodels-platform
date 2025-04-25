@@ -100,7 +100,7 @@
         <g:if test="${shouldDisplayDisclaimer}">
             <biomd:displayDisclaimer revision="${revision}"/></g:if>
         <div class="row rounded-header" style="margin-top: 1.0em"><h4 style="color: #ffffee">Connected external resources</h4></div>
-        <g:if test="${true}">
+        <g:if test="${hasRosetteLink}">
             <biomd:renderLinkOmicsDiRosette /></g:if>
         <g:if test="${hrefLinkToNewtEditor}">
             <biomd:renderLinkToNewtEditor serverURL="${serverURL}"
