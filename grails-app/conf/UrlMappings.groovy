@@ -167,6 +167,7 @@ class UrlMappings {
                 action: 'loadAllAnnotations')
         "/api/model/cache-annotations-organism-on-redis/$id?(.$format)?"(controller: 'model',
                 action: 'cacheAnnotationsAndOrganismOnRedis')
+        "/api/model/format/list"(controller: 'model', action: 'formats')
         "/api/post/create"(controller:'post', action:'createNewPost')
         "/api/user/list"(controller:'userAdministration', action:'list')
         "/api/submission/create"(controller: "submission", action: "create")

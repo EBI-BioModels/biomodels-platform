@@ -105,7 +105,7 @@ class ModelController extends CommonController {
        'searchModellingApproach', 'submit', 'terms', 'uploadFile',
        'identifiers', 'createCombineArchive', 'doAddOrRemoveGalaxyLink',
        'create', 'about', 'revisionsState', 'generateOmex', 'metadatardf', 'retrieveRevisionsState',
-       'retrieveModelLevelMetadata', 'cacheAnnotationsAndOrganismOnRedis', 'loadAllAnnotations'
+       'retrieveModelLevelMetadata', 'cacheAnnotationsAndOrganismOnRedis', 'loadAllAnnotations', 'formats'
     ]
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
@@ -458,6 +458,12 @@ class ModelController extends CommonController {
             String output = model.outputModelAsString(contentType)
             render(text: output, contentType: contentType)
         }
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def formats() {
+        Map mapResult = modelFileFormatService.getAllFormats()
+        handleRestApi(mapResult)
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])

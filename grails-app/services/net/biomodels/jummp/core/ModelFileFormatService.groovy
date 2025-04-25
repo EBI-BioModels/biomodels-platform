@@ -297,6 +297,16 @@ class ModelFileFormatService implements InitializingBean {
         return service ? service.getFormatVersion(revision) : "*"
     }
 
+    Map getAllFormats() {
+        List<ModelFormat> allFormats = ModelFormat.all
+        Map results = new HashMap()
+        for (ModelFormat format in allFormats) {
+            Map map = [name: format.name, identifier: format.identifier, version: format.version,
+                       formatVersion: format.formatVersion]
+            results.put(format.identifier, map)
+        }
+        results
+    }
     /**
      * Retrieves all annotation URNs through the service responsible for the format used
      * by the @p revision.
