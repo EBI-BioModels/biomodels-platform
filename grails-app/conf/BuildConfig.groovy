@@ -185,7 +185,9 @@ grails.project.dependency.resolution = {
         compile ":routing:1.3.2" //1.4.0
         //compile ":jms:1.2"
         compile(":mail:1.0.7")
-        compile ":simple-captcha:1.0.0"
+        compile (":simple-captcha:1.0.0") {
+            excludes("rest-client-builder")
+        }
         compile(":quartz:1.0.2")
         compile ":scaffold-core:1.3.2"
         compile ":spring-security-acl:2.0.1"
@@ -201,7 +203,9 @@ grails.project.dependency.resolution = {
         compile(":spring-security-rest:1.5.3") {
             excludes('spring-security-core', 'log4j-over-slf4j', 'slf4j-log4j12')
         }
-        runtime ":cors:1.3.0"
+        runtime (":cors:1.3.0") {
+            excludes("rest-client-builder")
+        }
 
         runtime ":database-migration:1.4.1"
         runtime ":hibernate4:4.3.10"
