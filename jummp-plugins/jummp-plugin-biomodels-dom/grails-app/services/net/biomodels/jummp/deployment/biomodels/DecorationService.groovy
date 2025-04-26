@@ -386,7 +386,7 @@ WHERE
     m.deleted = 0
     and m.submissionId NOT LIKE 'MODEL170711%'
     and m.submissionId NOT LIKE 'BMID%'
-GROUP BY p.journal
+GROUP BY p.id, p.journal
 '''
         def matchedModels = Model.executeQuery(query)
         Map<String, Integer> publications = new HashMap<>()
