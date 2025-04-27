@@ -82,7 +82,7 @@ class DecorationService implements InitializingBean {
      * @return A {@link Map} constructed by model identifiers associating with their names
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyAccessedModels')
-    private Map<String, String> buildListOfRecentlyAccessedModels() {
+    private static Map<String, String> buildListOfRecentlyAccessedModels() {
         String query ='''
 SELECT
     coalesce(m.publicationId, m.submissionId) as modelId,
@@ -105,7 +105,7 @@ WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
-GROUP BY rev.model
+GROUP BY rev.model, rev.name
 '''
         def now = new Date()
         def then = null
@@ -116,7 +116,7 @@ GROUP BY rev.model
             [then: then, now: now, max: ACCESSED_MAX_RECORDS]) as List<List>
         Map<String, String> returnedModels = new LinkedHashMap<>()
         matchedModels.each { row ->
-            String id = row[0]
+            String id = row[0] as String
             String name = row[1]
             returnedModels.put(id, name)
         }
