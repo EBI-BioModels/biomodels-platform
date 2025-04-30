@@ -132,7 +132,7 @@ GROUP BY rev.model, rev.name
      * @return A {@link Map} of {@link net.biomodels.jummp.statistic.RecentlyPublishedModel} objects
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
-    private Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
+    private static Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
         String query = '''
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
@@ -403,8 +403,8 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         def newsEntries = CmsContent.executeQuery(newsQuery, [aliasuri: 'news'], [max: 10])
         Map<String, String> data = [:]
         for (def entry : newsEntries) {
-            data.put(entry.aliasURI,
-                "${entry.createdOn.format('dd/MM/yyyy')}: ${entry.title}" as String)
+            String key = entry.aliasURI as String
+            data.put(key, "${entry.createdOn.format('dd/MM/yyyy')}: ${entry.title}" as String)
         }
         data
     }
@@ -508,9 +508,9 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         redisService.deleteAllByPattern(jedis, key)
     }
 
-    private Map<String, String> buildModelOfTheMonthEntry() {
+    private static Map<String, String> buildModelOfTheMonthEntry() {
         Date now = new Date()
-        final String query = "from ModelOfTheMonth where publishedFrom <= :now and :now < publishedUntil order by publishedFrom asc"
+        String query = "from ModelOfTheMonth where publishedFrom <= :now and :now < publishedUntil order by publishedFrom asc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query, [now: now])
         if (!theLatestMoM) {
             query = "from ModelOfTheMonth order by publicationDate desc"
@@ -619,7 +619,7 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         redisService.doRedisHGetAll(key)
     }
 
-    private Map<String, String> convert2RedisMap(final Map<String, Integer> inputMap) {
+    private static Map<String, String> convert2RedisMap(final Map<String, Integer> inputMap) {
         Map<String, String> returnedMap = new HashMap<>()
         for (entry in inputMap) {
             returnedMap.put(entry.key, Integer.toString(entry.value))
@@ -627,7 +627,7 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         returnedMap
     }
 
-    private Map<String, Integer> convertFromRedisMap(final Map<String, String> inputMap) {
+    private static Map<String, Integer> convertFromRedisMap(final Map<String, String> inputMap) {
         Map<String, Integer> returnedMap = new HashMap<>()
         for (entry in inputMap) {
             returnedMap.put(entry.key, Integer.parseInt(entry.value))
@@ -736,7 +736,7 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
      *
      * @return a long number as the total classes
      */
-    private long retrieveTotalGOClassesFromBioModels() {
+    private static long retrieveTotalGOClassesFromBioModels() {
         // TODO: will be implemented soon once this call is ready in Model Classifier Service
         /*String query = "query?nb_classes&format=json"
         def response = hitRemoteService(CLASSIFIER_SVR_URL, query)
@@ -784,7 +784,7 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         response
     }
 
-    private List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
+    private static List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
         // Take into account the fact that the input list was sorted in descending order
         LOGGER.debug("Scaling the counts of Organisms")
         ArrayList<OrganismData> originalData = new ArrayList<OrganismData>(organismData)
@@ -804,7 +804,7 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         normalisedData.toList()
     }
 
-    private Integer scaleDelta(Integer normalisedCount, final Float d) {
+    private static Integer scaleDelta(Integer normalisedCount, final Float d) {
         if (d > 2.0) {
             // decrease the count the i_th element just time, for example, 80% - 90% of
             // the delta between it and the closest lower count
