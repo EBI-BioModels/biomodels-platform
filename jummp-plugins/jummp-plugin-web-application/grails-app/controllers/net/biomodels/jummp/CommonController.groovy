@@ -55,14 +55,20 @@ class CommonController implements GrailsConfigurationAware {
         deployTarget = "local"
         EBI_BM_FTP = co.jummp.model.ftp.location
 
-        if (serverURL.contains("wwwdev")) {
+        if (serverURL.contains("wwwdev.ebi.ac.uk/biomodels")) {
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
             deployTarget = "dev"
             EBI_BM_FTP = BioModels.EBI_BMDEV_PUBLIC_FTP
-        } else if (Environment.current == Environment.PRODUCTION && !serverURL.contains("wwwdev")) {
+        } else if (Environment.current == Environment.PRODUCTION && serverURL.contains("www.ebi.ac.uk/biomodels")) {
             bmStaticAssetsURL = "${BioModels.BM_ROOT_URL}/static-assets"
             deployTarget = "prod"
             EBI_BM_FTP = BioModels.EBI_BMPROD_PUBLIC_FTP
+        } else if (serverURL.contains("biomodels.org") || serverURL.contains("biomodels.net")) {
+            // Presumably, biomodels.org and biomodels.net will be the official addresses after the migration
+            deployTarget = "prod"
+            // the following properties must be updated
+            // bmStaticAssetsURL
+            // EBI_BM_FTP -- should be renamed to make it neutrally
         } else {
             // local or dev target
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
