@@ -128,12 +128,16 @@
         <g:else>class="main-menu-item"</g:else>role="menuitem">
         <a><i class="icon icon-common icon-info"></i> <g:message code="jummp.aboutus.biomodels.title"/></a>
         <ul class="menu">
+            <li><a href="${g.createLink(controller: 'jummp', action: 'privacyPolicy')}">Privacy Policy</a></li>
+%{--            <li><a href="${g.createLink(url: 'https://www.ebi.ac.uk/ebisearch/assets/docs/privacy_notice_nov_2022.pdf')}">Privacy Policy</a></li>--}%
             <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
+            <li class="divider"></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
             <li><a href="${grailsApplication.config.grails.serverURL}/content/news">News</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'acknowledgements')}">Acknowledgements</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'curators')}">Curators</a></li>
+            <li class="divider"></li>
             <li><a>Model of the Year</a>
                 <ul class="menu">
                     <li><a href="${grailsApplication.config.grails.serverURL}/competition/model-of-the-year-2025">MOY2025</a></li>

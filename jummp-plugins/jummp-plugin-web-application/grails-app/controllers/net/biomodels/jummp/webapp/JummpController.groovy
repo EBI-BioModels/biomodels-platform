@@ -94,6 +94,17 @@ class JummpController extends CommonController {
         model
     }
 
+    def privacyPolicy() {
+        String url = "${COMMON_PROPERTIES["bmStaticAssetsURL"]}/info/privacy-notice-nov-2022.pdf"
+        URI uri = new URL(url).toURI()
+        render (
+            file: new URL(url).openStream(), // file could be stream
+            // file: new File(uri.getHost() + "/" + uri.getPath()), // to download file
+            fileName: "privacy-notice-nov-2022.pdf",
+            contentType: "application/pdf"
+        )
+    }
+
     def howToCiteBioModelsDatabase() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.howToCite.${theme}.title")

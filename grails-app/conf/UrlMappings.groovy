@@ -117,6 +117,7 @@ class UrlMappings {
         "/dev"(controller: "jummp", action: "developerZone")
         "/curation-docs"(controller: "jummp", action: "curatorZone")
         "/about"(controller: "jummp", action: "aboutus")
+        "/privacy"(controller: "jummp", action: "privacyPolicy")
         "/termsofuse"(controller: "jummp", action: "termsOfUse")
         "/citation"(controller: "jummp", action: "howToCiteBioModelsDatabase")
         "/contact"(controller: "jummp", action: "contactus")
