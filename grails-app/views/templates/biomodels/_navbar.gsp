@@ -129,7 +129,7 @@
         <a><i class="icon icon-common icon-info"></i> <g:message code="jummp.aboutus.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'privacyPolicy')}">Privacy Policy</a></li>
-%{--            <li><a href="${g.createLink(url: 'https://www.ebi.ac.uk/ebisearch/assets/docs/privacy_notice_nov_2022.pdf')}">Privacy Policy</a></li>--}%
+            %{-- <li><a href="${g.createLink(url: 'https://www.ebi.ac.uk/biomodels/static-assets/info/privacy-notice-nov-2022.pdf')}">Privacy Policy</a></li>--}%
             <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
             <li class="divider"></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
