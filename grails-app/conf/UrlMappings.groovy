@@ -178,6 +178,7 @@ class UrlMappings {
         "/api/contributor/load/$id(.$revisionId)?"(controller: "contributor", action: "load")
         "/api/contributor/role"(controller: "contributor", action: "role")
         "/api/search/index"(controller: "search", action: "indexViaAPI")
+        "/api/redis-cache/homepage/initiate-widgets"(controller: "homePage", action: "updateRedisCache")
 
         def cmsPrefix = "/cms"
         "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
