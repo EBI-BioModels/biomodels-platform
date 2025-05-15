@@ -235,7 +235,7 @@ class BioModelsTagLib {
 
     def renderTheLatestMoMEntryWidget = {
         Map<String, String> momEntry = decorationService.fetchMomEntry()
-        if (momEntry) {
+        if (!momEntry?.isEmpty()) {
             String curUsername = userService.getUsername() as String
             String hrefToEditor = ""
             boolean loggedIn = "anonymous" != curUsername
