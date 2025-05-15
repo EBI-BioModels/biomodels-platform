@@ -517,8 +517,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
                 max: count, offset: offset
             ]
         }
-
-        query ="$query ORDER BY m.id desc, r.revisionNumber, r.owner.username desc"
+        query ="$query ORDER BY m.id desc"
         List models = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
         return models
     }
