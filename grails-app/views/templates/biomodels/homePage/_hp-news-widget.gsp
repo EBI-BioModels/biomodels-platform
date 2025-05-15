@@ -1,3 +1,4 @@
+<%@ page import="groovy.time.TimeCategory" %>
 <style>
     .badge {
         display: inline;
@@ -21,8 +22,8 @@
             // TODO: move the following stuff to the backend or convert them into the business treatment
             String strDatePublished = news.value.take(10)
             Date datePublished = new Date().parse("dd/MM/yyyy", strDatePublished)
-            Integer nbDays
-            use(groovy.time.TimeCategory) {
+            Integer nbDays = 0
+            use(TimeCategory) {
                 def duration = new Date() - datePublished
                 nbDays = duration.days
             }

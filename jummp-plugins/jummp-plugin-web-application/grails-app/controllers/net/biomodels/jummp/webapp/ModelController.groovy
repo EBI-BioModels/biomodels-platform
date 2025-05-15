@@ -237,7 +237,7 @@ class ModelController extends CommonController {
                     model.putAll(doShowGetCheckConditions(PERENNIAL_ID, rev, repoFiles))
                     model.putAll(doShowGetCurationData(rev))
                     model.putAll(doShowGetExternalLinkedData(PERENNIAL_ID, rev, repoFiles))
-                    model.putAll(doShowGetAnnotationsBasedData(PERENNIAL_ID, rev, repoFiles))
+                    model.putAll(doShowGetAnnotationsBasedData(PERENNIAL_ID, rev))
                     if (rev.id == revision.id) {
                         if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE)) {
                             if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
@@ -343,8 +343,7 @@ class ModelController extends CommonController {
         ]
     }
 
-    private Map doShowGetAnnotationsBasedData(final String PERENNIAL_ID, final RTC revision,
-                                              final List<RFTC> repoFiles) {
+    private Map doShowGetAnnotationsBasedData(final String PERENNIAL_ID, final RTC revision) {
         List<STC> modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(revision)
         Map genericAnnotations = metadataDelegateService.fetchGenericAnnotations(modelLevelAnnotations)
         List<String> originalModels = metadataDelegateService.fetchOriginalModels(modelLevelAnnotations)
