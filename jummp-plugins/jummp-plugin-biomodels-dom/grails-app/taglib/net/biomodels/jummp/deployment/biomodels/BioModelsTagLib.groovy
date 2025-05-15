@@ -215,22 +215,34 @@ class BioModelsTagLib {
 
     def renderRecentlyAccessedModels = {
         Map<String, String> models = decorationService.fetchRecentlyAccessedModels()
-        out << render(template: "/templates/biomodels/homePage/hp-recently-accessed-models-widget",
-            model: [models: models])
+        if (models?.isEmpty()) {
+            out << render(template: "/templates/biomodels/homePage/theEmptyEntry")
+        } else {
+            out << render(template: "/templates/biomodels/homePage/hp-recently-accessed-models-widget",
+                    model: [models: models])
+        }
     }
 
     def renderRecentlyPublishedModels = {
         Map<String, RecentlyPublishedModel> models = decorationService.fetchRecentlyPublishedModels()
         String serverURL = grailsApplication.config.grails.serverURL
-        out << render(template: "/templates/biomodels/homePage/hp-recently-published-models-widget",
-                      model: [models: models, serverURL: serverURL])
+        if (models?.isEmpty()) {
+            out << render(template: "/templates/biomodels/homePage/theEmptyEntry")
+        } else {
+            out << render(template: "/templates/biomodels/homePage/hp-recently-published-models-widget",
+                    model: [models: models, serverURL: serverURL])
+        }
     }
 
     def renderNewsWidget = {
         Map<String, String> newsItems = decorationService.fetchDataNewsWidget()
         String serverURL = grailsApplication.config.grails.serverURL
-        out << render(template: "/templates/biomodels/homePage/hp-news-widget",
-            model: [newsItems: newsItems, serverURL: serverURL])
+        if (newsItems?.isEmpty()) {
+            out << render(template: "/templates/biomodels/homePage/theEmptyEntry")
+        } else {
+            out << render(template: "/templates/biomodels/homePage/hp-news-widget",
+                    model: [newsItems: newsItems, serverURL: serverURL])
+        }
     }
 
     def renderTheLatestMoMEntryWidget = {
@@ -248,7 +260,7 @@ class BioModelsTagLib {
             momEntry.put("hrefToEditor", hrefToEditor)
             out << render(template: "/templates/biomodels/homePage/theLatestMomEntryWidget", model: momEntry)
         } else {
-            out << render(template: "/templates/biomodels/homePage/theEmptyMoMEntry")
+            out << render(template: "/templates/biomodels/homePage/theEmptyEntry")
         }
     }
 
