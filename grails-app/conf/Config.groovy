@@ -964,3 +964,9 @@ if (!(jummpConfig.jummp.model.ftp.location instanceof ConfigObject)) {
 } else {
     jummp.model.ftp.location = "ftp://127.0.0.1:9000"
 }
+brutforce {
+    loginAttempts {
+        time = 5
+        allowedNumberOfAttempts = 3
+    }
+}

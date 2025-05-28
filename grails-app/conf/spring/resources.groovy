@@ -29,6 +29,11 @@
 **/
 
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.PropertyAccessor
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.persistence.Entity
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
@@ -44,8 +49,9 @@ import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGene
 import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
 import net.biomodels.jummp.plugins.bives.RevisionCreatedListener
+import net.biomodels.jummp.plugins.security.BioModelsAuthFailureHandler
 import net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler
-import net.biomodels.jummp.plugins.security.RestAccessTokenService
+import net.biomodels.jummp.security.LoginAttemptCacheService
 import net.biomodels.jummp.search.OmicsdiBasedSearch
 import net.biomodels.jummp.search.SolrBasedSearch
 import net.biomodels.jummp.search.SolrServerHolder
@@ -150,6 +156,17 @@ beans = {
         useReferer = conf.successHandler.useReferer
     }
 
+    authenticationFailureHandler(BioModelsAuthFailureHandler) {
+        def conf = SpringSecurityUtils.securityConfig
+
+        redirectStrategy = ref('redirectStrategy')
+        loginAttemptCacheService = ref('loginAttemptCacheService')
+        defaultFailureUrl = conf.failureHandler.defaultFailureUrl //'/login/authfail?login_error=1'
+        useForward = conf.failureHandler.useForward // false
+        ajaxAuthenticationFailureUrl = conf.failureHandler.ajaxAuthFailUrl // '/login/authfail?ajax=true'
+        exceptionMappings = conf.failureHandler.exceptionMappings // [:]
+        allowSessionCreation = conf.failureHandler.allowSessionCreation // true
+    }
     //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
     // This section defines model identifier related beans.
@@ -287,10 +304,46 @@ beans = {
     // override definition to use the one from the annotation-source-ddmore plugin
     springConfig.addAlias("metadataInfoService", "metadataInformationService")
 
-    jf(com.fasterxml.jackson.core.JsonFactory)
+    jf(JsonFactory)
 
-    objectMapper(com.fasterxml.jackson.databind.ObjectMapper, jf) {
-        visibility(com.fasterxml.jackson.annotation.PropertyAccessor.ALL, com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
-        configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    objectMapper(ObjectMapper, jf) {
+        visibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
+
+    /*
+    authenticationFailureListener(AuthenticationFailureListener) { bean ->
+        bean.scope = "singleton"
+        bean.autowire = "byName"
+        bean.singleton = true
+        producerTemplate = ref("producerTemplate")
+        modelService = ref("modelService")
+        springSecurityService = ref("springSecurityService")
+        grailsApplication = ref("grailsApplication")
+        configurationService = ref("configurationService")
+        miriamService = ref("miriamService")
+        aclUtilService = ref("aclUtilService")
+        loginAttemptCacheService = ref('loginAttemptCacheService')
+    }
+
+    authenticationSuccessEventListener(AuthenticationSuccessEventListener) { bean ->
+        bean.scope = "singleton"
+        bean.autowire = "byName"
+        bean.singleton = true
+        producerTemplate = ref("producerTemplate")
+        modelService = ref("modelService")
+        springSecurityService = ref("springSecurityService")
+        grailsApplication = ref("grailsApplication")
+        configurationService = ref("configurationService")
+        miriamService = ref("miriamService")
+        aclUtilService = ref("aclUtilService")
+        loginAttemptCacheService = ref('loginAttemptCacheService')
+    }*/
+
+    loginAttemptCacheService(LoginAttemptCacheService) { bean ->
+        bean.scope = "singleton"
+        bean.autowire = "byName"
+        bean.singleton = true
+        grailsApplication = ref("grailsApplication")
     }
 }
