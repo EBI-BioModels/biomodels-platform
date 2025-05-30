@@ -217,8 +217,9 @@ class UsermanagementController extends CommonController {
             try {
                 userService.resetPassword(cmd.hashCode, cmd.username, cmd.newPassword)
             } catch (Exception e) {
-                flash.message = "password.reset.service.error"
+                flash.message = e.getMessage()
                 redirect(action: "reset")
+                return
             }
             flash.flashMessage = "The password for ${cmd.username} was updated successfully. Please log in BioModels with your newly updated password."
             redirect(controller: "login", action: "auth")
