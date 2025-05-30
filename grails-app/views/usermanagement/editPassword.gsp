@@ -152,14 +152,16 @@
                 tips.push(tip);
             } else {
                 strength += 1;
-                tips.splice( $.inArray(tip, tips), 1);
+                // tips.splice( $.inArray(tip, tips), 1);
+                tips = jQuery.grep(tips, function(value) { return value !== tip; });
             }
 
             // Check for mixed case
             tip = "Use both lowercase and uppercase letters.";
             if (password.match(/[a-z]/) && password.match(/[A-Z]/)) {
                 strength += 1;
-                tips.splice( $.inArray(tip, tips), 1);
+                // tips.splice( $.inArray(tip, tips), 1);
+                tips = jQuery.grep(tips, function(value) { return value !== tip; });
             } else {
                 tips.push(tip);
             }
@@ -168,7 +170,8 @@
             tip = "Include at least one number.";
             if (password.match(/\d/)) {
                 strength += 1;
-                tips.splice( $.inArray(tip, tips), 1);
+                // tips.splice( $.inArray(tip, tips), 1);
+                tips = jQuery.grep(tips, function(value) { return value !== tip; });
             } else {
                 tips.push(tip);
             }
@@ -177,7 +180,8 @@
             tip = "Include at least one special character.";
             if (password.match(/[^a-zA-Z\d]/)) {
                 strength += 1;
-                tips.splice( $.inArray(tip, tips), 1);
+                // tips.splice( $.inArray(tip, tips), 1);
+                tips = jQuery.grep(tips, function(value) { return value !== tip; });
             } else {
                 tips.push(tip);
             }
