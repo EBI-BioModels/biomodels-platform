@@ -244,7 +244,7 @@ class UsermanagementController extends CommonController {
             try {
                 userService.changePassword(cmd.oldPassword, cmd.newPassword)
             } catch (Exception e) {
-                flash.message = e.getMessage();
+                flash.message = e.getMessage()
                 redirect(action: "editPassword")
                 return
             }

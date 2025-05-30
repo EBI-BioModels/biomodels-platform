@@ -20,11 +20,11 @@
 
 
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="net.biomodels.jummp.utils.MathUtils" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <title>${title}</title>
-    <meta name="layout" content="${session['branding.style']}/main" />
+    <g:render template="/usermanagement/head"/>
 </head>
 <body>
     <div class="row">
@@ -55,7 +55,7 @@
             </g:form>
         </div>
     </div>
-    <script>
+    <g:javascript>
         const helpText = $('.help-text');
         const oldPassword = $('#oldPassword');
         const newPassword = $('#newPassword');
@@ -95,18 +95,45 @@
             return retVal;
         }
 
-        function validateNewPassword() {
+        function validateNewPassword(showWarning = false) {
             const newPasswordVal = newPassword.val();
             let s = checkPasswordStrength(newPasswordVal);
             let retVal = s.tips.length === 0;
             const newPasswordHelp = $("#new-password-help");
-            if (!retVal) {
-                newPasswordHelp.show();
-                newPasswordHelp.html(s.tips.join("<br/>"));
-            } else {
-                newPasswordHelp.hide();
-                newPasswordHelp.html("");
+            let colourCode;
+            switch (s.strengthLevel) {
+                case "${MathUtils.PWD_HARD_LEVEL.EASY.label}":
+                    colourCode = "red";
+                    if (showWarning) {
+                        toastr.error(s.strengthLevel);
+                    }
+                    break;
+                case "${MathUtils.PWD_HARD_LEVEL.MEDIUM.label}":
+                    colourCode = "orange";
+                    if (showWarning) {
+                        toastr.warn(s.strengthLevel);
+                    }
+                    break;
+                case "${MathUtils.PWD_HARD_LEVEL.HARD.label}":
+                    colourCode = "cornflowerblue";
+                    if (showWarning) {
+                        toastr.info(s.strengthLevel);
+                    }
+                    break;
+                case "${MathUtils.PWD_HARD_LEVEL.X_HARD.label}":
+                    colourCode = "green";
+                    if (showWarning) {
+                        toastr.success(s.strengthLevel);
+                    }
+                    break;
             }
+            let msg = '<span style="color: ' + colourCode + '">' + s.strengthLevel + '</span>';
+            if (!retVal) {
+                msg += "<br/>" + s.tips.join("<br/>");
+            }
+            newPasswordHelp.show();
+            newPasswordHelp.html(msg);
+
             return retVal;
         }
 
@@ -133,7 +160,7 @@
         function validateForm() {
             console.log("Validating the form of changing password...");
             const oldPassCheck = validateOldPassword();
-            const newPassCheck = validateNewPassword();
+            const newPassCheck = validateNewPassword(true);
             const newPasswordRptCheck = validateNewPasswordRpt();
             const retVal = oldPassCheck && newPassCheck && newPasswordRptCheck;
             console.log(retVal);
@@ -141,6 +168,7 @@
         }
 
         function checkPasswordStrength(password) {
+            // source: https://martech.zone/javascript-password-strength/
             // Initialize variables
             let strength = 0;
             let strengthLevel;
@@ -198,7 +226,7 @@
             }
             return { strength: strength, strengthLevel: strengthLevel, tips: tips };
         }
-    </script>
+    </g:javascript>
 </body>
 </html>
 <content tag="title">
