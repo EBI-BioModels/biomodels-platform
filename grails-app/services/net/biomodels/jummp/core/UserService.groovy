@@ -454,7 +454,8 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             newUser.person.save(flush:true, failOnError: true)
         }
         boolean adminRegistration = false
-        String p = MathUtils.generatePassword( (('A'..'Z')+('0'..'9')).join(), 6 )
+        final String sequence = (('A'..'Z')+('a..z')+('0'..'9')+"!\"#\$%&'()*+,-./:;<=>?@[\\]^_`{|}~").join()
+        String p = MathUtils.generatePassword(sequence, 10)
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             // admin creates with a random password that is emailed to the user.
             newUser.enabled = true
