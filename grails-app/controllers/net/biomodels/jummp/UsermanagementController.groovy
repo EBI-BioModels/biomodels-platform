@@ -241,12 +241,14 @@ class UsermanagementController extends CommonController {
         withForm {
             if (!cmd.validate()) {
                 redirect(action: "editPassword")
+                return
             }
             try {
                 userService.changePassword(cmd.oldPassword, cmd.newPassword)
             } catch (Exception e) {
                 flash.message = e.getMessage();
                 redirect(action: "editPassword")
+                return
             }
             flash.message = "Your password was updated successfully!"
             redirect(action: "show")

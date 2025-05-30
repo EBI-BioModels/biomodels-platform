@@ -22,32 +22,180 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
-    <head>
-        <title>${title}</title>
-        <meta name="layout" content="${session['branding.style']}/main" />
-     </head>
-    <body>
-        <div class="row">
-            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <h3>Change your password</h3>
-                <g:form action="updatePassword" useToken="true">
-                    <div class="row column edit-password-form">
-                        <label class="required" for="oldPassword"><g:message code="user.administration.updatePassword.oldPassword"/></label>
-                        <g:passwordField name="oldPassword"/>
-
-                        <label class="required" for="newPassword"><g:message code="user.administration.updatePassword.newPassword"/></label>
-                        <g:passwordField name="newPassword"/>
-
-                        <label class="required" for="newPasswordRpt"><g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
-                        <g:passwordField name="newPasswordRpt"/>
-                        <p class="buttons">
-                            <input type="submit" class="button" value="${g.message(code: 'user.administration.updatePassword.submit')}"/>
-                        </p>
-                    </div>
-                </g:form>
-            </div>
+<head>
+    <title>${title}</title>
+    <meta name="layout" content="${session['branding.style']}/main" />
+</head>
+<body>
+    <div class="row">
+        <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
+            <h3>Change your password</h3>
+            <g:form action="updatePassword" useToken="true" onsubmit="return validateForm()">
+                <div class="row column edit-password-form">
+                    <label class="required" for="oldPassword">
+                        <g:message code="user.administration.updatePassword.oldPassword"/></label>
+                    <g:passwordField id="oldPassword" name="oldPassword" required="required"
+                                     placeholder="Current password"/>
+                    <p class="help-text" id="old-password-help" style="color: red !important;"></p>
+                    <label class="required" for="newPassword">
+                        <g:message code="user.administration.updatePassword.newPassword"/></label>
+                    <g:passwordField id="newPassword" name="newPassword" required="required"
+                                     placeholder="New password"/>
+                    <div class="help-text" id="new-password-help" style="color: red !important;"></div>
+                    <label class="required" for="newPasswordRpt">
+                        <g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
+                    <g:passwordField id="newPasswordRpt" name="newPasswordRpt" required="required"
+                                     placeholder="Retype new password"/>
+                    <p class="help-text" id="new-password-rpt-help" style="color: red !important;"></p>
+                    <p class="buttons">
+                        <input type="submit" class="button"
+                               value="${g.message(code: 'user.administration.updatePassword.submit')}"/>
+                    </p>
+                </div>
+            </g:form>
         </div>
-   </body>
+    </div>
+    <script>
+        const helpText = $('.help-text');
+        const oldPassword = $('#oldPassword');
+        const newPassword = $('#newPassword');
+        const newPasswordRpt = $('#newPasswordRpt');
+        $(document).ready(function(){
+            doShowOrHideAllHelp(false);
+        });
+
+        function doShowOrHideAllHelp(flag) {
+            flag ? helpText.show()  : helpText.hide();
+        }
+
+        oldPassword.on("change blur keyup keydown keypress", function() {
+            validateOldPassword();
+        });
+
+        newPassword.on("change blur keyup keydown keypress", function() {
+            validateNewPassword();
+        });
+
+        newPasswordRpt.on("change blur keyup keydown keypress", function() {
+            validateNewPasswordRpt();
+        });
+
+        function validateOldPassword() {
+            const oldPasswordVal = oldPassword.val();
+            let retVal;
+            const oldPasswordHelp = $("#old-password-help");
+            if (oldPasswordVal.length === 0) {
+                oldPasswordHelp.show();
+                oldPasswordHelp.text("Please enter your current password!");
+                retVal = false;
+            } else {
+                oldPasswordHelp.hide();
+                retVal = true;
+            }
+            return retVal;
+        }
+
+        function validateNewPassword() {
+            const newPasswordVal = newPassword.val();
+            let s = checkPasswordStrength(newPasswordVal);
+            let retVal = s.tips.length === 0;
+            const newPasswordHelp = $("#new-password-help");
+            if (!retVal) {
+                newPasswordHelp.show();
+                newPasswordHelp.html(s.tips.join("<br/>"));
+            } else {
+                newPasswordHelp.hide();
+                newPasswordHelp.html("");
+            }
+            return retVal;
+        }
+
+        function validateNewPasswordRpt() {
+            const newPasswordRptVal = newPasswordRpt.val();
+            const newPasswordVal = newPassword.val();
+            const newPasswordRptHelp = $("#new-password-rpt-help");
+            let retVal;
+            if (newPasswordRptVal.length === 0) {
+                retVal = false;
+                newPasswordRptHelp.show();
+                newPasswordRptHelp.html("Please retype your new password!");
+            } else if (newPasswordVal !== newPasswordRptVal) {
+                retVal = false;
+                newPasswordRptHelp.show();
+                newPasswordRptHelp.html("New password does not match!");
+            } else {
+                retVal = true;
+                newPasswordRptHelp.hide();
+            }
+            return retVal;
+        }
+
+        function validateForm() {
+            console.log("Validating the form of changing password...");
+            const oldPassCheck = validateOldPassword();
+            const newPassCheck = validateNewPassword();
+            const newPasswordRptCheck = validateNewPasswordRpt();
+            const retVal = oldPassCheck && newPassCheck && newPasswordRptCheck;
+            console.log(retVal);
+            return retVal;
+        }
+
+        function checkPasswordStrength(password) {
+            // Initialize variables
+            let strength = 0;
+            let strengthLevel;
+            let tips = [];
+
+            // Check password length
+            let tip = "Make the password longer.";
+            if (password.length < 10) {
+                tips.push(tip);
+            } else {
+                strength += 1;
+                tips.splice( $.inArray(tip, tips), 1);
+            }
+
+            // Check for mixed case
+            tip = "Use both lowercase and uppercase letters.";
+            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) {
+                strength += 1;
+                tips.splice( $.inArray(tip, tips), 1);
+            } else {
+                tips.push(tip);
+            }
+
+            // Check for numbers
+            tip = "Include at least one number.";
+            if (password.match(/\d/)) {
+                strength += 1;
+                tips.splice( $.inArray(tip, tips), 1);
+            } else {
+                tips.push(tip);
+            }
+
+            // Check for special characters
+            tip = "Include at least one special character.";
+            if (password.match(/[^a-zA-Z\d]/)) {
+                strength += 1;
+                tips.splice( $.inArray(tip, tips), 1);
+            } else {
+                tips.push(tip);
+            }
+
+            // Return results
+            if (strength < 2) {
+                 strengthLevel = "Easy to guess.";
+            } else if (strength === 2) {
+                strengthLevel = "Medium difficulty." ;
+            } else if (strength === 3) {
+                strengthLevel =  "Difficult.";
+            } else {
+                strengthLevel = "Extremely difficult.";
+            }
+            return { strength: strength, strengthLevel: strengthLevel, tips: tips };
+        }
+    </script>
+</body>
 </html>
 <content tag="title">
     <g:message code="user.administration.updatePassword.heading"/>

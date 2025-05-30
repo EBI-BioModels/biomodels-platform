@@ -370,14 +370,15 @@ function validateInputLength(element, minLength, maxLength, messageHolder) {
     $(element).on('keydown keyup change', function(){
         const char = $(this).val();
         const charLength = $(this).val().length;
-        if (charLength < minLength){
+        if (charLength < minLength) {
             $(messageHolder).text('Length is short, minimum '+minLength+' characters required.');
             setTimeout(function() { $(this).focus(); }, 0);
-        } else if (charLength > maxLength){
+        } else if (charLength > maxLength) {
             $(messageHolder).text('Length is not valid, maximum '+maxLength+' characters allowed.');
             $(this).val(char.substring(0, maxLength));
         } else {
             $(messageHolder).text('');
         }
+        $(messageHolder).show();
     });
 }
