@@ -37,6 +37,22 @@ import java.util.concurrent.ThreadLocalRandom
  * @author Tung Nguyen, nvntung@gmail.com
  */
 class MathUtils {
+    enum PWD_HARD_LEVEL {
+        EASY("Easy to guess."),
+        MEDIUM("Medium difficulty."),
+        HARD("Difficult."),
+        X_HARD("Extremely difficult.")
+
+        final String label
+
+        PWD_HARD_LEVEL(String label) {
+            this.label = label
+        }
+
+        String toString() {
+            return this.label
+        }
+    }
     static final int rand(int min, int max) {
         return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
@@ -54,5 +70,50 @@ class MathUtils {
             }
         }
         return true
+    }
+
+    /**
+     * Checks the strength of a given password
+     * Source: https://martech.zone/javascript-password-strength/
+     *
+     * @param password
+     * @return the difficulty level
+     */
+    static String checkPasswordStrength(String password) {
+        // Initialize variables
+        int strength = 0
+
+        // Check password length
+        if (password.length() < 8) {
+            return PWD_HARD_LEVEL.EASY.label
+        } else {
+            strength += 1
+        }
+
+        // Check for mixed case
+        if (password.matches(".*[a-z].*") && password.matches(".*[A-Z].*")) {
+            strength += 1
+        }
+
+        // Check for numbers
+        if (password.matches(".*\\d.*")) {
+            strength += 1
+        }
+
+        // Check for special characters
+        if (password.matches(".*[^a-zA-Z\\d].*")) {
+            strength += 1
+        }
+
+        // Return strength level
+        if (strength < 2) {
+            return PWD_HARD_LEVEL.EASY.label
+        } else if (strength == 2) {
+            return PWD_HARD_LEVEL.MEDIUM.label
+        } else if (strength == 3) {
+            return PWD_HARD_LEVEL.HARD.label
+        } else {
+            return PWD_HARD_LEVEL.X_HARD.label
+        }
     }
 }

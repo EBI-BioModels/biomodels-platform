@@ -148,9 +148,18 @@ class UserService implements IUserService, InitializingBean {
         newPassword = newPassword.decodeHTML()
         User user = (User)springSecurityService.getCurrentUser()
         if (user.password != springSecurityService.encodePassword(oldPassword, null)) {
-            throw new BadCredentialsException("Cannot change password, old password is incorrect")
+            String msg = "Cannot change password, old password is incorrect"
+            LOGGER.error("${user.username}: ${msg}")
+            throw new BadCredentialsException(msg)
         }
-        // TODO: verify password strength?
+        String hardLevel = MathUtils.checkPasswordStrength(newPassword)
+        if (hardLevel != MathUtils.PWD_HARD_LEVEL.X_HARD.label) {
+            String msg = """Password is insufficiently strong! A strong password is: at least 12 characters long but \
+14 or more is better. It is recommended to be any combination of lowercase and uppercase letters, numbers, and \
+symbols (ASCII-standard characters only). Accents and accented characters aren't supported."""
+            LOGGER.warn("${user.username}: ${msg}")
+            throw new BadCredentialsException(msg)
+        }
         user.password = springSecurityService.encodePassword(newPassword, null)
         user.passwordExpired = false
         user.save()
