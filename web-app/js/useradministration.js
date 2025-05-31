@@ -3,11 +3,14 @@
 $.jummp.userAdministration = {};
 $.jummp.userAdministration.changeUser = function (userId, field, target) {
     "use strict";
+    const value = $("#" + field).prop("checked");
     $.ajax({
-        url: target + "/" + userId,
-        dataType: 'json',
-        data: {value: $("#" + field).prop("checked")},
-        cache: 'false',
+        url: "/biomodels/userAdministration/" + target + "/" + userId,
+        dataType: "json",
+        data: {
+            value: value
+        },
+        cache: "false",
         success: function () {
             // redraw the dataTable to reset all changes
             $('#userTable').dataTable().fnDraw();
@@ -15,28 +18,46 @@ $.jummp.userAdministration.changeUser = function (userId, field, target) {
     });
 };
 
+$.jummp.userAdministration.handleCheckboxChange = function (target) {
+    console.log(target.value);
+}
+
+$(document).on('click', ".chk-feature", function (e) {
+    if ($(this).prop("checked")) {
+        $(this).attr("checked", true);
+    } else {
+        $(this).removeAttr("checked");
+    }
+});
+
 $.jummp.userAdministration.loadUserList = function () {
     "use strict";
-    var createUserChangeMarkup = function (id, target, enabled) {
-        var html, checkboxId;
-        checkboxId = "user-change-" + id + "-" + target;
+    const createUserChangeMarkup = function (id, target, enabled) {
+        let html;
+        const checkboxId = "user-change-" + id + "-" + target;
         html = '<input type="checkbox" id="' + checkboxId + '" ';
         if (enabled) {
-            html += 'checked="checked"';
+            html += 'checked="checked" class="chk-feature"';
         }
-        html += '/><input type="button" value="update" onclick="$.jummp.userAdministration.changeUser(' + id + ', \'' + checkboxId + '\', \'' + target + '\')"/>';
+        html += '/>&nbsp;<input type="button" class="button" value="update" ' +
+            'onclick="$.jummp.userAdministration.changeUser(' + id + ', \'' + checkboxId + '\', \'' + target + '\')"/>';
         return html;
     };
+
     $('#userTable').dataTable({
         // TODO: in future it might be interesting to allow filtering
         responsive: true,
         bFilter: false,
         columnDefs: [{
             targets: 2, /* For real name column */
-            width: "12%"
-        },{
+            width: "5%"
+        }, {
+            targets: 4, /* For institution column */
+            width: "10%",
+            visible: false
+        }, {
             targets: 5, /* For ORCID Identifier column */
-            width: "12%"
+            width: "5%"
         }],
         aLengthMenu: [[5, 10, 15, 20, 25, 50, 100, -1], [5, 10, 15, 20, 25, 50, 100, "All"]],
         bProcessing: true,
@@ -55,7 +76,7 @@ $.jummp.userAdministration.loadUserList = function () {
                     fnCallback({aaData: [], iTotalRecords: 0, iTotalDisplayRecords: 0});
                 },
                 "success": function (json) {
-                    var rowData, id, i;
+                    let rowData, id, i;
                     for (i = 0; i < json.aaData.length; i += 1) {
                         rowData = json.aaData[i];
                         id = rowData[0];
@@ -77,8 +98,8 @@ $.jummp.userAdministration.loadUserList = function () {
 
 $.jummp.userAdministration.editUser = function () {
     "use strict";
-    $("#user-role-management table tr a").click(function () {
-        var link, id, container, userId, action;
+    $("#user-role-management table tr a").on("click", function () {
+        let link, id, container, userId, action;
         link = $(this);
         id = link.prev().val();
         container = link.parents("div")[0];

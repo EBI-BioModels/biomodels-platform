@@ -92,7 +92,9 @@ class UserAdministrationController extends CommonController {
 
         List users = userService.getAllUsers(start, length)
         users.each { user ->
-            dataToRender.aaData << [user.id, user.username, user.person.userRealName, user.email, user.person.institution, user.person.orcid, user.enabled, user.accountExpired, user.accountLocked, user.passwordExpired]
+            dataToRender.aaData << [user.id, user.username, user.person.userRealName, user.email,
+                                    user.person.institution, user.person.orcid, user.enabled,
+                                    user.accountExpired, user.accountLocked, user.passwordExpired]
         }
         render dataToRender as JSON
     }
@@ -102,8 +104,8 @@ class UserAdministrationController extends CommonController {
      */
     def enable = {
         try {
-            def data = [success: userService.enableUser(params.id as Long,
-                Boolean.parseBoolean(params.value))]
+            boolean result = userService.enableUser(params.id as Long, params.getBoolean("value"))
+            Map data = [success: result]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -116,8 +118,7 @@ class UserAdministrationController extends CommonController {
      */
     def lockAccount = {
         try {
-            def data = [success: userService.lockAccount(params.id as Long,
-                Boolean.parseBoolean(params.value))]
+            def data = [success: userService.lockAccount(params.id as Long, params.getBoolean("value"))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]

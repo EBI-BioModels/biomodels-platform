@@ -365,7 +365,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     Boolean enableUser(Long userId, Boolean enable) throws UserNotFoundException {
         User user = User.get(userId)
         if (!user) {
-            throw new UserNotFoundException(userId)
+            throw new UserNotFoundException("User with userId = ${userId} doesn't exist!")
         }
         if (user.enabled != enable) {
             user.enabled = enable

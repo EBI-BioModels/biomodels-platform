@@ -49,8 +49,8 @@
                              src="${serverURL}/images/user_add.png" alt="Add a new user"/>
                     </span>
                 </a>
-                <div class="view-content rown column">
-                    <table id="userTable" class="display responsive nowrap" width="100%">
+                <div class="view-content row">
+                    <table id="userTable" class="display responsive nowrap table" style="width: 100%">
                         <thead>
                         <tr>
                             <th><g:message code="user.administration.list.id"/></th>
