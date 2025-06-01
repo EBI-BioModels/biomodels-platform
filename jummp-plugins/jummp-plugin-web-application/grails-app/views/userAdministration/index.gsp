@@ -87,6 +87,13 @@
         <g:javascript>
             $(function() {
                 $.jummp.userAdministration.loadUserList();
+                /*
+                select { width: 100% } defined in ebi-global.css breaks the label
+                and the number are on different line. Removing this attribute after
+                loading the entire data table resolved the issue.
+                */
+                const ele = $('select[name="userTable_length"]');
+                ele.css('width', 'auto');
             });
         </g:javascript>
     </body>

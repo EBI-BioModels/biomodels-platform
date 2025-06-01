@@ -18,10 +18,6 @@ $.jummp.userAdministration.changeUser = function (userId, field, target) {
     });
 };
 
-$.jummp.userAdministration.handleCheckboxChange = function (target) {
-    console.log(target.value);
-}
-
 $(document).on('click', ".chk-feature", function (e) {
     if ($(this).prop("checked")) {
         $(this).attr("checked", true);
