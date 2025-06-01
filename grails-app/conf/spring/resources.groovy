@@ -149,6 +149,7 @@ beans = {
         /* Configuring the bean */
         requestCache = ref('requestCache')
         redirectStrategy = ref('redirectStrategy')
+        loginAttemptCacheService = ref('loginAttemptCacheService')
         defaultTargetUrl = conf.successHandler.defaultTargetUrl
         alwaysUseDefaultTargetUrl = conf.successHandler.alwaysUseDefault
         targetUrlParameter = conf.successHandler.targetUrlParameter
@@ -158,7 +159,6 @@ beans = {
 
     authenticationFailureHandler(BioModelsAuthFailureHandler) {
         def conf = SpringSecurityUtils.securityConfig
-
         redirectStrategy = ref('redirectStrategy')
         loginAttemptCacheService = ref('loginAttemptCacheService')
         defaultFailureUrl = conf.failureHandler.defaultFailureUrl //'/login/authfail?login_error=1'
@@ -310,35 +310,6 @@ beans = {
         visibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
-
-    /*
-    authenticationFailureListener(AuthenticationFailureListener) { bean ->
-        bean.scope = "singleton"
-        bean.autowire = "byName"
-        bean.singleton = true
-        producerTemplate = ref("producerTemplate")
-        modelService = ref("modelService")
-        springSecurityService = ref("springSecurityService")
-        grailsApplication = ref("grailsApplication")
-        configurationService = ref("configurationService")
-        miriamService = ref("miriamService")
-        aclUtilService = ref("aclUtilService")
-        loginAttemptCacheService = ref('loginAttemptCacheService')
-    }
-
-    authenticationSuccessEventListener(AuthenticationSuccessEventListener) { bean ->
-        bean.scope = "singleton"
-        bean.autowire = "byName"
-        bean.singleton = true
-        producerTemplate = ref("producerTemplate")
-        modelService = ref("modelService")
-        springSecurityService = ref("springSecurityService")
-        grailsApplication = ref("grailsApplication")
-        configurationService = ref("configurationService")
-        miriamService = ref("miriamService")
-        aclUtilService = ref("aclUtilService")
-        loginAttemptCacheService = ref('loginAttemptCacheService')
-    }*/
 
     loginAttemptCacheService(LoginAttemptCacheService) { bean ->
         bean.scope = "singleton"

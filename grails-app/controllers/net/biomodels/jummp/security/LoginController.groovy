@@ -37,6 +37,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.annotation.Secured
 import org.springframework.security.authentication.AccountExpiredException
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.CredentialsExpiredException
 import org.springframework.security.authentication.DisabledException
 import org.springframework.security.authentication.LockedException
@@ -130,6 +131,8 @@ class LoginController extends CommonController {
                 msg = g.message(code: "springSecurity.errors.login.disabled")
             } else if (exception instanceof LockedException) {
                 msg = g.message(code: "springSecurity.errors.login.locked")
+            } else if (exception instanceof BadCredentialsException) {
+                msg = exception.message
             } else {
                 msg = g.message(code: "springSecurity.errors.login.fail")
             }

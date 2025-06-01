@@ -14,6 +14,11 @@ import org.springframework.transaction.support.TransactionTemplate
 import javax.annotation.PostConstruct
 import java.util.concurrent.TimeUnit
 
+/**
+ * <p><b>Aim</b>: Track and lock users if they exceed failure attempts.</p
+ *
+ * <p>Author: <a href="mailto:nvntung@gmail.com">Tung Nguyen</a></p>
+ */
 class LoginAttemptCacheService {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoginAttemptCacheService.class)
     private LoadingCache attempts
@@ -36,17 +41,24 @@ class LoginAttemptCacheService {
      * @param login - username which is trying to login
      * @return
      */
-    def failLogin(String login) {
-        def numberOfAttempts = attempts.get(login)
+    String failLogin(String login) {
+        def numberOfAttempts = attempts.get(login) as int
         LOGGER.debug "fail login $login previous number for attempts $numberOfAttempts"
         numberOfAttempts++
+        def remainingAttempts = allowedNumberOfAttempts - numberOfAttempts
+        String warningMessage = """Invalid login credentials.<br/>Attempts remaining: ${remainingAttempts}
+<br/>Warning: After $allowedNumberOfAttempts consecutive unsuccessful login attempts, you account will be locked."""
 
         if (numberOfAttempts > allowedNumberOfAttempts) {
             blockUser(login)
             attempts.invalidate(login)
+            // TODO: replace with the i18n: springSecurity.errors.login.locked
+            warningMessage = "Your account has been locked. Please contact an administrator or try again later."
+
         } else {
             attempts.put(login, numberOfAttempts)
         }
+        return warningMessage
     }
 
     /**
@@ -55,6 +67,8 @@ class LoginAttemptCacheService {
      */
     def loginSuccess(String login) {
         LOGGER.debug "successfully login for $login"
+        attempts.invalidate(login)
+        LOGGER.info("Login failures for $login was reset.")
         attempts.invalidate(login)
     }
 
@@ -74,7 +88,7 @@ class LoginAttemptCacheService {
                     user.save(flush: true)
                 }
             }
-        });
+        })
 
     }
 }

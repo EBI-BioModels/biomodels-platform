@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletResponse
 class BioModelsAuthSuccessHandler extends AAASH {
     private static final Logger LOGGER = LoggerFactory.getLogger(BioModelsAuthSuccessHandler.class)
 
+    def loginAttemptCacheService
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
         String preURL = request.getParameter("j_previousURL")
@@ -63,6 +64,14 @@ class BioModelsAuthSuccessHandler extends AAASH {
     void onAuthenticationSuccess(final HttpServletRequest request, final HttpServletResponse response,
                                  final Authentication authentication) throws ServletException, IOException {
         try {
+            String username = authentication.principal as String
+            String warningMessage
+            if (username) {
+                warningMessage = loginAttemptCacheService.loginSuccess(username)
+            } else {
+                warningMessage = "Cannot recognise the username who has tried to log in."
+            }
+            LOGGER.error(warningMessage)
             handle(request, response, authentication)
             super.clearAuthenticationAttributes(request)
         } finally {
