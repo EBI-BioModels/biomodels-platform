@@ -24,6 +24,7 @@ class LoginAttemptCacheService {
     private LoadingCache attempts
     private int allowedNumberOfAttempts
     def grailsApplication
+    def redisService
 
     @PostConstruct
     void init() {
@@ -34,6 +35,8 @@ class LoginAttemptCacheService {
         attempts = CacheBuilder.newBuilder()
                 .expireAfterWrite(time, TimeUnit.MINUTES)
                 .build({0} as CacheLoader)
+        // initiate the map of failed login attempts
+        redisService.doRedisHSet("Login-Attempts", "unknown_username", "1000")
     }
 
     /**
@@ -43,20 +46,34 @@ class LoginAttemptCacheService {
      */
     String failLogin(String login) {
         def numberOfAttempts = attempts.get(login) as int
+        //def numberOfAttempts = redisService.doRedisHGet("Login-Attempts", login)
+        if (!numberOfAttempts) {
+            numberOfAttempts = 1
+        } else {
+            numberOfAttempts = Integer.valueOf(numberOfAttempts as String)
+            numberOfAttempts++
+        }
         LOGGER.debug "fail login $login previous number for attempts $numberOfAttempts"
-        numberOfAttempts++
         def remainingAttempts = allowedNumberOfAttempts - numberOfAttempts
-        String warningMessage = """Invalid login credentials.<br/>Attempts remaining: ${remainingAttempts}
-<br/>Warning: After $allowedNumberOfAttempts consecutive unsuccessful login attempts, you account will be locked."""
+        String s1 = ""
+        if (remainingAttempts > 0) {
+            s1 = """Your failures will be automatically cleaned up to an hour if you do not try anymore.<br/>"""
+        }
+        String warningMessage = """Invalid login credentials.<br/>Attempts remaining: ${remainingAttempts}<br/>\
+${s1}\
+<b>Warning</b>: After $allowedNumberOfAttempts consecutive unsuccessful login attempts, you account will be 
+locked."""
 
         if (numberOfAttempts > allowedNumberOfAttempts) {
             blockUser(login)
             attempts.invalidate(login)
+            //redisService.doRedisHDel("Login-Attempts", login)
             // TODO: replace with the i18n: springSecurity.errors.login.locked
             warningMessage = "Your account has been locked. Please contact an administrator or try again later."
 
         } else {
             attempts.put(login, numberOfAttempts)
+            //redisService.doRedisHSet("Login-Attempts", login, numberOfAttempts.toString())
         }
         return warningMessage
     }
@@ -68,8 +85,8 @@ class LoginAttemptCacheService {
     def loginSuccess(String login) {
         LOGGER.debug "successfully login for $login"
         attempts.invalidate(login)
+        //redisService.doRedisHDel("Login-Attempts", login)
         LOGGER.info("Login failures for $login was reset.")
-        attempts.invalidate(login)
     }
 
     /**

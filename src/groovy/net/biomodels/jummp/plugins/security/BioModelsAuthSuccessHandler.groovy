@@ -64,7 +64,7 @@ class BioModelsAuthSuccessHandler extends AAASH {
     void onAuthenticationSuccess(final HttpServletRequest request, final HttpServletResponse response,
                                  final Authentication authentication) throws ServletException, IOException {
         try {
-            String username = authentication.principal as String
+            String username = authentication.principal.username as String
             String warningMessage
             if (username) {
                 warningMessage = loginAttemptCacheService.loginSuccess(username)
