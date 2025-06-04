@@ -53,22 +53,24 @@ class LoginAttemptCacheService {
             numberOfAttempts = Integer.valueOf(numberOfAttempts as String)
             numberOfAttempts++
         }
-        LOGGER.debug "fail login $login previous number for attempts $numberOfAttempts"
+        LOGGER.debug "Failed to log in $login previous number for attempts $numberOfAttempts"
         def remainingAttempts = allowedNumberOfAttempts - numberOfAttempts
         String s1 = ""
         if (remainingAttempts > 0) {
-            s1 = """Your failures will be automatically cleaned up to an hour if you do not try anymore.<br/>"""
+            s1 = """You can try again. If no further attempts are made within the next hour, your attempt count \
+will reset to $allowedNumberOfAttempts.<br/>"""
         }
-        String warningMessage = """Invalid login credentials.<br/>Attempts remaining: ${remainingAttempts}<br/>\
+        String warningMessage = """<b>Invalid login credentials.</b><br/><b>Attempts remaining:</b> 
+${remainingAttempts}<br/>\
 ${s1}\
-<b>Warning</b>: After $allowedNumberOfAttempts consecutive unsuccessful login attempts, you account will be 
+<b>Warning</b>: After $allowedNumberOfAttempts consecutive failed login attempts, you account will be temporarily \
 locked."""
 
         if (numberOfAttempts > allowedNumberOfAttempts) {
             blockUser(login)
             attempts.invalidate(login)
             //redisService.doRedisHDel("Login-Attempts", login)
-            // TODO: replace with the i18n: springSecurity.errors.login.locked
+            // Notes: the message below is the same as the i18n: springSecurity.errors.login.locked
             warningMessage = "Your account has been locked. Please contact an administrator or try again later."
 
         } else {
