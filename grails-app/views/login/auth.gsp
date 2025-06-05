@@ -64,27 +64,35 @@
             </div>
         </div>
         <script type='text/javascript'>
-            // TODO: move out of HTML page
             const referrer = document.referrer;
-            $("#loginForm input").focus(function() {
+            const loginInput = $("#loginForm input");
+            const loginForm = $("#loginForm");
+            const loginPassword = $("#password");
+            loginInput.focus(function() {
                 if ($(this).data("reset") === undefined) {
                 $(this).val("");
                 $(this).data("reset", true);
                 }
             });
-            $("#loginForm input").on("keyup", function(event) {
-            // magic value 13 is entered
-            if (event.which === 13) {
-                $("#loginForm").submit();
+            loginInput.on("keyup", function(event) {
+                // magic value 13 is entered
+                if (event.which === 13) {
+                    loginForm.submit();
                 }
             });
-            $("#login div.loginButton button").on("click", function() {
-                $("#loginForm").submit();
+            const loginSubmit = $("#login div.loginButton button");
+            loginSubmit.on("click", function() {
+                loginForm.submit();
             });
             $(document).ready(function() {
                 if (referrer.indexOf("biomodels/MODEL") > 0) {
-                    $("#previousURL").val(referrer);
+                    const previousURL = $("#previousURL");
+                    previousURL.val(referrer);
                 }
+            });
+            loginPassword.on("change blur keyup keydown keypress", function() {
+                // the function below was defined in the common-script template in jummp-plugin-web-app
+                verifyCompromisedPassword($(this).val());
             });
         </script>
     </body>

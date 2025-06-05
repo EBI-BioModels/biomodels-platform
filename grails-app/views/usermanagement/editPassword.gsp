@@ -98,32 +98,8 @@
 
         function validateNewPassword(showWarning = false) {
             const newPasswordVal = newPassword.val();
-            const URL = "${createLink(controller: 'usermanagement', action: 'verifyCompromisedPassword')}";
-            fetch(URL, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json; charset=utf-8',
-                    'Content-Type': 'application/json; charset=utf-8'
-                },
-                body: JSON.stringify({'password': newPasswordVal})
-            }).then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response failed!!!');
-                }
-                return response.json();
-            }).then(data => {
-                if (data["result"]) {
-                    const msg = "<h3 style='color: red'><b>Compromised Password Alert!</b></h3>" +
-                    "This password is known to cybercriminals far and wide! " +
-                    "It has been publicly exposed in one or more data breaches.";
-                    showNotification(msg);
-                } else {
-                    clearNotification();
-                    hideNow();
-                }
-            }).catch(error => {
-                console.error('Error: ', error);
-            });
+           // the function below was defined in the common-script template in jummp-plugin-web-app
+            verifyCompromisedPassword(newPasswordVal);
             let s = checkPasswordStrength(newPasswordVal);
             let retVal = s.tips.length === 0;
             const newPasswordHelp = $("#new-password-help");
