@@ -41,6 +41,7 @@
                         <g:message code="user.administration.updatePassword.newPassword"/></label>
                     <g:passwordField id="newPassword" name="newPassword" required="required"
                                      placeholder="New password"/>
+                    <span><i id="toggler" class="far fa-eye"></i></span>
                     <div class="help-text" id="new-password-help" style="color: red !important;"></div>
                     <label class="required" for="newPasswordRpt">
                         <g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
@@ -97,6 +98,32 @@
 
         function validateNewPassword(showWarning = false) {
             const newPasswordVal = newPassword.val();
+            const URL = "${createLink(controller: 'usermanagement', action: 'verifyCompromisedPassword')}";
+            fetch(URL, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json; charset=utf-8',
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                body: JSON.stringify({'password': newPasswordVal})
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response failed!!!');
+                }
+                return response.json();
+            }).then(data => {
+                if (data["result"]) {
+                    const msg = "<h3 style='color: red'><b>Compromised Password Alert!</b></h3>" +
+                    "This password is known to cybercriminals far and wide! " +
+                    "It has been publicly exposed in one or more data breaches.";
+                    showNotification(msg);
+                } else {
+                    clearNotification();
+                    hideNow();
+                }
+            }).catch(error => {
+                console.error('Error: ', error);
+            });
             let s = checkPasswordStrength(newPasswordVal);
             let retVal = s.tips.length === 0;
             const newPasswordHelp = $("#new-password-help");

@@ -150,6 +150,15 @@ class UsermanagementController extends CommonController {
         return true
     }
 
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def verifyCompromisedPassword() {
+        String password = request.getJSON()["password"].decodeHTML()
+        boolean result = false
+        if (password) {
+            result = userService.isCompromisedPassword(password)
+        }
+        render([result: result] as JSON)
+    }
 
     /**
      * Validates the command object and then uses the user service to

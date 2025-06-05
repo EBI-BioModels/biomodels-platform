@@ -4,33 +4,38 @@
  */
 function scheduleHide() {
     setTimeout(function() {
-        $(".flashNotificationDiv").fadeOut("slow", function() {
-            $(".flashNotificationDiv").hide();
+        const flashNotificationDiv = $(".flashNotificationDiv");
+        flashNotificationDiv.fadeOut("slow", function() {
+            flashNotificationDiv.hide();
         });
     }, 4000);
 }
 
 function hideNow() {
-    $(".flashNotificationDiv").hide();
+    const flashNotificationDiv = $(".flashNotificationDiv");
+    flashNotificationDiv.hide();
 }
 
 function showNotification(message) {
-    $(".flashNotificationDiv").text(message);
-    $(".flashNotificationDiv").show();
+    const flashNotificationDiv = $(".flashNotificationDiv");
+    flashNotificationDiv.html(message);
+    flashNotificationDiv.show();
 }
 
 function pollForNotifications(url) {
+    const notificationLink = $("#notificationLink");
     $.get( url, function(data) {
         if (data > 0) {
-            $("#notificationLink").text('My notifications (' + data + ')');
-            $("#notificationLink").show();
+            notificationLink.text('My notifications (' + data + ')');
+            notificationLink.show();
         }
     });
 }
 
 function clearNotification() {
-    $(".flashNotificationDiv").text("");
-};
+    const flashNotificationDiv = $(".flashNotificationDiv");
+    flashNotificationDiv.html("");
+}
 
 function markAsRead(url, updateCount) {
     $.get( url, function() {});

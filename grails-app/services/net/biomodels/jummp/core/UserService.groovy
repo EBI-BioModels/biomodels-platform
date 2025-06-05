@@ -30,6 +30,7 @@
 
 package net.biomodels.jummp.core
 
+import grails.plugin.cache.Cacheable
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclSid
 import grails.plugin.springsecurity.userdetails.GrailsUser
@@ -820,8 +821,8 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         preferences
     }
 
-
-    boolean verifyCompromisedPassword(final String password) {
+    @Cacheable("isCompromisedPassword")
+    boolean isCompromisedPassword(final String password) {
         Path top100kPath = Paths.get(grailsApplication.config.jummp.dirs.upload, "PwnedPasswordsTop100k.json")
         if (top100kPath) {
             def jsonSlurper = new JsonSlurper()
