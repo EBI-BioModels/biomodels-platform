@@ -227,23 +227,23 @@
 
     function retrieveUploadedFiles() {
         // All files in the queue are processed (success or error)
-        let uploadedFiles = $('.file-name').map(function () {
+        return $('.file-name').map(function () {
             return this.innerHTML;
         }).get();
-        return uploadedFiles;
     }
 
     function buildUploadedFilesMap() {
         const allMediaElements = $('.media');
-        const ids = allMediaElements.map(function () {
+        return allMediaElements.map(function () {
             let filename = $(this).find("strong.file-name").html();
             let description = $(this).find("input.file-description").val();
             let isModelFile = $(this).find("input.is-model-file")[0].checked;
             let originalFilesize = $(this).find("a.original-file-size").text();
-            return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile,
-                originalFilesize: originalFilesize };
+            return {
+                id: $(this).prop("id"), filename: filename, description: description, isModelFile: isModelFile,
+                originalFilesize: originalFilesize
+            };
         }).get();
-        return ids;
     }
 
     // check acceptable characters for the file names
@@ -338,7 +338,7 @@
                     let allFileNamesValid = true;
                     if (!hasOneModelFile) {
                         msg =
-                            "Please verify the Main Model file radio box. A submission must have at least only one main model file.";
+                            "Please verify the Main Model file radio box. A submission must have at least one main model file.";
                         errorMessages.push(msg);
                     } else {
                         modelFile = data.filter(e => e.isModelFile)[0];
@@ -363,13 +363,13 @@
                             }
                             // check the model file name for the invalid characters
                             let hasError = consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
-                            let isModelMainFileNameValid = hasError ? false : true;
+                            let isModelMainFileNameValid = !hasError;
 
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
                             let areAdditionalFileNamesValid = true;
                             if (additionalFiles.length > 0) {
-                                // there is no file having errors
+                                // no file having errors
                                 modelFileWithNoErrors = additionalFiles.filter(f =>
                                     f["validateFileErrors"].length > 0).length === 0;
                                 $.each(additionalFiles, function (i, f) {

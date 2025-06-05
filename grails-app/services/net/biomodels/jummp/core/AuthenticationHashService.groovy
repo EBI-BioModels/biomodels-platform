@@ -36,7 +36,7 @@ package net.biomodels.jummp.core
 
 import org.springframework.security.core.Authentication
 import net.biomodels.jummp.core.user.AuthenticationHashNotFoundException
-import org.springframework.security.authentication.AnonymousAuthenticationToken
+import org.springframework.security.authentication.AnonymousAuthenticationToken as AAT
 import org.springframework.security.core.authority.GrantedAuthorityImpl
 
 /**
@@ -67,7 +67,8 @@ class AuthenticationHashService implements IAuthenticationHashService {
             this.authentication = auth
         }
     }
-    private static final ANONYMOUS_AUTH = new AnonymousAuthenticationToken("key", "anonymousUser", [new GrantedAuthorityImpl("ROLE_ANONYMOUS")])
+    private static final ANONYMOUS_AUTH = new AAT("key", "anonymousUser",
+            [new GrantedAuthorityImpl("ROLE_ANONYMOUS")])
 
     static transactional = true
     /**

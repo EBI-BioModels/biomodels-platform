@@ -24,7 +24,7 @@
         var submitterInfo = "${submitterInfo}";
         var submissionFolder = "${submissionFolder}";
         var currentValidation = false;
-        var errorMessages = new Array();
+        var errorMessages = [];
         var modelInfo = ${modelInfo};
         var modelFile;
         var additionalFiles;
@@ -38,7 +38,7 @@
             };
             authorMap = {
                 "authors":
-                    ${publication?.authors.collect {
+                    ${publication?.authors?.collect {
                         String userRealName = it.userRealName ?: ""
                         String institution = it.institution ?: ""
                         String orcid = it.orcid ?: ""
