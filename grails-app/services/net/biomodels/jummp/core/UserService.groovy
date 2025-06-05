@@ -60,6 +60,8 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.transaction.TransactionStatus
 
 import javax.mail.AuthenticationFailedException
+import java.nio.file.Path
+import java.nio.file.Paths
 
 /**
  * @short Service for User administration.
@@ -816,6 +818,17 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             preferences.add(pref)
         }
         preferences
+    }
+
+
+    boolean verifyCompromisedPassword(final String password) {
+        Path top100kPath = Paths.get(grailsApplication.config.jummp.dirs.upload, "PwnedPasswordsTop100k.json")
+        if (top100kPath) {
+            def jsonSlurper = new JsonSlurper()
+            def arrBreaches = jsonSlurper.parse(new File(top100kPath.toString()))
+            return password in arrBreaches
+        }
+        true
     }
 
     @Override

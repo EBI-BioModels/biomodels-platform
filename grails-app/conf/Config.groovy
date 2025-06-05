@@ -26,6 +26,8 @@ import org.apache.log4j.Level
 import org.perf4j.log4j.AsyncCoalescingStatisticsAppender
 import org.perf4j.log4j.GraphingStatisticsAppender
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 // locations to search for config files that get merged into the main config
@@ -506,6 +508,20 @@ if (jummpConfig.jummp.vcs.exchangeDirectory) {
 }
 if (jummpConfig.jummp.vcs.workingDirectory) {
     jummp.vcs.workingDirectory = jummpConfig.jummp.vcs.workingDirectory
+}
+// tmp directory for storing the data temporarily processed. The directory will be cleaned periodically.
+if (jummpConfig.jummp.dirs.tmp) {
+    jummp.dirs.tmp = jummpConfig.jummp.dirs.tmp
+} else {
+    jummp.dirs.tmp = System.getProperty("java.io.tmpdir")
+}
+// upload directory for storing any files uploaded to the server
+if (jummpConfig.jummp.dirs.upload) {
+    jummp.dirs.upload = jummpConfig.jummp.dirs.upload
+} else {
+    Path tmp = Paths.get(System.getProperty("java.io.tmpdir"))
+    Path upload = Paths.get(tmp.toString(), "upload")
+    jummp.dirs.upload = upload.toString()
 }
 if (jummpConfig.jummp.model.cache.dir) {
     jummp.model.cache.dir = jummpConfig.jummp.model.cache.dir
