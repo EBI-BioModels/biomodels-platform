@@ -126,11 +126,10 @@ function checkPasswordStrength(password) {
 
 function validateNewPassword(newPassword, newPasswordHelp, showWarning = false) {
     const newPasswordVal = newPassword.val();
-   // the function below was defined in the common-script template in jummp-plugin-web-app
     verifyCompromisedPassword(newPasswordVal);
     let s = checkPasswordStrength(newPasswordVal);
-    let retVal = s.tips.length === 0;
     let colourCode;
+    let retVal = false;
     switch (s.strengthLevel) {
         case "${MathUtils.PWD_HARD_LEVEL.EASY.label}":
             colourCode = "red";
@@ -145,12 +144,14 @@ function validateNewPassword(newPassword, newPasswordHelp, showWarning = false) 
             }
             break;
         case "${MathUtils.PWD_HARD_LEVEL.HARD.label}":
+            retVal = true;
             colourCode = "cornflowerblue";
             if (showWarning) {
                 toastr.info(s.strengthLevel);
             }
             break;
         case "${MathUtils.PWD_HARD_LEVEL.X_HARD.label}":
+            retVal = true;
             colourCode = "green";
             if (showWarning) {
                 toastr.success(s.strengthLevel);
@@ -158,7 +159,7 @@ function validateNewPassword(newPassword, newPasswordHelp, showWarning = false) 
             break;
     }
     let msg = '<span style="color: ' + colourCode + '">' + s.strengthLevel + '</span>';
-    if (!retVal) {
+    if (s.tips.length !== 0) {
         msg += "<br/>" + s.tips.join("<br/>");
     }
     newPasswordHelp.show();
