@@ -2,6 +2,8 @@
  common-script.gsp is as the placeholder to define scripts where they need to use
  Grails tag-libs or server side variables.
  -->
+<%@ page import="net.biomodels.jummp.utils.MathUtils" contentType="text/html;charset=UTF-8" %>
+
 <g:javascript>
 function verifyCompromisedPassword(password) {
     const URL = "${createLink(controller: 'usermanagement', action: 'verifyCompromisedPassword')}";
@@ -20,7 +22,7 @@ function verifyCompromisedPassword(password) {
     }).then(data => {
         if (data["result"]) {
             let msg = "<h4 style='color: red'><b>Compromised Password Alert!</b></h4>";
-            if ("${actionName}" === 'editPassword') {
+            if (['editPassword', 'reset'].includes("${actionName}")) {
                 msg += "This password is known to cybercriminals far and wide! " +
                 "It has been publicly exposed in one or more data breaches.";
             } else if ("${actionName}" === 'auth') {
@@ -120,5 +122,67 @@ function checkPasswordStrength(password) {
         strengthLevel = "Extremely difficult.";
     }
     return { strength: strength, strengthLevel: strengthLevel, tips: tips };
+}
+
+function validateNewPassword(newPassword, newPasswordHelp, showWarning = false) {
+    const newPasswordVal = newPassword.val();
+   // the function below was defined in the common-script template in jummp-plugin-web-app
+    verifyCompromisedPassword(newPasswordVal);
+    let s = checkPasswordStrength(newPasswordVal);
+    let retVal = s.tips.length === 0;
+    let colourCode;
+    switch (s.strengthLevel) {
+        case "${MathUtils.PWD_HARD_LEVEL.EASY.label}":
+            colourCode = "red";
+            if (showWarning) {
+                toastr.error(s.strengthLevel);
+            }
+            break;
+        case "${MathUtils.PWD_HARD_LEVEL.MEDIUM.label}":
+            colourCode = "orange";
+            if (showWarning) {
+                toastr.warning(s.strengthLevel);
+            }
+            break;
+        case "${MathUtils.PWD_HARD_LEVEL.HARD.label}":
+            colourCode = "cornflowerblue";
+            if (showWarning) {
+                toastr.info(s.strengthLevel);
+            }
+            break;
+        case "${MathUtils.PWD_HARD_LEVEL.X_HARD.label}":
+            colourCode = "green";
+            if (showWarning) {
+                toastr.success(s.strengthLevel);
+            }
+            break;
+    }
+    let msg = '<span style="color: ' + colourCode + '">' + s.strengthLevel + '</span>';
+    if (!retVal) {
+        msg += "<br/>" + s.tips.join("<br/>");
+    }
+    newPasswordHelp.show();
+    newPasswordHelp.html(msg);
+
+    return retVal;
+}
+
+function validateNewPasswordRpt(newPassword, newPasswordRpt, newPasswordRptHelp) {
+    const newPasswordRptVal = newPasswordRpt.val();
+    const newPasswordVal = newPassword.val();
+    let retVal;
+    if (newPasswordRptVal.length === 0) {
+        retVal = false;
+        newPasswordRptHelp.show();
+        newPasswordRptHelp.html("Please retype your new password!");
+    } else if (newPasswordVal !== newPasswordRptVal) {
+        retVal = false;
+        newPasswordRptHelp.show();
+        newPasswordRptHelp.html("New password does not match!");
+    } else {
+        retVal = true;
+        newPasswordRptHelp.hide();
+    }
+    return retVal;
 }
 </g:javascript>

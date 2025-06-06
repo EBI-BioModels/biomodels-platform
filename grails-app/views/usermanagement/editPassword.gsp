@@ -20,7 +20,6 @@
 
 
 
-<%@ page import="net.biomodels.jummp.utils.MathUtils" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <title>${title}</title>
@@ -46,7 +45,7 @@
                     <label class="required" for="newPasswordRpt">
                         <g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
                     <g:passwordField id="newPasswordRpt" name="newPasswordRpt" required="required"
-                                     placeholder="Retype new password"/>
+                                     placeholder="Re-enter new password"/>
                     <p class="help-text" id="new-password-rpt-help" style="color: red !important;"></p>
                     <p class="buttons">
                         <input type="submit" class="button"
@@ -62,6 +61,9 @@
         const oldPassword = $('#oldPassword');
         const newPassword = $('#newPassword');
         const newPasswordRpt = $('#newPasswordRpt');
+        const newPasswordHelp = $("#new-password-help");
+        const oldPasswordHelp = $("#old-password-help");
+        const newPasswordRptHelp = $("#new-password-rpt-help");
 
         $(document).ready(function(){
             doShowOrHideAllHelp(false);
@@ -72,21 +74,20 @@
         }
 
         oldPassword.on("change blur keyup keydown keypress", function() {
-            validateOldPassword();
+            validateOldPassword(oldPassword, oldPasswordHelp);
         });
 
         newPassword.on("change blur keyup keydown keypress", function() {
-            validateNewPassword();
+            validateNewPassword(newPassword, newPasswordHelp, false);
         });
 
         newPasswordRpt.on("change blur keyup keydown keypress", function() {
-            validateNewPasswordRpt();
+            validateNewPasswordRpt(newPassword, newPasswordRpt, newPasswordRptHelp);
         });
 
-        function validateOldPassword() {
+        function validateOldPassword(oldPassword, oldPasswordHelp) {
             const oldPasswordVal = oldPassword.val();
             let retVal;
-            const oldPasswordHelp = $("#old-password-help");
             if (oldPasswordVal.length === 0) {
                 oldPasswordHelp.show();
                 oldPasswordHelp.text("Please enter your current password!");
@@ -98,75 +99,11 @@
             return retVal;
         }
 
-        function validateNewPassword(showWarning = false) {
-            const newPasswordVal = newPassword.val();
-           // the function below was defined in the common-script template in jummp-plugin-web-app
-            verifyCompromisedPassword(newPasswordVal);
-            let s = checkPasswordStrength(newPasswordVal);
-            let retVal = s.tips.length === 0;
-            const newPasswordHelp = $("#new-password-help");
-            let colourCode;
-            switch (s.strengthLevel) {
-                case "${MathUtils.PWD_HARD_LEVEL.EASY.label}":
-                    colourCode = "red";
-                    if (showWarning) {
-                        toastr.error(s.strengthLevel);
-                    }
-                    break;
-                case "${MathUtils.PWD_HARD_LEVEL.MEDIUM.label}":
-                    colourCode = "orange";
-                    if (showWarning) {
-                        toastr.warn(s.strengthLevel);
-                    }
-                    break;
-                case "${MathUtils.PWD_HARD_LEVEL.HARD.label}":
-                    colourCode = "cornflowerblue";
-                    if (showWarning) {
-                        toastr.info(s.strengthLevel);
-                    }
-                    break;
-                case "${MathUtils.PWD_HARD_LEVEL.X_HARD.label}":
-                    colourCode = "green";
-                    if (showWarning) {
-                        toastr.success(s.strengthLevel);
-                    }
-                    break;
-            }
-            let msg = '<span style="color: ' + colourCode + '">' + s.strengthLevel + '</span>';
-            if (!retVal) {
-                msg += "<br/>" + s.tips.join("<br/>");
-            }
-            newPasswordHelp.show();
-            newPasswordHelp.html(msg);
-
-            return retVal;
-        }
-
-        function validateNewPasswordRpt() {
-            const newPasswordRptVal = newPasswordRpt.val();
-            const newPasswordVal = newPassword.val();
-            const newPasswordRptHelp = $("#new-password-rpt-help");
-            let retVal;
-            if (newPasswordRptVal.length === 0) {
-                retVal = false;
-                newPasswordRptHelp.show();
-                newPasswordRptHelp.html("Please retype your new password!");
-            } else if (newPasswordVal !== newPasswordRptVal) {
-                retVal = false;
-                newPasswordRptHelp.show();
-                newPasswordRptHelp.html("New password does not match!");
-            } else {
-                retVal = true;
-                newPasswordRptHelp.hide();
-            }
-            return retVal;
-        }
-
         function validateForm() {
             console.log("Validating the form of changing password...");
-            const oldPassCheck = validateOldPassword();
-            const newPassCheck = validateNewPassword(true);
-            const newPasswordRptCheck = validateNewPasswordRpt();
+            const oldPassCheck = validateOldPassword(oldPassword, oldPasswordHelp);
+            const newPassCheck = validateNewPassword(newPassword, newPasswordHelp, true);
+            const newPasswordRptCheck = validateNewPasswordRpt(newPassword, newPasswordRpt, newPasswordRptHelp);
             const retVal = oldPassCheck && newPassCheck && newPasswordRptCheck;
             console.log(retVal);
             return retVal;
