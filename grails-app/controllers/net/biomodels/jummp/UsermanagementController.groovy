@@ -150,6 +150,11 @@ class UsermanagementController extends CommonController {
         return true
     }
 
+    /**
+     * This action is invoked when changing the password or typing the password on the login form.
+     * It is used to verify a compromised password and then show a warning against the user.
+     * @return
+     */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def verifyCompromisedPassword() {
         String password = request.getJSON()["password"].decodeHTML()
@@ -158,6 +163,24 @@ class UsermanagementController extends CommonController {
             result = userService.isCompromisedPassword(password)
         }
         render([result: result] as JSON)
+    }
+
+    /**
+     * This action is invoked after logging in successfully if the current password is compromised.
+     * Currently, hacking plain password from an authenticated context is not trivial. We insert this check
+     * when the login form is submitted via an AJAX call. If the password is compromised, a waring message will
+     * be sent to the user email and notification.
+     * @return
+     */
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def checkCompromisedPasswordOnServerSide() {
+        String password = request.getJSON()["password"].decodeHTML()
+        boolean result = false
+        if (password) {
+            result = userService.isCompromisedPassword(password)
+        }
+        // println "Implemented the check compromised password on server side"
+        render([message: "Under construction", result: result] as JSON)
     }
 
     /**
@@ -331,12 +354,12 @@ class UsermanagementController extends CommonController {
                             message = "Username ${username} does not exist."
                         }
                     } else {
-                        message = """Cannot send a reset password link to your email. Please contact \
-with us asap for further instructions"""
+                        message = """Cannot send a reset password link to your email. Please contact  us asap for \
+further instructions"""
                     }
                 }
             } else {
-                message = "Please provide a username or an email address."
+                message = "Please provide a username or an valid email address."
             }
             LOGGER.debug(message)
             flash.message = message

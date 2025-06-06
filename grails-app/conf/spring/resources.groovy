@@ -150,6 +150,7 @@ beans = {
         requestCache = ref('requestCache')
         redirectStrategy = ref('redirectStrategy')
         loginAttemptCacheService = ref('loginAttemptCacheService')
+        userService = ref('userService')
         defaultTargetUrl = conf.successHandler.defaultTargetUrl
         alwaysUseDefaultTargetUrl = conf.successHandler.alwaysUseDefault
         targetUrlParameter = conf.successHandler.targetUrlParameter

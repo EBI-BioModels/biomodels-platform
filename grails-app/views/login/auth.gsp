@@ -32,6 +32,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
         <title>Login | BioModels</title>
+        <g:render template="/usermanagement/head"/>
     </head>
     <body>
         <g:render template="/templates/initRegistration"
@@ -51,7 +52,7 @@
                             <input type='text' name='j_previousURL' id='j_previousURL'  value="${j_previousURL}"
                                    style="display: none"/></label>
                         %{--<input id="show-password" type="checkbox"><label for="show-password">Show password</label>--}%
-                        <p><button type="submit" class="button expanded">Log In</button></p>
+                        <p><button type="button" class="button expanded" id="btnLogIn">Log In</button></p>
                         <p class="text-center">
                             <a href="${grailsApplication.config.grails.serverURL}/forgotpassword">Forgot your password?</a></p>
                         <g:if test="${grailsApplication.config.jummp.security.anonymousRegistration}">
@@ -63,6 +64,9 @@
 
             </div>
         </div>
+
+        <g:render template="/usermanagement/common-scripts"/>
+
         <script type='text/javascript'>
             const referrer = document.referrer;
             const loginInput = $("#loginForm input");
@@ -78,11 +82,13 @@
                 // magic value 13 is entered
                 if (event.which === 13) {
                     loginForm.submit();
+                    checkCompromisedPasswordOnServerSide(loginPassword.val());
                 }
             });
-            const loginSubmit = $("#login div.loginButton button");
+            const loginSubmit = $("#btnLogIn");
             loginSubmit.on("click", function() {
                 loginForm.submit();
+                checkCompromisedPasswordOnServerSide(loginPassword.val());
             });
             $(document).ready(function() {
                 if (referrer.indexOf("biomodels/MODEL") > 0) {
@@ -90,8 +96,12 @@
                     previousURL.val(referrer);
                 }
             });
-            loginPassword.on("change blur keyup keydown keypress", function() {
-                // the function below was defined in the common-script template in jummp-plugin-web-app
+            loginPassword.on("focus", function() {
+                clearNotification();
+                hideNow();
+            });
+            loginPassword.on("blur", function() {
+                // the function below was defined in the common-script.gsp template
                 verifyCompromisedPassword($(this).val());
             });
         </script>

@@ -165,8 +165,16 @@ symbols (ASCII-standard characters only). Accents and accented characters aren't
         }
         user.password = springSecurityService.encodePassword(newPassword, null)
         user.passwordExpired = false
-        user.save()
-        springSecurityService.reauthenticate(user.username, newPassword)
+        if (!user.save(flush: true)) {
+            String msg = """${user.username} has changed the password but it cannot be saved! \
+The cause is ${user.errors.toString()}."""
+            LOGGER.error(msg)
+        } else {
+            springSecurityService.reauthenticate(user.username, newPassword)
+            if (isCompromisedPassword(newPassword)) {
+                println "Emailed and notified the user"
+            }
+        }
     }
 
     void handleOrcidModification(User newUserData, User existing) {

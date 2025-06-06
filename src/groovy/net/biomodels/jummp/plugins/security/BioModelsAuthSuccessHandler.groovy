@@ -49,6 +49,8 @@ class BioModelsAuthSuccessHandler extends AAASH {
     private static final Logger LOGGER = LoggerFactory.getLogger(BioModelsAuthSuccessHandler.class)
 
     def loginAttemptCacheService
+    def userService
+
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
         String preURL = request.getParameter("j_previousURL")
@@ -56,6 +58,8 @@ class BioModelsAuthSuccessHandler extends AAASH {
         if (isUnpublishedModel) {
             String username = request.getParameter("username")
             LOGGER.debug("The user '${username}' has logged in to access this unpublished model $preURL.")
+        } else {
+            preURL = super.determineTargetUrl(request, response)
         }
         return preURL
     }
@@ -67,11 +71,15 @@ class BioModelsAuthSuccessHandler extends AAASH {
             String username = authentication.principal.username as String
             String warningMessage
             if (username) {
-                warningMessage = loginAttemptCacheService.loginSuccess(username)
+                loginAttemptCacheService.loginSuccess(username)
+                boolean compromisedPwd = userService.isCompromisedPassword("password")
+                if (compromisedPwd) {
+                    println "Emailed the user and sent a notification to that user"
+                }
             } else {
                 warningMessage = "Cannot recognise the username who has tried to log in."
+                LOGGER.error(warningMessage)
             }
-            LOGGER.error(warningMessage)
             handle(request, response, authentication)
             super.clearAuthenticationAttributes(request)
         } finally {
