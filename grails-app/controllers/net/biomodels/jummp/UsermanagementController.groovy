@@ -178,6 +178,11 @@ class UsermanagementController extends CommonController {
     def verifyCompromisedPasswordAndNotifyUser() {
         String username = request.getJSON()["username"].decodeHTML()
         String password = request.getJSON()["password"].decodeHTML()
+        boolean result = doVerifyCompromisedPassword(username, password)
+        render([compromised: result] as JSON)
+    }
+
+    private boolean doVerifyCompromisedPassword(final String username, final String password) {
         boolean result = false
         if (password) {
             result = userService.isCompromisedPassword(password)
@@ -186,9 +191,8 @@ class UsermanagementController extends CommonController {
             // email and notify the user
             doEmailAndNotifyDueToCompromisedPassword(username)
         }
-        render([compromised: result] as JSON)
+        return result
     }
-
     /**
      * Validates the command object and then uses the user service to
      * edit a user. If an error occurs at any point, the method redirects
@@ -259,7 +263,9 @@ class UsermanagementController extends CommonController {
                 redirect(action: "reset")
                 return
             }
-            flash.flashMessage = "The password for ${cmd.username} was updated successfully. Please log in BioModels with your newly updated password."
+            flash.flashMessage = """The password for ${cmd.username} was updated successfully. Please log in BioModels\
+ with your newly updated password."""
+            doVerifyCompromisedPassword(cmd.username, cmd.newPassword)
             redirect(controller: "login", action: "auth")
         }.invalidToken {
             render(controller: "errors", action: "error405")
@@ -287,6 +293,8 @@ class UsermanagementController extends CommonController {
                 return
             }
             flash.message = "Your password was updated successfully!"
+            String username = springSecurityService.currentUser.username
+            doVerifyCompromisedPassword(username, cmd.newPassword)
             redirect(action: "show")
         }.invalidToken {
             render(controller: "errors", action: "error405")
