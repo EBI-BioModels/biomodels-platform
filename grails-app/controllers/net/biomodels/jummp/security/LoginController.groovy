@@ -89,7 +89,7 @@ class LoginController extends CommonController {
         String previousURL = request.getHeader("referer")
         String j_previousURL = request.getHeader("referer")
         String view = 'auth'
-        String postUrl = "${serverURL}${config.apf.filterProcessesUrl}"
+        String postUrl = "${request.contextPath}${config.apf.filterProcessesUrl}"
         render view: view, model: [postUrl: postUrl, previousURL: previousURL, j_previousURL: j_previousURL,
                                    rememberMeParameter: config.rememberMe.parameter,
                                    flashMessage: flash.flashMessage?:""]
