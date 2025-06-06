@@ -25,7 +25,7 @@ import org.apache.log4j.FileAppender
 import org.apache.log4j.Level
 import org.perf4j.log4j.AsyncCoalescingStatisticsAppender
 import org.perf4j.log4j.GraphingStatisticsAppender
-
+import java.lang.IllegalArgumentException as IAE
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
@@ -378,7 +378,8 @@ if (jummpConfig.jummp.healthcheck.ipRestrictions instanceof String) {
 println "INFO\tThe health check endpoint will only be available from '$healthCheckIpRestrictions'"
 
 // IPv4 IP addresses and ranges allowed to access specific URLs
-// requests from localhost are always allowed: http://grails-plugins.github.io/grails-spring-security-core/2.0.x/guide/ip.html
+// requests from localhost are always allowed:
+// http://grails-plugins.github.io/grails-spring-security-core/2.0.x/guide/ip.html
 grails.plugin.springsecurity.ipRestrictions = [
 //    '/healthCheck/**': healthCheckIpRestrictions
 ]
@@ -526,9 +527,9 @@ if (jummpConfig.jummp.dirs.upload) {
 if (jummpConfig.jummp.model.cache.dir) {
     jummp.model.cache.dir = jummpConfig.jummp.model.cache.dir
 } else {
-    throw new IllegalArgumentException("""\
-Please add the setting 'jummp.model.cache.dir', pointing to a directory where model files are cached, to your
-configuration.""")
+    throw new IAE("""\
+Please add the setting 'jummp.model.cache.dir', pointing to a directory where model files are cached, \
+to your configuration.""")
 }
 // search config
 // model search strategy setting: "omicsdi" or "solr"
@@ -562,14 +563,14 @@ if (jummp.search.strategy == "solr") {
             solrUrl = solrSetting
         }
         if (!solrUrl || !(solrUrl ==~ URL_PATTERN)) {
-            throw new IllegalArgumentException("""The URL for the search server ($solrUrl) does \
-not look right. Check the value of setting 'jummp.search.url'.""")
+            throw new IAE("""The URL for the search server ($solrUrl) does not look right. \
+Check the value of setting 'jummp.search.url'.""")
         } else {
             jummp.search.url = solrUrl
             println "INFO\tUsing $solrUrl as the URL of the search server."
         }
     } else {
-        throw new IllegalArgumentException("""\
+        throw new IAE("""\
 Please add the setting 'jummp.search.url', pointing to a Solr instance, to your configuration.""")
     }
     if (!(jummpConfig.jummp.search.folder instanceof ConfigObject)) {
@@ -980,6 +981,7 @@ if (!(jummpConfig.jummp.model.ftp.location instanceof ConfigObject)) {
 } else {
     jummp.model.ftp.location = "ftp://127.0.0.1:9000"
 }
+
 brutforce {
     loginAttempts {
         time = 5
