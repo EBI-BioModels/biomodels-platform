@@ -56,11 +56,13 @@
             </g:form>
         </div>
     </div>
+    <g:render template="/usermanagement/common-scripts"/>
     <g:javascript>
         const helpText = $('.help-text');
         const oldPassword = $('#oldPassword');
         const newPassword = $('#newPassword');
         const newPasswordRpt = $('#newPasswordRpt');
+
         $(document).ready(function(){
             doShowOrHideAllHelp(false);
         });
@@ -170,65 +172,6 @@
             return retVal;
         }
 
-        function checkPasswordStrength(password) {
-            // source: https://martech.zone/javascript-password-strength/
-            // Initialize variables
-            let strength = 0;
-            let strengthLevel;
-            let tips = [];
-
-            // Check password length
-            let tip = "Make the password longer.";
-            if (password.length < 10) {
-                tips.push(tip);
-            } else {
-                strength += 1;
-                // tips.splice( $.inArray(tip, tips), 1);
-                tips = jQuery.grep(tips, function(value) { return value !== tip; });
-            }
-
-            // Check for mixed case
-            tip = "Use both lowercase and uppercase letters.";
-            if (password.match(/[a-z]/) && password.match(/[A-Z]/)) {
-                strength += 1;
-                // tips.splice( $.inArray(tip, tips), 1);
-                tips = jQuery.grep(tips, function(value) { return value !== tip; });
-            } else {
-                tips.push(tip);
-            }
-
-            // Check for numbers
-            tip = "Include at least one number.";
-            if (password.match(/\d/)) {
-                strength += 1;
-                // tips.splice( $.inArray(tip, tips), 1);
-                tips = jQuery.grep(tips, function(value) { return value !== tip; });
-            } else {
-                tips.push(tip);
-            }
-
-            // Check for special characters
-            tip = "Include at least one special character.";
-            if (password.match(/[^a-zA-Z\d]/)) {
-                strength += 1;
-                // tips.splice( $.inArray(tip, tips), 1);
-                tips = jQuery.grep(tips, function(value) { return value !== tip; });
-            } else {
-                tips.push(tip);
-            }
-
-            // Return results
-            if (strength < 2) {
-                 strengthLevel = "Easy to guess.";
-            } else if (strength === 2) {
-                strengthLevel = "Medium difficulty." ;
-            } else if (strength === 3) {
-                strengthLevel =  "Difficult.";
-            } else {
-                strengthLevel = "Extremely difficult.";
-            }
-            return { strength: strength, strengthLevel: strengthLevel, tips: tips };
-        }
     </g:javascript>
 </body>
 </html>
