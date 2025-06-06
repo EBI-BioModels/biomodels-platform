@@ -265,6 +265,7 @@ class UsermanagementController extends CommonController {
             }
             flash.flashMessage = """The password for ${cmd.username} was updated successfully. Please log in BioModels\
  with your newly updated password."""
+            doEmailAndNotifyWhenChangingPassword(cmd.username)
             doVerifyCompromisedPassword(cmd.username, cmd.newPassword)
             redirect(controller: "login", action: "auth")
         }.invalidToken {
@@ -294,6 +295,7 @@ class UsermanagementController extends CommonController {
             }
             flash.message = "Your password was updated successfully!"
             String username = springSecurityService.currentUser.username
+            doEmailAndNotifyWhenChangingPassword(username)
             doVerifyCompromisedPassword(username, cmd.newPassword)
             redirect(action: "show")
         }.invalidToken {
@@ -507,6 +509,21 @@ further instructions"""
                          userRealname: userRealName]
         }
         userList
+    }
+
+    private void doEmailAndNotifyWhenChangingPassword(final String username) {
+        final User USER = User.findByUsername(username)
+        if (USER) {
+            final String link = createLink(controller: "usermanagement", action: "editPassword", absolute: true)
+            final String SUBJECT = "[BioModels] Your Password Has Been Updated Successfully"
+            final String BODY = """Dear ${USER.person.userRealName},\
+<p>We want to inform you that your password has been successfully changed.</p>\
+<p>If you did not request this change, please contact us asap.</p>\
+<p>Thank you for your cooperation.</p>\
+<p>Kind regards,<br/>\
+The BioModels Team</p>"""
+            userService.sendEmail(USER, BODY, SUBJECT)
+        }
     }
 
     private void doEmailAndNotifyDueToCompromisedPassword(final String username) {
