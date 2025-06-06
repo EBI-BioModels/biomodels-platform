@@ -69,15 +69,10 @@ class BioModelsAuthSuccessHandler extends AAASH {
                                  final Authentication authentication) throws ServletException, IOException {
         try {
             String username = authentication.principal.username as String
-            String warningMessage
             if (username) {
                 loginAttemptCacheService.loginSuccess(username)
-                boolean compromisedPwd = userService.isCompromisedPassword("password")
-                if (compromisedPwd) {
-                    println "Emailed the user and sent a notification to that user"
-                }
             } else {
-                warningMessage = "Cannot recognise the username who has tried to log in."
+                String warningMessage = "Cannot recognise the username who has tried to log in."
                 LOGGER.error(warningMessage)
             }
             handle(request, response, authentication)

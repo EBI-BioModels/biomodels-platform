@@ -71,6 +71,7 @@
             const referrer = document.referrer;
             const loginInput = $("#loginForm input");
             const loginForm = $("#loginForm");
+            const loginUsername = $("#username");
             const loginPassword = $("#password");
             loginInput.focus(function() {
                 if ($(this).data("reset") === undefined) {
@@ -82,13 +83,13 @@
                 // magic value 13 is entered
                 if (event.which === 13) {
                     loginForm.submit();
-                    checkCompromisedPasswordOnServerSide(loginPassword.val());
+                    checkCompromisedPasswordOnServerSide(loginUsername.val(), loginPassword.val());
                 }
             });
             const loginSubmit = $("#btnLogIn");
             loginSubmit.on("click", function() {
                 loginForm.submit();
-                checkCompromisedPasswordOnServerSide(loginPassword.val());
+                checkCompromisedPasswordOnServerSide(loginUsername.val(), loginPassword.val());
             });
             $(document).ready(function() {
                 if (referrer.indexOf("biomodels/MODEL") > 0) {

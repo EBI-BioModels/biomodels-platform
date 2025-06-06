@@ -166,21 +166,27 @@ class UsermanagementController extends CommonController {
     }
 
     /**
-     * This action is invoked after logging in successfully if the current password is compromised.
+     * <p>This action is invoked after logging in successfully if the current password is compromised.
      * Currently, hacking plain password from an authenticated context is not trivial. We insert this check
      * when the login form is submitted via an AJAX call. If the password is compromised, a waring message will
      * be sent to the user email and notification.
+     *
+     * <p>This action is also called when changing the password if it has been leaked on one or more data breaches.
      * @return
      */
-    @Secured(["IS_AUTHENTICATED_FULLY"])
-    def checkCompromisedPasswordOnServerSide() {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def verifyCompromisedPasswordAndNotifyUser() {
+        String username = request.getJSON()["username"].decodeHTML()
         String password = request.getJSON()["password"].decodeHTML()
         boolean result = false
         if (password) {
             result = userService.isCompromisedPassword(password)
         }
-        // println "Implemented the check compromised password on server side"
-        render([message: "Under construction", result: result] as JSON)
+        if (result && doesUserExist(username)) {
+            // email and notify the user
+            doEmailAndNotifyDueToCompromisedPassword(username)
+        }
+        render([compromised: result] as JSON)
     }
 
     /**
@@ -447,7 +453,7 @@ further instructions"""
             String label = "${it.userRealname} (${it.username}, ${it.email})"
             it.put("label", label)
         }
-        Map usersMap = [users: users]
+        Map<String, Object> usersMap = [users: users]
         if (users?.size()) {
             String str = g.render(template: "/contributor/listOfFoundUsers", plugin: "jummp-plugin-web-application",
                 model: [users: users, searchTerm: searchTerm]).toString()
@@ -493,5 +499,25 @@ further instructions"""
                          userRealname: userRealName]
         }
         userList
+    }
+
+    private void doEmailAndNotifyDueToCompromisedPassword(final String username) {
+        final User USER = User.findByUsername(username)
+        if (USER) {
+            final String link = createLink(controller: "usermanagement", action: "editPassword", absolute: true)
+            final String SUBJECT = "[BioModels] Compromised Password Alert!"
+            final String BODY = """Dear ${USER.person.userRealName},\
+<p>Your password has appeared in one or more data breaches which puts your account at high risk of compromise. \
+You should change your password immediately.</p>\
+<p>Open this link ${link} to change your password.</p>\
+<p>Thank you for your cooperation.</p>\
+<p>Best regards,<br/>\
+The BioModels Team</p>"""
+            userService.sendEmail(USER, BODY, SUBJECT)
+        }
+    }
+
+    private static doesUserExist(final String username) {
+        User.findByUsername(username)
     }
 }

@@ -39,22 +39,22 @@ function verifyCompromisedPassword(password) {
     });
 }
 
-function checkCompromisedPasswordOnServerSide(password) {
-    const URL = "${createLink(controller: 'usermanagement', action: 'checkCompromisedPasswordOnServerSide')}";
+function checkCompromisedPasswordOnServerSide(username, password) {
+    const URL = "${createLink(controller: 'usermanagement', action: 'verifyCompromisedPasswordAndNotifyUser')}";
     fetch(URL, {
         method: 'POST',
         headers: {
             'Accept': 'application/json; charset=utf-8',
             'Content-Type': 'application/json; charset=utf-8'
         },
-        body: JSON.stringify({'password': password})
+        body: JSON.stringify({'username': username, 'password': password})
     }).then(response => {
         if (!response.ok) {
             throw new Error('Network response failed!!!');
         }
         return response.json();
     }).then(data => {
-        if (data["result"]) {
+        if (data["compromised"]) {
             console.log("Sent the verification compromised password to the server side.");
         } else {
             console.log("Cannot verify compromised password to the server side.");

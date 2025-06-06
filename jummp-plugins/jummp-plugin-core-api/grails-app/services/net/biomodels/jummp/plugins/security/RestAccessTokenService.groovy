@@ -45,8 +45,6 @@ import org.springframework.context.ApplicationListener
 class RestAccessTokenService implements ApplicationListener<RestTokenCreationEvent> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestAccessTokenService.class)
 
-    def grailsApplication
-    def mailService
     def redisService
     def userService
 
@@ -178,7 +176,7 @@ expired at <strong>${atm.expiredDate.format('HH:mm:ss')}</strong> on <strong>${a
 <p>Best regards,<br/>
 The BioModels Team</p>"""
         final String SUBJECT = "[BioModels] Access Token Expiration"
-        sendEmail(atm.user, BODY, SUBJECT)
+        userService.sendEmail(atm.user, BODY, SUBJECT)
     }
 
     private void remindByEmail(final AuthTokenManager atm) {
@@ -193,7 +191,7 @@ about to expire at <strong>${atm.expiredDate.format('HH:mm:ss')}</strong> on <st
 <p>Best regards,<br/>
 The BioModels Team</p>"""
         final String SUBJECT = "[BioModels] Access Token Expiring Soon"
-        sendEmail(atm.user, BODY, SUBJECT)
+        userService.sendEmail(atm.user, BODY, SUBJECT)
     }
 
     private void confirmByEmail(final User requester, final String username, final String endingToken) {
@@ -207,7 +205,7 @@ to avoid unnecessary interuptions.</p>
 Thank you,<br/>
 The BioModels Team"""
         final String SUBJECT = "[BioModels] An access token has been issued to your account"
-        sendEmail(requester, BODY, SUBJECT)
+        userService.sendEmail(requester, BODY, SUBJECT)
     }
 
     private void sendReminderEmail(final AuthTokenManager account) {
@@ -230,19 +228,6 @@ The BioModels Team"""
                 } else if (duration.days == 1 && !sent1dayYet) {
                     redisService.doRedisSAdd("userLog:${account.user.username}", "sent1dayYet:true")
                 }
-            }
-        }
-    }
-
-    private void sendEmail(final User RECEIVER, final String BODY, final String SUBJECT) {
-        final String TO_EMAIL = RECEIVER?.email
-        if (RECEIVER) {
-            final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
-            mailService.sendMail {
-                to TO_EMAIL
-                from SENDER
-                subject SUBJECT
-                html BODY
             }
         }
     }

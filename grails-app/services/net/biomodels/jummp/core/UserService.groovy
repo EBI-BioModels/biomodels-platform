@@ -332,6 +332,19 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         result
     }
 
+    void sendEmail(final User USER, final String BODY, final String SUBJECT) {
+        final String TO_EMAIL = USER?.email
+        if (USER) {
+            final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
+            mailService.sendMail {
+                to TO_EMAIL
+                from SENDER
+                subject SUBJECT
+                html BODY
+            }
+        }
+    }
+
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="userService.getAllUsers")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
