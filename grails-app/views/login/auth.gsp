@@ -47,11 +47,12 @@
                         </label>
                         <label><g:message code="login.form.password"/>
                             <input type='password' name='j_password' id='password' placeholder="Password" autocomplete="on"/>
+                            <span id="toggle-password"
+                                  class="fa fa-fw fa-eye field-icon toggle-password"></span>
                         </label>
                         <label for='j_previousURL'>
                             <input type='text' name='j_previousURL' id='j_previousURL'  value="${j_previousURL}"
                                    style="display: none"/></label>
-                        %{--<input id="show-password" type="checkbox"><label for="show-password">Show password</label>--}%
                         <p><button type="button" class="button expanded" id="btnLogIn">Log In</button></p>
                         <p class="text-center">
                             <a href="${grailsApplication.config.grails.serverURL}/forgotpassword">Forgot your password?</a></p>
@@ -106,6 +107,7 @@
                 verifyCompromisedPassword($(this).val());
             });
         </script>
+    <g:render template="/usermanagement/foot"/>
     </body>
 </html>
 <content tag="login">
