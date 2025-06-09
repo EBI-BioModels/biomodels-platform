@@ -40,7 +40,8 @@
                         <g:message code="user.administration.updatePassword.newPassword"/></label>
                     <g:passwordField id="newPassword" name="newPassword" required="required"
                                      placeholder="New password"/>
-                    <span><i id="toggler" class="far fa-eye"></i></span>
+                    <span id="toggle-password"
+                          class="fa fa-fw fa-eye field-icon toggle-password"></span>
                     <div class="help-text" id="new-password-help" style="color: red !important;"></div>
                     <label class="required" for="newPasswordRpt">
                         <g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
@@ -110,6 +111,7 @@
         }
 
     </g:javascript>
+    <g:render template="/usermanagement/foot"/>
 </body>
 </html>
 <content tag="title">

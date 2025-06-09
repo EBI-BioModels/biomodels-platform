@@ -53,6 +53,8 @@
                     <span class="required"><g:message code="user.administration.updatePassword.newPassword"/></span>
                     <g:passwordField name="newPassword" id="newPassword" autocomplete="new-password"
                                      placeholder="Enter a new password"/>
+                    <span id="toggle-password"
+                          class="fa fa-fw fa-eye field-icon toggle-password"></span>
                 </label>
                 <div class="help-text" id="new-password-help" style="color: red !important;"></div>
 
@@ -98,6 +100,7 @@
         return retVal;
     }
 </g:javascript>
+ <g:render template="/usermanagement/foot"/>
      </body>
 </html>
 <content tag="title">
