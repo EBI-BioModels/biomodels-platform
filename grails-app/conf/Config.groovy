@@ -510,7 +510,8 @@ if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) ||
     grails.plugin.springsecurity.providerNames = [
         'ldapAuthProvider',
         'anonymousAuthenticationProvider',
-        'rememberMeAuthenticationProvider'
+        'rememberMeAuthenticationProvider',
+        'twoFactorAuthenticationProvider',
     ]
 }
 

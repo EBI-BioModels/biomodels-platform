@@ -51,6 +51,9 @@ import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorIn
 import net.biomodels.jummp.plugins.bives.RevisionCreatedListener
 import net.biomodels.jummp.plugins.security.BioModelsAuthFailureHandler
 import net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler
+import net.biomodels.jummp.plugins.security.TwoFactorAuthenticationDetailsSource
+import net.biomodels.jummp.plugins.security.TwoFactorAuthenticationProvider
+import net.biomodels.jummp.security.LoginAttemptCacheService
 import net.biomodels.jummp.search.OmicsdiBasedSearch
 import net.biomodels.jummp.search.SolrBasedSearch
 import net.biomodels.jummp.search.SolrServerHolder
@@ -330,4 +333,24 @@ beans = {
         diskPersistent = false
         memoryStoreEvictionPolicy = "LRU"
     }*/
+
+    loginAttemptCacheService(LoginAttemptCacheService) { bean ->
+        bean.scope = "singleton"
+        bean.autowire = "byName"
+        bean.singleton = true
+        grailsApplication = ref("grailsApplication")
+    }
+
+    authenticationDetailsSource(TwoFactorAuthenticationDetailsSource)
+
+    twoFactorAuthenticationProvider(TwoFactorAuthenticationProvider) {
+//        coordinateValidator = ref('coordinateValidator')
+        userDetailsService = ref('userDetailsService')
+        passwordEncoder = ref('passwordEncoder')
+        userCache = ref('userCache')
+        preAuthenticationChecks = ref('preAuthenticationChecks')
+        postAuthenticationChecks = ref('postAuthenticationChecks')
+        authoritiesMapper = ref('authoritiesMapper')
+        hideUserNotFoundExceptions = true
+    }
 }
