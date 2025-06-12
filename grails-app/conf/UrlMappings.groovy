@@ -129,6 +129,8 @@ class UrlMappings {
         "/login"(controller: "login", action: "auth")
         "/registration"(controller:"usermanagement", action:"registration")
         "/forgotpassword"(controller:"usermanagement", action:"forgot")
+        "/auth/two-factor-authentication"(controller:"auth", action:"load2fa")
+        "/auth/request-new-verification-code"(controller:"auth", action:"generateOTP")
         "/user/editUser"(controller:"usermanagement", action:"edit")
         "/user/editPassword"(controller:"usermanagement", action:"editPassword")
         "/user/profile"(controller:"usermanagement", action:"profile")
