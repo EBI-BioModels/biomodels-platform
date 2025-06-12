@@ -104,7 +104,10 @@
         }
     });
     $("#verify").on("click", function() {
-        const otp = $("#textcode").val();
+        let otp = "";
+        $(".textcode").each(function(i, obj) {
+            otp += $(obj).val();
+        });
         const URL = "${createLink(controller: 'auth', action: 'verifyOTP')}";
         fetch(URL, {
             method: 'POST',
@@ -121,11 +124,11 @@
         }).then(data => {
             if (data["message"] === "valid") {
                 let msg = "<h4 style='color: green'><b>OTP verification passed!</b></h4>";
-                msg += "<p>You can close this page now. Otherwise, you will be redirected after 5 seconds.<p>"
+                msg += "<p>You can close this page now. Otherwise, you will be redirected after 3 seconds.<p>"
                 showNotification(msg);
                 setTimeout(() => {
                     window.location = data["postUrl"];
-                }, 5000);
+                }, 3000);
             } else if (data["message"] === "forbidden") {
                 window.location = data["postUrl"];
             } else {
