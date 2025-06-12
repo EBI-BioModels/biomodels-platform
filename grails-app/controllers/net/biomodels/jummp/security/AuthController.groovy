@@ -55,7 +55,6 @@ class AuthController extends CommonController {
             String postURL = createLink(controller: "errors", action: "error403")
             render([message: "forbidden", postUrl: postURL] as JSON)
         } else {
-            println "OTP: $otp"
             LOGGER.info "OTP: $otp"
             session.removeAttribute("enabled2FA")
             render([message: "valid", postUrl: "/biomodels/user"] as JSON)

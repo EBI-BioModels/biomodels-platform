@@ -28,7 +28,6 @@ class BioModelsSecurityTagLib {
     static namespace = "bmsec"
 
     static defaultEncodeAs = [taglib:'html']
-    //static encodeAsForTags = [tagName: [taglib:'html'], otherTagName: [taglib:'none']]
 
     def springSecurityService
 
@@ -36,11 +35,8 @@ class BioModelsSecurityTagLib {
      * Renders the body if the user is authenticated.
      */
     def whenLoggedIn = { attrs, body ->
-        println "when logged in -> come here ${session.enabled2FA}"
         boolean otpValidated = session.enabled2FA == null
-        println "otpValidated: $otpValidated"
         if (springSecurityService.isLoggedIn() && otpValidated) {
-            println "rendering My Profile"
             out << body()
         }
     }
@@ -49,10 +45,8 @@ class BioModelsSecurityTagLib {
      * Renders the body if the user is not authenticated.
      */
     def whenNotLoggedIn = { attrs, body ->
-        println "not logged in ${springSecurityService.isLoggedIn()}"
         boolean notLoggedIn = !springSecurityService.isLoggedIn() || session.enabled2FA
         if (notLoggedIn) {
-            println "rednering Login | Register"
             out << body()
         }
     }
