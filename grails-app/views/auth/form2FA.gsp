@@ -92,10 +92,8 @@
 
     // https://codepen.io/tnguyenv/pen/JodvWZy
     $(".textcode").on("change keyup keydown", function() {
-        //console.log("entering...");
         if (this.value.length === this.maxLength) {
             let next = $(this).data('next');
-            //console.log("come here", next);
             $('#digit' + next).focus();
         }
     });

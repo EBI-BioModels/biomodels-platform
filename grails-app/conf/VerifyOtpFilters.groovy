@@ -36,6 +36,7 @@ class VerifyOtpFilters {
                             && !["load2fa", "verifyOTP", "generateOTP"].contains(action)
                             && !["notification"].contains(controller)) {
                         redirect(controller: "auth", action: "load2fa")
+                        return
                     }
                 }
             }

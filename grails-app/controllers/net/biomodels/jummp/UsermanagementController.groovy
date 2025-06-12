@@ -348,9 +348,10 @@ class UsermanagementController extends CommonController {
         if (forwardIfReadOnly()) return
         User currentUser = springSecurityService.currentUser
         if (currentUser) {
-            redirect(action: "profile")
+            render(action: "profile")
         } else {
             forward(action: "create")
+            return
         }
     }
 

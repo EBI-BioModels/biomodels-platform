@@ -32,7 +32,9 @@
 
 <div class="row">
 <div class="columns large-12 medium-12 small-12">
+<bmsec:ifLoggedIn>
     <g:render template="/templates/model/show/model-toolbox" plugin="jummp-plugin-web-application"/>
+</bmsec:ifLoggedIn>
     <div class="w3-bar w3-black">
         <button class="w3-bar-item w3-button tablink w3-red" id="btn-Overview"
                 onclick="openTab('Overview')">Overview</button>

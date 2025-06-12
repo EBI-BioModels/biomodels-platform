@@ -48,6 +48,7 @@ class LogoutController {
      * Index action. Redirects to the Spring security logout uri.
      */
     def index() {
+        session.removeAttribute("enabled2FA")
         if (!request.post && SpringSecurityUtils.getSecurityConfig().logout.postOnly) {
             response.sendError HttpServletResponse.SC_METHOD_NOT_ALLOWED // 405
             return

@@ -53,7 +53,7 @@ class BioModelsAuthSuccessHandler extends AAASH {
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
         String preURL = request.getParameter("j_previousURL")
-        boolean isUnpublishedModel = preURL?.indexOf("/biomodels/MODEL")  >= 0
+        boolean isUnpublishedModel = preURL?.indexOf("/biomodels/MODEL") >= 0
         if (isUnpublishedModel) {
             String username = request.getParameter("username")
             LOGGER.debug("The user [${username}] has logged in to access this unpublished model $preURL.")
@@ -96,15 +96,17 @@ class BioModelsAuthSuccessHandler extends AAASH {
             targetUrl = redirectURL
         }
         if (response.isCommitted()) {
-        def session = request.session
-        if (session.enabled2FA) {
-            redirectStrategy.sendRedirect(request, response, "/auth/two-factor-authentication")
-            return
-        } else if (response.isCommitted()) {
-            logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
-            return
-        }
+            def session = request.session
+            if (session.enabled2FA) {
+                redirectStrategy.sendRedirect(request, response, "/auth/two-factor-authentication")
+                return
+            } else if (response.isCommitted()) {
+                logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
+                return
+            }
 
-        redirectStrategy.sendRedirect(request, response, targetUrl)
+            redirectStrategy.sendRedirect(request, response, targetUrl)
+        }
     }
+
 }

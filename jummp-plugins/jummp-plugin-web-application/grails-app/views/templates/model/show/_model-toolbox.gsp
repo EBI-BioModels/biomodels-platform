@@ -1,4 +1,3 @@
-<sec:ifLoggedIn>
 <!-- TODO: create dialog boxes to confirm -->
 <!-- Load an icon library -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -296,7 +295,6 @@
         $.jummp.openPage("${g.createLink(controller: 'model', action: 'submitForPublication', id: revision.identifier())}");
     }
 </script>
-</sec:ifLoggedIn>
 <script>
     /**
      * This function computes a proper link for the download button depending on the size/total size of the model
