@@ -35,21 +35,26 @@ import org.slf4j.LoggerFactory
 @Secured(["IS_AUTHENTICATED_FULLY"])
 class AuthController extends CommonController {
     private final Logger LOGGER = LoggerFactory.getLogger(AuthController.class)
-    def userService
+    def springSecurityService
     def authService
+    def userService
 
     /**
      * Loads the two-factor authentication form
      * @return
      */
     def load2fa() {
+        if (!session.getAttribute("enabled2FA") && springSecurityService.isLoggedIn()) {
+            forward(plugin: "jummp-plugin-web-application", controller: "errors", action: "error405")
+            return
+        }
         String postUrl = "${request.contextPath}/${SpringSecurityUtils.securityConfig.textMessage.filterProcessesUrl}"
         postUrl = "/biomodels"
         Map userParams = [
-            postUrl: "/biomodels",
+            postUrl: postUrl,
             tokenName: "2FA"
         ]
-        render(view: "form2FA", model: userParams)
+        render(view: "form2fa", model: userParams)
     }
 
     def verifyOTP() {
