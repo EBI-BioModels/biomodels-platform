@@ -41,6 +41,10 @@
 					<td>${user.username}</td>
 				</tr>
 				<tr>
+					<td class='tableLabels'><label><g:message code="user.administration.ui.password"/></label></td>
+					<td>**********</td>
+				</tr>
+				<tr>
 					<td class='tableLabels'><label><g:message code="user.administration.ui.realname"/></label></td>
 					<td>${user.person.userRealName}</td>
 				</tr>
