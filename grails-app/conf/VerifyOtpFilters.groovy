@@ -27,7 +27,6 @@ class VerifyOtpFilters {
     def filters = {
         verifyOTP(controller:'*', action:'*') {
             before = {
-                println "session.enabled2FA: ${session.enabled2FA}"
                 String controller = params.get("controller")
                 String action = params.get("action")
                 if (controller && action) {
@@ -41,10 +40,10 @@ class VerifyOtpFilters {
                 }
             }
             after = { Map model ->
-                println model?.dump()
+                //println model?.dump()
             }
             afterView = { Exception e ->
-                println e
+                //println e
             }
         }
     }
