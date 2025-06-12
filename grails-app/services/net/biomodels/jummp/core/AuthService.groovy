@@ -55,7 +55,7 @@ identity.</p>\
 <h2 style="background-color: grey; text-align: center; font-weight: bold; padding: 20px 0px 20px">$otp</h2>\
 <p>This code expires in 15 minutes. <b>Don't share it with anyone.</b></p>\
 <p>If you think you didn't request this code, please <a href="mailto:${SENDER}">contact us</a>.</p>\
-<p>Thank you for subscribing to <a href="${BioModels.BM_ROOT_URL}" target="_blank">BioModels</a>.</p>\
+<p>Thank you for helping us keep your account secure.</p>\
 <p>Kind regards,<br/><em>The BioModels Team</em></p>\
 <div>\
 <hr/>\
