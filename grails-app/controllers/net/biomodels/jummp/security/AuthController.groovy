@@ -28,12 +28,15 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.SpringSecurityUtils
 import net.biomodels.jummp.CommonController
+import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 @Secured(["IS_AUTHENTICATED_FULLY"])
 class AuthController extends CommonController {
     private final Logger LOGGER = LoggerFactory.getLogger(AuthController.class)
+    def userService
+    def authService
 
     /**
      * Loads the two-factor authentication form
@@ -50,18 +53,24 @@ class AuthController extends CommonController {
     }
 
     def verifyOTP() {
+        User currentUser = userService.currentUser
         String otp = request.getJSON()["otp"].decodeHTML()
+        String postURL
         if (!otp) {
-            String postURL = createLink(controller: "errors", action: "error403")
-            render([message: "forbidden", postUrl: postURL] as JSON)
+            postURL = createLink(controller: "errors", action: "error403")
         } else {
-            LOGGER.info "OTP: $otp"
-            session.removeAttribute("enabled2FA")
-            render([message: "valid", postUrl: "/biomodels/user"] as JSON)
+            LOGGER.info "OTP: $otp has been entered by the user: ${currentUser.username}"
+            postURL = "/biomodels/user"
         }
+        session.removeAttribute("enabled2FA")
+        render([message: "valid", postUrl: postURL] as JSON)
     }
 
     def generateOTP() {
-
+        User currentUser = userService.currentUser
+        String username = currentUser.username
+        String address = "127.0.0.1"
+        String sessionId = session.id
+        authService.doGenerateOTP(username, address, sessionId)
     }
 }

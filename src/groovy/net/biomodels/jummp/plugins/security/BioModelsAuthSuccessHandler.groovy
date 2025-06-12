@@ -49,6 +49,7 @@ class BioModelsAuthSuccessHandler extends AAASH {
 
     def loginAttemptCacheService
     def userService
+    def authService
 
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
@@ -94,19 +95,30 @@ class BioModelsAuthSuccessHandler extends AAASH {
         if (redirectURL) {
             request.session.setMaxInactiveInterval(0)
             targetUrl = redirectURL
-        }
-        if (response.isCommitted()) {
             def session = request.session
             if (session.enabled2FA) {
+                username = authentication.principal.username
+                def remoteAddress = authentication.details.remoteAddress
+                def sessionId = authentication.details.sessionId
+                authService.doGenerateOTP(username, remoteAddress, sessionId)
                 redirectStrategy.sendRedirect(request, response, "/auth/two-factor-authentication")
                 return
             } else if (response.isCommitted()) {
                 logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
                 return
             }
+            if (response.isCommitted()) {
+                session = request.session
+                if (session.enabled2FA) {
+                    redirectStrategy.sendRedirect(request, response, "/auth/two-factor-authentication")
+                    return
+                } else if (response.isCommitted()) {
+                    logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
+                    return
+                }
 
-            redirectStrategy.sendRedirect(request, response, targetUrl)
+                redirectStrategy.sendRedirect(request, response, targetUrl)
+            }
         }
     }
-
 }
