@@ -65,18 +65,24 @@
 
         <form action='${postUrl}' method='POST' id='stepTwoLoginForm' autocomplete='off'>
             <div class="otp-field">
-                <label
-                        for='digit1'><input type='text' class="textcode" id='digit1' maxlength="1" data-next="2"/></label>
-                <label
-                        for='digit2'><input type='text' class="textcode" id='digit2' maxlength="1" data-next="3"/></label>
-                <label
-                        for='digit3'><input type='text' class="textcode" id='digit3' maxlength="1" data-next="4"/></label>
-                <label
-                        for='digit4'><input type='text' class="textcode" id='digit4' maxlength="1" data-next="5"/></label>
-                <label
-                        for='digit5'><input type='text' class="textcode" id='digit5' maxlength="1" data-next="6"/></label>
-                <label
-                        for='digit6'><input type='text' class="textcode" id='digit6' maxlength="1" data-next="1"/></label>
+                <label for='digit1'>
+                    <input type='text' class="textcode" id='digit1' maxlength="1" data-next="2"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'');"/></label>
+                <label for='digit2'>
+                    <input type='text' class="textcode" id='digit2' maxlength="1" data-next="3"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'');"/></label>
+                <label for='digit3'>
+                    <input type='text' class="textcode" id='digit3' maxlength="1" data-next="4"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'');"/></label>
+                <label for='digit4'>
+                    <input type='text' class="textcode" id='digit4' maxlength="1" data-next="5"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'');"/></label>
+                <label for='digit5'>
+                    <input type='text' class="textcode" id='digit5' maxlength="1" data-next="6"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'');"/></label>
+                <label for='digit6'>
+                    <input type='text' class="textcode" id='digit6' maxlength="1" data-next="1"
+                           oninput="this.value=this.value.replace(/[^0-9]/g,'');"/></label>
             </div>
             <p style="text-align: center">
 %{--                <input type='submit' id="submit" value='${message(code: "securitytoken.button")}'/>--}%
@@ -91,7 +97,7 @@
     })();
 
     // https://codepen.io/tnguyenv/pen/JodvWZy
-    $(".textcode").on("change keyup keydown", function() {
+    $(".textcode").on("change keyup", function() {
         if (this.value.length === this.maxLength) {
             let next = $(this).data('next');
             $('#digit' + next).focus();
