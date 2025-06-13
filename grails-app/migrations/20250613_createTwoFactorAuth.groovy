@@ -41,6 +41,8 @@ databaseChangeLog = {
 	}
 
 	changeSet(author: "tnguyen (generated)", id: "1749773561870-4") {
-		addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "two_factor_auth", constraintName: "FK_ftt5s3abki7yxb23nyjfvlwk5", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "user", referencesUniqueColumn: "false")
+		addForeignKeyConstraint(baseColumnNames: "user_id", baseTableName: "two_factor_auth",
+				constraintName: "FK_ftt5s3abki7yxb23nyjfvlwk5", deferrable: "false", initiallyDeferred: "false",
+				referencedColumnNames: "id", referencedTableName: "user", referencesUniqueColumn: "false")
 	}
 }
