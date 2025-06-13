@@ -63,11 +63,19 @@ class AuthService implements IAuthService {
         }
         String msg
         if (auth) {
-            msg = "Reused the OTP ${auth.otp} for username: $username; address: $remoteAddress; session: $sessionId"
-            println(msg)
-            LOGGER.info(msg)
-            emailOTP(USER, auth.otp)
-            return auth.otp
+            boolean valid
+            use(groovy.time.TimeCategory) {
+                def duration = new Date() - auth.issuedDate
+                // valid if the issued date is not over 15 minutes
+                valid = duration.minutes*60 + duration.seconds < 15*60
+            }
+            if (valid) {
+                msg = "Reused the OTP ${auth.otp} for username: $username; address: $remoteAddress; session: $sessionId"
+                println(msg)
+                LOGGER.info(msg)
+                emailOTP(USER, auth.otp)
+                return auth.otp
+            }
         }
         String otp = MathUtils.generatePassword('0123456789', 6)
         msg = "Created a new OTP $otp for username: $username; address: $remoteAddress; session: $sessionId"
