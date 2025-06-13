@@ -124,7 +124,7 @@
         }).then(data => {
             let msg = "";
             if (data["matched"]) {
-                msg = "<h4 style='color: green'><b>OTP verification passed!</b></h4>";
+                msg = "<h3 style='color: green'><b>OTP verification passed!</b></h3>";
                 msg += "<p>You can close this page now. Otherwise, you will be redirected after 3 seconds.<p>"
                 showNotification(msg);
                 setTimeout(() => {
@@ -133,8 +133,8 @@
             } else if (data["message"] === "forbidden") {
                 window.location = data["postUrl"];
             } else if (!data["matched"]) {
-                msg = "<h4 style='color: darkred'><b>OTP verification failed!</b></h4>";
-                msg += "<p>Mismatched One-Time Passcode (OTP). Try again or request a new OTP.<p>"
+                msg = "<h3 style='color: darkred'><b>OTP verification failed!</b></h3>";
+                msg += "<p>Mismatched One-Time Passcode (OTP). It could be expired. Try again or request a new OTP.<p>"
                 showNotification(msg);
             } else {
                 clearNotification();
