@@ -61,14 +61,19 @@ class AuthController extends CommonController {
         User currentUser = userService.currentUser
         String otp = request.getJSON()["otp"].decodeHTML()
         String postURL
+        String message
+        boolean matched = false
         if (!otp) {
+            message = "forbidden"
             postURL = createLink(controller: "errors", action: "error403")
         } else {
+            message = "valid"
             LOGGER.info "OTP: $otp has been entered by the user: ${currentUser.username}"
+            matched = authService.doVerifyOTP(currentUser.username, otp, session.id)
             postURL = "/biomodels/user"
         }
         session.removeAttribute("enabled2FA")
-        render([message: "valid", postUrl: postURL] as JSON)
+        render([message: message, postUrl: postURL, matched: matched] as JSON)
     }
 
     def generateOTP() {
