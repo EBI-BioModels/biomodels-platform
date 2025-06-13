@@ -59,7 +59,7 @@ class AuthService implements IAuthService {
         String queryString = "select id from TwoFactorAuth t where t.user.id = :userId and t.sessionId = :sessionId"
         List results = TFA.executeQuery(queryString, [userId: USER.id, sessionId: sessionId])
         if (!results.isEmpty()) {
-            auth = TFA.get(results.first().id)
+            auth = TFA.get(results.first())
         }
         String msg
         if (auth) {
