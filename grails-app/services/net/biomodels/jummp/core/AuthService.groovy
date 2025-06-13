@@ -100,7 +100,7 @@ class AuthService implements IAuthService {
                 def duration = new Date() - first.issuedDate
                 // println "Days: ${duration.days}, Hours: ${duration.hours}, etc."
                 // valid if the issued date is not over 15 minutes
-                valid = duration.minutes*15 + duration.seconds < 15*60
+                valid = duration.minutes*60 + duration.seconds < 15*60
             }
             if (valid) {
                 // make it expired because it has already been used. Should we?
