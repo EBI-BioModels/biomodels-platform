@@ -151,24 +151,22 @@
     });
 
     $("#chkTrustDevice").on("change", function () {
-        console.log("Trust this device has been changed!");
+        console.log("Checkbox `Trust this device` has been changed!");
         let isChecked = $(this).is(':checked');
-        let device = new Device();
+
         if (isChecked) {
             getIP().
             then((data) => {
                 const ipaddr = data;
                 const type = deviceType();
                 const userAgent = navigator.userAgent;
-                device.ipAddress = ipaddr;
-                device.type = type;
-                device.userAgent = userAgent;
+                let device = new Device(ipaddr, type, userAgent);
                 console.log(device.toString());
+                // localStorage.setItem();
             }).
             then(() => {
                 console.log("No more accepted");
             })
-            console.log(device.toString());
         }
     });
 
@@ -203,27 +201,6 @@
             this.ipAddress = ipAddress;
             this.type = type;
             this.userAgent = userAgent;
-        }
-
-        get ipAddress() {
-            return this.ipAddress;
-        }
-        set ipAddress(addr) {
-            this.ipAddress = addr;
-        }
-
-        get type() {
-            return this.type;
-        }
-        set type(type) {
-            this.type = type;
-        }
-
-        get userAgent() {
-            return this.userAgent;
-        }
-        set userAgent(agent) {
-            this.userAgent = agent;
         }
 
         toString() {
