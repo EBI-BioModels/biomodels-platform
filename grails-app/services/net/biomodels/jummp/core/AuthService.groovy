@@ -28,6 +28,7 @@ import grails.transaction.Transactional
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.security.IAuthService
+import net.biomodels.jummp.security.TwoFactorAuth as TFA
 import net.biomodels.jummp.utils.MathUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -38,21 +39,46 @@ class AuthService implements IAuthService {
     def grailsApplication
     def userService
 
-    def doGenerateOTP(final String username, final String remoteAddress, final String sessionId) {
-        println "Created a new OTP for username: $username; address: $remoteAddress; session: $sessionId"
-        LOGGER.info("Created a new OTP for username: $username; address: $remoteAddress; session: $sessionId")
-        String otp = MathUtils.generatePassword('0123456789', 6)
-        println "A newly issued OTP: $otp"
-        LOGGER.info("A newly issued OTP: $otp for the user $username")
-        final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
+    @Override
+    String doGenerateOTP(final String username, final String remoteAddress, final String sessionId) {
         final User USER = userService?.currentUser
+        TFA auth = TFA.findByUserAndSessionId(USER, sessionId)
+        String msg
+        if (auth) {
+            msg = "Reused the OTP ${auth.otp} for username: $username; address: $remoteAddress; session: $sessionId"
+            println(msg)
+            LOGGER.info(msg)
+            emailOTP(USER, auth.otp)
+            return auth.otp
+        }
+        String otp = MathUtils.generatePassword('0123456789', 6)
+        msg = "Created a new OTP $otp for username: $username; address: $remoteAddress; session: $sessionId"
+        println(msg)
+        LOGGER.info(msg)
+        auth = TFA.findOrCreateWhere(user: USER, sessionId: sessionId, otp: otp, issuedDate: new Date())
+        if (!auth.save(flush: true)) {
+            LOGGER.error("Cannot create a new OTP requested by user $username (sessionId: $sessionId).")
+            return ""
+        }
+        LOGGER.info("A newly issued OTP: $otp for the user $username")
+
+        otp
+    }
+
+    @Override
+    boolean doVerifyOTP(final String username, final String otp, final String sessionId) {
+        return true
+    }
+
+    private void emailOTP(final User USER, final String OTP) {
+        final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
         final String BODY = """\
 <div style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: 20px">\
-<p>Hi $username,</p>\
+<p>Hi ${USER.person.userRealName},</p>\
 <h3>You're nearly there!</h3>\
 <p>As an added layer of security to your account in BioModels, please use the code below to verify your \
 identity.</p>\
-<h2 style="background-color: grey; text-align: center; font-weight: bold; padding: 20px 0px 20px">$otp</h2>\
+<h2 style="background-color: grey; text-align: center; font-weight: bold; padding: 20px 0px 20px">$OTP</h2>\
 <p>This code expires in 15 minutes. <b>Don't share it with anyone.</b></p>\
 <p>If you think you didn't request this code, please <a href="mailto:${SENDER}">contact us</a>.</p>\
 <p>Thank you for helping us keep your account secure.</p>\
@@ -67,7 +93,7 @@ Replies to this email address aren't monitored.<br/>\
 Wellcome Genome Campus, Hinxton, \
 Cambridgeshire, CB10 1SD, UK. +44 (0)1223 49 44 44.</p>
 """
-        final String SUBJECT = "[BioModels] $otp is your verification code"
+        final String SUBJECT = "[BioModels] $OTP is your verification code"
         userService.sendEmail(USER, BODY, SUBJECT)
     }
 }

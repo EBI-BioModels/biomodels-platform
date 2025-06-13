@@ -1,5 +1,6 @@
 package net.biomodels.jummp.security
 
 interface IAuthService {
-    def doGenerateOTP(final String username, final String remoteAddress, final String sessionId)
+    String doGenerateOTP(final String username, final String remoteAddress, final String sessionId)
+    boolean doVerifyOTP(final String username, final String otp, final String sessionId)
 }
