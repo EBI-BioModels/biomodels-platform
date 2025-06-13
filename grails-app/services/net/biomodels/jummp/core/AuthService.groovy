@@ -28,6 +28,7 @@ import grails.transaction.Transactional
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.security.IAuthService
+import net.biomodels.jummp.security.TwoFactorAuth
 import net.biomodels.jummp.security.TwoFactorAuth as TFA
 import net.biomodels.jummp.utils.MathUtils
 import org.slf4j.Logger
@@ -38,6 +39,18 @@ class AuthService implements IAuthService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthService.class)
     def grailsApplication
     def userService
+
+    @Override
+    List<TwoFactorAuth> findAll(final String username, final String otp, final String sessionId) {
+        String queryString = """select id from TwoFactorAuth t where t.user.username = :username and t.sessionId = \
+:sessionId and t.otp = :otp"""
+        List iDs = TFA.executeQuery(queryString, [username: username, sessionId: sessionId, otp: otp])
+        List<TFA> results = new ArrayList<>()
+        iDs.each {
+            results.add(TFA.get(it))
+        }
+        results
+    }
 
     @Override
     String doGenerateOTP(final String username, final String remoteAddress, final String sessionId) {
@@ -72,7 +85,32 @@ class AuthService implements IAuthService {
 
     @Override
     boolean doVerifyOTP(final String username, final String otp, final String sessionId) {
-        return true
+        String msg = "Verifying the OTP $otp for the user $username at the session $sessionId"
+        LOGGER.info(msg)
+        List<TFA> results = findAll(username, otp, sessionId)
+        if (results.isEmpty()) {
+            msg = "Cannot find any match for OTP $otp provided by the user $username at the ssession $sessionId"
+            LOGGER.debug(msg)
+            return false
+        }
+        TFA first = results?.first()
+        if (first) {
+            boolean valid
+            use(groovy.time.TimeCategory) {
+                def duration = new Date() - first.issuedDate
+                // println "Days: ${duration.days}, Hours: ${duration.hours}, etc."
+                // valid if the issued date is not over 15 minutes
+                valid = duration.minutes*15 + duration.seconds < 15*60
+            }
+            if (valid) {
+                // make it expired because it has already been used. Should we?
+            }
+            return valid
+        } else {
+            msg = "Cannot find any match for OTP $otp provided by the user $username at the ssession $sessionId"
+            LOGGER.debug(msg)
+            return false
+        }
     }
 
     private void emailOTP(final User USER, final String OTP) {
