@@ -88,6 +88,10 @@
             <p style="text-align: center">
 %{--                <input type='submit' id="submit" value='${message(code: "securitytoken.button")}'/>--}%
                 <input type='button' id="verify" value='Verify' class="button"/>
+
+                <label for="chkTrustDevice">
+                    <input type="checkbox" id="chkTrustDevice"/> Trust this device for 30 days
+                </label>
             </p>
         </form>
     </div>
@@ -145,6 +149,88 @@
             console.error('Error: ', error);
         });
     });
+
+    $("#chkTrustDevice").on("change", function () {
+        console.log("Trust this device has been changed!");
+        let isChecked = $(this).is(':checked');
+        let device = new Device();
+        if (isChecked) {
+            getIP().
+            then((data) => {
+                const ipaddr = data;
+                const type = deviceType();
+                const userAgent = navigator.userAgent;
+                device.ipAddress = ipaddr;
+                device.type = type;
+                device.userAgent = userAgent;
+                console.log(device.toString());
+            }).
+            then(() => {
+                console.log("No more accepted");
+            })
+            console.log(device.toString());
+        }
+    });
+
+    let cachedIP = null;
+
+    async function getIP() {
+        if (cachedIP) {
+            return cachedIP;
+        }
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        cachedIP = data["ip"];
+        return cachedIP;
+    }
+
+    function deviceType() {
+        const ua = navigator.userAgent;
+        if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+            return "tablet";
+        }
+        else if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+            return "mobile";
+        }
+        return "desktop";
+    }
+
+    class Device {
+        ipAddress
+        type
+        userAgent
+        constructor(ipAddress, type, userAgent) {
+            this.ipAddress = ipAddress;
+            this.type = type;
+            this.userAgent = userAgent;
+        }
+
+        get ipAddress() {
+            return this.ipAddress;
+        }
+        set ipAddress(addr) {
+            this.ipAddress = addr;
+        }
+
+        get type() {
+            return this.type;
+        }
+        set type(type) {
+            this.type = type;
+        }
+
+        get userAgent() {
+            return this.userAgent;
+        }
+        set userAgent(agent) {
+            this.userAgent = agent;
+        }
+
+        toString() {
+            return this.ipAddress+"|"+this.type+"|"+this.userAgent;
+        }
+    }
+
 </script>
 </body>
 </html>
