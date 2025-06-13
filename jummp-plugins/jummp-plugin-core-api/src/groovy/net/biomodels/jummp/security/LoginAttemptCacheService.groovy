@@ -95,10 +95,10 @@ locked."""
      * @param login - username which is login
      */
     def loginSuccess(String login) {
-        LOGGER.debug "successfully login for $login"
+        LOGGER.debug "User [$login] logged in successfully."
         attempts.invalidate(login)
         //redisService.doRedisHDel("Login-Attempts", login)
-        LOGGER.info("Login failures for $login was reset.")
+        LOGGER.info("All login failures for $login were reset if happened earlier.")
     }
 
     /**
