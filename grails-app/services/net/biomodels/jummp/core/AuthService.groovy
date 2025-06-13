@@ -42,7 +42,12 @@ class AuthService implements IAuthService {
     @Override
     String doGenerateOTP(final String username, final String remoteAddress, final String sessionId) {
         final User USER = userService?.currentUser
-        TFA auth = TFA.findByUserAndSessionId(USER, sessionId)
+        TFA auth = null
+        String queryString = "select id from TwoFactorAuth t where t.user.id = :userId and t.sessionId = :sessionId"
+        List results = TFA.executeQuery(queryString, [userId: USER.id, sessionId: sessionId])
+        if (!results.isEmpty()) {
+            auth = TFA.get(results.first().id)
+        }
         String msg
         if (auth) {
             msg = "Reused the OTP ${auth.otp} for username: $username; address: $remoteAddress; session: $sessionId"
@@ -55,7 +60,7 @@ class AuthService implements IAuthService {
         msg = "Created a new OTP $otp for username: $username; address: $remoteAddress; session: $sessionId"
         println(msg)
         LOGGER.info(msg)
-        auth = TFA.findOrCreateWhere(user: USER, sessionId: sessionId, otp: otp, issuedDate: new Date())
+        auth = new TFA(user: USER, sessionId: sessionId, otp: otp, issuedDate: new Date())
         if (!auth.save(flush: true)) {
             LOGGER.error("Cannot create a new OTP requested by user $username (sessionId: $sessionId).")
             return ""
