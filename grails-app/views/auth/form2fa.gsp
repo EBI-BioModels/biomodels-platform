@@ -48,7 +48,8 @@
 
 <body>
 <div class="row">
-    <div class="small-12 medium-6 large-6 columns large-centered medium-centered">
+    <div class="small-12 medium-6 large-6 columns large-centered medium-centered"
+         style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: auto">
 %{--        <div class='fheader'><g:message code="securitytoken.header"/></div>--}%
         <div class='fheader'>
         <h2 class="green" style="text-align: center">Two-Factor Authentication<br/>(aka. OTP Verification)</h2>
