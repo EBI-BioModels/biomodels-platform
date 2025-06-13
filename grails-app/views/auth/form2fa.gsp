@@ -96,7 +96,7 @@
         </form>
     </div>
 </div>
-<script type='text/javascript'>
+<g:javascript type='text/javascript'>
     (function() {
         //document.forms['stepTwoLoginForm'].elements['textcode'].focus();
     })();
@@ -208,6 +208,6 @@
         }
     }
 
-</script>
+</g:javascript>
 </body>
 </html>
