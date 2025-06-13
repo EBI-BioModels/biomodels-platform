@@ -116,7 +116,7 @@ class AuthService implements IAuthService {
     private void emailOTP(final User USER, final String OTP) {
         final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
         final String BODY = """\
-<div style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: 20px">\
+<div style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: auto">\
 <p>Hi ${USER.person.userRealName},</p>\
 <h3>You're nearly there!</h3>\
 <p>As an added layer of security to your account in BioModels, please use the code below to verify your \
