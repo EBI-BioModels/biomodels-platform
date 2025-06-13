@@ -86,9 +86,9 @@ class AuthService implements IAuthService {
             LOGGER.error("Cannot create a new OTP requested by user $username (sessionId: $sessionId).")
             return ""
         }
+        emailOTP(USER, otp)
         LOGGER.info("A newly issued OTP: $otp for the user $username")
-
-        otp
+        return otp
     }
 
     @Override
