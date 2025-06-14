@@ -87,18 +87,23 @@
             </div>
             <p style="text-align: center">
 %{--                <input type='submit' id="submit" value='${message(code: "securitytoken.button")}'/>--}%
-                <input type='button' id="verify" value='Verify' class="button"/>
-
-                <label for="chkTrustDevice">
+                <input type='button' id="verify" value='Verify' class="button"/></p>
+                %{--<g:if test="${!trustDevice}">--}%
+                <div id="div-trust-device"><label for="chkTrustDevice">
                     <input type="checkbox" id="chkTrustDevice"/> Trust this device for 30 days
                 </label>
-            </p>
+                </div>
+                %{--</g:if>--}%
         </form>
     </div>
 </div>
 <g:javascript type='text/javascript'>
     (function() {
-        //document.forms['stepTwoLoginForm'].elements['textcode'].focus();
+        const username = "${user.username}";
+        const deviceInfo =  localStorage.getItem(username);
+        if (deviceInfo) {
+            $("#div-trust-device").remove();
+        }
     })();
 
     // https://codepen.io/tnguyenv/pen/JodvWZy
@@ -162,10 +167,10 @@
                 const userAgent = navigator.userAgent;
                 let device = new Device(ipaddr, type, userAgent);
                 console.log(device.toString());
-                // localStorage.setItem();
+                localStorage.setItem("${user.username}", device.toString());
             }).
             then(() => {
-                console.log("No more accepted");
+                // console.log("Do nothing");
             })
         }
     });

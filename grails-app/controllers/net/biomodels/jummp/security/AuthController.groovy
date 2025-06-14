@@ -52,7 +52,8 @@ class AuthController extends CommonController {
         postUrl = "/biomodels"
         Map userParams = [
             postUrl: postUrl,
-            tokenName: "2FA"
+            tokenName: "2FA",
+            user: userService.currentUser
         ]
         render(view: "form2fa", model: userParams)
     }
