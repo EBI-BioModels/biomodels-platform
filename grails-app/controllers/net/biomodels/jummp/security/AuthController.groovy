@@ -27,6 +27,8 @@ package net.biomodels.jummp.security
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.SpringSecurityUtils
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
@@ -37,6 +39,7 @@ class AuthController extends CommonController {
     private final Logger LOGGER = LoggerFactory.getLogger(AuthController.class)
     def springSecurityService
     def authService
+    def redisService
     def userService
 
     /**
@@ -56,6 +59,72 @@ class AuthController extends CommonController {
             user: userService.currentUser
         ]
         render(view: "form2fa", model: userParams)
+    }
+
+    def checkTrustDevice() {
+        // if the client used an AJAX call
+        String username = params.username.decodeHTML()
+        String deviceInfo = params.deviceInfo.decodeHTML()
+        String message
+        List<String> lstDeviceInfo
+        if (!deviceInfo) {
+            message = "No information of your trust device provided."
+        } else {
+            lstDeviceInfo = deviceInfo.tokenize("|")
+            if (lstDeviceInfo.isEmpty()) {
+                message = "An error happened when tokenising the device info."
+            }
+
+        }
+        // if the client used a fetch call
+        //String username = request.getJSON()["username"].decodeHTML()
+        //String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
+        // println "Data: $username: $deviceInfo"
+        Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
+        def parser = new JsonSlurper()
+        def json
+        String matched = trustDevices.find {
+            json = parser.parseText(it)
+            json["ipaddr"] == lstDeviceInfo[0] &&
+            json["type"] == lstDeviceInfo[1] &&
+            json["userAgent"] == lstDeviceInfo[2]
+            //json["cachedDate"] == lstDeviceInfo[3]
+        }
+        boolean valid = false
+        if (matched) {
+            json = parser.parseText(matched)
+            valid = authService.isTrustDeviceExpired(json["cachedDate"] as String)
+        }
+        render([message: "will be implemented", isTrustDeviceExpired: valid] as JSON)
+    }
+
+    def updateTrustDeviceOnRedis() {
+        String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
+        if (!deviceInfo) {
+            render([message: "cannot store your trust device in our system"] as JSON)
+        }
+        String username = request.getJSON()["username"].decodeHTML()
+        String ipaddr = request.getJSON()["ipaddr"].decodeHTML()
+        String type = request.getJSON()["type"].decodeHTML()
+        String userAgent = request.getJSON()["userAgent"].decodeHTML()
+        String cachedDate = request.getJSON()["cachedDate"].decodeHTML()
+        Map mapTrustDevice = [ipaddr: ipaddr, type: type, userAgent: userAgent, cachedDate: cachedDate]
+        def data = new JsonBuilder(mapTrustDevice).toString()
+        boolean checked = request.getJSON()["checked"] as boolean
+        if (checked) {
+            redisService.doRedisSAdd("trustdevices:$username", data)
+        } else {
+            Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
+            def parser = new JsonSlurper()
+            def json
+            for (String device : trustDevices) {
+                json = parser.parseText(device)
+                if (json["ipaddr"] == ipaddr && json["type"] == type && json["userAgent"] == userAgent) {
+                    redisService.doRedisSRem("trustdevices:$username", device)
+                }
+            }
+        }
+        render([message: "will be implemented"] as JSON)
     }
 
     def verifyOTP() {

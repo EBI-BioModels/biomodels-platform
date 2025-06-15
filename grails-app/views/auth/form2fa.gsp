@@ -101,9 +101,26 @@
     (function() {
         const username = "${user.username}";
         const deviceInfo =  localStorage.getItem(username);
-        if (deviceInfo) {
-            $("#div-trust-device").remove();
-        }
+        const URL = "${createLink(controller: "auth", action: "checkTrustDevice")}";
+        $.ajax({
+            type: "POST",
+            url: URL,
+            data: {
+                username: username,
+                deviceInfo: deviceInfo
+            }
+        }).success(function(data) {
+            console.log(data["message"]);
+            if (!data["isTrustDeviceExpired"]) {
+                $("#div-trust-device").remove();
+            } else {
+                // leave the checkbox as it is rendered
+            }
+        }).fail(function(jqXHR, status, error) {
+
+        }).always(function() {
+
+        });
     })();
 
     // https://codepen.io/tnguyenv/pen/JodvWZy
@@ -159,20 +176,46 @@
         console.log("Checkbox `Trust this device` has been changed!");
         let isChecked = $(this).is(':checked');
 
-        if (isChecked) {
-            getIP().
-            then((data) => {
-                const ipaddr = data;
-                const type = deviceType();
-                const userAgent = navigator.userAgent;
-                let device = new Device(ipaddr, type, userAgent);
-                console.log(device.toString());
-                localStorage.setItem("${user.username}", device.toString());
-            }).
-            then(() => {
-                // console.log("Do nothing");
-            })
-        }
+        getIP().
+        then((data) => {
+            const ipaddr = data;
+            const type = deviceType();
+            const userAgent = navigator.userAgent;
+            let device = new Device(ipaddr, type, userAgent);
+            let cachedDate = new Date();
+            cachedDate = cachedDate.toISOString();
+            const deviceInfo = device.toString() + "|" + cachedDate;
+            localStorage.setItem("${user.username}", deviceInfo);
+            const URL = "${createLink(controller: "auth", action: "updateTrustDeviceOnRedis")}";
+            fetch(URL, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json; charset=utf-8',
+                    'Content-Type': 'application/json; charset=utf-8'
+                },
+                body: JSON.stringify({
+                    'checked': isChecked,
+                    'username': "${user.username}",
+                    'ipaddr': ipaddr,
+                    'type': type,
+                    'userAgent': userAgent,
+                    'cachedDate': cachedDate,
+                    'deviceInfo': deviceInfo
+                })
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response failed!!!');
+                }
+                return response.json();
+            }).then(data => {
+                console.log(data);
+            }).catch(error => {
+                console.error('Error: ', error);
+            });
+        }).
+        then(() => {
+            // console.log("Do nothing");
+        })
     });
 
     let cachedIP = null;
