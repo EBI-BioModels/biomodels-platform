@@ -79,7 +79,6 @@ class AuthController extends CommonController {
         // if the client used a fetch call
         //String username = request.getJSON()["username"].decodeHTML()
         //String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
-        // println "Data: $username: $deviceInfo"
         Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
         def parser = new JsonSlurper()
         def json
@@ -132,20 +131,24 @@ class AuthController extends CommonController {
         String otp = request.getJSON()["otp"].decodeHTML()
         String postURL
         String message
+        String cause
         boolean matched = false
         if (!otp) {
             message = "forbidden"
+            cause = "You're not allowed to do this operations."
             postURL = createLink(controller: "errors", action: "error403")
         } else {
             message = "valid"
             LOGGER.info "OTP: $otp has been entered by the user: ${currentUser.username}"
-            matched = authService.doVerifyOTP(currentUser.username, otp, session.id)
+            Map m = authService.doVerifyOTP(currentUser.username, otp, session.id)
+            matched = m["matched"]
+            cause = m["cause"]
             postURL = "/biomodels/user"
         }
         if (matched) {
             session.removeAttribute("enabled2FA")
         }
-        render([message: message, postUrl: postURL, matched: matched] as JSON)
+        render([message: message, postUrl: postURL, matched: matched, cause: cause] as JSON)
     }
 
     def generateOTP() {

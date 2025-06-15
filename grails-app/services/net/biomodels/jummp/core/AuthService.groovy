@@ -106,14 +106,14 @@ class AuthService implements IAuthService {
     }
 
     @Override
-    boolean doVerifyOTP(final String username, final String otp, final String sessionId) {
+    Map doVerifyOTP(final String username, final String otp, final String sessionId) {
         String msg = "Verifying the OTP $otp for the user $username at the session $sessionId"
         LOGGER.info(msg)
         List<TFA> results = findAll(username, otp, sessionId)
         if (results.isEmpty()) {
             msg = "Cannot find any match for OTP $otp provided by the user $username at the ssession $sessionId"
             LOGGER.debug(msg)
-            return false
+            return [matched: false, cause: "OTP mismatch. Try again or request a new one."]
         }
         TFA first = results?.first()
         if (first) {
@@ -124,14 +124,15 @@ class AuthService implements IAuthService {
                 // valid if the issued date is not over 15 minutes
                 valid = duration.minutes*60 + duration.seconds < 15*60
             }
-            if (valid) {
+            if (!valid) {
                 // make it expired because it has already been used. Should we?
+                return [matched: valid, cause: "OTP expired. You can request a new one."]
             }
-            return valid
+            return [matched: valid]
         } else {
             msg = "Cannot find any match for OTP $otp provided by the user $username at the ssession $sessionId"
             LOGGER.debug(msg)
-            return false
+            return [matched: false, cause: "OTP doesn't exist. Check it in your email again."]
         }
     }
 

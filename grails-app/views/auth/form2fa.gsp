@@ -161,7 +161,7 @@
                 window.location = data["postUrl"];
             } else if (!data["matched"]) {
                 msg = "<h3 style='color: darkred'><b>OTP verification failed!</b></h3>";
-                msg += "<p>Mismatched One-Time Passcode (OTP). It could be expired. Try again or request a new OTP.<p>"
+                msg += "<p>" + data["cause"] + ".<p>"
                 showNotification(msg);
             } else {
                 clearNotification();
