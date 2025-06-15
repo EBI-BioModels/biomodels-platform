@@ -25,6 +25,7 @@
 package net.biomodels.jummp.core
 
 import grails.transaction.Transactional
+import groovy.time.TimeCategory
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.security.IAuthService
@@ -64,7 +65,7 @@ class AuthService implements IAuthService {
         String msg
         if (auth) {
             boolean valid
-            use(groovy.time.TimeCategory) {
+            use(TimeCategory) {
                 def duration = new Date() - auth.issuedDate
                 // valid if the issued date is not over 15 minutes
                 valid = duration.minutes*60 + duration.seconds < 15*60
@@ -104,7 +105,7 @@ class AuthService implements IAuthService {
         TFA first = results?.first()
         if (first) {
             boolean valid
-            use(groovy.time.TimeCategory) {
+            use(TimeCategory) {
                 def duration = new Date() - first.issuedDate
                 // println "Days: ${duration.days}, Hours: ${duration.hours}, etc."
                 // valid if the issued date is not over 15 minutes
