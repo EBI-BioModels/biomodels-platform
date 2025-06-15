@@ -50,7 +50,6 @@
 <div class="row">
     <div class="small-12 medium-6 large-6 columns large-centered medium-centered"
          style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: auto">
-%{--        <div class='fheader'><g:message code="securitytoken.header"/></div>--}%
         <div class='fheader'>
         <h2 class="green" style="text-align: center">Two-Factor Authentication<br/>(aka. OTP Verification)</h2>
         <p>Please enter the One-Time Passcode (OTP) sent to your registered email to complete your verification.<br/>
@@ -84,18 +83,15 @@
                            oninput="this.value=this.value.replace(/[^0-9]/g,'');"/></label>
             </div>
             <p style="text-align: center">
-%{--                <input type='submit' id="submit" value='${message(code: "securitytoken.button")}'/>--}%
                 <input type='button' id="verify" value='Verify' class="button"/></p>
             <p style="text-align: center">
                 Didn't receive code? <a href="${g.createLink(uri: "/auth/request-new-verification-code")}"
                                         target="_blank">Request again!</a>
             </p>
-                %{--<g:if test="${!trustDevice}">--}%
                 <div id="div-trust-device"><label for="chkTrustDevice">
                     <input type="checkbox" id="chkTrustDevice"/> Trust this device for 30 days
                 </label>
                 </div>
-                %{--</g:if>--}%
         </form>
     </div>
 </div>
@@ -175,7 +171,6 @@
     });
 
     $("#chkTrustDevice").on("change", function () {
-        console.log("Checkbox `Trust this device` has been changed!");
         let isChecked = $(this).is(':checked');
 
         getIP().
