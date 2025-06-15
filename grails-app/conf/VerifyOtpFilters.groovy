@@ -24,6 +24,9 @@
 
 class VerifyOtpFilters {
     def configurationService
+    List IGNORED_ACTIONS = [
+        "load2fa", "verifyOTP", "generateOTP", "checkTrustDevice", "updateTrustDeviceOnRedis"
+    ]
     def filters = {
         verifyOTP(controller:'*', action:'*') {
             before = {
@@ -32,7 +35,7 @@ class VerifyOtpFilters {
                 if (controller && action) {
                     if (session.enabled2FA
                             && !action.contains("error")
-                            && !["load2fa", "verifyOTP", "generateOTP"].contains(action)
+                            && !IGNORED_ACTIONS.contains(action)
                             && !["notification"].contains(controller)) {
                         redirect(controller: "auth", action: "load2fa")
                         return
