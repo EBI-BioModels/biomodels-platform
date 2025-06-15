@@ -1,25 +1,22 @@
 /**
-* Copyright (C) 2010-2025 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-**/
-
-
-
+ * Copyright (C) 2010-2025 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ **/
 
 
 package net.biomodels.jummp.security
@@ -54,47 +51,50 @@ class AuthController extends CommonController {
         String postUrl = "${request.contextPath}/${SpringSecurityUtils.securityConfig.textMessage.filterProcessesUrl}"
         postUrl = "/biomodels"
         Map userParams = [
-            postUrl: postUrl,
-            tokenName: "2FA",
-            user: userService.currentUser
+                postUrl  : postUrl,
+                tokenName: "2FA",
+                user     : userService.currentUser
         ]
         render(view: "form2fa", model: userParams)
     }
-
+    /**
+     * <h4>Check the trust devices of the authenticated user</h4>
+     *
+     * <p>This action is automatically called when the 2FA form is already loaded. It checks and determines to remove
+     * or keep the checkbox: Trust this device for 30 days.</p>
+     * @return
+     */
     def checkTrustDevice() {
-        // if the client used an AJAX call
         String username = params.username.decodeHTML()
         String deviceInfo = params.deviceInfo.decodeHTML()
         String message
-        List<String> lstDeviceInfo
+        List<String> devices
         if (!deviceInfo) {
             message = "No information of your trust device provided."
+            render([message: message, isTrustDeviceExpired: true] as JSON)
         } else {
-            lstDeviceInfo = deviceInfo.tokenize("|")
-            if (lstDeviceInfo.isEmpty()) {
+            devices = deviceInfo.tokenize("|")
+            if (devices.isEmpty()) {
                 message = "An error happened when tokenising the device info."
+                render([message: message, isTrustDeviceExpired: true] as JSON)
             }
-
         }
-        // if the client used a fetch call
-        //String username = request.getJSON()["username"].decodeHTML()
-        //String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
         Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
         def parser = new JsonSlurper()
         def json
         String matched = trustDevices.find {
             json = parser.parseText(it)
-            json["ipaddr"] == lstDeviceInfo[0] &&
-            json["type"] == lstDeviceInfo[1] &&
-            json["userAgent"] == lstDeviceInfo[2]
-            //json["cachedDate"] == lstDeviceInfo[3]
+            json["ipaddr"] == devices[0] && json["type"] == devices[1] && json["userAgent"] == devices[2]
         }
-        boolean valid = false
+        boolean expired = false
         if (matched) {
             json = parser.parseText(matched)
-            valid = authService.isTrustDeviceExpired(json["cachedDate"] as String)
+            expired = authService.isTrustDeviceExpired(json["cachedDate"] as String)
+            message = "This trust device has ${expired ? 'expired' : 'unexpired yet'}."
+        } else {
+            message = "No information about this device."
         }
-        render([message: "will be implemented", isTrustDeviceExpired: valid] as JSON)
+        render([message: message, isTrustDeviceExpired: expired] as JSON)
     }
 
     def updateTrustDeviceOnRedis() {
