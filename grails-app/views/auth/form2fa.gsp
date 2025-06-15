@@ -188,7 +188,11 @@
             let cachedDate = new Date();
             cachedDate = cachedDate.toISOString();
             const deviceInfo = device.toString() + "|" + cachedDate;
-            localStorage.setItem("${user.username}", deviceInfo);
+            if (isChecked) {
+                localStorage.setItem("${user.username}", deviceInfo);
+            } else {
+                localStorage.removeItem("${user.username}");
+            }
 
             // Below is unnecessary
             %{--const URL = "${createLink(controller: "auth", action: "updateTrustDeviceOnRedis")}";
