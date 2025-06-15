@@ -125,6 +125,8 @@ class AuthService implements IAuthService {
         final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
         final String BODY = """\
 <div style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: auto">\
+<p style="text-align: center"><a href="https://www.ebi.ac.uk/biomodels" target="_blank" title="BioModels repository">\
+<img src="https://www.ebi.ac.uk/biomodels/images/biomodels/logo_small.png" alt="BioModels logo"/>BioModels</a></p>\
 <p>Hi ${USER.person.userRealName},</p>\
 <h3>You're nearly there!</h3>\
 <p>As an added layer of security to your account in BioModels, please use the code below to verify your \
