@@ -56,9 +56,7 @@
         <p>Please enter the One-Time Passcode (OTP) sent to your registered email to complete your verification.<br/>
             <em>The code expires after 15
             minutes and will no longer work if it was already entered for this account.</em>
-            <br/>
-        Didn't receive code? <a href="${g.createLink(uri: "/auth/request-new-verification-code")}"
-                                target="_blank">Request again!</a></p></div>
+        </p></div>
 
         <g:if test='${flash.message}'>
             <div class='login_message'>${flash.message}</div>
@@ -88,6 +86,10 @@
             <p style="text-align: center">
 %{--                <input type='submit' id="submit" value='${message(code: "securitytoken.button")}'/>--}%
                 <input type='button' id="verify" value='Verify' class="button"/></p>
+            <p style="text-align: center">
+                Didn't receive code? <a href="${g.createLink(uri: "/auth/request-new-verification-code")}"
+                                        target="_blank">Request again!</a>
+            </p>
                 %{--<g:if test="${!trustDevice}">--}%
                 <div id="div-trust-device"><label for="chkTrustDevice">
                     <input type="checkbox" id="chkTrustDevice"/> Trust this device for 30 days
