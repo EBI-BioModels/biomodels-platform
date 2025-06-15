@@ -32,13 +32,17 @@ import net.biomodels.jummp.security.IAuthService
 import net.biomodels.jummp.security.TwoFactorAuth
 import net.biomodels.jummp.security.TwoFactorAuth as TFA
 import net.biomodels.jummp.utils.MathUtils
+import net.biomodels.jummp.utils.TimeUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.text.SimpleDateFormat
 
 @Transactional
 class AuthService implements IAuthService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthService.class)
     def grailsApplication
+    def redisService
     def userService
 
     @Override
@@ -51,6 +55,15 @@ class AuthService implements IAuthService {
             results.add(TFA.get(it))
         }
         results
+    }
+
+    @Override
+    boolean isTrustDeviceExpired(String strDateTime) {
+        def sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
+        def cachedDate = sdf.parse(strDateTime)
+        double days = TimeUtils.diffTwoDates(new Date(), cachedDate, "D")
+        return days > 30
     }
 
     @Override
@@ -127,7 +140,7 @@ class AuthService implements IAuthService {
         final String BODY = """\
 <div style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: auto">\
 <p style="text-align: center"><a href="https://www.ebi.ac.uk/biomodels" target="_blank" title="BioModels repository">\
-<img src="https://www.ebi.ac.uk/biomodels/images/biomodels/logo_small.png" alt="BioModels logo"/>BioModels</a></p>\
+<img src="https://www.ebi.ac.uk/biomodels/images/biomodels/logo_small.png" alt="BioModels logo"/></a></p>\
 <p>Hi ${USER.person.userRealName},</p>\
 <h3>You're nearly there!</h3>\
 <p>As an added layer of security to your account in BioModels, please use the code below to verify your \
