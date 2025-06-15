@@ -25,6 +25,8 @@
 package net.biomodels.jummp.core
 
 import grails.transaction.Transactional
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 import groovy.time.TimeCategory
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.plugins.security.User
@@ -133,6 +135,25 @@ class AuthService implements IAuthService {
             msg = "Cannot find any match for OTP $otp provided by the user $username at the ssession $sessionId"
             LOGGER.debug(msg)
             return [matched: false, cause: "OTP doesn't exist. Check it in your email again."]
+        }
+    }
+
+    void updateTrustDevice(final boolean checked, final String username, final Map deviceInfo) {
+        def data = new JsonBuilder(deviceInfo).toString()
+        if (checked) {
+            redisService.doRedisSAdd("trustdevices:$username", data)
+        } else {
+            Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
+            def parser = new JsonSlurper()
+            def json
+            for (String device : trustDevices) {
+                json = parser.parseText(device)
+                if (json["ipaddr"] == deviceInfo["ipaddr"]
+                        && json["type"] == deviceInfo["type"]
+                        && json["userAgent"] == deviceInfo["userAgent"]) {
+                    redisService.doRedisSRem("trustdevices:$username", device)
+                }
+            }
         }
     }
 

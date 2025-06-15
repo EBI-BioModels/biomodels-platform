@@ -22,9 +22,8 @@
 package net.biomodels.jummp.security
 
 import grails.converters.JSON
-import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.SpringSecurityUtils
-import groovy.json.JsonBuilder
+import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.plugins.security.User
@@ -72,11 +71,13 @@ class AuthController extends CommonController {
         if (!deviceInfo) {
             message = "No information of your trust device provided."
             render([message: message, isTrustDeviceExpired: true] as JSON)
+            return
         } else {
             devices = deviceInfo.tokenize("|")
             if (devices.isEmpty()) {
                 message = "An error happened when tokenising the device info."
                 render([message: message, isTrustDeviceExpired: true] as JSON)
+                return
             }
         }
         Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
@@ -86,13 +87,14 @@ class AuthController extends CommonController {
             json = parser.parseText(it)
             json["ipaddr"] == devices[0] && json["type"] == devices[1] && json["userAgent"] == devices[2]
         }
-        boolean expired = false
+        boolean expired
         if (matched) {
             json = parser.parseText(matched)
             expired = authService.isTrustDeviceExpired(json["cachedDate"] as String)
             message = "This trust device has ${expired ? 'expired' : 'unexpired yet'}."
         } else {
             message = "No information about this device."
+            expired = true
         }
         render([message: message, isTrustDeviceExpired: expired] as JSON)
     }
@@ -100,7 +102,8 @@ class AuthController extends CommonController {
     def updateTrustDeviceOnRedis() {
         String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
         if (!deviceInfo) {
-            render([message: "cannot store your trust device in our system"] as JSON)
+            render([message: "Cannot store your trust device in our system"] as JSON)
+            return
         }
         String username = request.getJSON()["username"].decodeHTML()
         String ipaddr = request.getJSON()["ipaddr"].decodeHTML()
@@ -108,30 +111,15 @@ class AuthController extends CommonController {
         String userAgent = request.getJSON()["userAgent"].decodeHTML()
         String cachedDate = request.getJSON()["cachedDate"].decodeHTML()
         Map mapTrustDevice = [ipaddr: ipaddr, type: type, userAgent: userAgent, cachedDate: cachedDate]
-        def data = new JsonBuilder(mapTrustDevice).toString()
         boolean checked = request.getJSON()["checked"] as boolean
-        if (checked) {
-            redisService.doRedisSAdd("trustdevices:$username", data)
-        } else {
-            Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
-            def parser = new JsonSlurper()
-            def json
-            for (String device : trustDevices) {
-                json = parser.parseText(device)
-                if (json["ipaddr"] == ipaddr && json["type"] == type && json["userAgent"] == userAgent) {
-                    redisService.doRedisSRem("trustdevices:$username", device)
-                }
-            }
-        }
+        authService.updateTrustDevice(checked, username, mapTrustDevice)
         render([message: "will be implemented"] as JSON)
     }
 
     def verifyOTP() {
         User currentUser = userService.currentUser
         String otp = request.getJSON()["otp"].decodeHTML()
-        String postURL
-        String message
-        String cause
+        String postURL, message, cause
         boolean matched = false
         if (!otp) {
             message = "forbidden"
@@ -147,6 +135,10 @@ class AuthController extends CommonController {
         }
         if (matched) {
             session.removeAttribute("enabled2FA")
+            boolean isTrustDeviceChecked = request.getJSON()["isTrustDeviceChecked"].decodeHTML() as boolean
+            String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
+            Map mInfo = toMapDeviceInfo(deviceInfo)
+            authService.updateTrustDevice(isTrustDeviceChecked, currentUser.username, mInfo)
         }
         render([message: message, postUrl: postURL, matched: matched, cause: cause] as JSON)
     }
@@ -157,5 +149,19 @@ class AuthController extends CommonController {
         String address = "127.0.0.1"
         String sessionId = session.id
         authService.doGenerateOTP(username, address, sessionId)
+    }
+
+    private static Map toMapDeviceInfo(final String deviceInfo) {
+        List<String> info = deviceInfo.tokenize("|")
+        if (info.isEmpty()) {
+            return [:]
+        } else {
+            Map m = new HashMap()
+            m["ipaddr"] = info[0]
+            m["type"] = info[1]
+            m["userAgent"] = info[2]
+            m["cachedDate"] = info[3]
+            return m
+        }
     }
 }

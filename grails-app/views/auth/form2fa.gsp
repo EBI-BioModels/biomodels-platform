@@ -128,11 +128,13 @@
             $('#digit' + next).focus();
         }
     });
+
     $("#verify").on("click", function() {
         let otp = "";
         $(".textcode").each(function(i, obj) {
             otp += $(obj).val();
         });
+        const isTrustDeviceChecked = $("#chkTrustDevice").is(":checked");
         const URL = "${createLink(controller: 'auth', action: 'verifyOTP')}";
         fetch(URL, {
             method: 'POST',
@@ -140,7 +142,11 @@
                 'Accept': 'application/json; charset=utf-8',
                 'Content-Type': 'application/json; charset=utf-8'
             },
-            body: JSON.stringify({'otp': otp})
+            body: JSON.stringify({
+                'otp': otp,
+                'isTrustDeviceChecked': isTrustDeviceChecked,
+                'deviceInfo': localStorage.getItem("${user.username}")
+            })
         }).then(response => {
             if (!response.ok) {
                 throw new Error('Network response failed!!!');
@@ -183,7 +189,9 @@
             cachedDate = cachedDate.toISOString();
             const deviceInfo = device.toString() + "|" + cachedDate;
             localStorage.setItem("${user.username}", deviceInfo);
-            const URL = "${createLink(controller: "auth", action: "updateTrustDeviceOnRedis")}";
+
+            // Below is unnecessary
+            %{--const URL = "${createLink(controller: "auth", action: "updateTrustDeviceOnRedis")}";
             fetch(URL, {
                 method: 'POST',
                 headers: {
@@ -208,11 +216,10 @@
                 console.log(data);
             }).catch(error => {
                 console.error('Error: ', error);
-            });
-        }).
-        then(() => {
+            });--}%
+        }).then(() => {
             // console.log("Do nothing");
-        })
+        });
     });
 
     let cachedIP = null;
