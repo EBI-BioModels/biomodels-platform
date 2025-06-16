@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.core
 
+import grails.converters.JSON
 import grails.transaction.Transactional
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
@@ -66,6 +67,64 @@ class AuthService implements IAuthService {
         def cachedDate = sdf.parse(strDateTime)
         double days = TimeUtils.diffTwoDates(new Date(), cachedDate, "D")
         return days > 30
+    }
+
+    /**
+     * <h4>Validate the trust device of a given user</h4>
+     * <p>This service is used to check the device of a given user needing to require two step verification.</p>
+     * @param username The username of the user in question
+     * @param deviceInfo The string representing the information such IP address, Mobile or Desktop, User Agent,...
+     * of the user's device.
+     * @return a map including two elements: message showing the information and expired indicating true/false
+     */
+    @Override
+    Map validateTrustDevice(final String username, final String deviceInfo) {
+        String message
+        boolean expired = false
+        List devices = new ArrayList()
+        if (!deviceInfo) {
+            message = "No information of your trust device provided."
+            expired = true
+        } else {
+            devices = deviceInfo.tokenize("|")
+            if (devices.isEmpty()) {
+                message = "An error happened when tokenising the device info."
+                expired = true
+            } else {
+                message = ""
+            }
+        }
+        if (!devices) {
+            Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
+            def parser = new JsonSlurper()
+            def json
+            String matched = trustDevices.find {
+                json = parser.parseText(it)
+                json["ipaddr"] == devices[0] && json["type"] == devices[1] && json["userAgent"] == devices[2]
+            }
+            if (matched) {
+                json = parser.parseText(matched)
+                expired = isTrustDeviceExpired(json["cachedDate"] as String)
+                message = "This trust device has ${expired ? 'expired' : 'unexpired yet'}."
+            } else {
+                message = "No information about this device."
+                expired = true
+            }
+        }
+        return [message: message, expired: expired]
+    }
+
+    /**
+     * <h4>Determine a given user enabled 2FA or not</h4>
+     * <p>This service is used to check a given user enabling 2FA or not.</p>
+     * @param username The username of the given user
+     * @return true|false
+     */
+    @Override
+    boolean is2FAEnabled(String username) {
+        String queryString = "select id from TwoFactorAuth t where t.user.username = :username"
+        List results = TFA.executeQuery(queryString, [username: username])
+        return !results.isEmpty()
     }
 
     @Override

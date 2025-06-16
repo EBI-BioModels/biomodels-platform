@@ -77,7 +77,10 @@ class BioModelsAuthSuccessHandler extends AAASH {
             }
             LOGGER.info "Successful login event triggered: ${authentication.principal.username}"
             def session = request.getSession()
-            session.enabled2FA = true
+            String di = request.getParameter("j_deviceInfo")
+            Map map = authService.validateTrustDevice(username, di)
+            LOGGER.info("$username: ${map["message"]}: ${map["expired"]}")
+            session.enabled2FA = authService.is2FAEnabled(username) && map["expired"]
             super.clearAuthenticationAttributes(request)
             handle(request, response, authentication)
             //super.onAuthenticationSuccess(request, response, authentication)
@@ -117,8 +120,8 @@ class BioModelsAuthSuccessHandler extends AAASH {
                     return
                 }
 
-                redirectStrategy.sendRedirect(request, response, targetUrl)
             }
         }
+        redirectStrategy.sendRedirect(request, response, targetUrl)
     }
 }

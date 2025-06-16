@@ -66,37 +66,8 @@ class AuthController extends CommonController {
     def checkTrustDevice() {
         String username = params.username.decodeHTML()
         String deviceInfo = params.deviceInfo.decodeHTML()
-        String message
-        List<String> devices
-        if (!deviceInfo) {
-            message = "No information of your trust device provided."
-            render([message: message, isTrustDeviceExpired: true] as JSON)
-            return
-        } else {
-            devices = deviceInfo.tokenize("|")
-            if (devices.isEmpty()) {
-                message = "An error happened when tokenising the device info."
-                render([message: message, isTrustDeviceExpired: true] as JSON)
-                return
-            }
-        }
-        Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
-        def parser = new JsonSlurper()
-        def json
-        String matched = trustDevices.find {
-            json = parser.parseText(it)
-            json["ipaddr"] == devices[0] && json["type"] == devices[1] && json["userAgent"] == devices[2]
-        }
-        boolean expired
-        if (matched) {
-            json = parser.parseText(matched)
-            expired = authService.isTrustDeviceExpired(json["cachedDate"] as String)
-            message = "This trust device has ${expired ? 'expired' : 'unexpired yet'}."
-        } else {
-            message = "No information about this device."
-            expired = true
-        }
-        render([message: message, isTrustDeviceExpired: expired] as JSON)
+        Map result = authService.validateTrustDevice(username, deviceInfo)
+        render([message: result["message"], isTrustDeviceExpired: result["expired"]] as JSON)
     }
 
     def updateTrustDeviceOnRedis() {
@@ -135,10 +106,12 @@ class AuthController extends CommonController {
         }
         if (matched) {
             session.removeAttribute("enabled2FA")
-            boolean isTrustDeviceChecked = request.getJSON()["isTrustDeviceChecked"].decodeHTML() as boolean
             String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
-            Map mInfo = toMapDeviceInfo(deviceInfo)
-            authService.updateTrustDevice(isTrustDeviceChecked, currentUser.username, mInfo)
+            if (deviceInfo) {
+                boolean isTrustDeviceChecked = request.getJSON()["isTrustDeviceChecked"].decodeHTML().toBoolean()
+                Map mInfo = toMapDeviceInfo(deviceInfo)
+                authService.updateTrustDevice(isTrustDeviceChecked, currentUser.username, mInfo)
+            }
         }
         render([message: message, postUrl: postURL, matched: matched, cause: cause] as JSON)
     }
@@ -152,6 +125,9 @@ class AuthController extends CommonController {
     }
 
     private static Map toMapDeviceInfo(final String deviceInfo) {
+        if (!deviceInfo) {
+            return [:]
+        }
         List<String> info = deviceInfo.tokenize("|")
         if (info.isEmpty()) {
             return [:]
