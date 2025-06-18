@@ -115,7 +115,7 @@ $('input[id=username]').blur(function() {
                 username = response[0];
                 username = username.trim();
                 if (username) {
-                    message = "A user with this username " + username + " already exists. Please try another one."
+                    message = "Use another username. This one is unavailable."
                 } else {
                     message = "This username does not exist. Please check typos and spelling or try again."
                 }
@@ -367,6 +367,7 @@ $("#menuItemFeedback").on("click", function() {
 });
 
 /**
+<<<<<<< HEAD
  * Hamburger menu toggle replaces Foundation 6's ResponsiveToggle plugin.
  *
  * Foundation's ResponsiveToggle._update() is bound to changed.zf.mediaquery

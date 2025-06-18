@@ -61,13 +61,18 @@ class UsermanagementController extends CommonController {
     	return null
     }
 
-     /**
+    /**
      * Passes on any info messages needed to be displayed and renders the register gsp
      */
     @Secured(["isAnonymous()"])
     def create() {
-        render view: "register", model: [postUrl: "", flashMessage: checkForMessage(), title: "Register | BioModels",
-    									validationErrorOn: checkForErrorBean()]
+        Map model = [
+            postUrl: "",
+            flashMessage: checkForMessage(),
+            title: "Register | BioModels",
+            validationErrorOn: checkForErrorBean()
+        ]
+        render view: "register", model: model
     }
 
     @Secured(["isAuthenticated()"])
