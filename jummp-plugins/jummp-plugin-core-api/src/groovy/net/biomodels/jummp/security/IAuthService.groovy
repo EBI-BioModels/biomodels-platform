@@ -23,4 +23,13 @@ interface IAuthService {
      */
 
     boolean is2FAEnabled(final String username)
+
+    /**
+     * <h4>Disable two-factor authentication of a given user</h4>
+     * <p>This method is used to disable the 2FA of a given user.
+     *
+     * @param username A string denoting the username of the given user
+     * @return A map including the cause/message and status
+     */
+    Map disable2FA(final String username)
 }

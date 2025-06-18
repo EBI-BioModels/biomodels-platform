@@ -25,7 +25,7 @@
 class VerifyOtpFilters {
     def configurationService
     List IGNORED_ACTIONS = [
-        "load2fa", "verifyOTP", "generateOTP", "checkTrustDevice", "updateTrustDeviceOnRedis"
+        "load2fa", "verifyOTP", "generateOTP", "checkTrustDevice", "updateTrustDeviceOnRedis", "toggle2FA"
     ]
     def filters = {
         verifyOTP(controller:'*', action:'*') {

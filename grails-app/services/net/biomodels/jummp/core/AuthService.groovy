@@ -127,6 +127,37 @@ class AuthService implements IAuthService {
         return !results.isEmpty()
     }
 
+    /**
+     * <h4>Disable two-factor authentication of a given user</h4>
+     * <p>This method is used to disable the 2FA of a given user.
+     *
+     * @param username A string denoting the username of the given user
+     * @return A map including the cause/message and status
+     */
+    @Override
+    Map disable2FA(String username) {
+        String cause = "2FA has been disabled"
+        boolean status = true
+        String queryString = "select id from TwoFactorAuth t where t.user.username = :username"
+        List results = TFA.executeQuery(queryString, [username: username])
+        if (results.isEmpty()) {
+            cause = "Not found - 2FA is on"
+        } else {
+            for (long deletedId in results) {
+                try {
+                    TFA.where { id == deletedId }.deleteAll()
+                    TFA.withSession { it.flush() }
+                } catch (Exception e) {
+                    status = false
+                    cause = """An error happened when trying to disable 2FA. Please try later or contact us for \
+further support"""
+                    LOGGER.error("Cannot delete the TFA record [id: ${deletedId}, username: ${username}] due to ${e.message}")
+                }
+            }
+        }
+        return [cause: cause, status: status]
+    }
+
     @Override
     String doGenerateOTP(final String username, final String remoteAddress, final String sessionId) {
         final User USER = userService?.currentUser

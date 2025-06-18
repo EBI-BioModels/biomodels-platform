@@ -70,6 +70,38 @@ class AuthController extends CommonController {
         render([message: result["message"], isTrustDeviceExpired: result["expired"]] as JSON)
     }
 
+    def toggle2FA() {
+        String message = "Under construction"
+        int status
+        String username = request.getJSON()["username"].decodeHTML()
+        boolean checked = request.getJSON()["checked"] as boolean
+        String otp = request.getJSON()["otp"].decodeHTML()
+        if (!username) {
+            message = "You're unauthorised to perform this operation!"
+            status = 401
+        } else if (!otp) {
+            message = "A verification code to confirm the security change is missing!"
+            status = 405
+        } else {
+            Map result = authService.doVerifyOTP(username, otp, request.session.id)
+            if (!result["matched"]) {
+                message = result["cause"]
+                status = 404
+            } else {
+                if (checked) {
+                    message = "You've successfully enabled 2FA!"
+                    status = 200
+                } else {
+                    // delete all OTP generations linked to this user
+                    authService.disable2FA(username)
+                    message = result["cause"]
+                    status = 200
+                }
+            }
+        }
+        render([message: message, status: status] as JSON)
+    }
+
     def updateTrustDeviceOnRedis() {
         String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
         if (!deviceInfo) {
