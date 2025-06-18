@@ -40,6 +40,7 @@ import javax.mail.AuthenticationFailedException
 class UsermanagementController extends CommonController {
     private static final Logger LOGGER = LoggerFactory.getLogger(UsermanagementController.class)
     def simpleCaptchaService
+    def authService
     def userService
     def springSecurityService
     def messageSource
@@ -97,8 +98,10 @@ class UsermanagementController extends CommonController {
         String username = currentUser.username
         List notifications = notificationService.getNotificationPermissions(username)
         String titlePage = "${userService.getRealName(username)} | BioModels"
+        boolean enabled2FA = authService.is2FAEnabled(username)
         render  view: "show",
                 model: [postUrl: "",
+                        enabled2FA: enabled2FA,
                         flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
                         user: currentUser,

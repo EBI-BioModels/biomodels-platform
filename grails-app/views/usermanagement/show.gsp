@@ -26,6 +26,55 @@
         <title>${titlePage}</title>
         <meta name="layout" content="${session['branding.style']}/main" />
 		<g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
+		<style>
+	#manage2FA {
+		justify-content: center;
+		align-items: center;
+		height: 10vh;
+	}
+	#manage2FA [type=checkbox] {
+		height: 0;
+		width: 0;
+		visibility: hidden;
+	}
+
+	#manage2FA label {
+		cursor: pointer;
+		text-indent: -9999px;
+		width: 80px;
+		height: 45px;
+		background: grey;
+		display: block;
+		border-radius: 100px;
+		position: relative;
+	}
+
+	#manage2FA label:after {
+		content: '';
+		position: absolute;
+		top: 5px;
+		left: 5px;
+		right: 5px;
+		width: 35px;
+		height: 35px;
+		background: #fff;
+		border-radius: 100px;
+		transition: 0.3s;
+	}
+
+	#manage2FA input:checked + label {
+		background: #007c82;
+	}
+
+	#manage2FA input:checked + label:after {
+		left: calc(100% - 5px) !important;
+		transform: translateX(-100%) !important;
+	}
+
+	#manage2FA label:active:after {
+		width: 130px;
+	}
+		</style>
      </head>
     <body>
     	<div class="content">
@@ -62,6 +111,53 @@
 				</tr>
 				</tbody>
 			</table>
+
+			<div class="row">
+				<div class="columns small-12 medium-10 large-10"><h2>Two-Factor Authentication</h2></div>
+				<div class="columns small-12 medium-2 large-2">
+					<p id="2fa-status" style="font-weight: bold; color: green;">
+						<g:if test="${enabled2FA}">
+							Enabled
+						</g:if>
+						<g:else>
+							Disabled
+						</g:else>
+					</p></div>
+			</div>
+				<div class="row">
+				<div id="manage2FA"  class="columns small-12 medium-3 large-3" style="margin-top: -30px">
+<g:if test="${enabled2FA}">
+	<input type="checkbox" id="switch-2fa" name="btnToggle2FA" checked/>
+</g:if>
+					<g:else>
+	<input type="checkbox" id="switch-2fa" name="btnToggle2FA"/>
+
+					</g:else>
+					<label for="switch-2fa">Toggle</label></div>
+
+				<div class="columns small-12 medium-9 large-9">
+						<div class="row" id="otp-verification-code-block">
+							<div class="columns small-12 medium-3 large-3">
+								<label for="txt-otp-verification-code"
+									   class="text-right middle" style="margin-top: -15px">
+									<a style="cursor: pointer" id="request-confirmation-code"
+									   href="${createLink(uri: "/auth/request-new-verification-code")}">Request a
+									confirmation
+									code</a></label>
+							</div>
+							<div class="columns small-12 medium-9 large-9">
+								<div class="input-group">
+									<input type="text" class="input-group-field" id="txt-otp-verification-code"
+										   placeholder="Verification code">
+									<div class="input-group-button">
+										<input type="button" id="btn-confirm" class="button" value="Confirm"/></div></div>
+							</div>
+						</div>
+				</div>
+
+
+				</div>
+
             </div>
             <div class="small-6 columns">
             <h2>Notifications</h2>
@@ -106,7 +202,54 @@
         </div>
         </div>
         </div>
-   </body>
+<g:javascript>
+	const otpVCB = $("#otp-verification-code-block");
+	const otpEle = $("#txt-otp-verification-code");
+	const switch2FA = $("#switch-2fa");
+    const requestCC = $("#request-confirmation-code");
+	$(document).ready(function() {
+		otpVCB.hide();
+	});
+
+	switch2FA.on("click", function() {
+		const checked = $(this).is(":checked");
+		console.log(checked);
+        otpVCB.show();
+	});
+
+    requestCC.on("click", function() {
+
+    });
+
+    $("#btn-confirm").on("click", function() {
+		const URL = "${createLink(controller: "auth", action: "toggle2FA")}";
+		fetch(URL, {
+			method: 'POST',
+			headers: {
+				'Accept': 'application/json; charset=utf-8',
+				'Content-Type': 'application/json; charset=utf-8'
+			},
+			body: JSON.stringify({
+				'checked': switch2FA.is(":checked"),
+				'username': "${user.username}",
+				'otp': otpEle.val()
+			})
+		}).then(response => {
+			if (!response.ok) {
+				throw new Error('Network response failed!!!');
+			}
+			return response.json();
+		}).then(data => {
+			console.log(data);
+            if (data["status"]) {
+                showNotification(data["message"]);
+            }
+		}).catch(error => {
+			console.error('Error: ', error);
+		});
+    });
+</g:javascript>
+</body>
 </html>
 <content tag="myprofile">
 	${user.person.userRealName}'s Profile
