@@ -139,7 +139,7 @@ class AuthService implements IAuthService {
         String cause = "2FA has been disabled"
         boolean status = true
         String queryString = "select id from TwoFactorAuth t where t.user.username = :username"
-        List results = TFA.executeQuery(queryString, [username: username])
+        List<Long> results = TwoFactorAuth.executeQuery(queryString, [username: username]) as List<Long>
         if (results.isEmpty()) {
             cause = "Not found - 2FA is on"
         } else {

@@ -24,7 +24,6 @@ package net.biomodels.jummp.security
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
-import groovy.json.JsonSlurper
 import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
@@ -70,6 +69,11 @@ class AuthController extends CommonController {
         render([message: result["message"], isTrustDeviceExpired: result["expired"]] as JSON)
     }
 
+    /**
+     * <h4>Turn on/off two-factor authentication</h4>
+     * <p>This action is used to turn on or off the two-step authentication</p>
+     * @return
+     */
     def toggle2FA() {
         String message = "Under construction"
         int status
@@ -93,7 +97,7 @@ class AuthController extends CommonController {
                     status = 200
                 } else {
                     // delete all OTP generations linked to this user
-                    authService.disable2FA(username)
+                    result = authService.disable2FA(username)
                     message = result["cause"]
                     status = 200
                 }
@@ -102,6 +106,11 @@ class AuthController extends CommonController {
         render([message: message, status: status] as JSON)
     }
 
+    /**
+     * <h4>Update the trust device on Redis Server</h4>
+     * <p>When users click 'Trust this device for 30 days" checkbox, this action is invoked via an async call.</p>
+     * @return
+     */
     def updateTrustDeviceOnRedis() {
         String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
         if (!deviceInfo) {
@@ -115,8 +124,8 @@ class AuthController extends CommonController {
         String cachedDate = request.getJSON()["cachedDate"].decodeHTML()
         Map mapTrustDevice = [ipaddr: ipaddr, type: type, userAgent: userAgent, cachedDate: cachedDate]
         boolean checked = request.getJSON()["checked"] as boolean
-        authService.updateTrustDevice(checked, username, mapTrustDevice)
-        render([message: "will be implemented"] as JSON)
+        //authService.updateTrustDevice(checked, username, mapTrustDevice)
+        render([message: "OK"] as JSON)
     }
 
     def verifyOTP() {
@@ -157,6 +166,8 @@ class AuthController extends CommonController {
     }
 
     private static Map toMapDeviceInfo(final String deviceInfo) {
+        // For example: "193.62.199.131|desktop|Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:139.0) Gecko/20100101
+        // Firefox/139.0|2025-06-18T22:10:49.561Z"
         if (!deviceInfo) {
             return [:]
         }

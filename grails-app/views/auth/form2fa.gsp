@@ -193,9 +193,8 @@
             } else {
                 localStorage.removeItem("${user.username}");
             }
-
-            // Below is unnecessary
-            %{--const URL = "${createLink(controller: "auth", action: "updateTrustDeviceOnRedis")}";
+            // the async below can be ignored
+            const URL = "${createLink(controller: "auth", action: "updateTrustDeviceOnRedis")}";
             fetch(URL, {
                 method: 'POST',
                 headers: {
@@ -220,7 +219,7 @@
                 console.log(data);
             }).catch(error => {
                 console.error('Error: ', error);
-            });--}%
+            });
         }).then(() => {
             // console.log("Do nothing");
         });
