@@ -209,7 +209,7 @@ further support"""
         }
         TFA first = results?.first()
         if (first) {
-            boolean valid
+            boolean valid = false
             use(TimeCategory) {
                 def duration = new Date() - first.issuedDate
                 // println "Days: ${duration.days}, Hours: ${duration.hours}, etc."

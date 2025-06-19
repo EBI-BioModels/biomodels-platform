@@ -9,7 +9,8 @@
  * Notes: Redesigning the rating system will be affected to the following code. Please pay more
  * attention once you want to customise it.
  */
-$('#submitButtonRate').prop('disabled', true);
+const submitButtonRate = $('#submitButtonRate');
+submitButtonRate.prop('disabled', true);
 const ALL_STARS = ["star1", "star2", "star3", "star4", "star5"];
 let stackOfStars = [];
 let currentStar;
@@ -21,14 +22,15 @@ $('span[id^=star]').on('click', function() {
     if (currentStar !== undefined) {
         const currentStarId = currentStar.substring(4);
         stackOfStars = [];
-        const currentStarClass = $('#' + currentStar).attr('class');
+        const currentStartEle = $('#' + currentStar);
+        const currentStarClass = currentStartEle.attr('class');
         for (let i = 1; i <= currentStarId; i++) {
             const idx = i;
             stackOfStars.push("star" + idx);
             $('#star'+ idx).attr('class', 'star-icon full');
         }
-        if (currentStarClass == 'star-icon full') {
-            $('#'+currentStar).attr('class', 'star-icon');
+        if (currentStarClass === 'star-icon full') {
+            currentStartEle.attr('class', 'star-icon');
             stackOfStars.pop();
         }
         const remainingStars = ALL_STARS.diff(stackOfStars);
@@ -37,15 +39,15 @@ $('span[id^=star]').on('click', function() {
         });
 
         $('#rateStar').val(stackOfStars.length);
-        if (stackOfStars.length == 0) {
-            $('#submitButtonRate').prop('disabled', true);
+        if (stackOfStars.length === 0) {
+            submitButtonRate.prop('disabled', true);
         } else {
-            $('#submitButtonRate').prop('disabled', false);
+            submitButtonRate.prop('disabled', false);
         }
         console.log(stackOfStars);
     }
 });
-$('#submitButtonRate').on("click", function(event) {
+submitButtonRate.on("click", function(event) {
     "use strict";
     event.preventDefault();
     $.ajax({
@@ -70,8 +72,9 @@ $('#submitButtonRate').on("click", function(event) {
                 thankyouMessage += '</div>';
                 thankyouMessage += '<button class="button" ' +
                     'style="background-color: grey;" onclick="closeForm()">Done</button>';
-                $('#messageTitle').html('Thank you for your feedback');
-                $('#messageTitle').css('color', '#ffffff');
+                const msgTitleEle = $('#messageTitle');
+                msgTitleEle.html('Thank you for your feedback');
+                msgTitleEle.css('color', '#ffffff');
                 $('#rate_review_form').css('background-color', '#007c96')
                 $('#feedback_panel').html(thankyouMessage);
             } else {
@@ -187,7 +190,7 @@ $('input[name=email]').blur(function() {
                 message = "The email address " + email + " could not be found, or does not exist.";
                 returned = false;
             } else if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FOUND) {
-                message = "The email " + email + " used by another BioModels user. Choose a different address.";
+                message = "The email " + email + " used by another BioModels user. Choose a different one.";
                 returned = true;
             } else {
                 message = "An unknown error has happened! Please try again.";

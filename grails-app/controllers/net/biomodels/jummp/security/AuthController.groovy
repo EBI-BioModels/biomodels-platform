@@ -75,7 +75,7 @@ class AuthController extends CommonController {
      * @return
      */
     def toggle2FA() {
-        String message = "Under construction"
+        String message
         int status
         String username = request.getJSON()["username"].decodeHTML()
         boolean checked = request.getJSON()["checked"] as boolean
@@ -99,7 +99,7 @@ class AuthController extends CommonController {
                     // delete all OTP generations linked to this user
                     result = authService.disable2FA(username)
                     message = result["cause"]
-                    status = 200
+                    status = result["status"] ? 200 : 500
                 }
             }
         }
