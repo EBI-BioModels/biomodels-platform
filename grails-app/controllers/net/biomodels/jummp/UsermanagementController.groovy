@@ -24,6 +24,7 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.utils.MathUtils
 import net.biomodels.jummp.webapp.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -426,6 +427,11 @@ further instructions"""
         withForm {
             RegistrationCommand cmd = new RegistrationCommand()
             if (!validateUserData(cmd, params)) {
+                return redirect(action: "registration")
+            }
+            String username = params.username.decodeHTML()
+            if (!username || MathUtils.validUsername(username)) {
+                flash.message = "The username is invalid such as containing disallowed characters or too short."
                 return redirect(action: "registration")
             }
             String captcha = params.captcha

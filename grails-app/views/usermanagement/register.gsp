@@ -37,12 +37,14 @@
         		visibility:hidden;
         	}
         </style>
+    <g:render template="head"/>
     </head>
     <body>
         <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
         <div id="register" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode !== 13;" useToken="true">
+                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode !== 13;" useToken="true"
+                        onsubmit="return validateForm()" >
                     <div class="row column register-form">
                         <g:render template="/templates/newAccountRegistrationForm"
                                   plugin="jummp-plugin-web-application" model="[user: null]" />
@@ -60,7 +62,13 @@
                 </g:form>
             </div>
         </div>
-
+<g:javascript>
+    const usernameEle = $("#username");
+    function validateForm() {
+        const isUsernameValid = validateAllowedCharacters(usernameEle.val()).length === 0;
+        return isUsernameValid;
+    }
+</g:javascript>
     </body>
 </html>
 <content tag="register">
