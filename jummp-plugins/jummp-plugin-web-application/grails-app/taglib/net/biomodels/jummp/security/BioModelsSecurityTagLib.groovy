@@ -35,7 +35,7 @@ class BioModelsSecurityTagLib {
      * Renders the body if the user is authenticated.
      */
     def whenLoggedIn = { attrs, body ->
-        boolean otpValidated = session.enabled2FA == null
+        boolean otpValidated = !session.enabled2FA // the enabled2FA flag is off (false) or null
         if (springSecurityService.isLoggedIn() && otpValidated) {
             out << body()
         }
