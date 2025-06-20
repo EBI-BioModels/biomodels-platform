@@ -241,8 +241,10 @@
 			return response.json();
 		}).then(data => {
 			console.log(data);
-            if (data["status"]) {
-                showNotification(data["message"]);
+            if (data["status"] === 200) {
+                showNotification('<span style="color: green">' + data["message"] + '</span>');
+            } else {
+                showNotification('<span style="color: red">' + data["message"] + '</span>');
             }
 		}).catch(error => {
 			console.error('Error: ', error);
