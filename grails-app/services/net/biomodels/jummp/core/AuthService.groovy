@@ -267,7 +267,7 @@ further support"""
             MAIN_TEXT = """\
 <p>Your BioModels account <a href="mailto:${USER.email}">${USER.email}</a> is now protected with 2-Step Verification. \
 When you sign in on a new or untrusted device, you’ll need your second factor to verify your identity.</p>\
-<p>You can <a href="${SVR_URL}/user" target="_blank">review your 2SV settings</a> to make changes.</p>
+<p>You can <a href="${SVR_URL}/user" target="_blank">review your 2FA settings</a> to make changes.</p>
 """
 // Don't get locked out!
 // You can add a backup phone or get backup codes to use when you don’t have your second factor with you.
