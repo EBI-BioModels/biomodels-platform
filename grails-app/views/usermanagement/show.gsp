@@ -207,8 +207,10 @@
 	const otpEle = $("#txt-otp-verification-code");
 	const switch2FA = $("#switch-2fa");
     const requestCC = $("#request-confirmation-code");
+
 	$(document).ready(function() {
 		otpVCB.hide();
+        requestCC.prop("target", "_blank");
 	});
 
 	switch2FA.on("click", function() {
