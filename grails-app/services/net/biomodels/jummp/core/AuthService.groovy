@@ -247,6 +247,57 @@ further support"""
         }
     }
 
+    /**
+     * <h4>Email to the users when they enable or disable 2FA</h4>
+     * <p>When enabling or disabling 2FA successfully, an email will be sent to the user to confirm the activity.</p>
+     * @param USER A {@link User} object indicating who has changed the 2FA
+     * @param enabled2FA true|false indicating enable or disable the 2FA
+     */
+    void emailWhenToggle2FA(final User USER, final boolean enabled2FA) {
+        final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
+        final String SVR_URL = grailsApplication.config.grails.serverURL
+        String SUBJECT = "[BioModels] Two-Factor Authentication turned"
+        if (enabled2FA) {
+            SUBJECT = "$SUBJECT on"
+        } else {
+            SUBJECT = "$SUBJECT off"
+        }
+        String MAIN_TEXT
+        if (enabled2FA) {
+            MAIN_TEXT = """\
+<p>Your BioModels account <a href="mailto:${USER.email}">${USER.email}</a> is now protected with 2-Step Verification. \
+When you sign in on a new or untrusted device, you’ll need your second factor to verify your identity.</p>\
+<p>You can <a href="${SVR_URL}/user" target="_blank">review your 2SV settings</a> to make changes.</p>
+"""
+// Don't get locked out!
+// You can add a backup phone or get backup codes to use when you don’t have your second factor with you.
+        } else {
+            MAIN_TEXT = """Your BioModels account is no longer protected with 2-Step Verification. \
+You don’t need your second factor to sign in."""
+        }
+        String BODY = """\
+<div style="background-color: lightgrey; width: 500px; border: 3px solid green; border-radius: 10x; padding: 20px; 
+margin: auto">\
+<p style="text-align: center"><a href="https://www.ebi.ac.uk/biomodels" target="_blank" title="BioModels repository">\
+<img src="https://www.ebi.ac.uk/biomodels/images/biomodels/logo_small.png" alt="BioModels logo"/></a></p>\
+<p>Hi ${USER.person.userRealName},</p>\
+<hr/> \
+<p>${MAIN_TEXT}</p>\
+<p>If you think you didn't perform this operation, please <a href="mailto:${SENDER}">contact us</a>.</p>\
+<p>Thank you for helping us keep your account secure.</p>\
+<p>Kind regards,<br/><em>The BioModels Team</em></p>\
+<div>\
+<hr/>\
+<p style="font-size: smaller">This is an automatically generated email. \
+Replies to this email address aren't monitored.<br/>\
+&copy; ${new Date().format("YYYY")} <a href="${BioModels.BM_ROOT_URL}" target="_blank">BioModels</a>, \
+<a href="https://www.ebi.ac.uk/about/teams/molecular-networks/" target="_blank">Molecular Networks Team</a>, \
+<a href="https://www.ebi.ac.uk" target="_blank">EMBL-EBI</a>, Wellcome Genome Campus, Hinxton, \
+Cambridgeshire, CB10 1SD, UK. +44 (0)1223 49 44 44.</p>\
+"""
+        userService.sendEmail(USER, BODY, SUBJECT)
+    }
+
     private void emailOTP(final User USER, final String OTP) {
         final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
         final String BODY = """\

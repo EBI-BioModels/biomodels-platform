@@ -101,6 +101,9 @@ class AuthController extends CommonController {
                     message = result["cause"]
                     status = result["status"] ? 200 : 500
                 }
+                if (status == 200) {
+                    authService.emailWhenToggle2FA(userService.currentUser, checked)
+                }
             }
         }
         render([message: message, status: status] as JSON)
