@@ -213,6 +213,26 @@
         requestCC.prop("target", "_blank");
 	});
 
+    $(window).on('beforeunload', function() {
+		const checked = switch2FA.is(":checked");
+		const current = Boolean("${enabled2FA}");
+		const message = "The changes you made may not be saved. Do you really want to leave?";
+		let unsaved = checked !== current;
+		if (unsaved) {
+			return message;
+		}
+	});
+    %{--window.onbeforeunload = function () {
+        const checked = switch2FA.is(":checked");
+        const current = Boolean("${enabled2FA}");
+        const message = "Do you really want to leave?";
+		if (checked !== current) {
+    		return message;
+        } else {
+            return "";
+        }
+	};--}%
+
 	switch2FA.on("click", function() {
 		const checked = $(this).is(":checked");
 		console.log(checked);
