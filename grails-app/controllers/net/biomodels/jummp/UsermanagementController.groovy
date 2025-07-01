@@ -73,6 +73,7 @@ class UsermanagementController extends CommonController {
             title: "Register | BioModels",
             validationErrorOn: checkForErrorBean()
         ]
+        model.putAll(COMMON_PROPERTIES)
         render view: "register", model: model
     }
 

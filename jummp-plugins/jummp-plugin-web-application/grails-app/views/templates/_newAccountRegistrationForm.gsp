@@ -9,7 +9,8 @@
                  required="true" autocomplete="username"/>
     <p class="help-text" id="username-help-text"
        style="color: darkred">Only accept alphanumeric characters and underscores. For more information,
-    refer to our <a href="" target="_blank">general rules for usernames and passwords</a>.</p>
+    refer to our <a href="${manualURL}/getting-started-with-biomodels.html#general-rules-for-username-and-passwords"
+                    target="_blank">general rules for usernames and passwords</a>.</p>
 </g:else>
 
 

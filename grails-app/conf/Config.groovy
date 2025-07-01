@@ -861,7 +861,8 @@ grails {
 }
 
 if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
-    def pages=["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile", "sharing", "teams", "notifications","annotate"]
+    def pages = ["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile",
+                "sharing", "teams", "notifications", "annotate", "getting-started-with-biomodels"]
     pages.each {
         if (!(jummpConfig.jummp.context.help."${it}" instanceof ConfigObject)) {
             jummp.context.help."${it}" = jummpConfig.jummp.context.help."${it}"
