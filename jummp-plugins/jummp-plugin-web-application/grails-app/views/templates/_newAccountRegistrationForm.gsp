@@ -5,10 +5,10 @@
 </g:if>
 <g:else>
     <g:textField name="username" id="username" aria-describedby="username-help-text"
-                 placeholder="Only accept alphanumeric characters and underscores"
+                 placeholder="Alphanumeric characters, underscores, dots and hyphens"
                  required="true" autocomplete="username"/>
     <p class="help-text" id="username-help-text"
-       style="color: darkred">Only accept alphanumeric characters and underscores. For more information,
+       style="color: darkred">Only accept alphanumeric characters, underscores, dots and hyphens. For more information,
     refer to our <a href="${manualURL}/getting-started-with-biomodels.html#general-rules-for-username-and-passwords"
                     target="_blank">general rules for usernames and passwords</a>.</p>
 </g:else>
