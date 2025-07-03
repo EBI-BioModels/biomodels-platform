@@ -217,7 +217,9 @@ class UserAdministrationController extends CommonController {
      * Action to render the view to register a new user as admin
      */
     def register() {
-        COMMON_PROPERTIES
+        Map model = COMMON_PROPERTIES
+        model.put("title", "${g.message(code: "user.administration.ui.heading.register")} | BioModels")
+        model
     }
 
     /**

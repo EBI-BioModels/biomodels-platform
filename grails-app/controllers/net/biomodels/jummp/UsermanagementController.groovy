@@ -67,13 +67,13 @@ class UsermanagementController extends CommonController {
      */
     @Secured(["isAnonymous()"])
     def create() {
-        Map model = [
+        Map model = COMMON_PROPERTIES
+        model.putAll([
             postUrl: "",
             flashMessage: checkForMessage(),
-            title: "Register | BioModels",
+            title: "${g.message(code: "user.administration.ui.heading.register")} | BioModels",
             validationErrorOn: checkForErrorBean()
-        ]
-        model.putAll(COMMON_PROPERTIES)
+        ])
         render view: "register", model: model
     }
 
