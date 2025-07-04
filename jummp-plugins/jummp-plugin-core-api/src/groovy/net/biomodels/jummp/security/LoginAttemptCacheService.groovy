@@ -1,9 +1,11 @@
 package net.biomodels.jummp.security
 
+import net.biomodels.jummp.core.UnlockAccountJob
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import net.biomodels.jummp.plugins.security.User
+import org.quartz.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.transaction.PlatformTransactionManager
@@ -72,9 +74,10 @@ ${s1}\
 locked."""
 
         if (numberOfAttempts > allowedNumberOfAttempts) {
-            blockUser(login)
+            lockUser(login)
             attempts.invalidate(login)
-            warningMessage = "Your account has been locked. Please contact an administrator or try again later."
+            warningMessage = """\
+Your account has been locked. Please try to log in again after an hour or contact us for further assistance."""
         } else {
             attempts.put(login, numberOfAttempts)
         }
@@ -102,10 +105,10 @@ locked."""
     }
 
     /**
-     * Disable user account so it would not able to login
+     * Lock the user account so it would not able to login
      * @param login - username that has to be disabled
      */
-    private void blockUser(String login) {
+    private void lockUser(String login) {
         LOGGER.debug "blocking user: $login"
         PlatformTransactionManager ptm = grailsApplication.mainContext.getBean(PlatformTransactionManager.class)
         TransactionTemplate tx = new TransactionTemplate(ptm)
@@ -114,10 +117,36 @@ locked."""
                 def user = User.findByUsername(login)
                 if (user) {
                     user.accountLocked = true
-                    user.save(flush: true)
+                    if (user.save(flush: true)) {
+                        unlockUser(user.id)
+                    }
                 }
             }
         })
 
+    }
+
+    private void unlockUser(long userId) {
+        def quartzScheduler = grailsApplication.mainContext.getBean('quartzScheduler')
+        // JobDetailImpl is deprecated, so it is replaced with JobBuilder.newJob()
+        // JobDetail jobDetail = new JobDetailImpl('UnlockAccountJob', 'group1', UnlockAccountJob)
+        JobDataMap dataMap = new JobDataMap()
+        dataMap.putAsString("userId", userId)
+        JobDetail jobDetail = JobBuilder.newJob(UnlockAccountJob.class)
+                .withIdentity("unlockAccount")
+                .usingJobData(dataMap)
+                .build()
+        Trigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity('trigger1', 'group1')
+                //.startNow()
+                .startAt(DateBuilder.futureDate(1, DateBuilder.IntervalUnit.HOUR))
+                //.startAt(DateBuilder.futureDate(3, DateBuilder.IntervalUnit.MINUTE))
+                /*.withSchedule(SimpleScheduleBuilder.simpleSchedule()
+                    .withRepeatCount(0)
+                    .withIntervalInMinutes(60))*/
+                //.withSchedule(SimpleScheduleBuilder.repeatSecondlyForever(10))
+                .build()
+        quartzScheduler.scheduleJob(jobDetail, trigger)
+        LOGGER.info("The user ${userId} will be unlocked after 60 minutes")
     }
 }
