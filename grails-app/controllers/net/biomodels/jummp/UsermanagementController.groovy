@@ -1,6 +1,8 @@
 package net.biomodels.jummp
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.annotation.Secured
+
 /**
 * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
@@ -21,7 +23,6 @@ import grails.converters.JSON
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.utils.MathUtils
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.mail.MailAuthenticationException
 
 import javax.mail.AuthenticationFailedException
+
 /**
  * @short Controller for managing user registrations
  *

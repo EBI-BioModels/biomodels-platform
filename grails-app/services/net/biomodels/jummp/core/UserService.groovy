@@ -625,6 +625,24 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     }
 
     @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag = "userService.unlockAccount")
+    @PreAuthorize("isAnonymous()")
+    boolean unlockAccount(final String username) {
+        User user = User.findByUsername(username)
+        if (!user || !user.accountLocked) {
+            return false
+        } else {
+            user.accountLocked = false
+            if (!user.save(flush: true)) {
+                LOGGER.error("Cannot unlock the user ${username} because of ${user.errors.toString()}.")
+                return false
+            } else {
+                return true
+            }
+        }
+    }
+
+    @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="userService.requestPassword")
     @PreAuthorize("isAnonymous()")
     void requestPassword(String usernameOrEmail)
