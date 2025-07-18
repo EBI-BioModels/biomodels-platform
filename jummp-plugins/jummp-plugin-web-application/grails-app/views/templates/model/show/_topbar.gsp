@@ -4,7 +4,7 @@
     <div class="message" style="display: block"></div>
 
     <div style="float:left" class="columns medium-9 large-9 small-12">
-        <h2>${revision.name}</h2>
+        <h2><a href="">${revision.name}</a></h2>
         <biomd:renderModelOfMonth modelId="${revision.model.id}" />
     </div>
 
