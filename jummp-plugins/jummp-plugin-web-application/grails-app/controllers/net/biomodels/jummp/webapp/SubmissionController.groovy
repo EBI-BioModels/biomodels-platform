@@ -144,7 +144,6 @@ class SubmissionController extends CommonController implements InitializingBean 
             String cause = working.get("cause")
             return ["ticketID": errorTicketId, "status": status, "message": message, "cause": cause]
         }
-        return [:]
     }
 
     /**

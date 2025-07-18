@@ -76,7 +76,7 @@
     <div class="row">
 
         <div class="small-12 medium-3 large-3 columns">
-            <label>Published From<small style="color: red">required</small>
+            <label>Published From <small style="color: red">required</small>
                 <input type="text" id="publishedFrom" required
                        placeholder="enter the date when the content is published"
                        <g:if test="${content?.publishedFrom}">value="${dateFormat.format(content?.publishedFrom)}"</g:if>>
