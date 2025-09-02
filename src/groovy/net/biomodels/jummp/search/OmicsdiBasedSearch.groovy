@@ -273,8 +273,12 @@ The root cause is ${e.toString()}""")
                     state = ModelState.PUBLISHED
                     String submissionDateString = getSingleValueForEntryField(entry, 'submission_date')
                     Date submissionDate = null
-                    if (submissionDateString != "") {
-                        submissionDate = formatParsedDateString(submissionDateString)
+                    try {
+                        if (submissionDateString != "") {
+                            submissionDate = formatParsedDateString(submissionDateString)
+                        }
+                    } catch (NumberFormatException e1) {
+                        LOGGER.debug("${submissionId} because of ${e1.message}")
                     }
                     String submitterName = getSingleValueForEntryField(entry, 'submitter')
                     String modifiedDateString = getSingleValueForEntryField(entry,
