@@ -271,9 +271,11 @@ The root cause is ${e.toString()}""")
                     )
                 } else {
                     state = ModelState.PUBLISHED
-                    String submissionDateString = getSingleValueForEntryField(  entry,
-                            'submission_date')
-                    Date submissionDate = formatParsedDateString(submissionDateString)
+                    String submissionDateString = getSingleValueForEntryField(entry, 'submission_date')
+                    Date submissionDate = null
+                    if (submissionDateString != "") {
+                        submissionDate = formatParsedDateString(submissionDateString)
+                    }
                     String submitterName = getSingleValueForEntryField(entry, 'submitter')
                     String modifiedDateString = getSingleValueForEntryField(entry,
                             'last_modification_date')
