@@ -271,28 +271,9 @@ The root cause is ${e.toString()}""")
                     )
                 } else {
                     state = ModelState.PUBLISHED
-                    String submissionDateString = getSingleValueForEntryField(entry, 'submission_date')
-                    Date submissionDate = null
-                    try {
-                        if (submissionDateString != "") {
-                            submissionDate = formatParsedDateString(submissionDateString)
-                        }
-                    } catch (NumberFormatException e1) {
-                        println("${submissionId} because of ${e1.message} - ${entry.dump()}")
-                        LOGGER.debug("${submissionId} because of ${e1.message} - ${entry.dump()}")
-                    }
                     String submitterName = getSingleValueForEntryField(entry, 'submitter')
-                    String modifiedDateString = getSingleValueForEntryField(entry,
-                            'last_modification_date')
-                    Date modifiedDate = null
-                    try {
-                        if (modifiedDateString != "") {
-                            modifiedDate = formatParsedDateString(modifiedDateString)
-                        }
-                    } catch (NumberFormatException e1) {
-                        println("${submissionId} because of ${e1.message} - ${entry.dump()}")
-                        LOGGER.debug("${submissionId} because of ${e1.message} - ${entry.dump()}")
-                    }
+                    Date submissionDate = inferDateField(entry, "submission_date", submissionId)
+                    Date modifiedDate = inferDateField(entry, "last_submission_date", submissionId)
                     String formatName = getSingleValueForEntryField(entry, 'modelformat')
                     String formatVersion = getSingleValueForEntryField(entry, 'levelversion')
                     String publicationYear = getSingleValueForEntryField(entry, 'publication_year')
@@ -571,5 +552,20 @@ The root cause is ${e.toString()}""")
             'isMetadataSubmission': revision.model.isMetadataSubmission
         ]
         return data
+    }
+
+    private Date inferDateField(def entry, final String fieldName, final String submissionId) {
+        String submissionDateString = getSingleValueForEntryField(entry, fieldName)
+        Date submissionDate = null
+        try {
+            if (submissionDateString != "") {
+                submissionDate = formatParsedDateString(submissionDateString)
+            }
+        } catch (NumberFormatException e1) {
+            println("${submissionId} because of ${e1.message} - ${entry.dump()}")
+            LOGGER.debug("${submissionId} because of ${e1.message} - ${entry.dump()}")
+        }
+
+        submissionDate
     }
 }
