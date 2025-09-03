@@ -251,6 +251,8 @@ The root cause is ${e.toString()}""")
             totalCount = result.count
             List<Entry> entries = result.getEntries()
             entries?.eachWithIndex { Entry entry, int i ->
+                println entry.dump()
+                LOGGER.info(entry.dump())
                 ModelTransportCommand mtc
                 String submissionId = entry.id
                 String modelName = getSingleValueForEntryField(entry, 'name')
@@ -278,12 +280,21 @@ The root cause is ${e.toString()}""")
                             submissionDate = formatParsedDateString(submissionDateString)
                         }
                     } catch (NumberFormatException e1) {
-                        LOGGER.debug("${submissionId} because of ${e1.message}")
+                        println("${submissionId} because of ${e1.message} - ${entry.dump()}")
+                        LOGGER.debug("${submissionId} because of ${e1.message} - ${entry.dump()}")
                     }
                     String submitterName = getSingleValueForEntryField(entry, 'submitter')
                     String modifiedDateString = getSingleValueForEntryField(entry,
                             'last_modification_date')
-                    Date modifiedDate = formatParsedDateString(modifiedDateString)
+                    Date modifiedDate = null
+                    try {
+                        if (modifiedDateString != "") {
+                            modifiedDate = formatParsedDateString(modifiedDateString)
+                        }
+                    } catch (NumberFormatException e1) {
+                        println("${submissionId} because of ${e1.message} - ${entry.dump()}")
+                        LOGGER.debug("${submissionId} because of ${e1.message} - ${entry.dump()}")
+                    }
                     String formatName = getSingleValueForEntryField(entry, 'modelformat')
                     String formatVersion = getSingleValueForEntryField(entry, 'levelversion')
                     String publicationYear = getSingleValueForEntryField(entry, 'publication_year')
