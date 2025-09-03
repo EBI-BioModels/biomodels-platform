@@ -554,18 +554,18 @@ The root cause is ${e.toString()}""")
         return data
     }
 
-    private Date inferDateField(def entry, final String fieldName, final String submissionId) {
-        String submissionDateString = getSingleValueForEntryField(entry, fieldName)
-        Date submissionDate = null
+    private Date inferDateField(Entry entry, final String fieldName, final String submissionId) {
+        String fieldValue = getSingleValueForEntryField(entry, fieldName)
+        Date date = null
         try {
-            if (submissionDateString != "") {
-                submissionDate = formatParsedDateString(submissionDateString)
+            if (fieldValue != "") {
+                date = formatParsedDateString(fieldValue)
             }
         } catch (NumberFormatException e1) {
             println("${submissionId} because of ${e1.message} - ${entry.dump()}")
             LOGGER.debug("${submissionId} because of ${e1.message} - ${entry.dump()}")
         }
 
-        submissionDate
+        date
     }
 }
