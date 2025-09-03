@@ -251,8 +251,6 @@ The root cause is ${e.toString()}""")
             totalCount = result.count
             List<Entry> entries = result.getEntries()
             entries?.eachWithIndex { Entry entry, int i ->
-                println entry.dump()
-                LOGGER.info(entry.dump())
                 ModelTransportCommand mtc
                 String submissionId = entry.id
                 String modelName = getSingleValueForEntryField(entry, 'name')
