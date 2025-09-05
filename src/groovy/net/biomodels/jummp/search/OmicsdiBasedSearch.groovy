@@ -562,8 +562,8 @@ The root cause is ${e.toString()}""")
                 date = formatParsedDateString(fieldValue)
             }
         } catch (NumberFormatException e1) {
-            println("${submissionId} because of ${e1.message} - ${entry.dump()}")
-            LOGGER.debug("${submissionId} because of ${e1.message} - ${entry.dump()}")
+            println("${submissionId} errors: ${e1.message} - ${fieldName}: ${entry.getFields().get(fieldName)}")
+            LOGGER.debug("${submissionId} errors: ${e1.message} - ${fieldName}: ${entry.getFields().get(fieldName)}")
         }
 
         date
