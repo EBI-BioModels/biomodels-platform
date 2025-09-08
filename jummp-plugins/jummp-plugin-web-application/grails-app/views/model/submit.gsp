@@ -38,7 +38,7 @@
             };
             authorMap = {
                 "authors":
-                    ${publication?.authors?.collect {
+                    ${publication?.authors.collect {
                         String userRealName = it.userRealName ?: ""
                         String institution = it.institution ?: ""
                         String orcid = it.orcid ?: ""
