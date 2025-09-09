@@ -59,7 +59,7 @@ class HealthCheck {
             User.withSession { Session session ->
                 session.createSQLQuery(validationQuery)
                     .setCacheMode(CacheMode.IGNORE)
-                    .setTimeout(3)
+                    .setTimeout(30)
                     .setReadOnly(true)
                     .uniqueResult()
             }
