@@ -374,7 +374,9 @@ under the format: ${response.format}"""
         List<MTC> models = []
         List<Facet> facets = []
         String facetStats = ""
-        if (query?.trim()) {
+        if (query.contains("lung cancer AND CHEBI:CHEBI")) {
+            LOGGER.info("Stop such queries from hitting the server continuously by AI robots!")
+        } else if (query?.trim()) {
             SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
             Map extractedSearchModels = searchService.extractSearchModels(response)
             totalCount = extractedSearchModels["totalCount"] as Integer
