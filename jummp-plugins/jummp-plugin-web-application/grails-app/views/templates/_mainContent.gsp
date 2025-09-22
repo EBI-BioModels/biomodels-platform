@@ -256,7 +256,7 @@
                 First
             </g:else>
             <g:if test="${currentPage == 1 || numPages <= stepPagination}">
-                <g:img dir="${imagePath}/pagination" absolute="true" contextPath=""
+                <g:img dir="images/pagination" absolute="true" contextPath=""
                        file="arrow-previous-disable.gif" alt="Previous"/>
             </g:if>
             <g:else>
@@ -270,7 +270,7 @@
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
-                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                    <g:img dir="images/pagination" absolute="true"  contextPath=""
                            file="arrow-previous.gif" alt="Previous"/>
                 </a>
             </g:else>
@@ -303,7 +303,7 @@
                 </span>
             </g:each>
             <g:if test="${modelEnd == totalCount || numPages <= stepPagination}">
-                <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                <g:img dir="images/pagination" absolute="true"  contextPath=""
                        file="arrow-next-disable.gif" alt="Next"/>
             </g:if>
             <g:else>
@@ -317,7 +317,7 @@
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
-                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                    <g:img dir="images/pagination" absolute="true"  contextPath=""
                            file="arrow-next.gif" alt="Next"/>
                 </a>
             </g:else>
