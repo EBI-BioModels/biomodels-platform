@@ -179,7 +179,7 @@ class RevisionTransportCommand implements Serializable {
         getValidationLevelMessage(validationLevel)
     }
 
-    String getValidationLevelMessage(ValidationState validationLevel){
+    static String getValidationLevelMessage(ValidationState validationLevel){
         switch (validationLevel) {
             case ValidationState.APPROVE:
                 return "Annotations have not been checked."

@@ -76,7 +76,7 @@ class SearchController extends CommonController {
         redirect action: 'search'
     }
 
-    private boolean integerCheck(def input, boolean minValueCheck=false, int minValue=-1) {
+    private static boolean integerCheck(def input, boolean minValueCheck=false, int minValue=-1) {
         try {
             if (!input) {
                 return false
@@ -86,8 +86,7 @@ class SearchController extends CommonController {
                 return value > minValue
             }
             return true
-        }
-        catch(Exception e) {
+        } catch (Exception ignored) {
             return false
         }
     }

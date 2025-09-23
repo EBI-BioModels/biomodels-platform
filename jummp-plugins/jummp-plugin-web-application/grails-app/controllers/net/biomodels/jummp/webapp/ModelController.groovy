@@ -212,7 +212,7 @@ class ModelController extends CommonController {
         String userAgent = request.getHeader("User-Agent")
         if (params?.format && params?.format?.toLowerCase() == "html" &&
             !WSF.isUserAgentSupported(userAgent)) {
-            LOGGER.warn("$userAgent has tried to access HTML format of ${params?.id}.")
+            LOGGER.warn("$userAgent has tried to access HTML format of ${rev.identifier()}.")
             render("Apologise! Your operation is not supported.")
             return
         }
