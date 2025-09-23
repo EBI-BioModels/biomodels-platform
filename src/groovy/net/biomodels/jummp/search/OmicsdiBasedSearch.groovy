@@ -28,6 +28,7 @@ import grails.transaction.NotTransactional
 import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.RevisionAnnotation
@@ -141,6 +142,8 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
 
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
+    def redisService = Holders.grailsApplication.mainContext.getBean('redisService')
+
     private String httpProxyHost = "localhost"
     private int httpProxyPort = 80
 
@@ -187,7 +190,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
 
     @NotTransactional
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
-            Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 20] ) {
+            Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 20]) {
         long startAt = System.currentTimeMillis()
         boolean inProdMode = Environment.current == Environment.PRODUCTION
         AbstractEbeyeWsConfig ebeyeWsConfig
@@ -322,25 +325,11 @@ The root cause is ${e.toString()}""")
             results = []
             facets = []
         }
-        Set<String> immutableFacets = ["Organisms", "Publication Date", "Omics type"]
 
-        // potentially turn facets into a HashSet/HashMap so that we can more easily
-        // compute the delta b/w facets and immutable facets
-        List<FacetValue> facetValues = facets.findAll({ Facet f ->
-            !(immutableFacets.contains(f.label))
-        })*.facetValues.flatten().findAll { FacetValue value -> !value.label.contains(' ') }
-        Map<String, String> labelsForAccessions = new LinkedHashMap<>(facetValues.size())
-        List<String> labels = facetValues.collect { it.label }
-        List<ResourceReference> references = ResourceReference.findAllByAccessionInList(labels)
-        references.each { ResourceReference r ->
-            labelsForAccessions[r.accession] = r.name
+        if (facets) {
+            findNameForAccession(facets)
         }
-        facetValues.each { FacetValue v ->
-            String referenceName = labelsForAccessions[v.label]
-            if (referenceName) {
-                v.label = referenceName
-            }
-        }
+
         // build a TreeMap based on the deliberately designed order of our Facets
         TreeSet<OrderedFacet> orderedFacets = new TreeSet<OrderedFacet>()
         facets.each {Facet facet ->
@@ -567,5 +556,42 @@ The root cause is ${e.toString()}""")
         }
 
         date
+    }
+
+    private void findNameForAccession(List<Facet> facets) {
+        Set<String> immutableFacets = ["Organisms", "Publication Date", "Omics type"]
+        // potentially turn facets into a HashSet/HashMap so that we can more easily
+        // compute the delta b/w facets and immutable facets
+        List<FacetValue> facetValues = facets.findAll({ Facet f ->
+            !(immutableFacets.contains(f.label))
+        })*.facetValues.flatten().findAll { FacetValue value -> !value.label.contains(' ') }
+        Map<String, String> labelsForAccessions = new LinkedHashMap<>(facetValues.size())
+        List<String> lstAccessions = facetValues.collect { it.label }
+
+        // the `rrmap` is the key holding all the pairs of accession and its name of Taxonomy, Gene Ontology, UniProt
+        // Knowledgebase, and ChEBI. They were cached on Redis in the preparation stage. The key is converted to JSON
+        // string from a map.
+        String strJson = redisService.doRedisGet("rrmap")
+        if (strJson) {
+            def json = new JsonSlurper().parseText(strJson)
+            Map references = [:]
+            for (def obj in json) {
+                if (lstAccessions.contains(obj.key)) {
+                    references.put(obj.key, obj.value)
+                    labelsForAccessions[obj.key] = obj.value
+                }
+            }
+        } else {
+            List<ResourceReference> references = ResourceReference.findAllByAccessionInList(lstAccessions)
+            references.each { ResourceReference r ->
+                labelsForAccessions[r.accession] = r.name
+            }
+        }
+        facetValues.each { FacetValue v ->
+            String referenceName = labelsForAccessions[v.label]
+            if (referenceName) {
+                v.label = referenceName
+            }
+        }
     }
 }
