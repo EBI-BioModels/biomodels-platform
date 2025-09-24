@@ -117,6 +117,12 @@ class JummpController extends CommonController {
         render(view: "acknowledgements", model: model)
     }
 
+    def fetchNews() {
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.news.${theme}.title")
+        render(view: "news", model: model)
+    }
+
     def jobs() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.jobs.${theme}.title")

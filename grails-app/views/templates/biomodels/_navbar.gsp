@@ -133,7 +133,7 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
             <li class="divider"></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
-            <li><a href="${grailsApplication.config.grails.serverURL}/content/news">News</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'fetchNews')}">News</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'acknowledgements')}">Acknowledgements</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'curators')}">Curators</a></li>

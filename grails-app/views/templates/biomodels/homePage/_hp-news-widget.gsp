@@ -34,4 +34,5 @@
         <a href="${serverURL}/content/news/${news.key}">${news.value}</a>
         <g:if test="${nbDays <= 90}">&nbsp;<span class="badge alert">New</span></g:if></li>
 </g:each>
+<a href="${g.createLink(controller: 'jummp', action: 'fetchNews')}">Read more...</a>
 </ul>
