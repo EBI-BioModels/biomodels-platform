@@ -143,10 +143,8 @@
 </div>
 
 <div class="small-12 medium-12 large-4 columns">
-    <div class="homepage_info_box">
-        <h3>Find us on Twitter</h3>
+    <div class="homepage_info_box"><h3>News</h3></div>
+    <div class="widget-body-text" style="text-align: left">
+        <biomd:renderNewsWidget/>
     </div>
-    <div class="widget-body-text"><a class="twitter-timeline" data-lang="en" data-height="820"
-                                     href="https://twitter.com/biomodels">Tweets by @biomodels</a>
-        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></div>
 </div>
