@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory
 class JummpController extends CommonController {
     private static final Logger LOGGER = LoggerFactory.getLogger(JummpController.class)
     def springSecurityService
+    def decorationService
     def userService
     def teamService
     def feedbackService
@@ -120,6 +121,7 @@ class JummpController extends CommonController {
     def fetchNews() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.news.${theme}.title")
+        model.put("newsEntries", decorationService.fetchAllNewsArticles())
         render(view: "news", model: model)
     }
 

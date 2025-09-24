@@ -409,6 +409,14 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         data
     }
 
+    List fetchAllNewsArticles() {
+        // only select the published News items and ignore ones under the other statuses
+        def newsQuery = """\
+from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
+        def newsEntries = CmsContent.executeQuery(newsQuery, [aliasuri: 'news'])
+        newsEntries
+    }
+
     void refreshDataForNewsWidgetRedisCache() {
         Map data = buildDataForNewsWidget(7)
         redisService.doRedisHSet("hp-news-widget", data)
