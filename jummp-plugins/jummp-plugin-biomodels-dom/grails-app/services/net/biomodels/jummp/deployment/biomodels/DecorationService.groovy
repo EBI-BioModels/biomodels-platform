@@ -338,7 +338,7 @@ and publishedFrom is not null and publishedTo is not null order by createdOn des
         if (!news?.isEmpty()) {
             // call the fallback
             LOGGER.debug("Falling back to build the News entry")
-            news = buildDataForNewsWidget()
+            news = buildDataForNewsWidget(7)
             // cache the data to Redis server
             LOGGER.debug("Caching the News entry to Redis server")
             redisService.doRedisHSet("hp-news-widget", news)
@@ -396,11 +396,11 @@ GROUP BY p.id, p.journal
         publications
     }
 
-    Map buildDataForNewsWidget() {
+    Map buildDataForNewsWidget(final long max = 10) {
         // only select the published News items and ignore ones under the other statuses
         def newsQuery = """\
 from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
-        def newsEntries = CmsContent.executeQuery(newsQuery, [aliasuri: 'news'], [max: 10])
+        def newsEntries = CmsContent.executeQuery(newsQuery, [aliasuri: 'news'], [max: max])
         Map<String, String> data = [:]
         for (def entry : newsEntries) {
             String key = entry.aliasURI as String
@@ -410,7 +410,7 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
     }
 
     void refreshDataForNewsWidgetRedisCache() {
-        Map data = buildDataForNewsWidget()
+        Map data = buildDataForNewsWidget(7)
         redisService.doRedisHSet("hp-news-widget", data)
     }
 
