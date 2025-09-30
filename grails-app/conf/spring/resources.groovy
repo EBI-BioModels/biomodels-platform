@@ -318,4 +318,13 @@ beans = {
         bean.singleton = true
         grailsApplication = ref("grailsApplication")
     }
+
+    pirateCache(EhCacheFactoryBean) { bean ->
+        cacheManager = ref("springcacheCacheManager")
+        cacheName = "cacheJummpBioModels"
+        // these are just examples of properties you could set
+        eternal = false
+        diskPersistent = false
+        memoryStoreEvictionPolicy = "LRU"
+    }
 }
