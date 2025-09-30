@@ -689,7 +689,6 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
     RevisionTC getRevisionFromParams(final String MODEL, String REVISION = null) {
         String sanitisedModelId
         String sanitisedRevisionId
-        final RevisionTC REV
         final boolean MODEL_ID_HAS_DOT = MODEL.contains('.')
         if (MODEL_ID_HAS_DOT) {
             String[] parts = MODEL.split("\\.")
@@ -698,17 +697,20 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
         } else {
             sanitisedModelId = MODEL
         }
-        final boolean PARSE_REVISION_ID = REVISION != null && sanitisedRevisionId == null
-        if (PARSE_REVISION_ID) {
-            // if revision is not an integer, then UrlMappings will error out.
-            final int REVISION_ID = Integer.parseInt(REVISION)
-            REV = getRevision(sanitisedModelId, REVISION_ID)
+        // if the revision id is not embedded/included in the MODEL param
+        final boolean EMBEDDED_REVISION_ID = REVISION != null && sanitisedRevisionId == null
+
+        int REVISION_ID
+        if (EMBEDDED_REVISION_ID) {
+            // if REVISION is not an integer, then UrlMappings will error out.
+            REVISION_ID = Integer.parseInt(REVISION)
         } else if (sanitisedRevisionId) {
-            final int REVISION_ID = Integer.parseInt(sanitisedRevisionId)
-            REV = getRevision(sanitisedModelId, REVISION_ID)
+            REVISION_ID = Integer.parseInt(sanitisedRevisionId)
         } else { // no revision was specified - pull the latest one.
-            REV = getLatestRevision(sanitisedModelId)
+            REVISION_ID = 0
         }
+        // check and reuse the cached version
+        RevisionTC REV = doFetchFromRedisOrDatabase(sanitisedModelId, REVISION_ID)
         return REV
     }
 
@@ -908,5 +910,16 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
     @Override
     void afterPropertiesSet() throws Exception {
         LOGGER.info("Finished the bean initialisation")
+    }
+
+    RevisionTC doFetchFromRedisOrDatabase(final String sanitisedModelId, final int REVISION_ID) {
+        RevisionTC REV
+        // TODO: should we get the cached version? How to cache an object of RevisionTC?
+        if (REVISION_ID) {
+            REV = getRevision(sanitisedModelId, REVISION_ID)
+        } else {
+            REV = getLatestRevision(sanitisedModelId)
+        }
+        return REV
     }
 }
