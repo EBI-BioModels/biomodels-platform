@@ -22,6 +22,7 @@ package net.biomodels.jummp.core
 
 import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
+import grails.plugin.cache.Cacheable
 import net.biomodels.jummp.annotation.SectionContainer
 import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
@@ -251,6 +252,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         fetchAnnotations(revisionTC.id)
     }
 
+    @Cacheable("annotations")
     List<EATC> fetchAnnotations(final Long revId) {
         List<EATC> annotations = null
         use(ElementAnnotationCategory) {
@@ -271,6 +273,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         fetchGenericAnnotations(statements)
     }
 
+    @Cacheable("genericAnnotations")
     Map<QualifierTC, List<RRTC>> fetchGenericAnnotations(final List<STC> statements) {
         Map result = [:]
         statements.each { STC s ->
@@ -293,6 +296,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         result as Map<QualifierTC, List<RRTC>>
     }
 
+    @Cacheable("curationNotes")
     CNTC fetchCurationNotes(RevisionTC rev) {
         curationNotesService.fetchCurationNotesForModel(rev.model.id)
     }
@@ -310,6 +314,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         rev.model.publicationId ? "curated" : "non-curated"
     }
 
+    @Cacheable("modellingApproaches")
     Map<String, String[]> fetchModellingApproaches(RevisionTC rev) {
         ModellingApproach modellingApproach =  rev.model.modellingApproach
         Map result = [:]
@@ -324,6 +329,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         fetchOriginalModels(statements)
     }
 
+    @Cacheable("originalModels")
     List<String> fetchOriginalModels(List<STC> statements) {
         List<String> result = []
         statements.each { STC s ->
@@ -334,6 +340,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         result
     }
 
+    @Cacheable("modelTags")
     Set<String> fetchModelTags(String modelSubmissionId) {
         modelTagService.getTagsByModelId(modelSubmissionId) as Set
     }
@@ -344,6 +351,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
     }
 
     @Override
+    @Cacheable("modellingApproach")
     ModellingApproach getModellingApproach(String name) {
         metadataService.getModellingApproach(name)
     }
@@ -353,6 +361,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         return model.modellingApproach
     }
 
+    @Cacheable("tagsByModel")
     Set<TagTC> findTagsByModel(ModelTC model) {
         modelTagService.findTagsByModel(model)
     }
@@ -361,6 +370,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         getModelLevelAnnotations(rev?.id)
     }
 
+    @Cacheable("modelLevelAnnotations")
     List<STC> getModelLevelAnnotations(long revisionId) {
         // By default, fetching generic annotations means to grab model-level annotations
         // The specific levels of annotations should be invoked within another methods

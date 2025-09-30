@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.search
 
+import grails.plugin.cache.Cacheable
 import grails.transaction.NotTransactional
 import grails.util.Environment
 import grails.util.Holders
@@ -189,6 +190,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     }
 
     @NotTransactional
+    @Cacheable("searchResults")
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 20]) {
         long startAt = System.currentTimeMillis()
