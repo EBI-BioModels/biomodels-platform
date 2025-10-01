@@ -77,7 +77,7 @@ RUN mkdir webapps/biomodels; \
     jar xf ../biomodels.war; \
     cd - ; \
     mkdir log data; \
-    chown -R $USERNAME /usr/local/tomcat/data /usr/local/tomcat/log /usr/local/tomcat/webapps;
+    chown -R $USERNAME /usr/local/tomcat/data /usr/local/tomcat/log /usr/local/tomcat/temp /usr/local/tomcat/webapps;
 
 # the docker image for the production server
 FROM deploy as prod
