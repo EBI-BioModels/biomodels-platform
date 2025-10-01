@@ -201,7 +201,7 @@ class ModelDelegateService implements IModelService, InitializingBean {
     }
 
     @NotTransactional
-    @Cacheable("detailedContributors")
+    //@Cacheable("detailedContributors")
     Map<String, Set<ContributorDto>> buildDetailedContributors(Map<String, List<CTC>> contributors) {
         // use TreeMap to sort the keys in a natural order
         Map<String, Set<ContributorDto>> mapResult = new TreeMap<>()
@@ -662,7 +662,7 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
         modelService.submitModelRevisionForPublication(Revision.get(revision.id))
     }
 
-    @Cacheable("findByPerennialIdentifier")
+    //@Cacheable("findByPerennialIdentifier")
     ModelTC findByPerennialIdentifier(String perennialId) {
         def model = modelService.findByPerennialIdentifier(perennialId)
         if (model) {
@@ -685,7 +685,7 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
         new RevisionAdapter(revision: revision, latest: true).toCommandObject()
     }
 
-    @Cacheable("getRevisionFromParams")
+    //@Cacheable("getRevisionFromParams")
     RevisionTC getRevisionFromParams(final String MODEL, String REVISION = null) {
         String sanitisedModelId
         String sanitisedRevisionId
@@ -768,7 +768,7 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
     }
 
     @NotTransactional
-    @Cacheable("sortModelFilesByName")
+    //@Cacheable("sortModelFilesByName")
     List<RFTC> sortModelFilesByName(final List<RFTC> repoFiles) {
         List<RFTC> sortedList = repoFiles.sort { it.filename }
         return sortedList
@@ -845,6 +845,7 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
     }
 
     @NotTransactional
+    @Cacheable("rosetteLink")
     boolean checkRosetteLink(final String modelId) {
         LOGGER.info("Fetching OmicsDI data to check rosette link for $modelId...")
         final EP_PREFIX = "https://www.omicsdi.org/ws/dataset/get?database=biomodels&accession="
