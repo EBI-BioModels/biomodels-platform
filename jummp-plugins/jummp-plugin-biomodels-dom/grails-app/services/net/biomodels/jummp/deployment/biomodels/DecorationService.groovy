@@ -239,13 +239,18 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
     }
 
     String fetchAnnouncements() {
-        String content = ""
-        def queryStr = """\
+        String content = redisService.doRedisGet("hp-latest-announcements")
+        if (!content) {
+            def queryStr = """\
 from CmsContent where parent.aliasURI = :aliasURI and publishedTo >= :now \
 and publishedFrom is not null and publishedTo is not null order by createdOn desc"""
-        def announcements = CmsContent.executeQuery(queryStr, [aliasURI: 'announcements', now: new Date()], [max: 10])
-        for (def entry : announcements) {
-            content += entry.content
+            def announcements = CmsContent.executeQuery(queryStr, [aliasURI: 'announcements', now: new Date()], [max: 10])
+            for (def entry : announcements) {
+                content += entry.content
+            }
+            if (content) {
+                redisService.doRedisSet("hp-latest-announcements", content)
+            }
         }
         content
     }
