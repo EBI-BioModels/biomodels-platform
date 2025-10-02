@@ -68,6 +68,7 @@ try {
     ConfigObject dbConfig = new ConfigSlurper().parse(dbProps)
 
     dataSource {
+        logSql = true
         jmxEnabled = true
         pooled = Boolean.parseBoolean(dbConfig.jummp.database.pooled as String)
         driverClassName = dbConfig.jummp.database.driver
