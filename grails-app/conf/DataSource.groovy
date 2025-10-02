@@ -132,10 +132,12 @@ try {
                 driverClassName = ModelIdentifierUtils.DEFAULT_DRIVER
                 // can't use databaseMigrations
                 dbCreate = "update"
+                logSql = true
             }
         }
         production {
             dataSource {
+                logSql = true
                 properties {
                     ignoreExceptionOnPreLoad = true
                     jdbcInterceptors = "ConnectionState;StatementCache(max=200)"
