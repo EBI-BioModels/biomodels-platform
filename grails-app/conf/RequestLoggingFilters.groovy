@@ -36,7 +36,8 @@ class RequestLoggingFilters {
                 if (request.queryString?.contains("format=") || request.queryString?.contains("/api/")) {
                     // Log the request and start a timer
                     request.setAttribute('startTime', System.currentTimeMillis())
-                    LOGGER.info("""INCOMING REQUEST: ${request.getMethod()} ${request.getRequestURI()} \
+                    LOGGER.info("""INCOMING REQUEST: ${request.getMethod()} \
+${request.forwardURI}${request.queryString ? "?" + request.queryString : ""} \
 from ${request.getRemoteAddr()}""")
                     // Return true to continue the request chain
                     // return true
@@ -51,7 +52,8 @@ from ${request.getRemoteAddr()}""")
                 if (request.queryString?.contains("format=") || request.queryString?.contains("/api/")) {
                     long startTime = request.getAttribute('startTime') as long
                     long duration = System.currentTimeMillis() - startTime
-                    LOGGER.info("""OUTGOING RESPONSE: ${request.getMethod()} ${request.getRequestURL()} \
+                    LOGGER.info("""OUTGOING RESPONSE: ${request.getMethod()} \
+${request.forwardURI}${request.queryString ? "?" + request.queryString : ""} \
 responded with ${response.getStatus()} in ${duration}ms""")
                 }
             }
