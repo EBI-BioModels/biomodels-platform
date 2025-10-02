@@ -246,7 +246,7 @@ from CmsContent where parent.aliasURI = :aliasURI and publishedTo >= :now \
 and publishedFrom is not null and publishedTo is not null order by createdOn desc"""
             def announcements = CmsContent.executeQuery(queryStr, [aliasURI: 'announcements', now: new Date()], [max: 10])
             for (def entry : announcements) {
-                content += entry.content
+                content = entry.content
             }
             if (content) {
                 redisService.doRedisSet("hp-latest-announcements", content)
