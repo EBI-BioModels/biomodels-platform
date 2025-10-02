@@ -324,7 +324,7 @@ and publishedFrom is not null and publishedTo is not null order by createdOn des
 
     Map<String, String> fetchMomEntry() {
         Map<String, String> momEntryMap = redisService.doRedisHGetAll("the-latest-mom-entry")
-        if (!momEntryMap?.isEmpty()) {
+        if (momEntryMap?.isEmpty()) {
             // call the fallback
             LOGGER.debug("Falling back to build the Model of the Month entry")
             momEntryMap = buildModelOfTheMonthEntry()
@@ -335,7 +335,7 @@ and publishedFrom is not null and publishedTo is not null order by createdOn des
 
     Map<String, String> fetchDataNewsWidget() {
         Map<String, String> news = redisService.doRedisHGetAll("hp-news-widget")
-        if (!news?.isEmpty()) {
+        if (news?.isEmpty()) {
             // call the fallback
             LOGGER.debug("Falling back to build the News entry")
             news = buildDataForNewsWidget(7)
