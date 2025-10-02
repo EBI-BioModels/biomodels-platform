@@ -314,7 +314,8 @@ log4j.main = {
         threshold: Level.WARN, additivity: false
     rollingFile name: "cronJobAppender", file: "${logsDir}/jummp-cronjob.log",
         threshold: Level.DEBUG, additivity: false
-
+    rollingFile name: "apiFilterAppender", file: "${logsDir}/jummp-api-filter.log",
+            threshold: Level.INFO, additivity: false
     debug debugAppender: [
         'net.biomodels.jummp',
         'net.biomodels.jummp.core',
@@ -366,6 +367,10 @@ log4j.main = {
         'org.springframework.orm.hibernate4.support'
 
     ], additivity: false
+
+    info apiFilterAppender: [
+        'PreProcessFilters', 'RequestLoggingFilters'
+    ]
 }
 
 
