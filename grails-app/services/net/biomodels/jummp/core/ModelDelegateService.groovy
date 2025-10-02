@@ -856,14 +856,13 @@ session: ${TransactionSynchronizationManager.getResource(Holders.applicationCont
 
     @NotTransactional
     boolean retrieveRosetteLink(final String modelId) {
+        // TODO: check TTL and refresh the cached value
         boolean value
-        if (!redisService.doRedisHGet(modelId, "hasRosetteLink")) {
-            value = false
+        if (redisService.doRedisHGet(modelId, "hasRosetteLink") == null) {
+            // this key doesn't exist on Redis
+            value = cacheRosetteLink(modelId)
         } else {
             value = redisService.doRedisHGet(modelId, "hasRosetteLink").toBoolean()
-        }
-        if (!value) {
-            value = cacheRosetteLink(modelId)
         }
         value
     }
