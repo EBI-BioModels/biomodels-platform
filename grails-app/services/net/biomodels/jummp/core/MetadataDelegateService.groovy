@@ -309,12 +309,31 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         rev.model.publicationId ? "curated" : "non-curated"
     }
 
-    //@Cacheable("modellingApproaches")
+    /**
+     * Fetches all modelling approaches of a specific revision
+     * @param rev {@link RevisionTC}
+     * @return a map containing the accession associated with the name and resource (i.e., URI)
+     */
     Map<String, String[]> fetchModellingApproaches(RevisionTC rev) {
-        ModellingApproach modellingApproach =  rev.model.modellingApproach
+        String strMAs = redisService.doRedisHGet(rev.model.submissionId, "modelling-approaches")
         Map result = [:]
-        if (modellingApproach) {
-            result.put(modellingApproach.accession, [modellingApproach.name, modellingApproach.resource] as String[])
+        List<String> approaches = new ArrayList<>()
+        if (strMAs?.trim()) {
+            approaches = strMAs.trim().tokenize("|")
+            approaches.each { String approach ->
+                List tokens = approach.tokenize(";")
+                result.put(tokens[0], [tokens[1], tokens[2]])
+            }
+        } else {
+            ModellingApproach approach = rev.model.modellingApproach
+            if (approach) {
+                result.put(approach.accession, [approach.name, approach.resource] as String[])
+                approaches.add([approach.accession, approach.name, approach.resource].join(";"))
+            }
+            if (!result.isEmpty()) {
+                String s = approaches.join("|")
+                redisService.doRedisHSet(rev.model.submissionId, "modelling-approaches", s)
+            }
         }
         return result
     }
