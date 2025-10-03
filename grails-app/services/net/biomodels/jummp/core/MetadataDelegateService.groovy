@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2025 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -70,13 +70,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
          "MAMO_0000030": "Logical model",
          "MAMO_0000046": "Ordinary differential equation model"]
 
-    /**
-     * Dependency injection for the metadata service.
-     */
-    MetadataService metadataService
-    /**
-     * Dependency injection for the curation notes service.
-     */
+    def metadataService
     def curationNotesService
     def modelTagService
     def redisService
@@ -364,6 +358,25 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
     //@Cacheable("tagsByModel")
     Set<TagTC> findTagsByModel(ModelTC model) {
         modelTagService.findTagsByModel(model)
+    }
+
+    @Cacheable("modelTags")
+    List<String> listModelTags(ModelTC model) {
+        String strCachedTags = redisService.doRedisHGet(model.submissionId, "tags")
+        List<String> tags
+        if (strCachedTags) {
+            tags = strCachedTags?.trim()?.tokenize("|")
+        } else {
+            tags = modelTagService.getTagsByModelId(model.submissionId)
+            if (tags) {
+                redisService.doRedisHSet(model.submissionId, "tags", tags.join("|"))
+            } else {
+                // create a key named 'tags' with a space as its value to make sure that
+                // it won't need a database check for models having no tags
+                redisService.doRedisHSet(model.submissionId, "tags", " ")
+            }
+        }
+        tags
     }
 
     List<STC> getModelLevelAnnotations(RevisionTC rev) {

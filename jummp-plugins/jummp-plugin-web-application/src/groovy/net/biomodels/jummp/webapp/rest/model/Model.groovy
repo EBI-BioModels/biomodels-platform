@@ -80,9 +80,7 @@ class Model {
             }
             curationStatus = revision.curationState.toString() //revision.curationState.name()
             def mdds = Holders.grailsApplication.mainContext.getBean("metadataDelegateService")
-            Set<TagTC> tags = mdds.findTagsByModel(revision.model)
-            List<String> tagList = tags.collect { it.name }
-            modelTags = tagList
+            modelTags = mdds.listModelTags(revision.model)
 
             def mds = Holders.grailsApplication.mainContext.getBean("modelDelegateService")
             contributors = mds.buildDetailedContributors(revision.contributors)
