@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core
 
+import com.google.gson.Gson
 import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
 import grails.plugin.cache.Cacheable
@@ -380,7 +381,26 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
     }
 
     List<STC> getModelLevelAnnotations(RevisionTC rev) {
-        getModelLevelAnnotations(rev?.id)
+        Gson gson = new Gson()
+        String strMLAs = redisService.doRedisHGet(rev.model.submissionId, "model-level-annotations")
+        List<String> strStatements = new ArrayList<>()
+        List<STC> statements = new ArrayList<>()
+        if (strMLAs?.trim()) {
+            strStatements = strMLAs.trim().tokenize("|")
+            for (String stmt in strStatements) {
+                STC objStmt = gson.fromJson(stmt, STC.class)
+                statements.add(objStmt)
+            }
+        } else {
+            statements = getModelLevelAnnotations(rev?.id)
+            String s
+            for (STC stmt in statements) {
+                s = gson.toJson(stmt)
+                strStatements.add(s)
+            }
+            redisService.doRedisHSet(rev.model.submissionId, "model-level-annotations", strStatements.join("|"))
+        }
+        statements
     }
 
     //@Cacheable("modelLevelAnnotations")

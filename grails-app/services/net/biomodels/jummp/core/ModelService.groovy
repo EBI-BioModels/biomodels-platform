@@ -35,6 +35,8 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -610,10 +612,19 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
         if (!model) {
             return null
         }
-        /*if (model.deleted) {
+        if (model.deleted) {
             // exclude deleted models
             return null
-        }*/
+        }
+        String strCachedLatestRevs = redisService.doRedisHGet(model.submissionId, "latest-revision")
+        Map cachedLatestRevs = new HashMap()
+        if (strCachedLatestRevs?.trim()) {
+            cachedLatestRevs = new JsonSlurper().parseText(strCachedLatestRevs) as Map
+            if (cachedLatestRevs.containsKey(userService.username)) {
+                long id = cachedLatestRevs[userService.username]
+                return Revision.get(id)
+            }
+        }
         // admin gets max (non deleted) revision
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             List<Long> result = Revision.executeQuery('''
@@ -628,8 +639,10 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
             if (!result) {
                 return null
             }
-//            modelHistoryService.addModelToHistory(model)
-            return Revision.get(result[0])
+            modelHistoryService.addModelToHistory(model)
+            Revision revision = Revision.get(result[0])
+            cacheLatestRevision(cachedLatestRevs, revision, userService.username)
+            return revision
         }
 
         Set<String> roles = getSpringDatabaseRoles()
@@ -661,7 +674,15 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             modelHistoryService.addModelToHistory(model)
         }
         //ModelPublishedEvent event = new ModelPublishedEvent()
-        return Revision.get(result[0])
+        Revision revision = Revision.get(result[0])
+        cacheLatestRevision(cachedLatestRevs, revision, userService.username)
+        revision
+    }
+
+    private void cacheLatestRevision(final Map cachedLatestRevs, final Revision revision, final String username) {
+        cachedLatestRevs.put(username, revision.id)
+        String strJson = JsonOutput.toJson(cachedLatestRevs)
+        redisService.doRedisHSet(revision.model.submissionId, "latest-revision", strJson)
     }
 
     /** deduplication method for getting Spring's authorities as Database-Role strings */
