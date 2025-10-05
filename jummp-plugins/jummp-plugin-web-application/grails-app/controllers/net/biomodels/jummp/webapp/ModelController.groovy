@@ -194,6 +194,8 @@ class ModelController extends CommonController {
              * flag should be assigned true. However, to keep the logic simply, we handle the private revision as
              * the public one with the super users.
              */
+            LOGGER.info("""${params.id}${params.revisionId ? ".".concat(params.revisionId as String) : ""} \
+has been accessed!""")
             rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
         } catch (AccessDeniedException e) {
             // then access the model by bypassing ACLs
