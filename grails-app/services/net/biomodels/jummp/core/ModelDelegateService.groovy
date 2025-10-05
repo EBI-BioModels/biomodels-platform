@@ -32,6 +32,8 @@
 package net.biomodels.jummp.core
 
 import com.google.common.io.Files
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import grails.plugin.cache.Cacheable
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
@@ -63,8 +65,9 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.access.AccessDeniedException
-import org.springframework.transaction.support.TransactionSynchronizationManager
+import org.springframework.transaction.support.TransactionSynchronizationManager as TSM
 
+import java.lang.reflect.Modifier
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -288,21 +291,42 @@ class ModelDelegateService implements IModelService, InitializingBean {
     }
 
     List<RevisionTC> getAllRevisions(String modelId) {
+        Gson gson = new Gson()
+        List<RevisionTC> revisions = []
+        List<String> lstAllRevs = new ArrayList<>()
         def model = modelService.findByPerennialIdentifier(modelId)
+        String strAllRevs = redisService.doRedisHGet(modelId, "allRevisions")
+        if (strAllRevs) {
+            lstAllRevs = strAllRevs.trim().tokenize("|")
+            for (strRev in lstAllRevs) {
+                RevisionTC revTC = gson.fromJson(strRev, RevisionTC)
+                revisions.add(revTC)
+            }
+            return revisions
+        }
         def revs = modelService.getAllRevisions(model)
-        def msg = """Fetching revisions ${revs*.id} for $modelId. Attachment to current session: ${revs*.isAttached()}
-transactionStatus: ${transactionStatus
+        def msg = """Fetching revisions ${revs*.id} for $modelId. \
+Attachment to current session: ${revs*.isAttached()}transactionStatus: ${transactionStatus
             /* injected by org.codehaus.groovy.grails.transaction.transform.TransactionalTransform*/} ;
-session: ${TransactionSynchronizationManager.getResource(Holders.applicationContext.sessionFactory)
+session: ${TSM.getResource(Holders.applicationContext.sessionFactory)
             .session.persistenceContext.entitiesByKey.collect {
             def instance = it.value
             "{${instance.class.name} ${instance.hasProperty('id') ? instance.id : instance.toString()}}" }.toString()}
 """
         LOGGER.info(msg.toString())
-
-        List<RevisionTC> revisions = []
+        gson = new GsonBuilder()
+//            .excludeFieldsWithModifiers(Modifier.FINAL, Modifier.TRANSIENT, Modifier.STATIC)
+//            .serializeNulls()
+            .excludeFieldsWithoutExposeAnnotation()
+            .create()
         revs.each {
-            revisions << new RevisionAdapter(revision: it, latest: true).toCommandObject()
+            RevisionTC revTC = new RevisionAdapter(revision: it, latest: true).toCommandObject()
+            String s = gson.toJson(revTC)
+            lstAllRevs.add(s)
+            revisions.add(revTC)
+        }
+        if (!lstAllRevs.isEmpty()) {
+            redisService.doRedisHSet(modelId, "all-revisions", lstAllRevs.join("|"))
         }
         return revisions
     }
