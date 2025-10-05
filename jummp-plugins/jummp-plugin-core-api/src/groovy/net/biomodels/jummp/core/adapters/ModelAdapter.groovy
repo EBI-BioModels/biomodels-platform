@@ -45,7 +45,7 @@ class ModelAdapter {
         Map<String, String> creatorUsernames = [:]
         Map<String, String> contributors = [:]
         if (model.revisions?.size() > 0) {
-            List revisions = model.revisions.collect { it.id }
+            /*List revisions = model.revisions.collect { it.id }
             String queryString = "from ContributionDetails as CD where CD.revision.id in (:revisions)"
             List otherContributors = ContributionDetails.findAll(queryString, [revisions: revisions])
             for (ContributionDetails contributionDetail: otherContributors) {
@@ -54,7 +54,7 @@ class ModelAdapter {
                 creators.add(fullName)
                 creatorUsernames.put(username, fullName)
                 contributors.put(username, "${contributionDetail.role.name} - ${fullName}".toString())
-            }
+            }*/
         }
         Revision latestRev
         Revision firstRev
