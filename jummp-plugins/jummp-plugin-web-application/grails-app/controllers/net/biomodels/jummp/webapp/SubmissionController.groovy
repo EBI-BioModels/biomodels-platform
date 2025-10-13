@@ -416,21 +416,37 @@ ${pubURIs?.join(";")}""")
         return pubDetails
     }
 
-    private Map resolvePublicationMetadata(List<String> pubURIs) {
+    private static Map resolvePublicationMetadata(List<String> pubURIs) {
         String firstPubURI = pubURIs?.first()
-        String rest = JummpHttpService.getDataTypeAndAccession(firstPubURI)
-        String json = JummpHttpService.jsonGetRequest("https://resolver.api.identifiers.org/" + rest)
-        JSONObject jsonObject = new JSONObject(json)
-        JSONObject parsedCI = jsonObject.getJSONObject("payload").getJSONObject("parsedCompactIdentifier")
-        String localId = parsedCI.getString("localId")
-        String namespace = parsedCI.getString("namespace")
-        String collectionLabel = ""
-        if ("pubmed" == namespace) {
-            collectionLabel = "PubMed ID"
-        } else if ("doi" == namespace) {
-            collectionLabel = "DOI"
+        Map result = [:]
+        try {
+            String rest = JummpHttpService.getDataTypeAndAccession(firstPubURI)
+            if (!rest) {
+                logger.error("""Cannot fetch the publication details from ${firstPubURI} due to not resolving \
+data type and accession from the URI.""")
+                return null
+            }
+            String json = JummpHttpService.jsonGetRequest("https://resolver.api.identifiers.org/" + rest)
+            JSONObject jsonObject = new JSONObject(json)
+            JSONObject parsedCI = jsonObject.getJSONObject("payload").getJSONObject("parsedCompactIdentifier")
+            String localId = parsedCI.getString("localId")
+            String namespace = parsedCI.getString("namespace")
+            String collectionLabel
+            if ("pubmed" == namespace) {
+                collectionLabel = "PubMed ID"
+            } else if ("doi" == namespace) {
+                collectionLabel = "DOI"
+            } else {
+                collectionLabel = "unknown"
+            }
+            result = ["pubURI": firstPubURI, "namespace": namespace,
+                      "collectionLabel": collectionLabel, "accession": localId]
+        } catch (NullPointerException npe) {
+            logger.error("Cannot resolve the publication metadata for ${firstPubURI} because of NPE (${npe.message})!")
+        } finally {
+
         }
-        ["pubURI": firstPubURI, "namespace": namespace, "collectionLabel": collectionLabel, "accession": localId]
+        return result
     }
 
     /**
