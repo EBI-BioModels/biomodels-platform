@@ -30,6 +30,7 @@
 
 package net.biomodels.jummp.core.util
 
+import net.biomodels.jummp.core.constants.BioModels
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -102,16 +103,27 @@ class JummpHttpService implements InitializingBean {
         return json
     }
 
+    /**
+     * <p>Extracts the data type and accession from identifier.org-based URI. If the URI isn't patterned with this
+     * service, the method should return an empty string.</p>
+     * <p><b>For example:</b></p>
+     * <ul>
+     *     <li>http://identifiers.org/taxonomy/9606 -> taxonomy/9606</li>
+     *     <li>http://identifiers.org/VTO:0011993 -> VTO:0011993</li>
+     * </ul>
+     * @param uri An identifiers.org-based URI
+     * @return A String instance including the data type and accession.
+     */
     static String getDataTypeAndAccession(String uri) {
-        if (uri == null || uri.isEmpty()) {
-            LOGGER.error("The URI given is null or empty");
-            return null;
+        if (uri == null || uri.isEmpty() || uri.contains(BioModels.IDENTIFIERS)) {
+            LOGGER.error("The URI given is null, empty or not in identifiers.org format! The URI is ${uri}!")
+            return null
         }
         if (uri.startsWith("http://")) {
-            uri = uri.replace("http", "https");
+            uri = uri.replace("http", "https")
         }
-        String rest = uri.substring(("https://identifiers.org/").length());
-        return rest;
+        String rest = uri.substring(("https://identifiers.org/").length())
+        return rest
     }
 
     /**

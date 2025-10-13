@@ -77,7 +77,7 @@ class PublicationController implements GrailsConfigurationAware {
         } else if (!data["publication"]?.isEmpty() && operation == "edit") {
             boolean ID_EXISTS = params.containsKey("id")
             if (ID_EXISTS) {
-                data["message"] = "The publiction has been fetched from the remote location!"
+                data["message"] = "The publication has been fetched from the remote location!"
                 data["publication"]?.id = params.long("id")
             }
         }
