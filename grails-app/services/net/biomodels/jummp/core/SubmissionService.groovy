@@ -411,10 +411,10 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
                 refreshPublication = true
             }
             model.publication.link = publink
-            PublicationLinkProvider publSrc = PublicationLinkProvider.withCriteria(uniqueResult: true) {
+            PublicationLinkProvider pubSrc = PublicationLinkProvider.withCriteria(uniqueResult: true) {
                 eq("linkType", linkType)
-            }
-            model.publication.linkProvider = new PLPAdapter(linkProvider: publSrc).toCommandObject()
+            } as PublicationLinkProvider
+            model.publication.linkProvider = new PLPAdapter(linkProvider: pubSrc).toCommandObject()
             return refreshPublication
         }
 
@@ -1568,7 +1568,7 @@ an annotation to SBML document.""")
      * @param filterMain a boolean parameter specifying whether or not to exclude additional files
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
-    protected List getFilesFromMemory(Map workingMemory, boolean filterMain) {
+    protected static List getFilesFromMemory(Map workingMemory, boolean filterMain) {
         List<RFTC> repFiles = getRepFiles(workingMemory)
         if (!repFiles) {
             repFiles = new LinkedList<RFTC>();
@@ -1590,7 +1590,7 @@ an annotation to SBML document.""")
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
-    protected List getFilesFromRepFiles(List<RFTC> repFiles) {
+    protected static List getFilesFromRepFiles(List<RFTC> repFiles) {
         return repFiles?.collect { RFTC it -> new File(it.path) }
     }
 
@@ -1600,12 +1600,12 @@ an annotation to SBML document.""")
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
-    protected List getRepFiles(Map workingMemory,
-            String mapName = "repository_files") {
+    protected static List getRepFiles(Map workingMemory,
+                                      String mapName = "repository_files") {
         return (List) workingMemory.get(mapName)
     }
 
-    private boolean checkMainFilesAreLarge(List<File> mainFiles) {
+    private static boolean checkMainFilesAreLarge(List<File> mainFiles) {
         // As of this point in time, each submission has only one main file
         def result = mainFiles.find { File file ->
             // 100 MB is the maximum size to be allowed to infer the model format

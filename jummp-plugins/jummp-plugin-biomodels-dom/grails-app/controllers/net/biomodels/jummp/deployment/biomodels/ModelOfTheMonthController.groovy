@@ -89,7 +89,7 @@ Please correct or enter valid values into the required fields if they are missin
 Click Save button again when you finish it!"""
             result['errors'] = command.errors.allErrors.inspect()
         }
-        response.status = result.status
+        response.status = result.status as int
         render(result as JSON)
     }
 

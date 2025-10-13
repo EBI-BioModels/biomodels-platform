@@ -65,9 +65,7 @@ import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.ObjectFactory
-import org.springframework.context.ApplicationEvent
 import org.springframework.context.ApplicationListener
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
@@ -87,7 +85,6 @@ import org.springframework.transaction.annotation.Propagation
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantLock
-
 /**
  * Service class for managing Models.
  *

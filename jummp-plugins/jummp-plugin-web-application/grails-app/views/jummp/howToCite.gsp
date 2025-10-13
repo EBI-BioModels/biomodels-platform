@@ -29,7 +29,7 @@
 
     <script type="text/javascript">
         function toggleDisplayById(theElementId) {
-            var obj = document.getElementById(theElementId)
+            const obj = document.getElementById(theElementId);
             if (obj.className == "") {
                 obj.className = "hidden";
             } else {

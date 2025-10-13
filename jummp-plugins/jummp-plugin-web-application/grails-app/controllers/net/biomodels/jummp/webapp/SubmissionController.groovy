@@ -179,9 +179,9 @@ class SubmissionController extends CommonController implements InitializingBean 
                 Map detectedModelFormat = detectModelFormat(e)
                 e["detectedModelFormat"] = detectedModelFormat
                 List errors = []
-                e["validSyntax"] = validateSyntax(e, detectedModelFormat.identifier, errors)
+                e["validSyntax"] = validateSyntax(e, detectedModelFormat.identifier as String, errors)
                 e["validateSyntaxErrors"] = errors
-                Map detectedModelInfo = detectModelInfo(e, detectedModelFormat.identifier)
+                Map detectedModelInfo = detectModelInfo(e, detectedModelFormat.identifier as String)
                 e["detectedModelInfo"] = detectedModelInfo
             }
             // check for the valid file name
@@ -338,7 +338,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         String metadata = request.reader.text
         logger.info("Updating the submission: $metadata")
         Map<String, Object> working = [isUpdate: true, isUpdateOnExistingModel: true,
-           isAmend: false, isMetadataSubmission: false, accessType: "update", accessFormat: "json"]
+                                       isAmend : false, isMetadataSubmission: false,
+                                       accessType: "update", accessFormat: "json"] as Map<String, Object>
         if (metadata) {
             makeSubmission(metadata, working)
         } else {
@@ -471,7 +472,7 @@ data type and accession from the URI.""")
             CollectionHelper.remove(changesMade, "MODEL FILES")
         }
         List parsedExistingFiles = JSON.parse(params.files.decodeHTML()) as List
-        for (JSONElement e : parsedExistingFiles) {
+        for (JSONElement e : (parsedExistingFiles as List<JSONElement>)) {
             boolean exists = uploadedFiles.find { String fName, String fSize ->
                 long size = Long.parseLong(fSize)
                 e["filename"] == fName && e["size"] == size
@@ -555,7 +556,7 @@ data type and accession from the URI.""")
         File temporaryStorage = new File(buggyFiles, ticket)
         temporaryStorage.mkdirs()
         if (working.containsKey("repository_files")) {
-            List repFiles = working.get("repository_files")
+            List repFiles = working.get("repository_files") as List
             if (repFiles && submissionFiles.exists()) {
                 FileUtils.copyDirectory(submissionFiles, temporaryStorage)
             } else {
@@ -575,13 +576,13 @@ data type and accession from the URI.""")
         working.each {
             submissionLog.append("${it.key}: ${it.dump()}\n")
         }
-        List<RFTC> filesList = working.get("repository_files")
+        List<RFTC> filesList = working.get("repository_files") as List<RFTC>
         submissionLog.append("\nDump of the repository files:\n")
         for (RFTC fileTC : filesList) {
             submissionLog.append(fileTC.dump())
         }
         submissionLog.append("\nDump of the revision transport command:\n")
-        RTC revisionTC = working.get("RevisionTC")
+        RTC revisionTC = working.get("RevisionTC") as RTC
         submissionLog.append(revisionTC.dump())
         println(submissionLog.text) // sending the logs to the stdout is used for K8s ELK
 
