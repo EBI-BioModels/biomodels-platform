@@ -68,7 +68,7 @@ try {
     ConfigObject dbConfig = new ConfigSlurper().parse(dbProps)
 
     dataSource {
-        logSql = true
+//        logSql = true
         jmxEnabled = true
         pooled = Boolean.parseBoolean(dbConfig.jummp.database.pooled as String)
         driverClassName = dbConfig.jummp.database.driver
@@ -133,12 +133,12 @@ try {
                 driverClassName = ModelIdentifierUtils.DEFAULT_DRIVER
                 // can't use databaseMigrations
                 dbCreate = "update"
-                logSql = true
+//                logSql = true
             }
         }
         production {
             dataSource {
-                logSql = true
+//                logSql = true
                 properties {
                     ignoreExceptionOnPreLoad = true
                     jdbcInterceptors = "ConnectionState;StatementCache(max=200)"
@@ -173,7 +173,7 @@ try {
         }
     }
 
-} catch (Exception e) {
+} catch (Exception ignored) {
     // no database configured yet, use h2
     hibernate {
         cache.use_second_level_cache = false
