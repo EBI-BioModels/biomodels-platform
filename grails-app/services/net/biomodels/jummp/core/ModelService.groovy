@@ -48,7 +48,7 @@ import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService as MIGRS
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.util.JummpHttpService
@@ -137,7 +137,7 @@ class ModelService implements ApplicationListener<ModelOperationEvent> {
     def redisService
     def contributorService
 
-    ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
+    ObjectFactory<MIGRS> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
 
@@ -593,16 +593,16 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
     @CompileStatic
     @NotTransactional
     Set<String> getPerennialIdentifierTypes() {
-        ModelIdentifierGeneratorRegistryService registry = idGeneratorRegistryFactoryBean.object
+        MIGRS registry = idGeneratorRegistryFactoryBean.object
         registry.generatorTypes
     }
 
     /**
-    * Queries the @p model for the latest available revision the user has read access to.
-    * @param model The Model for which the latest revision should be retrieved.
-    * @param addToHistory Optional field to allow history not to be modified - e.g. if called from modelhistoryService
-    * @return Latest Revision the current user has read access to. If there is no such revision null is returned
-    **/
+     * Queries the @p model for the latest available revision the user has read access to.
+     * @param model The Model for which the latest revision should be retrieved.
+     * @param addToHistory Optional field to allow history not to be modified - e.g. if called from modelhistoryService
+     * @return Latest Revision the current user has read access to. If there is no such revision null is returned
+     */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getLatestRevision")
     Revision getLatestRevision(Model model, boolean addToHistory = true) {
@@ -693,20 +693,22 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-    * Queries the @p model for all revisions the user has read access to.
-    * The returned list is ordered by revision number of the model.
-    * @param model The Model for which all revisions should be retrieved
-    * @return List of Revisions ordered by revision numbers of underlying VCS.
-    * If the user has no access to any revision an empty list is returned
-    * @todo: add paginated version with offset and count. Problem: filter
-    **/
+     * Queries the @p model for all revisions the user has read access to.
+     * The returned list is ordered by revision number of the model.
+     * @param model The Model for which all revisions should be retrieved
+     * @return List of Revisions ordered by revision numbers of underlying VCS.
+     * If the user has no access to any revision an empty list is returned
+     * @todo: add paginated version with offset and count. Problem: filter
+     * @param model
+     * @return
+     */
     @PostFilter("hasPermission(filterObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllRevisions")
     List<Revision> getAllRevisions(Model model) {
-        /*if (model.deleted) {
+        if (model.deleted) {
             return []
-        }*/
+        }
         // exclude deleted revisions
         modelHistoryService.addModelToHistory(model)
         List<Revision> revisions = model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
@@ -717,12 +719,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * Parses the @p identifier to query for a model and optionally
      * a revision number, separated by the . character. If no revision
      * is specified the latest revision is returned.
+     * The authorisation has been disabled because model.findByPerennialIdentifier
+     * calls this method indirectly.
      * @param identifier The identifier in the format Model.Revision
      * @return The revision or @c null if there is no such revision
-     */
-    /*
-     * The authorisation has been disabled because model.findByPerennialIdentifier calls
-     * this method indirectly.
      */
     //@PostAuthorize("hasPermission(returnObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -784,17 +784,17 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-    * Creates a new Model and stores it in the VCS.
-    *
-    * Stores the @p repoFile as a new file in the VCS and creates a Model for it.
-    * The Model will have one Revision attached to it. The MetaInformation for this
-    * Model is taken from @p meta. The user who uploads the Model becomes the owner of
-    * this Model. The new Model is not visible to anyone except the owner.
-    * @param repoFile The wrapper for the model file that will be stored in the VCS.
-    * @param meta Meta Information to be added to the model
-    * @return The newly-created Model, or null if the model could not be created
-    * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
-    **/
+     * Creates a new Model and stores it in the VCS.
+     *
+     * Stores the @p repoFile as a new file in the VCS and creates a Model for it.
+     * The Model will have one Revision attached to it. The MetaInformation for this
+     * Model is taken from @p meta. The user who uploads the Model becomes the owner of
+     * this Model. The new Model is not visible to anyone except the owner.
+     * @param repoFile The wrapper for the model file that will be stored in the VCS.
+     * @param meta Meta Information to be added to the model
+     * @return The newly-created Model, or null if the model could not be created
+     * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
+     */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsFile")
@@ -962,14 +962,14 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-    * Retrieves information related to a file from the VCS
-    * Passes the @p revision and filename to the vcsService, gets
-    * info related to the specified @p filename, and filters the returned
-    * values based on the revisions available to the user
-    * @param rev The model revision
-    * @param filename The file to be queried
-    * @return A list of VcsFileDetails objects
-    **/
+     * Retrieves information related to a file from the VCS
+     * Passes the @p revision and filename to the vcsService, gets
+     * info related to the specified @p filename, and filters the returned
+     * values based on the revisions available to the user
+     * @param rev The model revision
+     * @param filename The file to be queried
+     * @return A list of VcsFileDetails objects
+     */
     @PreAuthorize("permitAll()")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getFileDetails")
@@ -995,19 +995,19 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-    * Creates a new Model and stores it in the VCS. Stripped down version suitable
-    * for calling from SubmissionService, where model has already been validated
-    *
-    * Stores the @p modelFile as a new file in the VCS and creates a Model for it.
-    * The Model will have one Revision attached to it. The MetaInformation for this
-    * Model is taken from @p meta. The user who uploads the Model becomes the owner of
-    * this Model. The new Model is not visible to anyone except the owner.
-    * @param repoFiles The list of command objects corresponding to the files
-    * of the model that is to be stored in the VCS.
-    * @param rev Meta Information to be added to the model
-    * @return The new created Model, or null if the model could not be created
-    * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
-    **/
+     * Creates a new Model and stores it in the VCS. Stripped down version suitable
+     * for calling from SubmissionService, where model has already been validated
+     *
+     * Stores the @p modelFile as a new file in the VCS and creates a Model for it.
+     * The Model will have one Revision attached to it. The MetaInformation for this
+     * Model is taken from @p meta. The user who uploads the Model becomes the owner of
+     * this Model. The new Model is not visible to anyone except the owner.
+     * @param repoFiles The list of command objects corresponding to the files
+     * of the model that is to be stored in the VCS.
+     * @param rev Meta Information to be added to the model
+     * @return The new created Model, or null if the model could not be created
+     * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
+     */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadValidatedModel")
@@ -1219,7 +1219,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             stopWatch.stop()
 
             // broadcast event
-            grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this,new ModelAdapter(model: model).toCommandObject(), modelFiles))
+            def event = new ModelCreatedEvent(this, new ModelAdapter(model: model).toCommandObject(), modelFiles)
+            grailsApplication.mainContext.publishEvent(event)
         } else {
             // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
