@@ -62,10 +62,10 @@
         <!-- Our markup, the important part here! -->
         <div id="drag-and-drop-zone" class="dm-uploader">
             <div class="padding-3 margin-3">
-                <h3 class="text-muted" style="margin-top: 3rem!important; margin-bottom: 3rem!important;">Drag
+                <h3 class="text-muted" style="margin-top: 1rem!important; margin-bottom: 1rem!important;">Drag
             &amp; drop files here</h3></div>
 
-            <div class="padding-3 margin-3 btn button" style="margin-bottom: 3rem!important; display: block; width:
+            <div class="padding-3 margin-3 btn button" style="margin-bottom: 1rem!important; display: block; width:
             100%">
                 <span>Open the file Browser</span>
                 <input type="file" title='Click to add Files' class="btn btn-primary" name="modelFiles[]" multiple
