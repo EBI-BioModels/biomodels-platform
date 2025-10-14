@@ -28,7 +28,7 @@ import grails.plugin.cache.Cacheable
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
-import net.biomodels.jummp.core.user.PersonTransportCommand
+import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
 import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -41,6 +41,7 @@ import org.springframework.beans.factory.InitializingBean
  *
  * @author <a href="mailto:tungnguyenvn@pm.me">tungnguyenvn@pm.me</a>
  * @date   2021-01-17
+ * @update 2025-10-14
  */
 class DoiService extends AbstractPubDataFetchStrategy implements InitializingBean {
     static transactional = false
@@ -62,8 +63,8 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
     @Override
     PLPTC createLinkProviderInstance() {
         PubLP link = PubLP.withCriteria(uniqueResult: true) {
-            eq("linkType", PubLP.LinkType.DOI)
-        }
+            eq("linkType", PublicationLinkProvider.LinkType.DOI)
+        } as PubLP
         PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
         linkCommand
     }
@@ -75,7 +76,8 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
             logger.debug("The raw details of the publication record ${rawData.get('doi')} cannot be empty.")
             return null
         }
-        if (rawPubDetails.charAt(0) != '@') {
+        char at = '@'
+        if (rawPubDetails.charAt(0) != at) {
             logger.debug("DOI ${doi} Not Found")
             return null
         }
@@ -98,12 +100,12 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
             pubTC.link = pubMap.get("doi")
             pubTC.title = pubMap.get("title")
             pubTC.journal = pubMap.get("journal")
-            pubTC.authors = parseAuthorsFromRawText(pubMap.get("author"))
+            pubTC.authors = parseAuthorsFromRawText(pubMap.get("author") as String) as List
             pubTC.volume = pubMap.get("volume")
             pubTC.issue = pubMap.get("number")
             pubTC.pages = pubMap.get("pages")
-            pubTC.year = Integer.parseInt(pubMap.get("year"))
-            pubTC.month = inferFromMonthName(pubMap.get("month"))
+            pubTC.year = Integer.parseInt(pubMap.get("year") as String)
+            pubTC.month = inferFromMonthName(pubMap.get("month") as String)
 
             // Currently, the two attributes below are missing due to the limitations of this approach
             /*pubTC.affiliation
@@ -112,7 +114,7 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
         return pubTC
     }
 
-    private Map lookupPublicationDataFromDOI(final String doi) {
+    private static Map lookupPublicationDataFromDOI(final String doi) {
         // this method works without specifying proxy in the curl command
         // because we had given the proxy arguments to JVM
         Map result = ["doi": doi]
@@ -123,13 +125,13 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
         result
     }
 
-    private List<PersonTransportCommand> parseAuthorsFromRawText(final String rawText) {
-        List<PersonTransportCommand> authors = new ArrayList<>()
+    private static List<PersonTC> parseAuthorsFromRawText(final String rawText) {
+        List<PersonTC> authors = new ArrayList<>()
         if (rawText) {
             String[] authorSet = rawText.trim().split(" and ")
             if (authorSet?.size()) {
                 for (String authorName : authorSet) {
-                    PersonTransportCommand author = new PersonTransportCommand()
+                    PersonTC author = new PersonTC()
                     author.userRealName = authorName
                     authors.add(author)
                 }
@@ -138,8 +140,8 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
         return authors
     }
 
-    private String inferFromMonthName(final String name) {
-        int retVal
+    private static String inferFromMonthName(final String name) {
+        int retVal = 0
         switch (name) {
             case "jan":
                 retVal = 1
