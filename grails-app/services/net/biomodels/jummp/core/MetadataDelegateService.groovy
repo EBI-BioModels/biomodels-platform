@@ -23,13 +23,12 @@ package net.biomodels.jummp.core
 import com.google.gson.Gson
 import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
-import grails.plugin.cache.Cacheable
 import net.biomodels.jummp.annotation.SectionContainer
 import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
-import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
+import net.biomodels.jummp.core.annotation.ElementAnnotationCategory as EAC
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
 import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
@@ -247,10 +246,9 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         fetchAnnotations(revisionTC.id)
     }
 
-    //@Cacheable("annotations")
     List<EATC> fetchAnnotations(final Long revId) {
         List<EATC> annotations = null
-        use(ElementAnnotationCategory) {
+        use(EAC) {
             List<RevisionAnnotation>  revisionAnnotations = null
             def values = RevisionAnnotation.where {
                 revision.id == revId
@@ -268,7 +266,6 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         fetchGenericAnnotations(statements)
     }
 
-    //@Cacheable("genericAnnotations")
     Map<QualifierTC, List<RRTC>> fetchGenericAnnotations(final List<STC> statements) {
         Map result = [:]
         statements.each { STC s ->
@@ -291,7 +288,6 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         result as Map<QualifierTC, List<RRTC>>
     }
 
-    //@Cacheable("curationNotes")
     CNTC fetchCurationNotes(RevisionTC rev) {
         curationNotesService.fetchCurationNotesForModel(rev.model.id)
     }
@@ -343,7 +339,6 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         fetchOriginalModels(statements)
     }
 
-    @Cacheable("originalModels")
     List<String> fetchOriginalModels(List<STC> statements) {
         List<String> result = []
         statements.each { STC s ->
@@ -354,7 +349,6 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         result
     }
 
-    @Cacheable("modelTags")
     Set<String> fetchModelTags(String modelSubmissionId) {
         modelTagService.getTagsByModelId(modelSubmissionId) as Set
     }
@@ -365,7 +359,6 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
     }
 
     @Override
-    //@Cacheable("modellingApproach")
     ModellingApproach getModellingApproach(String name) {
         metadataService.getModellingApproach(name)
     }
@@ -375,12 +368,10 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         return model.modellingApproach
     }
 
-    //@Cacheable("tagsByModel")
     Set<TagTC> findTagsByModel(ModelTC model) {
         modelTagService.findTagsByModel(model)
     }
 
-    @Cacheable("modelTags")
     List<String> listModelTags(ModelTC model) {
         String strCachedTags = redisService.doRedisHGet(model.submissionId, "tags")
         List<String> tags
@@ -422,7 +413,6 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         statements
     }
 
-    //@Cacheable("modelLevelAnnotations")
     List<STC> getModelLevelAnnotations(long revisionId) {
         // By default, fetching generic annotations means to grab model-level annotations
         // The specific levels of annotations should be invoked within another methods
@@ -438,7 +428,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         }
         List<EATC> annotations = new ArrayList<>()
         annotationList.collect { ElementAnnotation ea ->
-            use(ElementAnnotationCategory) {
+            use(EAC) {
                 annotations.add(ea.toCommandObject())
             }
         }
