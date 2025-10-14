@@ -115,7 +115,7 @@ class JummpHttpService implements InitializingBean {
      * @return A String instance including the data type and accession.
      */
     static String getDataTypeAndAccession(String uri) {
-        if (uri == null || uri.isEmpty() || uri.contains(BioModels.IDENTIFIERS)) {
+        if (uri == null || uri.isEmpty() || !uri.contains(BioModels.IDENTIFIERS)) {
             LOGGER.error("The URI given is null, empty or not in identifiers.org format! The URI is ${uri}!")
             return null
         }
