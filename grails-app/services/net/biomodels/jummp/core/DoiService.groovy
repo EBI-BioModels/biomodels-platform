@@ -50,7 +50,12 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
     PubTC fetchPublicationData(final String doi) throws JummpException {
         Map fetchedData = lookupPublicationDataFromDOI(doi)
         PubTC pubTC = buildPubTCFromRawData(fetchedData)
-        PubTC.fromDOI(pubTC)
+        if (pubTC.validate()) {
+            return PubTC.fromDOI(pubTC)
+        } else {
+            logger.error("The DOI ${doi}: cannot pull all required information! Errors: ${pubTC.errors.toString()}")
+            return null
+        }
     }
 
     @Cacheable("doiLinkProviderInstance")

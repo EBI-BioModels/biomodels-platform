@@ -105,8 +105,13 @@ class PublicationService implements IPublicationService, InitializingBean {
             log.debug("The publication details of ${link} fetched from EuropePMC look ${pubTC?.dump()}")
             if (type == PLP.LinkType.DOI && pubTC?.isEmpty()) {
                 // fallback to DoiService if the entry hasn't indexed in PubMed centre yet
-                pubTC = doiService.fetchPublicationData(link)
-                log.debug("The publication details of ${link} fetched from https://doi.org look ${pubTC?.dump()}")
+                try {
+                    pubTC = doiService.fetchPublicationData(link)
+                    log.debug("The publication details of ${link} fetched from https://doi.org look ${pubTC?.dump()}")
+                } catch (JummpException je) {
+                    log.error("""An errors occurred when fetching the publication metadata of \
+${linkTypeAsString}:${link} due to ${je.message}""")
+                }
             }
         }
         pubTC
