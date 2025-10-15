@@ -391,8 +391,9 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
     }
 
     List<STC> getModelLevelAnnotations(RevisionTC rev) {
+        String key = "model-level-annotations-${rev.revisionNumber}"
         Gson gson = new Gson()
-        String strMLAs = redisService.doRedisHGet(rev.model.submissionId, "model-level-annotations")
+        String strMLAs = redisService.doRedisHGet(rev.model.submissionId, key)
         List<String> strStatements = new ArrayList<>()
         List<STC> statements = new ArrayList<>()
         if (strMLAs?.trim()) {
@@ -408,7 +409,7 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
                 s = gson.toJson(stmt)
                 strStatements.add(s)
             }
-            redisService.doRedisHSet(rev.model.submissionId, "model-level-annotations", strStatements.join("|"))
+            redisService.doRedisHSet(rev.model.submissionId, key, strStatements.join("|"))
         }
         statements
     }

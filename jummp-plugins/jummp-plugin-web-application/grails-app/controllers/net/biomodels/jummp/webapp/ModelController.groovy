@@ -239,7 +239,7 @@ has been accessed!""")
                     model.putAll(doShowGetCheckConditions(PERENNIAL_ID, rev, repoFiles))
                     model.putAll(doShowGetCurationData(rev))
                     model.putAll(doShowGetExternalLinkedData(PERENNIAL_ID, rev, repoFiles))
-                    model.putAll(doShowGetAnnotationsBasedData(PERENNIAL_ID, rev))
+                    model.putAll(doShowGetAnnotationsBasedData(PERENNIAL_ID, rev, revision))
                     if (rev.id == revision.id) {
                         if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE)) {
                             if (redisService.doRedisGet(KeyCollection.DEBUGGING_MODE).toBoolean()) {
@@ -345,8 +345,13 @@ has been accessed!""")
         ]
     }
 
-    private Map doShowGetAnnotationsBasedData(final String PERENNIAL_ID, final RTC revision) {
-        List<STC> modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(revision)
+    private Map doShowGetAnnotationsBasedData(final String PERENNIAL_ID, final RTC revision, final RTC latest) {
+        List<STC> modelLevelAnnotations
+        if (revision.id == latest.id) {
+            modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(latest)
+        } else {
+            modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(revision)
+        }
         Map genericAnnotations = metadataDelegateService.fetchGenericAnnotations(modelLevelAnnotations)
         List<String> originalModels = metadataDelegateService.fetchOriginalModels(modelLevelAnnotations)
         List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
