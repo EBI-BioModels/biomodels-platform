@@ -853,6 +853,20 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         true
     }
 
+    @Cacheable("isAllowedMigrationAWS")
+    String isAllowedMigrationAWS(final String username) {
+        Path disallowedUsers = Paths.get(grailsApplication.config.jummp.dirs.upload, "DisallowedUsers.json")
+        String redirectURL = ""
+        if (disallowedUsers) {
+            def jsonSlurper = new JsonSlurper()
+            def arrBreaches = jsonSlurper.parse(new File(disallowedUsers.toString()))
+            if (username in arrBreaches) {
+                redirectURL = grailsApplication.config.grails.serverURL + "/usermanagement/notfound"
+            }
+        }
+        redirectURL
+    }
+
     @Override
     void afterPropertiesSet() throws Exception {
         LOGGER.info("Finished the bean initialisation")

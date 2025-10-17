@@ -132,6 +132,17 @@ class UsermanagementController extends CommonController {
     	render(view: "reset", model: model)
     }
 
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def notfound() {
+        String previousURL = request.getHeader("referer")
+        // if the callee is not the auth controller, throw an error 405
+        if (!previousURL) {
+            forward(controller: "errors", action: "error405")
+            return
+        }
+    	render(view: "notfound")
+    }
+
 
     boolean validateUserData(def cmd, def params) {
         params.username = params.username.decodeHTML()

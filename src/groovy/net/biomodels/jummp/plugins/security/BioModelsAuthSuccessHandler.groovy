@@ -38,7 +38,6 @@ import org.springframework.security.core.Authentication
 import javax.servlet.ServletException
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
-
 /**
  * This class customises the post process after the successful login. It changes the default behaviour a bit by
  * redirecting the user to the previous page which is the page of an unpublished model.
@@ -86,7 +85,12 @@ class BioModelsAuthSuccessHandler extends AAASH {
     protected void handle(HttpServletRequest request, HttpServletResponse response, Authentication authentication)
         throws IOException, ServletException {
         String targetUrl = determineTargetUrl(request, response)
-
+        String username = authentication.principal.username as String
+        String redirectURL = userService.isAllowedMigrationAWS(username)
+        if (redirectURL) {
+            request.session.setMaxInactiveInterval(0)
+            targetUrl = redirectURL
+        }
         if (response.isCommitted()) {
             logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
             return
