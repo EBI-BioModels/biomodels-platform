@@ -319,8 +319,8 @@ There has been errors when assembling authors $authors into the publication '${p
             linkTypeProvider = pubDetails.linkProvider
         }
         tempPTC.linkProvider = inferPublicationLinkProvider(linkTypeProvider)
-        String message = ""
-        String status = ""
+        String message
+        String status
         List errors = new ArrayList()
         try  {
             assembleAuthors(tempPTC, pubDetails.authors)

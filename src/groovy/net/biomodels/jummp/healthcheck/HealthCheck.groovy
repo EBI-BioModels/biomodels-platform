@@ -76,7 +76,7 @@ class HealthCheck {
         String key = asName(type)
         String value = asName(status)
         map[key] = value
-        map
+        map as Map<String, String>
     }
 
     String toString() {
