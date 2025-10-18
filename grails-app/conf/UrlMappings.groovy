@@ -105,6 +105,7 @@ class UrlMappings {
         "400"(controller: "errors", action: "error400")
         "403"(controller: "errors", action: "error403")
         "404"(controller: "errors", action: "error404")
+        "405"(controller: "errors", action: "error405")
         "500"(controller: "errors", action: "error500")
         "500"(controller: "errors", action: "error403", exception: AccessDeniedException)
         "/models"(controller: "search", action: "list")
