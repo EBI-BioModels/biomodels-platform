@@ -31,7 +31,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Nonexist User | BioModels</title>
+        <title>Account Not Found | BioModels</title>
         <g:render template="/usermanagement/head"/>
 
     </head>
@@ -48,5 +48,5 @@
      </body>
 </html>
 <content tag="title">
-	<g:message code="user.resetpassword.ui.heading"/>
+	Account Not Found
 </content>
