@@ -329,7 +329,8 @@ The root cause is ${e.toString()}""")
         }
 
         if (facets) {
-            findNameForAccession(facets)
+            LOGGER.info("Disabling resolving name for accession to debug 500 error")
+            // findNameForAccession(facets)
         }
 
         // build a TreeMap based on the deliberately designed order of our Facets
