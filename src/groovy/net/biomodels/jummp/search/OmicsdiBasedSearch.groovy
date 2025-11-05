@@ -42,6 +42,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import net.biomodels.jummp.indexing.IndexingPlan
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.utils.EbiSearchHelper
 import net.biomodels.jummp.utils.FileHelper
@@ -52,6 +53,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
+import ucar.ma2.Index
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
@@ -413,9 +415,10 @@ The root cause is ${e.toString()}""")
         Revision.executeUpdate("delete IndexingPlan")
     }
 
-    void clearIndex(RevisionTC revisionTC) {
+    @Override
+    void clearIndex(final long revisionId) {
         List revisionAnnotationRecords = RevisionAnnotation.findAll {
-            revision.id == revisionTC.id
+            revision.id == revisionId
         }
 
         // delete RevisionAnnotation
@@ -453,6 +456,30 @@ The root cause is ${e.toString()}""")
                         rr.delete(flush: true)
                     }
                 }
+            }
+        }
+
+        // remove all indexing plans
+        clearIndexingPlan(revisionId)
+
+    }
+
+    void clearIndex(RevisionTC revisionTC) {
+        if (revisionTC) {
+            clearIndex(revisionTC.id)
+        }
+    }
+
+    void clearIndexingPlan(final long revisionId) {
+        def indexingPlans = IndexingPlan.where {
+            revision.id == revisionId
+        }
+        if (indexingPlans) {
+            List plans = indexingPlans.toList()
+            plans.each {
+                println "deleting IP ${it.id}"
+                def qStr = "delete IndexingPlan ip where ip.revision.id = :revId"
+                IndexingPlan.executeUpdate(qStr, [revId: revisionId])
             }
         }
     }

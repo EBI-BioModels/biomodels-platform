@@ -39,6 +39,13 @@ import net.biomodels.jummp.search.SortOrder
 @CompileStatic
 interface ModelSearchStrategy {
     void clearIndex()
+    /**
+     * Clears the indexed annotations (aka. cross-references) of a given {@link net.biomodels.jummp.model.Revision}
+     * identified via its identifier.
+     *
+     * @param revisionId an {@link Integer} value indicating the revision identifier
+     */
+    void clearIndex(final long revisionId)
     void clearIndex(RevisionTransportCommand revision)
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
                                 Map<String, Integer> paginationCriteria)

@@ -170,8 +170,15 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
     }
 
     @Profiled(tag="searchService.clearIndex")
-    void clearIndex(RevisionTransportCommand revisionTC) {
+    void clearIndex(final long revisionId) {
+        log.debug("Hasn't been implemented yet!")
+    }
 
+    @Profiled(tag="searchService.clearIndex")
+    void clearIndex(RevisionTransportCommand revisionTC) {
+        if (revisionTC) {
+            clearIndex(revisionTC.id)
+        }
     }
 
     /**

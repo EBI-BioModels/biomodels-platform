@@ -34,7 +34,7 @@ import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.search.*
 import org.perf4j.aop.Profiled
@@ -116,10 +116,15 @@ class SearchService implements InitializingBean {
     @Secured(['ROLE_ADMIN'])
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="searchService.clearIndex")
-    void clearIndex(RevisionTransportCommand revision = null) {
+    void clearIndex(def revision = null) {
         if (revision) {
-            LOGGER.info("Clearing the indexes of the ${revision.identifier()}.")
-            strategy.clearIndex(revision)
+            if (revision instanceof RevisionTC) {
+                LOGGER.info("Clearing the indexes of the ${revision.identifier()}.")
+                strategy.clearIndex(revision as RevisionTC)
+            } else if (revision instanceof Long) {
+                LOGGER.info("Clearing the indexes of the revision which the id is ${revision}.")
+                strategy.clearIndex(revision as long)
+            }
         } else {
             LOGGER.info("Clearing all indexes from the database.")
             strategy.clearIndex()
@@ -135,7 +140,7 @@ class SearchService implements InitializingBean {
      **/
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="searchService.updateIndex")
-    void updateIndex(RevisionTransportCommand revision,
+    void updateIndex(RevisionTC revision,
                      Map<String, String> options = ["level": "full", "indexer": ""] as Map) {
         clearIndex(revision)
         strategy.updateIndex(revision, options)
@@ -151,7 +156,7 @@ class SearchService implements InitializingBean {
     @Profiled(tag="searchService.regenerateIndices")
     void regenerateIndices() {
         clearIndex()
-        List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
+        List<RevisionTC> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
             new RevisionAdapter(revision: r).toCommandObject()
         }
         if (IS_DEBUG_ENABLED) {
