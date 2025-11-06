@@ -2364,6 +2364,32 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         revision
     }
 
+    /**
+     * Purges a given revision from the database
+     *
+     * @param revision An {@link Revision} object will be destroyed.
+     *
+     * @return true if the action is successful, otherwise, it returns false.
+     */
+    boolean purgeRevision(final Revision revision) {
+        boolean retVal = false
+        long tempId = revision.id
+        try {
+            def qStr = "delete Revision r where r.id = :revId"
+            retVal = Revision.executeUpdate(qStr, [revId: tempId]) ? false : true
+        } catch (Exception ex) {
+            logger.error("""An error happened when deleting the revision \
+${revision.model.submissionId}, id=${tempId} due to ${ex.message}.""")
+            retVal = false
+        } finally {
+            Revision.withSession {
+                it.flush()
+                retVal = Revision.get(tempId) ? false : true
+            }
+        }
+        retVal
+    }
+
     /*
      * Sets ACL permissions and the revision state to published.
      * Any user, whether logged in or not, can read public revisions.
