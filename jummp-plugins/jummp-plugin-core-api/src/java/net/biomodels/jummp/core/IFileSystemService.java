@@ -67,9 +67,10 @@ public interface IFileSystemService {
      * Deletes a directory recursively
      * This method will delete the directory in the location indicated by the argument path
      *
-     * @param path  A Path object indicating the place where the directory is
+     * @param path  A {@link Path} object indicating the place where the directory is
+     * @return true if the deletion is successful. Otherwise, false is returned.
      */
-    void deleteDirectory(Path path);
+    boolean deleteDirectory(Path path);
 
     /**
      * Transfer an uploading file given via a {@link File} object to the dedicated submission directory

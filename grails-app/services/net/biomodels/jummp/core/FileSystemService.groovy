@@ -167,11 +167,12 @@ particularly for network file systems."""
     }
 
     @Override
-    void deleteDirectory(Path path) {
+    boolean deleteDirectory(Path path) {
         boolean succeed = path.deleteDir()
         if (!succeed) {
             log.error("Cannot delete the directory ${path.getName()}")
         }
+        succeed
     }
     /**
      * Updates the model container name.

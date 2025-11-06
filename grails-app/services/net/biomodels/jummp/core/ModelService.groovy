@@ -2026,7 +2026,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         return succeed
     }
 
-    void deleteModelWorkingDirectory(final Model model) throws IOException {
+    boolean deleteModelWorkingDirectory(final Model model) throws IOException {
         String workingDirectory = grailsApplication.config.jummp.vcs.workingDirectory
         String modelDirectory = model.vcsIdentifier
         Path absModelDir = Paths.get(workingDirectory, modelDirectory)
