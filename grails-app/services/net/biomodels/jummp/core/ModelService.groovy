@@ -2365,6 +2365,24 @@ for the model ${model.submissionId} due to ${ex.message}.""")
     }
 
     /**
+     * Destroys the model
+     *
+     * @param model {@link Model} object indicating the model in question.
+     *
+     * @return true if the destroy is successful. Otherwise, it returns false.
+     */
+    boolean purgeModel(final Model model) {
+        long tmpId = model.id
+        Model.withTransaction {
+            Model.where {
+                id == model.id
+            }.deleteAll()
+        }
+        Model.withSession { it.flush() }
+        Model.get(tmpId) == null
+    }
+
+    /**
      * Purges a given revision from the database
      *
      * @param revision An {@link Revision} object will be destroyed.
