@@ -2032,6 +2032,30 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         Path absModelDir = Paths.get(workingDirectory, modelDirectory)
         fileSystemService.deleteDirectory(absModelDir)
     }
+
+    /**
+     * Deletes all the audit items of a given model
+     *
+     * @param model {@link Model} object denoting the model in question.
+     *
+     * @return true if the deletion is successful. Otherwise, it returns false.
+     */
+    static boolean deleteModelAudit(final Model model) {
+        boolean retVal = false
+        try {
+            String qStr = "delete ModelAudit ma where ma.model.id = :modelId"
+            ModelAudit.executeUpdate(qStr, [modelId: model.id])
+            retVal = ModelAudit.findAllByModel(model)?.toList()?.size() == 0
+        } catch (Exception ex) {
+            retVal = false
+            logger.error("""An error happened when trying to delete all the auditing items 
+for the model ${model.submissionId} due to ${ex.message}.""")
+        } finally {
+            ModelAudit.withSession { it.flush() }
+        }
+        retVal
+    }
+
     /**
      * Deletes all the contributors linked to the model
      *
