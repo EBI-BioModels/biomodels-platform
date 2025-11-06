@@ -477,14 +477,13 @@ The root cause is ${e.toString()}""")
         if (indexingPlans) {
             List plans = indexingPlans.toList()
             plans.each {
-                println "deleting IP ${it.id}"
                 def qStr = "delete IndexingPlan ip where ip.revision.id = :revId"
                 IndexingPlan.executeUpdate(qStr, [revId: revisionId])
             }
         }
     }
 
-    private Date formatParsedDateString(String dateString) {
+    private static Date formatParsedDateString(String dateString) {
         Date date = null
         if (!dateString.isEmpty()) {
             date = dateFormat.parse(dateString)
