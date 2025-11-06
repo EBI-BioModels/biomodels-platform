@@ -25,7 +25,6 @@ import grails.plugins.rest.client.RestBuilder
 import grails.transaction.Transactional
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
-import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.model.Model
@@ -390,6 +389,50 @@ for revision ${revision.dump()} without main file"""
         }
         logger.debug(response?.text)
         response?.text
+    }
+
+    /**
+     * Purges all the {@link RepositoryFile} objects linked to the given {@link Revision} object.
+     * This is an irreversible action.
+     *
+     * @param rev an {@link Revision} object
+     * @return  a boolean value telling the deletion is success or failed
+     */
+    boolean purgeRepositoryFiles(final Revision rev) {
+        List<RepositoryFile> repoFiles = RepositoryFile.findAllByRevision(rev)
+        boolean retVal = true
+        try {
+            repoFiles.each {
+                def queryStr = "delete RepositoryFile rf where rf.id = :rfId and rf.revision.id = :revisionId"
+                RepositoryFile.executeUpdate(queryStr, [rfId: it.id, revisionId: rev.id])
+            }
+            retVal = RepositoryFile.findAllByRevision(rev) ? false : true
+        } catch (Exception ex) {
+            retVal = false
+        } finally {
+            RepositoryFile.withSession {
+                it.flush()
+            }
+        }
+        retVal
+    }
+
+    /**
+     * Purges the working directory of a given model. This is an undone action.
+     *
+     * @param model {@link Model} object indicating the model in question.
+     *
+     * @return true if the action is successful, otherwise it returns false.
+     */
+    boolean purgeWorkingRepositoryFiles(final Model model) {
+        boolean retVal
+        try {
+            retVal = modelService.deleteModelWorkingDirectory(model)
+        } catch (Exception ex) {
+            retVal = false
+            logger.error("An error happened when purging all working files of the model ${model.submissionId}.")
+        }
+        retVal
     }
 
     private void doUpdateModelRevisionCacheDirectory(final Revision revision) {
