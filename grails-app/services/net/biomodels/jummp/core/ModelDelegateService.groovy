@@ -874,7 +874,13 @@ session: ${TSM.getResource(Holders.applicationContext.sessionFactory)
         LOGGER.info("Fetching OmicsDI data to check rosette link for $modelId...")
         final EP_PREFIX = "https://www.omicsdi.org/ws/dataset/get?database=biomodels&accession="
         final url = "${EP_PREFIX}$modelId"
-        int status = new WebServiceFetcher(url).getHttpStatus() as int
+        int status
+        try {
+            status = new WebServiceFetcher(url).getHttpStatus() as int
+        } catch (Exception ex) {
+            LOGGER.error("Cannot connect to fetch the data due to ${ex.message}")
+            status = 500
+        }
         status == 200
     }
 
