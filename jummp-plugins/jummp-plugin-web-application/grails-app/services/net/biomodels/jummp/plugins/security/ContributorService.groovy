@@ -67,6 +67,42 @@ class ContributorService implements InitializingBean {
         contributors
     }
 
+    /**
+     * Deletes all the contributions linked to a given revision. The connected contributions are saved in the tables
+     * which were created by the domain classes {@link net.biomodels.jummp.model.ContributionInvite},
+     * {@link net.biomodels.jummp.model.ContributionDetails} and
+     * {@link net.biomodels.jummp.model.ContributionDetailsWithoutInvite}
+     *
+     * @param revision a {@link Revision} object indicating the subject in question.
+     * @return true if the deletion goes through, otherwise, it returns false.
+     */
+    static boolean deleteConnectedContributors(final Revision revision) {
+        boolean retVal = false
+        String revId = "${revision.model.submissionId}.${revision.revisionNumber}"
+        LOGGER.info("Deleting all the connected contributors of the model revision ${revId}.")
+        try {
+            /* delete the {@see net.biomodels.jummp.model.ContributionInvite} */
+            String qStr = "delete ContributionInvite ci where ci.revision.id = :revisionId"
+            CI.executeUpdate(qStr, [revisionId: revision.id])
+            /* delete the {@see net.biomodels.jummp.model.ContributionDetails} */
+            qStr = "delete ContributionDetails cd where cd.revision.id = :revisionId"
+            CD.executeUpdate(qStr, [revisionId: revision.id])
+            /* delete the {@see net.biomodels.jummp.model.ContributionDetailsWithoutInvite} */
+            qStr = "delete ContributionDetailsWithoutInvite cdwi where cdwi.revision.id = :revisionId"
+            CDWI.executeUpdate(qStr, [revisionId: revision.id])
+            retVal = CI.findAllByRevision(revision)?.toList()?.size() == 0 &&
+                CD.findAllByRevision(revision)?.toList()?.size() == 0 &&
+                CDWI.findAllByRevision(revision)?.toList()?.size() == 0
+        } catch (Exception ex) {
+            retVal = false
+            LOGGER.error("""An error happened when trying to delete all the connected contributors to \
+the revision ${revId} due to ${ex.message}.""")
+        } finally {
+            CI.withSession { it.flush() }
+        }
+        retVal
+    }
+
     Map findOrCreateInvite(final CI ci, final String inviterName, final User inviter, final String inviteeEmail,
                            String howtoAction, final String refCode, final CR role, final Revision revision) {
         Map result = [:]

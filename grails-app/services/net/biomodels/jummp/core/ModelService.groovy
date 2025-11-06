@@ -2032,6 +2032,24 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         Path absModelDir = Paths.get(workingDirectory, modelDirectory)
         fileSystemService.deleteDirectory(absModelDir)
     }
+    /**
+     * Deletes all the contributors linked to the model
+     *
+     * @param model {@link Model} object indicating the model in question
+     * @return boolean if the deletion is successful, otherwise, it returns false.
+     */
+    static boolean deleteModelContributors(final Model model) {
+        List<Boolean> results = []
+        model.revisions.each { Revision rev ->
+            boolean status = contributorService.deleteConnectedContributors(rev)
+            results.add(status)
+        }
+        // we expect the deletion is successful when the number of true in the result list
+        // should be the same as the number of revisions
+        int count = results.collect { it }?.size()
+        count == model.revisions?.size()
+    }
+
     /*
      * Convenience method that checks whether a model has any publicly-available revision.
      *
