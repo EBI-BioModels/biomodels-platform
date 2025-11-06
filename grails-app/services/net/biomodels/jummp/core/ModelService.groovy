@@ -2067,7 +2067,12 @@ for the model ${model.submissionId} due to ${ex.message}.""")
      *
      * @return boolean if the deletion is successful, otherwise, it returns false.
      */
-    static boolean deleteModelContributors(final Model model) {
+    boolean deleteModelContributors(final Model model) {
+        if (!model) {
+            logger.error("Cannot delete the contributors of the null model!")
+            return false
+        }
+        logger.info("Deleting all connected contributors of the model ${model.submissionId}.")
         List<Boolean> results = []
         model.revisions.each { Revision rev ->
             boolean status = contributorService.deleteConnectedContributors(rev)
