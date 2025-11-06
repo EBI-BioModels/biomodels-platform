@@ -2041,6 +2041,10 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
      * @return true if the deletion is successful. Otherwise, it returns false.
      */
     static boolean deleteModelAudit(final Model model) {
+        if (!model) {
+            logger.error("Cannot delete the audit data of a null model!!!")
+            return false
+        }
         boolean retVal = false
         try {
             String qStr = "delete ModelAudit ma where ma.model.id = :modelId"

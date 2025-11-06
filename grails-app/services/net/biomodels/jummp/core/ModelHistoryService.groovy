@@ -135,6 +135,10 @@ class ModelHistoryService implements InitializingBean {
      * @return true if the deletion is successful. Otherwise, it returns false.
      */
     static boolean deleteModelHistoryItem(final Model model) {
+        if (!model) {
+            LOGGER.error("Cannot delete the audit data of a null model!!!")
+            return false
+        }
         boolean retVal = false
         try {
             String qStr = "delete ModelHistoryItem mhi where mhi.model.id = :modelId"
