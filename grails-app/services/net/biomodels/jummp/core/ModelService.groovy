@@ -2057,9 +2057,10 @@ for the model ${model.submissionId} due to ${ex.message}.""")
     }
 
     /**
-     * Deletes all the contributors linked to the model
+     * Deletes all the contributors linked to the given model
      *
-     * @param model {@link Model} object indicating the model in question
+     * @param model {@link Model} object indicating the model in question.
+     *
      * @return boolean if the deletion is successful, otherwise, it returns false.
      */
     static boolean deleteModelContributors(final Model model) {
