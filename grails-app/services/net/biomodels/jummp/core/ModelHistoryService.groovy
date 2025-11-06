@@ -128,7 +128,12 @@ class ModelHistoryService implements InitializingBean {
         }
     }
 
-
+    /**
+     * Deletes all the history items of a given model.
+     *
+     * @param model {@link Model} object denoting the model in question
+     * @return true if the deletion is successful. Otherwise, it returns false.
+     */
     static boolean deleteModelHistoryItem(final Model model) {
         boolean retVal = false
         try {
