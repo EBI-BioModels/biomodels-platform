@@ -618,7 +618,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
         if (strCachedLatestRevs?.trim()) {
             cachedLatestRevs = new JsonSlurper().parseText(strCachedLatestRevs) as Map
             if (cachedLatestRevs.containsKey(userService.username)) {
-                long id = cachedLatestRevs[userService.username]
+                long id = cachedLatestRevs[userService.username] as long
                 return Revision.get(id)
             }
         }
