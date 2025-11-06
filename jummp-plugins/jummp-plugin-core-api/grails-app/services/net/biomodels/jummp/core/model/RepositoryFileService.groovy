@@ -37,6 +37,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
@@ -162,8 +163,8 @@ $description --- of the repository file $path""")
             files = vcsService.retrieveFiles(revision)
             // log the result
             String modelId = "${revision.model.submissionId}.${revision.revisionNumber}"
-            String message = """Retrieving the revision ${modelId} from the local model cache directory failed. \
-The revision has been checked out from VCS instead."""
+            String message = """Retrieving the revision ${modelId} from the local model cache directory failed due to
+ ${e.message}. The revision has been checked out from VCS instead."""
             logger.debug(message)
             if (files?.size()) {
                 // update the cache directory of this revision
@@ -202,7 +203,7 @@ The revision has been checked out from VCS instead."""
             }
         } catch (FileNotFoundException me) {
             String message = """The files associated with this model ${modelId}, \
-revision ${revisionNumber} hasn't been cached yet"""
+revision ${revisionNumber} hasn't been cached yet due to ${me.message}."""
             throwModelException(modelId, message)
         }
         return returnedFiles
@@ -270,6 +271,19 @@ $modelId, revision $revNum: ${e.message}""")
             }
         }
         return repFiles
+    }
+
+    /**
+     * Gets the directory path of the location where the revision's files are cached.
+     *
+     * @param revision a {@link Revision} object indicating the revision in question.
+     *
+     * @return a {@link Path} object showing the path of the cached directory if the location is available.
+     * Otherwise, it returns null.
+     */
+    Path getCachedDirForRevision(final Revision revision) {
+        Path defaultPath = Paths.get(modelCacheDir, revision.model.submissionId, revision.revisionNumber as String)
+        return defaultPath.toFile().exists() ? defaultPath : null
     }
 
     List<File> getFilesFromRF(List<RFTC> files) {
@@ -392,6 +406,37 @@ for revision ${revision.dump()} without main file"""
     }
 
     /**
+     * Purges the folder where the model files are cached
+     *
+     * @param model a {@link Model} object holding all the files of the model
+     *
+     * @return true if the deletion is successfully completed. Otherwise, it returns false.
+     */
+    boolean purgeCachedDirOfModel(final Model model) {
+        Path defaultPath = Paths.get(modelCacheDir, model.submissionId)
+        logger.info("Deleting the cached dir of the model ${model.submissionId}.")
+        if (defaultPath) {
+            return defaultPath.deleteDir()
+        } else {
+            logger.debug("The cached dir of the model ${model.submissionId} doesn't exist!")
+            return true
+        }
+    }
+
+    /**
+     * Purges the folder where the model revision files are cached
+     *
+     * @param revision a {@link Revision} object holding the files
+     *
+     * @return true if the deletion is successfully completed. Otherwise, it returns false.
+     */
+    boolean purgeCachedDirOfRevision(final Revision revision) {
+        logger.info("Deleting the cached dir of the revision ${revision.model.submissionId}.${revision.revisionNumber}.")
+        Path path = getCachedDirForRevision(revision)
+        boolean retVal = path ? path.deleteDir() : false
+        return retVal
+    }
+    /**
      * Purges all the {@link RepositoryFile} objects linked to the given {@link Revision} object.
      * This is an irreversible action.
      *
@@ -409,6 +454,8 @@ for revision ${revision.dump()} without main file"""
             retVal = RepositoryFile.findAllByRevision(rev) ? false : true
         } catch (Exception ex) {
             retVal = false
+            logger.error("""An error happened when purging all working files of the model \
+${rev.model.submissionId}.${rev.revisionNumber} due to ${ex.message}.""")
         } finally {
             RepositoryFile.withSession {
                 it.flush()
@@ -430,7 +477,8 @@ for revision ${revision.dump()} without main file"""
             retVal = modelService.deleteModelWorkingDirectory(model)
         } catch (Exception ex) {
             retVal = false
-            logger.error("An error happened when purging all working files of the model ${model.submissionId}.")
+            logger.error("""An error happened when purging all working files of the model \
+${model.submissionId} due to ${ex.message}.""")
         }
         retVal
     }
