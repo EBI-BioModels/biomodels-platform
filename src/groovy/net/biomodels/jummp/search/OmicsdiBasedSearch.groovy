@@ -422,48 +422,52 @@ The root cause is ${e.toString()}""")
         }
 
         // delete RevisionAnnotation
-        List statements = new ArrayList<>()
+        LOGGER.info("Clearing all ${revisionAnnotationRecords.size()} the relevant records of RevisionAnnotation")
         revisionAnnotationRecords.each {
-            statements.add(it.elementAnnotation.statement)
+            LOGGER.info "deleting RevisionAnnotation: ${it.id}"
             it.delete(flush: true)
         }
+        RevisionAnnotation.withSession { it.flush() }
 
         // delete ElementAnnotation
-        // it's unnecessary
-        // List listElementAnnotation = revisionAnnotationRecords*.elementAnnotation
-        /*listElementAnnotation.each {
+        List listElementAnnotation = revisionAnnotationRecords*.elementAnnotation
+        List<Long> statements = new ArrayList<>()
+        List<Long> references = new ArrayList<>()
+        LOGGER.info("Clearing all ${listElementAnnotation.size()} the relevant records of ElementAnnotation")
+        listElementAnnotation.each {
+            statements.add(it.statement.id)
+            references.add(it.statement.object.id)
+            LOGGER.info "deleting ElementAnnotation: ${it.id}"
             it.delete(flush: true)
-        }*/
-
-        // delete Statement and ResourceReference
-        statements.each { def stmt ->
-            List rs = ElementAnnotation.findAllByStatement(stmt as Statement)
-            if (!rs?.size()) {
-                ResourceReference rr = stmt.object as ResourceReference
-                Set stmts = rr.statements
-                if (stmts?.size() == 1) {
-                    rr.delete(flush: true)
-                } else {
-                    Set updatedStmts = stmts.findAll { s ->
-                        s.id != stmt.id
-                    }
-                    rr.statements = updatedStmts
-                    rr.save(flush: true)
-
-                    stmt.delete(flush: true)
-
-                    if (!rr.statements?.size()) {
-                        rr.delete(flush: true)
-                    }
-                }
-            }
         }
+        ElementAnnotation.withSession { it.flush() }
+        // delete Statement
+        LOGGER.info("Clearing all the ${statements.size()} relevant records of Statement")
+        statements.each { Long id ->
+            LOGGER.info "deleting Statement: ${id}"
+            def qStr = "delete Statement s where s.id = :sId"
+            Statement.executeUpdate(qStr, [sId: id])
+        }
+        Statement.withSession { it.flush() }
+
+        // delete ResourceReference
+        LOGGER.info("Clearing all the ${references.size()} relevant records of ResourceReference")
+        references.each { Long id ->
+            LOGGER.info("deleting ResourceReference: ${id}")
+            def qStr = "delete ResourceReference r where r.id = :rId"
+            ResourceReference.executeUpdate(qStr, [rId: id])
+        }
+        ResourceReference.withSession { it.flush() }
 
         // remove all indexing plans
         clearIndexingPlan(revisionId)
-
     }
 
+    /**
+     * Clears the indexed data (annotations)
+     *
+     * @param revisionTC {@link net.biomodels.jummp.core.model.RevisionTransportCommand} object holding the revision
+     */
     void clearIndex(RevisionTC revisionTC) {
         if (revisionTC) {
             clearIndex(revisionTC.id)
