@@ -398,7 +398,7 @@ for revision ${revision.dump()} without main file"""
      * @param rev an {@link Revision} object
      * @return  a boolean value telling the deletion is success or failed
      */
-    boolean purgeRepositoryFiles(final Revision rev) {
+    static boolean purgeRepositoryFiles(final Revision rev) {
         List<RepositoryFile> repoFiles = RepositoryFile.findAllByRevision(rev)
         boolean retVal = true
         try {
