@@ -41,7 +41,10 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelHistoryItem
 import net.biomodels.jummp.plugins.security.User
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.dao.OptimisticLockingFailureException as OLFE
 import org.springframework.transaction.annotation.Propagation
 
 /**
@@ -63,6 +66,7 @@ import org.springframework.transaction.annotation.Propagation
  */
 @Transactional
 class ModelHistoryService implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelHistoryService.class)
     /**
      * Dependency Injection of Spring Security Service
      */
@@ -116,12 +120,29 @@ class ModelHistoryService implements InitializingBean {
             try {
                 ModelHistoryItem newItem = ModelHistoryItem.create(model, user)
                 newItem.save(flush: true)
-            } catch (org.springframework.dao.OptimisticLockingFailureException ignored) {
+            } catch (OLFE ignored) {
                 // 2 transactions competed for the last entry in the user's history; this one lost
                 // no point in retrying because this would mean deleting the entry from the other tx.
                 status.setRollbackOnly()
             }
         }
+    }
+
+
+    static boolean deleteModelHistoryItem(final Model model) {
+        boolean retVal = false
+        try {
+            String qStr = "delete ModelHistoryItem mhi where mhi.model.id = :modelId"
+            ModelHistoryItem.executeUpdate(qStr, [modelId: model.id])
+            retVal = 0 == ModelHistoryItem.findAllByModel(model)?.toList()?.size()
+        } catch (Exception ex) {
+            retVal = false
+            LOGGER.error("""An error happened when trying to delete model history item linked to the model \
+${model.submissionId} due to ${ex.message}.""")
+        } finally {
+            ModelHistoryItem.withSession { it.flush() }
+        }
+        retVal
     }
 
     /**
@@ -179,7 +200,7 @@ class ModelHistoryService implements InitializingBean {
         return retList
     }
 
-    private ModelTransportCommand turnModelToCommandObject(Model m, boolean toHistory = true) {
+    private static ModelTransportCommand turnModelToCommandObject(Model m, boolean toHistory = true) {
         new ModelAdapter(model: m).toCommandObject(toHistory)
     }
 
