@@ -18,7 +18,7 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-<div class="title-bar" data-responsive-toggle="biomodels-menu" data-hide-for="medium">
+<div data-responsive-toggle="biomodels-menu" data-hide-for="medium">
     <button class="menu-icon" type="button" data-toggle="biomodels-menu"></button>
     <div class="title-bar-title">Menu</div>
 </div>
