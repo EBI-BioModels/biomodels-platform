@@ -145,6 +145,43 @@ There is an error when trying to persist curate image into database: ${cn.errors
         success
     }
 
+    /**
+     * Removes the link between model and curation notes.
+     *
+     * @param model a {@link Model} object holding the model in question
+     *
+     * @return true if the removal goes through. Otherwise, it returns false.
+     */
+    static boolean removeLinkToModel(final Model model) {
+        CurationNotes cn = CurationNotes.findByModel(model)
+        if (!cn) {
+            log.debug("The model ${model.submissionId} hasn't curated yet!")
+            // meaning that the removal is fine
+            return true
+        }
+        boolean retVal = false
+        try {
+            def qStr = "delete CurationNotes cn where cn.model.id = :modelId"
+            CurationNotes.executeUpdate(qStr, [modelId: model.id])
+            cn = CurationNotes.findByModel(model)
+            if (cn) {
+                retVal = false
+                log.error("""Removing the link between the curation notes (id=${cn.id})\
+and model (submissionId=${model.submissionId}) failed.""")
+            } else {
+                retVal = true
+                log.error("""Removed the link of the model (id=${model.submissionId}) to the curation notes.""")
+            }
+        } catch (Exception ex) {
+            retVal = false
+            log.error("""An error happened when trying to remove the link between the model (id: ${model.submissionId}) 
+and the curation notes due to ${ex.message}.""")
+        } finally {
+            CurationNotes.withSession { it.flush() }
+        }
+        retVal
+    }
+
     CurationNotes doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
         Model model = Model.get(cntc.model.id)
         User submitter = cntc.submitter
