@@ -27,6 +27,7 @@ import grails.transaction.Transactional
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndEntryImpl
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndFeedImpl
+import net.biomodels.jummp.deployment.biomodels.ModelOfTheMonthTransportCommand as MOMTC
 import net.biomodels.jummp.model.Model
 import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.logging.Log
@@ -62,18 +63,18 @@ class ModelOfTheMonthService implements InitializingBean {
      * Builds a map of all entries used for rendering the page of all entries
      */
     Map buildAllEntries() {
-        Map<String, Set<ModelOfTheMonthTransportCommand>> result = new TreeMap<String, TreeSet>(ModelOfTheMonthTransportCommand.newReverseYearComparator())
+        Map<String, Set<MOMTC>> result = new TreeMap<String, TreeSet>(MOMTC.newReverseYearComparator())
         def entries = ModelOfTheMonth.getAll()
         entries.each { ModelOfTheMonth model ->
             def cmd = model.toCommandObject()
-            TreeSet<ModelOfTheMonthTransportCommand> value
+            TreeSet<MOMTC> value
             List ym = parseYearMonth(model.publicationDate)
             String year = ym[0]
             if (result.containsKey(year)) {
                 value = result.get(year)
                 value.add(cmd)
             } else {
-                value = new TreeSet<>(ModelOfTheMonthTransportCommand.newReverseMonthComparator())
+                value = new TreeSet<>(MOMTC.newReverseMonthComparator())
                 value.add(cmd)
                 result.put(year, value)
             }
@@ -96,9 +97,37 @@ class ModelOfTheMonthService implements InitializingBean {
         entries*.toCommandObject()
     }
 
+    /**
+     * Removes the link between Model and ModelOfTheMonth
+     *
+     * @param model a {@link Model} object linked to the Model Of The Month entry
+     */
+    static void removeLinkToModel(final Model model) {
+        log.info("Removing the link between Model (submissionId=${model.submissionId}) and ModelOfTheMonth")
+        List records = ModelOfTheMonth.getAll()
+        List results = new ArrayList()
+        for (ModelOfTheMonth mom in records) {
+            Set<Model> models = mom.models
+            for (Model m in models) {
+                if (m == model) {
+                    results.add(mom)
+                    break
+                }
+            }
+        }
+        log.info("There are ${results.size()} links to be removed!")
+        for (ModelOfTheMonth mom in results) {
+            for (Model m in mom.models) {
+                if (m == model) {
+                    mom.models.remove(model)
+                }
+            }
+        }
+    }
+
     def list() {
         List<ModelOfTheMonth> entries = ModelOfTheMonth.getAll()
-        List<ModelOfTheMonthTransportCommand>  entryCommands = new ArrayList<>()
+        List<MOMTC>  entryCommands = new ArrayList<>()
         for (ModelOfTheMonth entry : entries) {
             entryCommands.add(entry.toCommandObject())
         }
@@ -112,7 +141,7 @@ class ModelOfTheMonthService implements InitializingBean {
      * @param id An integer denoting the identifier of the domain object
      * @return the corresponding transport command object of the domain object
      */
-    ModelOfTheMonthTransportCommand get(int id) {
+    MOMTC get(int id) {
         ModelOfTheMonth m = ModelOfTheMonth.get(id)
         m?.toCommandObject()
     }
@@ -127,7 +156,7 @@ class ModelOfTheMonthService implements InitializingBean {
      * @return  The latest record has been created or updated
      */
     @Transactional
-    ModelOfTheMonth doCreateOrUpdate(ModelOfTheMonthTransportCommand command) {
+    ModelOfTheMonth doCreateOrUpdate(MOMTC command) {
         ModelOfTheMonth entry
         if (command?.id) {
             entry = ModelOfTheMonth.get(command?.id)
@@ -173,7 +202,7 @@ There are errors when trying to persist entry (${entry.id}) of the model of the 
     }
 
     String createFeeds() {
-        List<ModelOfTheMonthTransportCommand> momEntries = list()
+        List<MOMTC> momEntries = list()
         momEntries.sort { m1, m2 -> m2.publicationDate <=> m1.publicationDate }
 
         String feedType = "rss_2.0"
@@ -217,7 +246,7 @@ Every month, a scientist from the BioModels Database team selects a model to fur
         feed
     }
 
-    private SyndEntry convertToSyndEntry(ModelOfTheMonthTransportCommand model, String feedType) {
+    private SyndEntry convertToSyndEntry(MOMTC model, String feedType) {
         SyndEntry entry
         entry = feedType == "rss_2.0" ? new CustomSyndEntryImpl() : new SyndEntryImpl()
         entry.setTitle(StringEscapeUtils.escapeXml(model.title))
