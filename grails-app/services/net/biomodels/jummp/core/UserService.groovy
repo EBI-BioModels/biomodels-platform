@@ -844,7 +844,8 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
 
     @Cacheable("isCompromisedPassword")
     boolean isCompromisedPassword(final String password) {
-        Path top100kPath = Paths.get(grailsApplication.config.jummp.dirs.upload, "PwnedPasswordsTop100k.json")
+        String path = grailsApplication.config.jummp.dirs.upload as String
+        Path top100kPath = Paths.get(path, "PwnedPasswordsTop100k.json")
         if (top100kPath) {
             def jsonSlurper = new JsonSlurper()
             def arrBreaches = jsonSlurper.parse(new File(top100kPath.toString()))
@@ -855,7 +856,8 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
 
     @Cacheable("isAllowedMigrationAWS")
     String isAllowedMigrationAWS(final String username) {
-        Path disallowedUsers = Paths.get(grailsApplication.config.jummp.dirs.upload, "DisallowedUsers.json")
+        String path = grailsApplication.config.jummp.dirs.upload as String
+        Path disallowedUsers = Paths.get(path, "DisallowedUsers.json")
         String redirectURL = ""
         if (disallowedUsers) {
             def jsonSlurper = new JsonSlurper()
