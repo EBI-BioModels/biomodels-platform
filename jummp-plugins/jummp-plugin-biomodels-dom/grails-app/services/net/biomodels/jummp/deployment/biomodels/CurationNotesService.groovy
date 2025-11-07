@@ -36,17 +36,17 @@ import java.text.SimpleDateFormat
 
 /**
  * @short Service responsible for retrieving CurationNotes entries.
- * This class  is used for dealing with CurationNotes records.
+ * <p>This class  is used for dealing with CurationNotes records.</p>
  *
- * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
 @Transactional
 class CurationNotesService implements InitializingBean {
-    static final Log log = LogFactory.getLog(this.getClass())
+    private static final Log LOGGER = LogFactory.getLog(CurationNotesService.class)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    static final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
 
     def userService
     /**
@@ -135,11 +135,11 @@ class CurationNotesService implements InitializingBean {
         }
         boolean success = cn.save(flush: true)
         if (success) {
-            log.debug("""\
+            LOGGER.debug("""\
 The curation image associated with the simulation results of model $model.submissionId
 has been saved successfully into the database.""")
         } else {
-            log.error("""\
+            LOGGER.error("""\
 There is an error when trying to persist curate image into database: ${cn.errors.allErrors.inspect()}""")
         }
         success
@@ -155,8 +155,8 @@ There is an error when trying to persist curate image into database: ${cn.errors
     static boolean removeLinkToModel(final Model model) {
         CurationNotes cn = CurationNotes.findByModel(model)
         if (!cn) {
-            log.debug("The model ${model.submissionId} hasn't curated yet!")
-            // meaning that the removal is fine
+            LOGGER.debug("The model ${model.submissionId} hasn't been curated yet! No curation notes will be unlinked!")
+            // meaning that the removal is considered successfully.
             return true
         }
         boolean retVal = false
@@ -166,15 +166,15 @@ There is an error when trying to persist curate image into database: ${cn.errors
             cn = CurationNotes.findByModel(model)
             if (cn) {
                 retVal = false
-                log.error("""Removing the link between the curation notes (id=${cn.id})\
+                LOGGER.error("""Removing the link between the curation notes (id=${cn.id})\
 and model (submissionId=${model.submissionId}) failed.""")
             } else {
                 retVal = true
-                log.error("""Removed the link of the model (id=${model.submissionId}) to the curation notes.""")
+                LOGGER.error("""Removed the link of the model (id=${model.submissionId}) to the curation notes.""")
             }
         } catch (Exception ex) {
             retVal = false
-            log.error("""An error happened when trying to remove the link between the model (id: ${model.submissionId}) 
+            LOGGER.error("""An error happened when trying to remove the link between the model (id: ${model.submissionId}) 
 and the curation notes due to ${ex.message}.""")
         } finally {
             CurationNotes.withSession { it.flush() }
@@ -200,10 +200,10 @@ and the curation notes due to ${ex.message}.""")
         cn.curationImage = curationImage
         String modelId = model.publicationId ?: model.submissionId
         if (cn.save(flush: true)) {
-            log.debug("The simulation results of the model $modelId have been saved!")
+            LOGGER.debug("The simulation results of the model $modelId have been saved!")
             return cn
         } else {
-            log.error("""\
+            LOGGER.error("""\
 There are errors when trying to persist curation notes of the model $modelId into database: ${cn.errors.allErrors.inspect()}""")
             return null
         }
@@ -211,6 +211,6 @@ There are errors when trying to persist curation notes of the model $modelId int
 
     @Override
     void afterPropertiesSet() throws Exception {
-        log.info("Finished the bean initialisation")
+        LOGGER.info("Finished the bean initialisation")
     }
 }
