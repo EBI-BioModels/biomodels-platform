@@ -439,10 +439,10 @@ The root cause is ${e.toString()}""")
         List<Long> references = new ArrayList<>()
         LOGGER.info("Clearing all ${listElementAnnotation.size()} the relevant records of ElementAnnotation")
         listElementAnnotation.each {
-            statements.add(it.statement.id)
-            references.add(it.statement.object.id)
-            LOGGER.info "deleting ElementAnnotation: ${it.id}"
             try {
+                if (it.statement) statements.add(it.statement.id)
+                if (it.statement?.object) references.add(it.statement.object.id)
+                LOGGER.info "deleting ElementAnnotation: ${it.id}"
                 it.delete(flush: true)
             } catch (Exception ex) {
                 LOGGER.error("Cannot delete the ${revisionId}: ElementAnnotation id: ${it.id} due to ${ex.message}.")
