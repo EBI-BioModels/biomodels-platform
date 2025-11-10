@@ -425,7 +425,11 @@ The root cause is ${e.toString()}""")
         LOGGER.info("Clearing all ${revisionAnnotationRecords.size()} the relevant records of RevisionAnnotation")
         revisionAnnotationRecords.each {
             LOGGER.info "deleting RevisionAnnotation: ${it.id}"
-            it.delete(flush: true)
+            try {
+                it.delete(flush: true)
+            } catch (Exception ex) {
+                LOGGER.error("Cannot delete the ${revisionId}: RevisionAnnotation id: ${it.id} due to ${ex.message}.")
+            }
         }
         RevisionAnnotation.withSession { it.flush() }
 
@@ -438,7 +442,11 @@ The root cause is ${e.toString()}""")
             statements.add(it.statement.id)
             references.add(it.statement.object.id)
             LOGGER.info "deleting ElementAnnotation: ${it.id}"
-            it.delete(flush: true)
+            try {
+                it.delete(flush: true)
+            } catch (Exception ex) {
+                LOGGER.error("Cannot delete the ${revisionId}: ElementAnnotation id: ${it.id} due to ${ex.message}.")
+            }
         }
         ElementAnnotation.withSession { it.flush() }
         // delete Statement
