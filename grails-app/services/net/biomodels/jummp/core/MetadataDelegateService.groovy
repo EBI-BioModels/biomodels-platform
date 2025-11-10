@@ -403,7 +403,13 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
                 statements.add(objStmt)
             }
         } else {
-            statements = getModelLevelAnnotations(rev?.id)
+            try {
+                statements = getModelLevelAnnotations(rev?.id)
+            } catch (Exception ex) {
+                log.error("""Cannot get the model level annotations of the model revision ${rev.identifier()}\
+due to ${ex.message}.""")
+                return null
+            }
             String s
             for (STC stmt in statements) {
                 s = gson.toJson(stmt)
