@@ -98,9 +98,12 @@ caused by ${conn.responseCode}: ${conn.getErrorStream().inspect()}""")
 
     static String executePostRequest(final String serviceURI, final String requestBody) {
         CloseableHttpClient httpClient
-        String hostName = System.getenv("HTTP_PROXY_HOST")
-        int hostPort = System.getenv("HTTP_PROXY_PORT") as int
-        HttpHost host = new HttpHost(hostName, hostPort)
+        HttpHost host = null
+        if (System.getenv("HTTP_PROXY_PORT") && System.getenv("HTTP_PROXY_HOST")) {
+            String hostName = System.getenv("HTTP_PROXY_HOST")
+            int hostPort = System.getenv("HTTP_PROXY_PORT") as int
+            host = new HttpHost(hostName, hostPort)
+        }
         if (host) {
             httpClient = HttpClientBuilder.create().setProxy(host).build()
         } else {
