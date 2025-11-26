@@ -887,7 +887,7 @@ Please contact the developers team for support!"""])
         [modelId: modelId, revisionNumber: revisionNumber, location: filePath]
     }
 
-    private String doGenerateOmexMetadataRDF(final String modelId, final Integer revisionId) {
+    private static String doGenerateOmexMetadataRDF(final String modelId, final Integer revisionId) {
         final String DEFAULT_FS_SVR = "http://localhost:8090/biomodels/services/file-format/api/v1.0"
         final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
         String identifier = modelId + (revisionId != null ? ".${revisionId}" : "")
@@ -1086,21 +1086,18 @@ Please contact the developers team for support!"""])
         if (!omexFile.exists()) {
             Map result = doGenerateOmex(revision.model.submissionId, revision.revisionNumber) as Map
             String omexLocation = result.get("location")
-            if (omexLocation && revision.state != ModelState.PUBLISHED) {
-                String msg = """Your file might be big. It is being generated. Please be patient and check the download \
-link <a href='${url}' target='_blank'>${url}</a> after a few seconds. If you have any trouble in downloading the file after \
-about a quarter of an hour, please feel free to <a href='mailto:${grailsApplication.config.jummp.model.curators.mailinglist}'>contact us</a>.\
-<br/><br/>Thank you for your understanding!"""
-                LOGGER.info(msg)
-                render(view: "download/inform", model: [message: msg])
-            } else if (omexLocation && revision.state == ModelState.PUBLISHED) {
-                String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
-                String ftpDownloadUrl = "${EBI_BM_FTP_REPO}/${modelParentFolder}/$filePath"
-                String msg = """Your file might be large and is being generated. It will be available shortly on \
-the public FTP at <a href='${ftpDownloadUrl}' target='_blank'>${ftpDownloadUrl}</a>. Please be patient and check it \
-after a few seconds. If you have any trouble in downloading the file after about a quarter of an hour, please feel free to \
-<a href='mailto:${grailsApplication.config.jummp.model.curators.mailinglist}'>contact us</a>.\
-<br/><br/>Thank you for your understanding!"""
+            String curator = grailsApplication.config.jummp.model.curators.mailinglist
+            if (omexLocation) {
+                if (revision.state == ModelState.PUBLISHED && EBI_BM_FTP_REPO) {
+                    String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
+                    url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/$filePath"
+                }
+                String msg = """<p>Your file is being prepared. Because of its large size, it's taking a moment to \
+generate.</p><p>It will be available to download at the following link very soon: \
+<a href='${url}' target='_blank'>${url}</a></p>\
+<p>Please be patient and check the link after a few seconds. If the file is still unavailable or you encounter any \
+download issues after 15 minutes, please don't hesitate to <a href='mailto:${curator}'>contact</a> our support \
+team.<p>Thank you for your patience!</p>"""
                 LOGGER.info(msg)
                 render(view: "download/inform", model: [message: msg])
             } else {

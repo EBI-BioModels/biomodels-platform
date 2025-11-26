@@ -34,6 +34,6 @@
 
 <body>
     <h2 style="color: red">Result</h2>
-    <h4 style="color: #2aabd2">${message}</h4>
+    <h4 style="color: black">${message}</h4>
 </body>
 </html>
