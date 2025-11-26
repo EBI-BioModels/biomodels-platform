@@ -126,6 +126,7 @@ class UrlMappings {
 	    "/jobs"(controller: "jummp", action: "jobs")
         "/lookupUser"(controller: "jummp", action: "lookupUser")
         "/news"(controller: "jummp", action: "fetchNews")
+        "/login"(controller: "login", action: "auth")
         "/registration"(controller:"usermanagement", action:"registration")
         "/forgotpassword"(controller:"usermanagement", action:"forgot")
         "/user/editUser"(controller:"usermanagement", action:"edit")

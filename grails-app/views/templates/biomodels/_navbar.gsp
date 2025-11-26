@@ -140,9 +140,9 @@
             <li class="divider"></li>
             <li><a>Model of the Year</a>
                 <ul class="menu">
-                    <li><a href="${grailsApplication.config.grails.serverURL}/competition/model-of-the-year-2025">MOY2025</a></li>
-                    <li><a href="${grailsApplication.config.grails.serverURL}/competition/model-of-the-year-2024">MOY2024</a></li>
-                    <li><a href="${grailsApplication.config.grails.serverURL}/competition/model-of-the-year-2023">MOY2023</a></li>
+                    <li><a href='<g:createLink uri="/competition/model-of-the-year-2025"/>'>MOY2025</a></li>
+                    <li><a href='<g:createLink uri="/competition/model-of-the-year-2024"/>'>MOY2024</a></li>
+                    <li><a href='<g:createLink uri="/competition/model-of-the-year-2023"/>'>MOY2023</a></li>
                 </ul>
             </li>
         </ul>
@@ -224,7 +224,7 @@
         <li <g:if test="${loginSelected}"> class="active main-menu-item functional first float-right " </g:if>
             <g:else>class="main-menu-item functional first float-right "</g:else>
             role="menuitem">
-            <a href="${grailsApplication.config.grails.serverURL}/login">
+            <a href='<g:createLink uri="/login" />'>
                 <span class="icon icon-common icon-sign-in-alt">&nbsp;</span><g:message code="jummp.main.login"/>
             </a>
         </li>
