@@ -73,7 +73,7 @@ class CommonController implements GrailsConfigurationAware {
             // local or dev target
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
         }
-        EBI_BM_FTP_REPO = WSF.addPath(new URI(EBI_BM_FTP), "repository").toString()
+        EBI_BM_FTP_REPO = EBI_BM_FTP ? WSF.addPath(new URI(EBI_BM_FTP), "repository").toString() : ""
         theme = grailsApplication.config.jummp.branding.style
         if (!theme) theme = "default"
         COMMON_PROPERTIES = [

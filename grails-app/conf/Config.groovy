@@ -984,7 +984,7 @@ if (!(jummpConfig.jummp.model.download.server instanceof ConfigObject)) {
 if (!(jummpConfig.jummp.model.ftp.location instanceof ConfigObject)) {
     jummp.model.ftp.location = jummpConfig.jummp.model.ftp.location
 } else {
-    jummp.model.ftp.location = "ftp://127.0.0.1:9000"
+    jummp.model.ftp.location = ""
 }
 
 brutforce {
