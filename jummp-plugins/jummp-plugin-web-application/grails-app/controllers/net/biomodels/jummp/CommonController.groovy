@@ -63,8 +63,11 @@ class CommonController implements GrailsConfigurationAware {
             bmStaticAssetsURL = "${BioModels.BM_ROOT_URL}/static-assets"
             deployTarget = "prod"
             EBI_BM_FTP = BioModels.EBI_BMPROD_PUBLIC_FTP
-        } else if (serverURL.contains("biomodels.org") || serverURL.contains("biomodels.net")) {
+        } else if (serverURL.contains("biomodels.org") ||
+                serverURL.contains("biomodels.net") ||
+                serverURL.contains("dmscambs.co.uk")) {
             // Presumably, biomodels.org and biomodels.net will be the official addresses after the migration
+            // Before switching to these domains, we use dmscambs.co.uk temporarily
             deployTarget = "prod"
             // the following properties must be updated
             // bmStaticAssetsURL
