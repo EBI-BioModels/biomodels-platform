@@ -22,6 +22,7 @@ package net.biomodels.jummp
 
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugins.rest.client.RestBuilder
+import net.biomodels.jummp.utils.WebServiceFetcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -30,23 +31,24 @@ import org.slf4j.LoggerFactory
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@Secured(["isAuthenticated()"])
+@Secured(["ROLE_ADMIN"])
 class SystemController extends CommonController {
     private static final Logger LOGGER = LoggerFactory.getLogger(SystemController.class)
+    def grailsApplication
     def dataSource
 
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def index() {
 
     }
 
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def info() {
         Map argsMap = [:]
         render(view: "info", model: argsMap)
     }
 
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def health() {
         String healthCheckLink = createLink(controller: "healthCheck", action: "status", absolute: true)
         RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
@@ -55,5 +57,32 @@ class SystemController extends CommonController {
             contentType("application/json;charset=UTF-8")
         }
         [statusCode: response.responseEntity.statusCode, headers: response.responseEntity.headers]
+    }
+
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def checkDownUpLoadServer() {
+        String serverURL = grailsApplication.config.jummp.model.download.server
+        String serviceURL = "${serverURL}/about"
+
+        render hitService(serviceURL)
+    }
+
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def checkFileServiceServer() {
+        String serverURL = grailsApplication.config.jummp.model.fileservice.server
+        String serviceURL = "${serverURL}/hello"
+
+        render hitService(serviceURL)
+    }
+
+    private static boolean hitService(final String serviceURL) {
+        int status
+        try {
+            status = new WebServiceFetcher(serviceURL).getHttpStatus() as int
+        } catch (Exception ex) {
+            LOGGER.error("Cannot connect to fetch the data due to ${ex.message}")
+            status = 500
+        }
+        status == 200
     }
 }

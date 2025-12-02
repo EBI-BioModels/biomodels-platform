@@ -12,9 +12,11 @@
 </head>
 
 <body>
-    <h3><a href="${createLink(action: "info")}">System Info</a> |
-    <a href="${createLink(action: "health")}">System Healthcheck</a> |
-    <a href="${createLink(controller: "search", action: "check")}">Checked Indexed Data</a>
-    </h3>
+<h4><a href="${createLink(action: "info")}">System Info</a><br/>
+    <a href="${createLink(action: "health")}">System Healthcheck</a><br/>
+    <a href="${createLink(controller: "search", action: "check")}">Checked Indexed Data</a><br/>
+    <a href="${createLink(controller: "system", action: "checkDownUpLoadServer")}">Down and Up Server</a><br/>
+    <a href="${createLink(controller: "system", action: "checkFileServiceServer")}">File Service Server</a>
+</h4>
 </body>
 </html>

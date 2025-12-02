@@ -978,8 +978,17 @@ if (!(jummpConfig.ws.client.pyapi.docs instanceof ConfigObject)) {
 if (!(jummpConfig.jummp.model.download.server instanceof ConfigObject)) {
     jummp.model.download.server = jummpConfig.jummp.model.download.server
 } else {
+    // it is set to the default server
     jummp.model.download.server = "http://127.0.0.1:7000"
 }
+
+if (!(jummpConfig.jummp.model.fileservice.server instanceof ConfigObject)) {
+    jummp.model.fileservice.server = jummpConfig.jummp.model.fileservice.server
+} else {
+    // it is set to the default server
+    jummp.model.fileservice.server = "http://127.0.0.1:8090"
+}
+
 
 if (!(jummpConfig.jummp.model.ftp.location instanceof ConfigObject)) {
     jummp.model.ftp.location = jummpConfig.jummp.model.ftp.location
