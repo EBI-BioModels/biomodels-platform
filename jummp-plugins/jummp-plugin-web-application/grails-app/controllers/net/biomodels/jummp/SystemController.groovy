@@ -75,6 +75,12 @@ class SystemController extends CommonController {
         render hitService(serviceURL)
     }
 
+
+    @Secured(['ROLE_ADMIN', 'ROLE_USER'])
+    def readonly() {
+
+    }
+
     private static boolean hitService(final String serviceURL) {
         int status
         try {
