@@ -22,6 +22,7 @@ package net.biomodels.jummp
 
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugins.rest.client.RestBuilder
+import net.biomodels.jummp.scms.CmsContent
 import net.biomodels.jummp.utils.WebServiceFetcher
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -75,11 +76,19 @@ class SystemController extends CommonController {
         render hitService(serviceURL)
     }
 
-
+    /**
+     * Loads the announcement of the read-only mode if it is available.
+     *
+     * @return
+     */
     @Secured(['ROLE_ADMIN', 'ROLE_USER'])
     def readonly() {
-
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'read-only-mode'], [max: 1])
+        String context = newsItem[0]?.content
+        [context: context]
     }
+
 
     private static boolean hitService(final String serviceURL) {
         int status

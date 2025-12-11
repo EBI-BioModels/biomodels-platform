@@ -12,9 +12,16 @@
 </head>
 
 <body>
-    <h2>Readonly Mode</h2>
+    <h2>Read-Only Mode</h2>
+<g:if test="${context}">
+    <div>
+        ${context}
+    </div>
+</g:if>
+<g:else>
     <p>This instance is no longer receiving new submission and any updates.
     Please use our new site at <a href="https://biomodels.org">https://biomodels.org</a>. Thank you for your
     understanding.</p>
+</g:else>
 </body>
 </html>
