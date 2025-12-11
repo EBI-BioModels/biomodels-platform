@@ -42,6 +42,7 @@ class HomePageController extends CommonController {
     }
 
     def index() {
+        String hpLatestAnnouncements = createLink(action: "updateLatestAnnouncements")
         String hpStatisticsDataForFeatures = createLink(controller: "homePage", action: "updateStatisticsDataForFeatures")
         String hpStatisticsDataForCharts = createLink(controller: "homePage", action: "updateStatisticsDataForCharts")
         String hpStatisticsModellingApproaches = createLink(controller: "homePage", action: "updateStatisticsModellingApproaches")
@@ -53,6 +54,7 @@ class HomePageController extends CommonController {
         String latestMomEntry = createLink(controller: "homePage", action: "updateMoMEntryOnRedisCache")
         String title = "Admin Board to update data on Home Page | BioModels"
         Map links = ["layout": layout, "title": title]
+        links.put("hpLatestAnnouncements", hpLatestAnnouncements)
         links.put("hpStatisticsDataForFeatures", hpStatisticsDataForFeatures)
         links.put("hpStatisticsDataForCharts", hpStatisticsDataForCharts)
         links.put("hpStatisticsModellingApproaches", hpStatisticsModellingApproaches)
@@ -63,6 +65,13 @@ class HomePageController extends CommonController {
         links.put("hpDataNewsWidget", hpDataNewsWidget)
         links.put("latestMomEntry", latestMomEntry)
         links
+    }
+
+    def updateLatestAnnouncements() {
+        decorationService.updateLatestAnnouncementsOnRedis()
+        String title = "${PRE_TITLE} the latest announcements | BioModels"
+        String message = "Updated the latest announcements successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
 
     /**

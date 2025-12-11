@@ -241,13 +241,7 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
     String fetchAnnouncements() {
         String content = redisService.doRedisGet("hp-latest-announcements")
         if (!content) {
-            def queryStr = """\
-from CmsContent where parent.aliasURI = :aliasURI and publishedTo >= :now \
-and publishedFrom is not null and publishedTo is not null order by createdOn desc"""
-            def announcements = CmsContent.executeQuery(queryStr, [aliasURI: 'announcements', now: new Date()], [max: 10])
-            for (def entry : announcements) {
-                content = entry.content
-            }
+            content = loadLatestAnnouncementsFromDB()
             if (content) {
                 redisService.doRedisSet("hp-latest-announcements", content)
             }
@@ -463,6 +457,27 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         LOGGER.debug("Caching the statistics journals to Redis Server")
         Map pubsRedisMap = convert2RedisMap(pubsMap)
         redisService.doRedisHSet("hp-statistics-journals", pubsRedisMap)
+    }
+
+    String loadLatestAnnouncementsFromDB() {
+        StringBuilder content = new StringBuilder()
+        def queryStr = """\
+from CmsContent where parent.aliasURI = :aliasURI and publishedTo >= :now \
+and publishedFrom is not null and publishedTo is not null order by createdOn desc"""
+        def announcements = CmsContent.executeQuery(queryStr, [aliasURI: 'announcements', now: new Date()], [max: 10])
+        for (def entry : announcements) {
+            content.append(entry.content as String)
+        }
+        return content.toString()
+    }
+
+    void updateLatestAnnouncementsOnRedis() {
+        String content = loadLatestAnnouncementsFromDB()
+        if (content) {
+            redisService.doRedisSet("hp-latest-announcements", content)
+        } else {
+            LOGGER.debug("Cannot update the latest announcements on Redis because of no active announcements")
+        }
     }
 
     void refreshStatisticsDataForFeatures() {
