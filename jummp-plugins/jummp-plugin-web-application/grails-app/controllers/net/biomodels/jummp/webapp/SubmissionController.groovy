@@ -318,9 +318,11 @@ hyphens, plus signs and underscores. It should also have a proper file extension
      */
     def create() {
         String metadata = request.reader.text
-        logger.info("Creating the submission: $metadata")
-        Map<String, Object> working = [isUpdate: false, isUpdateOnExistingModel: false,
-           isAmend: false, isMetadataSubmission: false, accessType: "create", accessFormat: "json"]
+        logger.info("Creating the new submission: $metadata")
+        Map<String, Object> working = [
+            isUpdate: false, isUpdateOnExistingModel: false,
+            isAmend: false, isMetadataSubmission: false,
+            accessType: "create", accessFormat: "json"] as HashMap<String, Object>
         if (metadata) {
             makeSubmission(metadata, working)
         } else {
@@ -337,9 +339,10 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     def update() {
         String metadata = request.reader.text
         logger.info("Updating the submission: $metadata")
-        Map<String, Object> working = [isUpdate: true, isUpdateOnExistingModel: true,
-                                       isAmend : false, isMetadataSubmission: false,
-                                       accessType: "update", accessFormat: "json"] as Map<String, Object>
+        Map<String, Object> working = [
+            isUpdate: true, isUpdateOnExistingModel: true,
+            isAmend : false, isMetadataSubmission: false,
+            accessType: "update", accessFormat: "json"] as Map<String, Object>
         if (metadata) {
             makeSubmission(metadata, working)
         } else {

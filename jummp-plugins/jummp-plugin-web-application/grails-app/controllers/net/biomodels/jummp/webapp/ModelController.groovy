@@ -753,11 +753,7 @@ Please contact the developers team for support!"""])
     }
 
     def submit() {
-        boolean readonly = redisService.doRedisGet("readonly") as boolean
-        if (readonly) {
-            forward(controller: "system", action: "readonly")
-            return
-        }
+        checkReadOnlyMode()
         Map initials = initialiseSubmission(false)
         initials.put("controller", "model")
         initials.put("operation", "submit")
@@ -767,11 +763,7 @@ Please contact the developers team for support!"""])
     }
 
     def update() {
-        boolean readonly = redisService.doRedisGet("readonly") as boolean
-        if (readonly) {
-            forward(controller: "system", action: "readonly")
-            return
-        }
+        checkReadOnlyMode()
         Map initials = initialiseSubmission(true)
         String modelId = params.id
         String titlePage = "Update model ${modelId} | BioModels"

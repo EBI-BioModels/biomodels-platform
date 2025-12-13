@@ -45,6 +45,7 @@ class CommonController implements GrailsConfigurationAware {
     static Map COMMON_PROPERTIES = [:]
 
     def grailsApplication
+    def redisService
 
     @Override
     void setConfiguration(ConfigObject co) {
@@ -101,6 +102,13 @@ class CommonController implements GrailsConfigurationAware {
             json { render resultMap as JSON }
             xml { render resultMap as XML }
             '*' { render status: 415, view: "/errors/error415" }
+        }
+    }
+
+    void checkReadOnlyMode() {
+        boolean readonly = redisService.doRedisGet("readonly") as boolean
+        if (readonly) {
+            forward(controller: "system", action: "readonly")
         }
     }
 }

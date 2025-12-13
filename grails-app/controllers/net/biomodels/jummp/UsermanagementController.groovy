@@ -71,6 +71,7 @@ class UsermanagementController extends CommonController {
 
     @Secured(["isAuthenticated()"])
     def edit() {
+        checkReadOnlyMode()
         User currentUser = springSecurityService.currentUser
         List notifications = notificationService.getNotificationPermissions(currentUser.username)
         render  view: "edit",
@@ -82,6 +83,7 @@ class UsermanagementController extends CommonController {
 
     @Secured(["isAuthenticated()"])
     def editPassword() {
+        checkReadOnlyMode()
         String username = springSecurityService.principal.username as String
         render  view: "editPassword",
                 model: [postUrl: "", flashMessage: checkForMessage(), title: "Edit Password | BioModels",
@@ -106,6 +108,7 @@ class UsermanagementController extends CommonController {
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def forgot() {
+        checkReadOnlyMode()
         render  view: "forgot",
                 model: [postUrl: "", flashMessage: checkForMessage(), title: "Forgot Password | BioModels",
                         validationErrorOn: checkForErrorBean()]
@@ -337,6 +340,7 @@ class UsermanagementController extends CommonController {
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def registration() {
+        checkReadOnlyMode()
         User currentUser = springSecurityService.currentUser
         if (currentUser) {
             redirect(action: "profile")
