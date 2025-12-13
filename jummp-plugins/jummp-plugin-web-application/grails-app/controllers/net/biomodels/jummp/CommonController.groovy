@@ -26,6 +26,7 @@ import grails.util.Environment
 import grails.util.Holders
 import net.biomodels.jummp.utils.WebServiceFetcher as WSF
 import net.biomodels.jummp.core.constants.BioModels
+import net.biomodels.jummp.utils.redis.RedisService
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 
 /**
@@ -51,6 +52,7 @@ class CommonController implements GrailsConfigurationAware {
     void setConfiguration(ConfigObject co) {
         layout = "${co.jummp.branding.style}/main"
         grailsApplication = Holders.grailsApplication
+        redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
         manualURL = grailsApplication.config.jummp.context.help.root
         serverURL = grailsApplication.config.grails.serverURL
         deployTarget = "local"
