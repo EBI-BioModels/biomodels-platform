@@ -73,7 +73,7 @@ class CommonController implements GrailsConfigurationAware {
             // Before switching to these domains, we use dmscambs.co.uk temporarily
             deployTarget = "prod"
             // the following properties must be updated
-            // bmStaticAssetsURL
+            bmStaticAssetsURL = "$serverURL/static-assets"
             // EBI_BM_FTP -- should be renamed to make it neutrally
         } else {
             // local or dev target
