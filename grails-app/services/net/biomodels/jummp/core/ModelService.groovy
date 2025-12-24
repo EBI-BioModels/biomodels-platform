@@ -2365,8 +2365,10 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         //ModelPublishedEvent event = new ModelPublishedEvent(new Object(), cmd)
         //grailsApplication.mainContext.publishEvent(event)
 
-        // publish the revision files to EBI's FTP for downloading
-        if (grailsApplication.isWarDeployed()) {
+        // publish the revision files to the EBI's public FTP sever for serving our users
+        // TODO: we should support the availability of the FTP settings instead of fixing the domain name
+        if (grailsApplication.isWarDeployed()
+                && grailsApplication.config.grails.serverURL.contains("ebi.ac.uk")) {
             copyRevisionFilesToFtp(revision)
         }
 
