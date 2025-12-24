@@ -641,7 +641,8 @@ has been accessed!""")
                 params: [flashMessage: """Model has not been published because due to an internal problem. \
 Please contact the developers team for support!"""])
         } catch (Exception e) {
-            LOGGER.error("General exception thrown while publishing ${rev?.identifier()} (${published?.identifier()})", e)
+            String m = "${rev?.identifier()} (${published?.identifier()}) due to ${e.message}"
+            LOGGER.error("General exception thrown while publishing $m.")
             redirect(action: "showWithMessage", id: rev?.identifier(),
                 params: [flashMessage: """An internal error prevented this model from being published. \
 Please contact the developers team for support!"""])
