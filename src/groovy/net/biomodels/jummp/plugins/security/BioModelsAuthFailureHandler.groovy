@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse
  */
 class BioModelsAuthFailureHandler extends AAAFH {
     private static final Logger LOGGER = LoggerFactory.getLogger(AAAFH.class)
+    def userService
     def loginAttemptCacheService
 
     @Override
@@ -23,6 +24,11 @@ class BioModelsAuthFailureHandler extends AAAFH {
         String username = exception.authentication.principal as String
         String warningMessage
         if (username) {
+            String redirectURL = userService.isAllowedMigrationAWS(username)
+            if (redirectURL) {
+                request.session.setMaxInactiveInterval(0)
+                redirectStrategy.sendRedirect(request, response, redirectURL)
+            }
             warningMessage = loginAttemptCacheService.failLogin(username)
         } else {
             warningMessage = "Cannot recognise the username who has tried to log in."
