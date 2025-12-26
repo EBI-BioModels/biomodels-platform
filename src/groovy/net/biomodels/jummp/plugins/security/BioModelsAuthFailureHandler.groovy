@@ -28,6 +28,7 @@ class BioModelsAuthFailureHandler extends AAAFH {
             if (redirectURL) {
                 request.session.setMaxInactiveInterval(0)
                 redirectStrategy.sendRedirect(request, response, redirectURL)
+                return
             }
             warningMessage = loginAttemptCacheService.failLogin(username)
         } else {
