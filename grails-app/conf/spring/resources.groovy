@@ -161,6 +161,7 @@ beans = {
     authenticationFailureHandler(BioModelsAuthFailureHandler) {
         def conf = SpringSecurityUtils.securityConfig
         redirectStrategy = ref('redirectStrategy')
+        userService = ref('userService')
         loginAttemptCacheService = ref('loginAttemptCacheService')
         defaultFailureUrl = conf.failureHandler.defaultFailureUrl //'/login/authfail?login_error=1'
         useForward = conf.failureHandler.useForward // false
