@@ -672,7 +672,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         }
         //ModelPublishedEvent event = new ModelPublishedEvent()
         Revision revision = Revision.get(result[0])
-        cacheLatestRevision(cachedLatestRevs, revision, userService.username)
+        //cacheLatestRevision(cachedLatestRevs, revision, userService.username)
         revision
     }
 
