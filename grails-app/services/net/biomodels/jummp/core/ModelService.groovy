@@ -638,7 +638,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
             }
             modelHistoryService.addModelToHistory(model)
             Revision revision = Revision.get(result[0])
-            cacheLatestRevision(cachedLatestRevs, revision, userService.username)
+            //cacheLatestRevision(cachedLatestRevs, revision, userService.username)
             return revision
         }
 
