@@ -613,15 +613,15 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
             // exclude deleted models
             return null
         }
-        String strCachedLatestRevs = redisService.doRedisHGet(model.submissionId, "latest-revision")
-        Map cachedLatestRevs = new HashMap()
-        if (strCachedLatestRevs?.trim()) {
-            cachedLatestRevs = new JsonSlurper().parseText(strCachedLatestRevs) as Map
-            if (cachedLatestRevs.containsKey(userService.username)) {
-                long id = cachedLatestRevs[userService.username] as long
-                return Revision.get(id)
-            }
-        }
+//        String strCachedLatestRevs = redisService.doRedisHGet(model.submissionId, "latest-revision")
+//        Map cachedLatestRevs = new HashMap()
+//        if (strCachedLatestRevs?.trim()) {
+//            cachedLatestRevs = new JsonSlurper().parseText(strCachedLatestRevs) as Map
+//            if (cachedLatestRevs.containsKey(userService.username)) {
+//                long id = cachedLatestRevs[userService.username] as long
+//                return Revision.get(id)
+//            }
+//        }
         // admin gets max (non deleted) revision
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             List<Long> result = Revision.executeQuery('''
