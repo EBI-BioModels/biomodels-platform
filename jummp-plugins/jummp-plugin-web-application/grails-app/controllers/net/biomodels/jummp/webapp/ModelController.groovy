@@ -838,7 +838,7 @@ Please contact the developers team for support!"""])
             return
         }
         Integer revisionId = params.getInt("revisionId")
-        Map m = doGenerateOmex(modelId, revisionId)
+        Map m = doGenerateOmex(modelId, revisionId, true, true) as Map
 
         withFormat {
             html {
@@ -1087,7 +1087,7 @@ Please contact the developers team for support!"""])
         String DOWNLOAD_SERVICE_URL = grailsApplication.config.jummp.model.download.server
         String url = "${DOWNLOAD_SERVICE_URL}/get-files/$filePath"
         if (!omexFile.exists()) {
-            Map result = doGenerateOmex(revision.model.submissionId, revision.revisionNumber) as Map
+            Map result = doGenerateOmex(revision.model.submissionId, revision.revisionNumber, true, true) as Map
             String omexLocation = result.get("location")
             String curator = grailsApplication.config.jummp.model.curators.mailinglist
             if (omexLocation) {
