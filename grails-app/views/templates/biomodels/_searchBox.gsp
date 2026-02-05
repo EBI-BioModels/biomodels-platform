@@ -123,9 +123,15 @@
         const query = document.getElementById('local-search-box').value;
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set('query', query);
-
-        const newUrl = window.location.pathname + '?' + urlParams.toString();
-        window.location.href = newUrl;
+        const searchPattern = /^\/search(?:\/|$)/i;
+        let newURL;
+        if (searchPattern.test(window.location.pathname)) {
+            // Matches /search or /search/ but NOT /search-results
+            newURL = window.location.pathname + '?' + urlParams.toString();
+        } else {
+            newURL = "${grailsApplication.config.grails.serverURL}/search?" + urlParams.toString();
+        }
+        window.location.href = newURL;
 
         return false;
     }, true); // true = use capture phase
