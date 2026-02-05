@@ -66,7 +66,7 @@
             </div>
 
             <div class="input-group-field columns large-8 medium-8 small-12">
-                <input type="text" name="search_block_form" id="local-searchbox"
+                <input type="text" name="search_block_form" id="local-search-box"
                    placeholder="Search..." class="input-group-field search_box_style clearable"
                    title="Search"
                    tabindex="1" style="width: 100%;">
@@ -87,7 +87,7 @@
                        class="secondary label label-floating-right">Search tips</a>
                 </p></div>
             <div class="input-group-button columns large-1 medium-2 small-12" style="float: left">
-                <input id="search_submit" class="button icon icon-functional" tabindex="2"
+                <input id="btn-search-submit" class="button icon icon-functional" tabindex="2"
                        type="submit" name="searchSubmit" value="1" />
             </div>
         </div>
@@ -100,10 +100,33 @@
         let chosenDomain = domain.length > 0 ? domain : "biomodels";
         $('#chosenDomain').val(chosenDomain);
         $('#domain_switcher').val(chosenDomain);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('query');
+
+        if (query) {
+            $("#local-search-box").val(query);
+        }
+
     });
     $(document).on('change', '#domain_switcher', {}, function(e) {
         e.preventDefault();
         let domain = $(this).val();
         $('#chosenDomain').val(domain);
     });
+
+    /* Use event capturing (runs before other handlers) */
+    document.getElementById('local-search').addEventListener('submit', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const query = document.getElementById('local-search-box').value;
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('query', query);
+
+        const newUrl = window.location.pathname + '?' + urlParams.toString();
+        window.location.href = newUrl;
+
+        return false;
+    }, true); // true = use capture phase
 </script>

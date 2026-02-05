@@ -132,7 +132,7 @@
                         // at the top of main content division
                         $(document).ready(function() {
                             const query = "${queryString}";
-                            $('#local-searchbox').val(query);
+                            $('#local-search-box').val(query);
                             $('#searchString').text(query);
                             if ("${params.sort}") {
                                 $("select[name='sortBy']").val("${params.sort}");

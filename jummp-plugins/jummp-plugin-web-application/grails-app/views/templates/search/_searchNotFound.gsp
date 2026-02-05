@@ -13,7 +13,7 @@
                 and password if you're trying to access an unpublished model.</li></g:if>
                 <li><a onclick="window.history.back()">Go back to the previous page.</a></li></ul>
         <script>
-            $('#local-searchbox').val("${params.query.encodeAsHTML()}");
+            $('#local-search-box').val("${params.query.encodeAsHTML()}");
             $('#clearsearch').hide();
         </script>
     </div>
