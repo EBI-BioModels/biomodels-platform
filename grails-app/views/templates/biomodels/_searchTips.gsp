@@ -20,7 +20,7 @@
                     controller="search" action="search" params="${[query: "GO:0016049"]}" class="secondary label"
                     title="Search by Gene Ontology term cell growth" target="_blank">GO:0016049</g:link></li>
         </ul>
-        <p><a href="${BioModels.BM_ROOT_URL}/user-guide/model_search.html"
+        <p><a href="${grailsApplication.config.jummp.context.help.root}/model_search.html"
               target="_blank">Learn more about searching models</a></p>
     </div>
 </div>
