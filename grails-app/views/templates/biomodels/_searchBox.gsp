@@ -49,7 +49,7 @@
     }
 </style>
 <form id="local-search" name="local-search"
-      action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
+      action="${createLink(controller: 'search', action: 'search')}" method="post">
     <fieldset><div class="row">
         <div class="input-group margin-bottom-none margin-top-large padding-bottom-medium">
             <div class="input-group-field columns large-3 medium-3 small-12" style="vertical-align: text-top">

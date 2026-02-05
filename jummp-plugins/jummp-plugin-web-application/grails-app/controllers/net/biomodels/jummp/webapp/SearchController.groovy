@@ -194,19 +194,22 @@ class SearchController extends CommonController {
      */
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def search() {
-//        publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE, "MODEL1234")
+        // publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE, "MODEL1234")
+        String query = params.search_block_form.decodeHTML()
+        if (!query) {
+            query = params.query.decodeHTML()
+        }
+        String domain = params.chosenDomain
         sanitiseParams()
-        if (!params.query) {
-            params.query = ""
-        } else {
-            if (params.query in ["*", "*.*", "*?*", "***"]) {
-                params.query = "*:*"
-                params.flashMessage = "Please use *:* to browse all models."
-            }
+
+        params.query = query
+        if (query in ["*", "*.*", "*?*", "***"]) {
+            params.query = "*:*"
+            params.flashMessage = "Please use *:* to browse all models."
         }
-        if (!params.domain) {
-            params.domain = "biomodels"
-        }
+
+        params.domain = domain ?: "biomodels"
+
         /**
          * Check whether the request isn't re-processed by Load Balancer
          */
