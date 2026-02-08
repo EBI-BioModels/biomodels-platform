@@ -877,7 +877,9 @@ Please contact the developers team for support!"""])
             String userParams = "metadata=${biomodelsMetadataAdded.toString()}"
             userParams += "&nolargefiles=${noLargeFiles}"
             final String serviceURI = "$FS_SVR_URL/create-omex?${userParams}"
-            filePath = WSF.executePostRequest(serviceURI, array.toString())
+            String arrayStr = array.toString()
+            LOGGER.debug("ServiceURI: ${serviceURI} - Array: ${arrayStr}")
+            filePath = WSF.executePostRequest(serviceURI, arrayStr)
         } catch (ModelException ignored) {
             ignored.printStackTrace()
         } finally {
