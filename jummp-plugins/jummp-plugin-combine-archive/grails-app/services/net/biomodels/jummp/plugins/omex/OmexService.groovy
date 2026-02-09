@@ -215,7 +215,7 @@ class OmexService extends FileFormatServiceAdapter implements InitializingBean {
             URI uri = Formatizer.guessFormat(file)
             String format = uri?.toString()
             boolean master = rftc.mainFile
-            ArtifactInfo artifactInfo = arch.createArtifact(fileName, format, master)
+            ArtifactInfo artifactInfo = arch.createArtifact(fileName, format, master, true)
             OutputStream writer = arch.writeArtifact(artifactInfo)
             Files.copy(path, writer)
             writer.close()

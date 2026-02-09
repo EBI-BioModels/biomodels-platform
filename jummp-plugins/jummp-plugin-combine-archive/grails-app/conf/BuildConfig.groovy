@@ -63,7 +63,7 @@ grails.project.dependency.resolution = {
         mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-snapshots/"
     }
     dependencies {
-        compile("org.mbine.co:libCombineArchive:0.3.1-SNAPSHOT") {
+        compile("org.mbine.co:libCombineArchive:0.3.2-SNAPSHOT") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
         }
         compile "de.uni-rostock.sbi:CombineExt:1.3.1"
