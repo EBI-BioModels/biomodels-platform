@@ -215,10 +215,10 @@ class OmexService extends FileFormatServiceAdapter implements InitializingBean {
             URI uri = Formatizer.guessFormat(file)
             String format = uri?.toString()
             boolean master = rftc.mainFile
-            ArtifactInfo artifactInfo = arch.createArtifact(fileName, format, master, true)
-            OutputStream writer = arch.writeArtifact(artifactInfo)
-            Files.copy(path, writer)
-            writer.close()
+            ArtifactInfo artifactInfo = arch.createArtifact(fileName, format, path, master, true)
+            if (!artifactInfo) {
+                log.error("Could not create artefact for file ${file.absolutePath}")
+            }
         }
 
         // customise the metadata.rdf
