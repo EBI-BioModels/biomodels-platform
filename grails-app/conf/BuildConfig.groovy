@@ -154,13 +154,13 @@ grails.project.dependency.resolution = {
         /*compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {
             excludes 'apache-jena-libs'
         }*/
-//        compile("org.apache.jena:jena-tdb:1.1.2") {
-//            excludes 'slf4j-log4j12', 'slf4j-log4j12-impl'
-//        }
+        compile("org.apache.jena:jena-tdb:3.17.0") {
+            excludes 'slf4j-log4j12', 'slf4j-log4j12-impl'
+        }
         compile("org.apache.jena:jena-core:3.17.0") {
             excludes 'slf4j-log4j12', 'icu4j'
         }
-//        compile "com.ibm.icu:icu4j:4.8.1"
+        compile "com.ibm.icu:icu4j:4.8.1"
         /*compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }*/
@@ -171,6 +171,7 @@ grails.project.dependency.resolution = {
             excludes("spring-context", "spring-context-support", "spring-aop")
         }
         compile "redis.clients:jedis:2.9.0"
+        compile "org.json:json:20251224"
     }
 
     plugins {

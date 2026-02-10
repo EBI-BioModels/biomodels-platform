@@ -34,9 +34,9 @@
 
 package net.biomodels.jummp.plugins.omex
 
-import com.hp.hpl.jena.rdf.model.Model
-import com.hp.hpl.jena.rdf.model.Resource
-import com.hp.hpl.jena.vocabulary.DCTerms
+import org.apache.jena.rdf.model.Model
+import org.apache.jena.rdf.model.Resource
+import org.apache.jena.vocabulary.DCTerms
 import de.unirostock.sems.cbext.Formatizer
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.model.FileFormatServiceAdapter
