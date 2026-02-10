@@ -146,24 +146,24 @@ grails.project.dependency.resolution = {
 
         // DDMoRe Metadata Information Service uses jena 2.13
         compile("org.mbine.co:libCombineArchive:0.3.2-SNAPSHOT") {
-            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
+            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4'
         }
         compile "de.uni-rostock.sbi:CombineExt:1.3.1"
         // need to add this as an explicit dependency to configure exclusions
         // can't use apache-jena-libs due to pom packaging, rely on jena-tdb instead
-        compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {
+        /*compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {
             excludes 'apache-jena-libs'
-        }
-        compile("org.apache.jena:jena-tdb:1.1.2") {
-            excludes 'slf4j-log4j12', 'slf4j-log4j12-impl'
-        }
-        compile("org.apache.jena:jena-core:2.13.0") {
+        }*/
+//        compile("org.apache.jena:jena-tdb:1.1.2") {
+//            excludes 'slf4j-log4j12', 'slf4j-log4j12-impl'
+//        }
+        compile("org.apache.jena:jena-core:3.17.0") {
             excludes 'slf4j-log4j12', 'icu4j'
         }
-        compile "com.ibm.icu:icu4j:4.8.1"
-        compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
+//        compile "com.ibm.icu:icu4j:4.8.1"
+        /*compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
-        }
+        }*/
         compile "com.rometools:rome:1.11.1"
         /* Jedis and spring-data-redis clash in Grails2,
            though not Grails 3 https://stackoverflow.com/a/30776364 */
@@ -228,7 +228,7 @@ grails.plugin.location.'jummp-plugin-simple-logging' = "jummp-plugins/jummp-plug
 grails.plugin.location.'jummp-plugin-simple-cms' = "jummp-plugins/jummp-plugin-simple-cms"
 grails.plugin.location.'jummp-plugin-web-application' = "jummp-plugins/jummp-plugin-web-application"
 grails.plugin.location.'jummp-plugin-biomodels-dom' = "jummp-plugins/jummp-plugin-biomodels-dom"
-grails.plugin.location.'jummp-plugin-annotation-source-ddmore' = "jummp-plugins/jummp-plugin-annotation-source-ddmore"
+//grails.plugin.location.'jummp-plugin-annotation-source-ddmore' = "jummp-plugins/jummp-plugin-annotation-source-ddmore"
 grails.plugin.location.'jummp-plugin-annotation-core' = "jummp-plugins/jummp-plugin-annotation-core"
 grails.plugin.location.'jummp-plugin-omicsdi' = "jummp-plugins/jummp-plugin-omicsdi"
 grails.plugin.location.'jummp-plugin-qc-info' = "jummp-plugins/jummp-plugin-qc-info"

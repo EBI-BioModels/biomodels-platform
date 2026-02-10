@@ -53,7 +53,7 @@ grails.project.dependency.resolution = {
     String jungVersion = "2.0.1"
 
     dependencies {
-        compile "eu.ddmore:lib-metadata-api:$ddmoreMetadataIntegrationServiceVersion"
+        /*compile "eu.ddmore:lib-metadata-api:$ddmoreMetadataIntegrationServiceVersion"
         // can't use apache-jena-libs due to pom packaging, rely on jena-tdb instead
         compile("eu.ddmore:lib-metadata:$ddmoreMetadataIntegrationServiceVersion") {
             excludes 'apache-jena-libs'
@@ -63,7 +63,7 @@ grails.project.dependency.resolution = {
         compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             // can't use Spring 4.1 yet, fall back on Grails defaults
             excludes 'spring-core', 'spring-context', 'slf4j-log4j12'
-        }
+        }*/
 
         compile("net.sf.jung:jung-graph-impl:$jungVersion")
 

@@ -20,7 +20,7 @@
 
 package net.biomodels.jummp.annotation
 
-import eu.ddmore.metadata.service.MetadataWriterImpl
+//import eu.ddmore.metadata.service.MetadataWriterImpl
 import net.biomodels.jummp.core.MetadataSavingStrategy
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
@@ -48,58 +48,58 @@ This file contains annotations which make this model more easily findable."""
      */
     def modelFileFormatService
 
-    List<RepositoryFileTransportCommand> marshallAnnotations(RevisionTransportCommand revisionTC,
-                                List<StatementTransportCommand> statementTransportCommands,
-                                boolean isUpdate = false) {
-        def metadataWriter = createMetadataWriter(revisionTC, statementTransportCommands)
-        List<RepositoryFileTransportCommand> files = revisionTC.files
-        String annoFilePath
-        File annoFile
-        RepositoryFileTransportCommand rf
-        if (!isUpdate) {
-            String fileBase = System.properties['java.io.tmpdir']
-            String fileName = "${revisionTC.model.submissionId}.rdf"
-            annoFile = new File(fileBase, fileName)
-            annoFilePath = annoFile.absolutePath
-            rf = new RepositoryFileTransportCommand(path: annoFilePath, description: defaultRdfFileDescription)
-            files.add rf
-        } else {
-            rf = files.find {
-                it.path?.endsWith(".rdf")
-            }
-            annoFilePath = rf.path
-            annoFile = new File(annoFilePath)
-        }
-        metadataWriter.writeRDFModel(annoFilePath, RDFFormat.RDFXML)
-        boolean preProcessingOK = modelFileFormatService.doBeforeSavingAnnotations(annoFile, revisionTC)
-        if (!preProcessingOK) {
-            log.error """\
-            Metadata ${metadataWriter.dump()} based on revision ${revisionTC.id} will not save cleanly."""
-            return null
-        } else {
-            return files
-        }
-    }
+//    List<RepositoryFileTransportCommand> marshallAnnotations(RevisionTransportCommand revisionTC,
+//                                List<StatementTransportCommand> statementTransportCommands,
+//                                boolean isUpdate = false) {
+//        def metadataWriter = createMetadataWriter(revisionTC, statementTransportCommands)
+//        List<RepositoryFileTransportCommand> files = revisionTC.files
+//        String annoFilePath
+//        File annoFile
+//        RepositoryFileTransportCommand rf
+//        if (!isUpdate) {
+//            String fileBase = System.properties['java.io.tmpdir']
+//            String fileName = "${revisionTC.model.submissionId}.rdf"
+//            annoFile = new File(fileBase, fileName)
+//            annoFilePath = annoFile.absolutePath
+//            rf = new RepositoryFileTransportCommand(path: annoFilePath, description: defaultRdfFileDescription)
+//            files.add rf
+//        } else {
+//            rf = files.find {
+//                it.path?.endsWith(".rdf")
+//            }
+//            annoFilePath = rf.path
+//            annoFile = new File(annoFilePath)
+//        }
+//        metadataWriter.writeRDFModel(annoFilePath, RDFFormat.RDFXML)
+//        boolean preProcessingOK = modelFileFormatService.doBeforeSavingAnnotations(annoFile, revisionTC)
+//        if (!preProcessingOK) {
+//            log.error """\
+//            Metadata ${metadataWriter.dump()} based on revision ${revisionTC.id} will not save cleanly."""
+//            return null
+//        } else {
+//            return files
+//        }
+//    }
 
-    public MetadataWriterImpl createMetadataWriter(RevisionTransportCommand revisionTC, List<StatementTransportCommand> statements){
-        def subject = "${grailsApplication.config.grails.serverURL}/model/${revisionTC.model.submissionId}"
-        def rdfTypeProperty = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-        def modelOntologyTerm = "http://www.pharmml.org/ontology/PHARMMLO_0000001"
-
-        def metadataWriter = new MetadataWriterImpl()
-        statements.each { StatementTransportCommand statement ->
-            String predicate = statement.predicate.uri
-            ResourceReferenceTransportCommand xref = statement.object
-            String object = xref.uri ?: xref.name
-            boolean isLiteralTriple = xref.uri ? false : true
-            if (isLiteralTriple) {
-                metadataWriter.generateLiteralTriple(subject, predicate, object)
-            } else {
-                metadataWriter.generateTriple(subject, predicate, object)
-            }
-        }
-        metadataWriter.generateTriple(subject, rdfTypeProperty, modelOntologyTerm)
-
-        return metadataWriter
-    }
+//    public MetadataWriterImpl createMetadataWriter(RevisionTransportCommand revisionTC, List<StatementTransportCommand> statements){
+//        def subject = "${grailsApplication.config.grails.serverURL}/model/${revisionTC.model.submissionId}"
+//        def rdfTypeProperty = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+//        def modelOntologyTerm = "http://www.pharmml.org/ontology/PHARMMLO_0000001"
+//
+//        def metadataWriter = new MetadataWriterImpl()
+//        statements.each { StatementTransportCommand statement ->
+//            String predicate = statement.predicate.uri
+//            ResourceReferenceTransportCommand xref = statement.object
+//            String object = xref.uri ?: xref.name
+//            boolean isLiteralTriple = xref.uri ? false : true
+//            if (isLiteralTriple) {
+//                metadataWriter.generateLiteralTriple(subject, predicate, object)
+//            } else {
+//                metadataWriter.generateTriple(subject, predicate, object)
+//            }
+//        }
+//        metadataWriter.generateTriple(subject, rdfTypeProperty, modelOntologyTerm)
+//
+//        return metadataWriter
+//    }
 }
