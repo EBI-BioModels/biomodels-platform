@@ -219,16 +219,16 @@ beans = {
     }
 
     // this is the only mandatory identifier generator, all others are optional
-    submissionIdGenerator(ModelIdentifierGeneratorFactoryBean) { bean ->
-        bean.scope  = 'prototype'
-        idSettings  = idGeneratorSettings.get('submission')
-        initializerBeanName = "submissionIdGeneratorInitializer"
-        shouldComputeRegex  = !regexPresent
-        generatorType       = 'submission'
+    submissionIdGenerator(ModelIdentifierGeneratorFactoryBean,
+        idGeneratorSettings.get('submission'),
+        "submissionIdGeneratorInitializer",
+        !regexPresent,
+        'submission') { bean ->
+        bean.scope = 'prototype'
     }
 
     Map<String, ConfigObject> optionalGeneratorBeanDefs = [:]
-    idGeneratorSettings.each { String name, def /*ConfigObject or String*/ cfg ->
+    idGeneratorSettings.each { def name, def /*ConfigObject or String*/ cfg ->
         String beanName = name + ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
         if (name != 'submission' && name != 'regex')
             optionalGeneratorBeanDefs.put(beanName, cfg)
@@ -240,15 +240,18 @@ beans = {
     def parentContext = ((GrailsApplicationContext) getParentCtx())
     optionalGeneratorBeanDefs.each { String name, ConfigObject c ->
         // don't touch bean definitions from BeanDefinitionRegistryPostProcessors, doWithSpring etc
-        if (null == parentContext || !parentContext.containsBeanDefinition(name)) {
+        if (!parentContext || !parentContext.containsBeanDefinition(name)) {
             String initializerBean = "${name}Initializer"
-            "$name"(ModelIdentifierGeneratorFactoryBean) { bean ->
+            String generatorType = name - ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
+
+            // Use constructor args (like submissionIdGenerator) to avoid brittle property binding
+            "$name"(ModelIdentifierGeneratorFactoryBean,
+                c,
+                initializerBean,
+                !regexPresent,
+                generatorType
+            ) { bean ->
                 bean.scope = 'prototype'
-                idSettings = c
-                // the initializer bean should exist, even if it's a NullModelIdGeneratorInitializer
-                initializerBeanName = initializerBean
-                shouldComputeRegex  = !regexPresent
-                generatorType       = name - ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
             }
         }
     }
