@@ -135,8 +135,8 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
             }
             LOGGER.debug("Seed: $seed --- type: $type")
 
-            GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(generatorType,
-                idSettings, seed, shouldComputeRegex)
+            GeneratorDetails details = ModelIdentifierUtils.
+                buildDecoratorsFromSettings(generatorType, idSettings, seed, shouldComputeRegex)
 
             new DMIG(details)
         }
