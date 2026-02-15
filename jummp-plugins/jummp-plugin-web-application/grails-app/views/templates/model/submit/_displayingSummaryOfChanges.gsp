@@ -275,6 +275,7 @@
                 currentValidation = false;
                 msg = "There have been some errors in your submission data. Please do verify all steps again.";
                 console.log(msg);
+                console.log(error.responseText);
                 showNotification(msg);
                 toastr.error(msg);
             }

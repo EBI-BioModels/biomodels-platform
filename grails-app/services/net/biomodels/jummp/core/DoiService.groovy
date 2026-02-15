@@ -63,7 +63,7 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
     @Override
     PLPTC createLinkProviderInstance() {
         PubLP link = PubLP.withCriteria(uniqueResult: true) {
-            eq("linkType", PublicationLinkProvider.LinkType.DOI)
+            eq("linkType", PubLP.LinkType.DOI)
         } as PubLP
         PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
         linkCommand
@@ -84,29 +84,33 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
         String left = rawPubDetails.substring(rawPubDetails.indexOf(",") + 1)
         left = left?.substring(0, left?.length() - 1)
         String need = left?.substring(0, left.lastIndexOf("}"))
-        String[] parts = need?.split(",\n\t")
-        parts[0].replace("\n\t", "")
+        List<String> parts = need?.tokenize("\n")
+        // parts[0].replace("\n", "")
         PLPTC linkProvider = createLinkProviderInstance()
         PubTC pubTC = new PubTC(linkProvider: linkProvider, link: rawData["doi"])
         Map pubMap = [:]
         for (String p : parts) {
-            String[] items = p.split(" = ")
+            // p looks like
+            // "title = {Physiologically based pharmacokinetic (PBPK) model of glimepiride},"
+            List items = p.tokenize("=")
             String attr = items[0].trim()
-            String val = items[1].trim()
-            val = val.replaceAll("\\{", "").replaceAll("\\}", "")
-            pubMap.put(attr, val)
+            String value = items[1].replaceAll(/[{}]/, "").trim()
+            // remove the comma at the end of the value
+            value = value.endsWith(",") ? value[0..-2] : value
+            pubMap.put(attr, value)
         }
         if (!pubMap?.isEmpty()) {
             pubTC.link = pubMap.get("doi")
-            pubTC.title = pubMap.get("title")
-            pubTC.journal = pubMap.get("journal")
+            pubTC.title = pubMap.get("title") ?: "N/A"
+            pubTC.journal = pubMap.get("journal") ?: (pubMap.get("publisher") ?: "N/A")
             pubTC.authors = parseAuthorsFromRawText(pubMap.get("author") as String) as List
-            pubTC.volume = pubMap.get("volume")
-            pubTC.issue = pubMap.get("number")
-            pubTC.pages = pubMap.get("pages")
-            pubTC.year = Integer.parseInt(pubMap.get("year") as String)
-            pubTC.month = inferFromMonthName(pubMap.get("month") as String)
-
+            pubTC.volume = pubMap.get("volume") ?: "N/A"
+            pubTC.issue = pubMap.get("number") ?: "N/A"
+            pubTC.pages = pubMap.get("pages") ?: "N/A"
+            pubTC.year = Integer.parseInt(pubMap.get("year") as String) ?: new Date().format("yyyy").toInteger()
+            pubTC.month = inferFromMonthName(pubMap.get("month") as String) ?: new Date().format("mm").toInteger()
+            pubTC.affiliation = pubMap.get("affiliation") ?: "N/A"
+            pubTC.synopsis = pubMap.get("synopsis") ?: "N/A"
             // Currently, the two attributes below are missing due to the limitations of this approach
             /*pubTC.affiliation
             pubTC.synopsis*/
