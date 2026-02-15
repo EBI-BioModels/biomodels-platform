@@ -304,9 +304,15 @@ beans = {
                 Class.forName(beanClassName, true, Thread.currentThread().contextClassLoader))
     }
 
-    importBeans('classpath:/metadatalib-spring-config.xml')
-    // override definition to use the one from the annotation-source-ddmore plugin
-    springConfig.addAlias("metadataInfoService", "metadataInformationService")
+    def metaSpringConfig = this.class.classLoader.getResource('metadatalib-spring-config.xml')
+    if (metaSpringConfig) {
+        importBeans('classpath:/metadatalib-spring-config.xml')
+        // override definition to use the one from the annotation-source-ddmore plugin
+        springConfig.addAlias("metadataInfoService", "metadataInformationService")
+    } else {
+        println "WARN\tmetadatalib-spring-config.xml not found on classpath; skipping importBeans()."
+        // If other code expects the alias, you can either leave it out or ensure the target bean exists.
+    }
 
     jf(JsonFactory)
 
