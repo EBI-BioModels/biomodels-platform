@@ -160,6 +160,9 @@ grails.project.dependency.resolution = {
         compile("org.apache.jena:jena-core:3.17.0") {
             excludes 'slf4j-log4j12', 'icu4j'
         }
+        compile("org.apache.jena:jena-arq:3.17.0") {
+            excludes 'slf4j-log4j12', 'icu4j'
+        }
         compile "com.ibm.icu:icu4j:4.8.1"
         /*compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
