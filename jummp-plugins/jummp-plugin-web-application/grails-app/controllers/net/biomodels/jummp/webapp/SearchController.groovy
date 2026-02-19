@@ -95,9 +95,14 @@ class SearchController extends CommonController {
         // the statements below only perform an extraction and analyse parameters
         // the sanitization of the parameters was performed earlier in ParameterFilters
         if (params.sort) {
-            def sortVal = params.sort.split("-")
-            params.sortBy = sortVal[0]
-            params.sortDir = sortVal[1]
+            def sortVal = params.sort.tokenize("-") as List
+            if (sortVal?.size() == 2) {
+                params.sortBy = sortVal[0]
+                params.sortDir = sortVal[1]
+            } else {
+                params.sortBy = "relevance"
+                params.sortDir = "desc"
+            }
         } else {
             params.sortBy = "relevance"
             params.sortDir = "desc"
