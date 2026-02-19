@@ -754,7 +754,7 @@ Please contact the developers team for support!"""])
     }
 
     def submit() {
-        checkReadOnlyMode()
+        if (forwardIfReadOnly()) return
         Map initials = initialiseSubmission(false)
         initials.put("controller", "model")
         initials.put("operation", "submit")
@@ -764,7 +764,7 @@ Please contact the developers team for support!"""])
     }
 
     def update() {
-        checkReadOnlyMode()
+        if (forwardIfReadOnly()) return
         Map initials = initialiseSubmission(true)
         String modelId = params.id
         String titlePage = "Update model ${modelId} | BioModels"

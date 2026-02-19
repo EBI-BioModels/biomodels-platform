@@ -107,10 +107,12 @@ class CommonController implements GrailsConfigurationAware {
         }
     }
 
-    void checkReadOnlyMode() {
+    boolean forwardIfReadOnly() {
         boolean readonly = redisService.doRedisGet("readonly").toBoolean()
         if (readonly) {
             forward(controller: "system", action: "readonly")
+            return true
         }
+        return false
     }
 }
