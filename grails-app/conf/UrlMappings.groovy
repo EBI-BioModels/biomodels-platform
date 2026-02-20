@@ -134,6 +134,7 @@ class UrlMappings {
         "/user/profile"(controller:"usermanagement", action:"profile")
         "/user/update"(controller:"usermanagement", action:"update")
         "/user"(controller:"usermanagement", action:"show")
+        "/administration/dashboard"(controller: "admin", action: "dashboard")
         "/mommanagement"(controller: "modelOfTheMonth", action: "index")
         "/competition/model-of-the-year-2022"(redirect: "/competition/model-of-the-year-2023")
         "/competition/model-of-the-year-2023"(controller: "competition", action: "modelOfTheYear2023")
