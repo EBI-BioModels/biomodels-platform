@@ -67,8 +67,6 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://download.java.net/maven/2/"
         //mavenRepo "http://repository.jboss.com/maven2/"
         // repository for miriam lib
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/" // for JSBML snapshots
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }

@@ -66,8 +66,6 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.codehaus.org"
         //mavenRepo "http://download.java.net/maven/2/"
         //mavenRepo "http://repository.jboss.com/maven2/"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4.5-b1")

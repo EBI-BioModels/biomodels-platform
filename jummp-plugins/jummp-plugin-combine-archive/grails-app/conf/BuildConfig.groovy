@@ -57,8 +57,6 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenRepo("http://mvn.sems.uni-rostock.de/releases/")
         mavenCentral()
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-release/"
         mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-snapshots/"
     }
