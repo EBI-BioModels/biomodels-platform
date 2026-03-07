@@ -2627,13 +2627,12 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
      * The search result always contains downloadable public models, therefore,
      * these chain of methods do not need to check ACLs
      *
-     * @param modelIDs The list of model identities being retrieved
+     * @param mids The list of model identities being retrieved
      * @return either the list of RFTC objects or null
      *         if there is no model files available
      */
-    Map<String, RFTC> fetchMainFileForModels(String[] modelIDs) {
+    Map<String, RFTC> fetchMainFileForModels(List<String> mids) {
         Map<String, RFTC> results = [:]
-        List mids = modelIDs.toList()
         String query = """
 SELECT
     r1

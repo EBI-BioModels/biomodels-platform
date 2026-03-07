@@ -445,7 +445,7 @@ session: ${TSM.getResource(Holders.applicationContext.sessionFactory)
     }
 
     @NotTransactional
-    InputStream serveModelFilesAsZip(String[] modelIDs) {
+    InputStream serveModelFilesAsZip(List<String> modelIDs) {
         Map<String, RFTC> files = modelService.fetchMainFileForModels(modelIDs)
         if (files) {
             return serveModelFilesAsZip(files)
@@ -923,7 +923,7 @@ session: ${TSM.getResource(Holders.applicationContext.sessionFactory)
 
     /**
      * Returns the first and last revision of the given model without checking
-     * ACLs as well as permissions. This method will be called by admins or 
+     * ACLs as well as permissions. This method will be called by admins or
      * any privileges. In other words, admins use this method to manage data.
      * @param model {@link Model} instance
      * @return a pair of two {@link Revision} instances
