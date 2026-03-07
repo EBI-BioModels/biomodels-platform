@@ -119,7 +119,7 @@ class SearchController extends CommonController {
     private int numResults() {
         final int MAX_RESULTS = 100
         final int MIN_RESULTS = 10
-        User user
+        User user = null
         String username = springSecurityService?.principal?.username
         if (!(username == GrailsAnonymousAuthenticationToken.USERNAME) && !username) {
             user = User.findByUsername(username)
@@ -144,6 +144,7 @@ class SearchController extends CommonController {
                 prefs.save(flush: true)
             }
         }
+        LOGGER.debug("${user?.username}: Updating the search references.")
         return prefs.numResults
     }
 
@@ -264,7 +265,7 @@ under the format: ${response.format}"""
             indexer = params.get("indexer")
             indexer = indexer ? indexer : ""
         }
-        def models = params.models.split(",")
+        List models = processParamsModels()
         Map<String, String> msgMap = [:]
         models.each { def model ->
             String message = ""
@@ -312,7 +313,7 @@ under the format: ${response.format}"""
             forward action: 'search', params: params
             return // don't continue any further with this.
         }
-        String[] models = params.models?.split(',')
+        List models = processParamsModels()
         if (models?.size() > 100) {
             def params = [query: "*:*",
                           flashMessage: g.message(code: "jummp.search.download.exceededThreshold.warningMessage")]
@@ -474,5 +475,13 @@ under the format: ${response.format}"""
             dataToRender << [id: model.id, name: model.name, submitter: model.submitter]
         }
         render dataToRender as JSON
+    }
+
+    private List<String> processParamsModels() {
+        List models = params.models
+            ?.trim() // remove leading/trailing whitespace from the whole string
+            ?.replaceAll(/\s*,+\s*/, ",") // normalize: strip spaces around commas AND collapse multiple commas into one
+            ?.tokenize(",") ?: []
+        models
     }
 }
