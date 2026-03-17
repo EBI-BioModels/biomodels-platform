@@ -246,7 +246,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         tobeAdded
     }
 
-    private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
+    private SBMLDocument getFileAsValidatedSBMLDocument(final File model, List<String> errors) {
         // TODO: we should insert the parsed model into the cache
         String errorMsg = ""
         SBMLDocument doc
@@ -290,7 +290,13 @@ to validate the file ${doc.inspect()}\t${doc.properties}. \
 The system has tried to call the fallback to the SBML offline validator..."""
                     println(errorMsg)
                     LOGGER.error(errorMsg)
-                    CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
+                    try {
+                        CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
+                    } catch (Exception exception) {
+                        LOGGER.error(exception.message)
+                        errors.add(exception.message)
+                        return null
+                    }
                 }
                 if (CONSISTENCY_ERRORS > 0) {
                     // search for an error
@@ -364,7 +370,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
         return areAllSbml
     }
 
-    private SBMLDocument getDocumentFromFiles(final List<File> model, final List<String> errors = []) {
+    private SBMLDocument getDocumentFromFiles(final List<File> model, List<String> errors = []) {
         SBMLDocument retval = null
         model.each {
             try {
@@ -380,7 +386,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
     }
 
     @Profiled(tag = "SbmlService.validate")
-    boolean validate(final List<File> model, final List<String> errors) {
+    boolean validate(final List<File> model, List<String> errors) {
         if (!grailsApplication.config.jummp.plugins.sbml.validation) {
             LOGGER.info("Validation for ${model.inspect()} skipped due to configuration option")
             return true
@@ -1256,6 +1262,9 @@ the user has attempted to update an blank value for the name attribute.""")
     MA guessModellingApproach(final File modelFile) {
         List<String> errors = new ArrayList<>()
         SBMLDocument document = getFileAsValidatedSBMLDocument(modelFile, errors)
+        if (!document) {
+            return MA.findByName("other")
+        }
         String rID = modelFile.name
         guessModellingApproachFromSBMLDocument(document, rID)
     }
