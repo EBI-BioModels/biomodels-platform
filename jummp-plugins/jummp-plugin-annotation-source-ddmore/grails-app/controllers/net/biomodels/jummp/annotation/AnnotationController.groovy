@@ -27,9 +27,9 @@ import net.biomodels.jummp.core.model.AnnotationValidationContext as AVC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.annotation.*
 import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
-import net.biomodels.jummp.core.model.ValidationState
-import org.apache.jena.riot.RDFFormat
-import eu.ddmore.metadata.service.*
+//import net.biomodels.jummp.core.model.ValidationState
+//import org.apache.jena.riot.RDFFormat
+//import eu.ddmore.metadata.service.*
 
 @Secured(["isAuthenticated()"])
 class AnnotationController {
@@ -121,7 +121,7 @@ class AnnotationController {
         }
     }
 
-    def validate(){
+    /*def validate(){
         if (!params.revision) {
             def response = [
                 status: '400',
@@ -154,7 +154,7 @@ class AnnotationController {
         else
             render ([status: '500', message: "Unable to validate the annotations you provided."] as JSON)
 
-    }
+    }*/
 
     private List<STC> createStatementList(){
         def ap = params.annotations

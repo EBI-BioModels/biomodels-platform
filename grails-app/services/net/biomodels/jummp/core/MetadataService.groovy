@@ -20,8 +20,8 @@
 
 package net.biomodels.jummp.core
 
-import eu.ddmore.metadata.service.ValidationError
-import eu.ddmore.metadata.service.ValidationErrorStatus
+//import eu.ddmore.metadata.service.ValidationError
+//import eu.ddmore.metadata.service.ValidationErrorStatus
 import grails.transaction.Transactional
 import net.biomodels.jummp.annotation.CompositeValueContainer
 import net.biomodels.jummp.annotation.PropertyContainer
@@ -35,6 +35,7 @@ import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.AnnotationValidationContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
@@ -214,10 +215,11 @@ class MetadataService implements InitializingBean {
         RevisionAdapter adapter = new RevisionAdapter(revision: baseRevision, latest: true)
         RevisionTransportCommand newRevision = adapter.toCommandObject()
         newRevision.comment = "Updated model annotations."
-        AnnotationValidationContext avc = validateModelRevision(baseRevision,statements)
-        newRevision.validationLevel = avc.validationLevel
-        newRevision.validationReport = avc.validationReport
-
+        //AnnotationValidationContext avc = validateModelRevision(baseRevision,statements)
+        //newRevision.validationLevel = avc.validationLevel
+        //newRevision.validationReport = avc.validationReport
+        newRevision.validationLevel = ValidationState.APPROVE
+        newRevision.validationReport = "N/A"
         List<RepositoryFileTransportCommand> files = newRevision.files
         try {
             files = executeMetadataSavingStrategy(newRevision, statements, isUpdate)
@@ -269,13 +271,13 @@ class MetadataService implements InitializingBean {
         MetadataSavingStrategy strategy = createMetadataSavingStrategyForFormat format
 
         RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
-        def metadataWriter = strategy.createMetadataWriter(revisionTC, statements)
+//        def metadataWriter = strategy.createMetadataWriter(revisionTC, statements)
 
         StringBuffer validationReport = new StringBuffer();
 
-        metadataValidator.validate(metadataWriter.model)
+//        metadataValidator.validate(metadataWriter.model)
 
-        for(ValidationError validationError: metadataValidator.validationHandler.getValidationList()) {
+        /*for(ValidationError validationError: metadataValidator.validationHandler.getValidationList()) {
             if (validationError.errorStatus == ValidationErrorStatus.EMPTY) {
                 validationReport.append(getQualifierLabel(validationError.qualifier))
                 validationReport.append(" is empty.")
@@ -292,7 +294,7 @@ class MetadataService implements InitializingBean {
             }
             validationReport.append("<br>")
 
-        }
+        }*/
 
         AnnotationValidationContext anc = new AnnotationValidationContext();
         anc.validationReport = validationReport.toString();

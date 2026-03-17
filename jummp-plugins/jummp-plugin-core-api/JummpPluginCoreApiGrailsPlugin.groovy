@@ -20,6 +20,7 @@
 
 import net.biomodels.jummp.core.annotation.EnvironmentAwareAnnotationRender
 import net.biomodels.jummp.core.subscribers.ShareRevisionToFellowCurators
+import net.biomodels.jummp.security.LoginAttemptCacheService
 import net.biomodels.jummp.utils.redis.PublishClient
 import net.biomodels.jummp.utils.redis.RedisService
 import net.biomodels.jummp.utils.redis.SubscribeClient
@@ -78,6 +79,13 @@ All other plugins providing core functionality depend on this plugin and the cor
         subscribeClientService(SubscribeClient) { bean ->
             bean.autowire = "byName"
             bean.scope = "singleton"
+        }
+
+        loginAttemptCacheService(LoginAttemptCacheService) { bean ->
+            bean.scope = "singleton"
+            bean.autowire = "byName"
+            bean.singleton = true
+            grailsApplication = ref("grailsApplication")
         }
     }
 

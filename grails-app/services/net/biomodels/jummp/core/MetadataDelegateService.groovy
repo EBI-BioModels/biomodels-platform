@@ -21,7 +21,7 @@
 package net.biomodels.jummp.core
 
 import com.google.gson.Gson
-import eu.ddmore.metadata.service.ValidationException
+//import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
 import net.biomodels.jummp.annotation.SectionContainer
 import net.biomodels.jummp.annotationstore.ElementAnnotation
@@ -155,14 +155,14 @@ class MetadataDelegateService implements IMetadataService, InitializingBean {
         }
     }
 
-    @Profiled(tag = "metadataDelegateService.validateModelRevision")
+    /*@Profiled(tag = "metadataDelegateService.validateModelRevision")
     AnnotationValidationContext validateModelRevision(RevisionTC revision, List<STC> statements) {
         try {
             return metadataService.validateModelRevision(Revision.get(revision.id), statements)
         }catch(ValidationException e){
             throw e
         }
-    }
+    }*/
 
     @Profiled(tag = "metadataDelegateService.getMetadataNamespaces")
     List<String> getMetadataNamespaces() {

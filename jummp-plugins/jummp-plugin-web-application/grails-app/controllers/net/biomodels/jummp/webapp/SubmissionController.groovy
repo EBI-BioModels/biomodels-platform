@@ -698,7 +698,7 @@ data type and accession from the URI.""")
     }
 
     private void populatePublication(def paramPublication, MTC model) {
-        if (paramPublication != "{}" && paramPublication != null) {
+        if (paramPublication != "{}" && paramPublication) {
             Map publicationData = publicationService.buildPublicationFromJSONData(paramPublication)
             model.publication = publicationData["publication"]
         } else {

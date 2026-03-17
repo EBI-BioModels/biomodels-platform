@@ -139,7 +139,17 @@ class ModelService implements ApplicationListener<ModelOperationEvent> {
 
     ObjectFactory<MIGRS> idGeneratorRegistryFactoryBean
 
-    final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
+    /**
+     * Decide dynamically whether publication IDs should be generated.
+     *
+     * IMPORTANT: ModelService is a singleton. Do NOT compute this once at field-init time,
+     * because grailsApplication/mainContext may not be available yet and the decision would
+     * be cached incorrectly for the lifetime of the bean.
+     */
+    private boolean shouldMakePublicationId() {
+        def gen = getPublicationIdGenerator()
+        return (gen != null) && !(gen instanceof NullModelIdentifierGenerator)
+    }
 
     /**
      * Guard insertion of ACL entries from concurrent access.
@@ -2052,7 +2062,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
             retVal = ModelAudit.findAllByModel(model)?.toList()?.size() == 0
         } catch (Exception ex) {
             retVal = false
-            logger.error("""An error happened when trying to delete all the auditing items 
+            logger.error("""An error happened when trying to delete all the auditing items
 for the model ${model.submissionId} due to ${ex.message}.""")
         } finally {
             ModelAudit.withSession { it.flush() }
@@ -2352,7 +2362,7 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         Model model = revision.model
         boolean curatedModel = isCurated(revision)
         boolean missingPerennialId = !model.publicationId || model.publicationId == ""
-        if (MAKE_PUBLICATION_ID && curatedModel && missingPerennialId) {
+        if (shouldMakePublicationId() && curatedModel && missingPerennialId) {
             revision = doBeforePublishingCuratedRevision(revision)
         }
         model.firstPublished = new Date()
@@ -2617,13 +2627,12 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
      * The search result always contains downloadable public models, therefore,
      * these chain of methods do not need to check ACLs
      *
-     * @param modelIDs The list of model identities being retrieved
+     * @param mids The list of model identities being retrieved
      * @return either the list of RFTC objects or null
      *         if there is no model files available
      */
-    Map<String, RFTC> fetchMainFileForModels(String[] modelIDs) {
+    Map<String, RFTC> fetchMainFileForModels(List<String> mids) {
         Map<String, RFTC> results = [:]
-        List mids = modelIDs.toList()
         String query = """
 SELECT
     r1

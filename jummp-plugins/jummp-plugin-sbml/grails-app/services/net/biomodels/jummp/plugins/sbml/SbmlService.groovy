@@ -465,12 +465,15 @@ the user has attempted to update an blank value for the name attribute.""")
             return ""
         }
         def description = new StringBuffer()
-        def nsList = ["http://www.sbml.org/sbml/level2/version5",
-                      "http://www.sbml.org/sbml/level2/version4",
-                      "http://www.sbml.org/sbml/level2/version3",
-                      "http://www.sbml.org/sbml/level2/version2",
-                      "http://www.sbml.org/sbml/level2",
-                      "http://www.sbml.org/sbml/level1"
+        def nsList = [
+            "http://www.sbml.org/sbml/level3/version2",
+            "http://www.sbml.org/sbml/level3/version1",
+            "http://www.sbml.org/sbml/level2/version5",
+            "http://www.sbml.org/sbml/level2/version4",
+            "http://www.sbml.org/sbml/level2/version3",
+            "http://www.sbml.org/sbml/level2/version2",
+            "http://www.sbml.org/sbml/level2",
+            "http://www.sbml.org/sbml/level1"
         ]
         try {
             // find the namespace without loading the file
@@ -483,7 +486,7 @@ the user has attempted to update an blank value for the name attribute.""")
                 xpath.addNamespace(ns)
                 List<Element> noteElements = xpath.selectNodes(doc)
                 if (!noteElements.isEmpty()) {
-                    for (Element elt : noteElements) {
+                    for (Element elt : (noteElements as List<Element>)) {
                         // required step as 'notes' contains further XML tags
                         XMLOutputter xmlOut = new XMLOutputter()
                         description.append(xmlOut.outputString(elt))
@@ -1180,7 +1183,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     private String processXmlElement(XMLStreamReader reader, String element, String attribute) {
-        if (element.equals(reader.getLocalName())) {
+        if (element == reader.getLocalName()) {
             return reader.getAttributeValue(null, attribute)
         }
         return null

@@ -57,14 +57,15 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenRepo("http://mvn.sems.uni-rostock.de/releases/")
         mavenCentral()
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-release/"
         mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-snapshots/"
     }
     dependencies {
         compile("org.mbine.co:libCombineArchive:0.3.2-SNAPSHOT") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
+        }
+        compile("org.apache.jena:jena-core:3.17.0") {
+            excludes 'slf4j-log4j12', 'icu4j'
         }
         compile "de.uni-rostock.sbi:CombineExt:1.3.1"
         compile "com.ibm.icu:icu4j:4.8.1"

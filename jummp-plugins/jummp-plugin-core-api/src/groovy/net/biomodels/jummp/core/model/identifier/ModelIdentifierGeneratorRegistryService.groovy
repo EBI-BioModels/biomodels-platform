@@ -77,8 +77,10 @@ class ModelIdentifierGeneratorRegistryService {
      * @param grailsApplication the grailsApplication bean reference
      * @param generatorNames the generator bean names.
      */
-    ModelIdentifierGeneratorRegistryService(GrailsApplication grailsApplication,
-            Set<String> generatorNames, Set<String> generatorTypes) {
+    ModelIdentifierGeneratorRegistryService(
+        GrailsApplication grailsApplication,
+        Set<String> generatorNames, Set<String> generatorTypes
+    ) {
         if (null == generatorNames || !generatorNames.contains(
             ModelIdentifierUtils.DEFAULT_GENERATOR_BEAN))
             throw new IllegalStateException('SubmissionIdGenerator is mandatory but was not found')
@@ -99,8 +101,10 @@ If you instantiate this class outside Grails, please manually pass the grailsApp
      * @param generatorNames the generator bean names.
      * @param explicitRegex the model id pattern defined in the externalised configuration.
      */
-    ModelIdentifierGeneratorRegistryService(GrailsApplication grailsApplication,
-            Set<String> generatorNames, Set<String> generatorTypes, String explicitRegex) {
+    ModelIdentifierGeneratorRegistryService(
+        GrailsApplication grailsApplication,
+        Set<String> generatorNames, Set<String> generatorTypes, String explicitRegex
+    ) {
         this(grailsApplication, generatorNames, generatorTypes)
         if (null == explicitRegex || explicitRegex.isEmpty())
             throw new IllegalArgumentException('''The model id regex cannot be empty or null. \

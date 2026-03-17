@@ -754,7 +754,7 @@ Please contact the developers team for support!"""])
     }
 
     def submit() {
-        checkReadOnlyMode()
+        if (forwardIfReadOnly()) return
         Map initials = initialiseSubmission(false)
         initials.put("controller", "model")
         initials.put("operation", "submit")
@@ -764,7 +764,7 @@ Please contact the developers team for support!"""])
     }
 
     def update() {
-        checkReadOnlyMode()
+        if (forwardIfReadOnly()) return
         Map initials = initialiseSubmission(true)
         String modelId = params.id
         String titlePage = "Update model ${modelId} | BioModels"
@@ -1003,10 +1003,13 @@ Please contact the developers team for support!"""])
 
     private void serveModelAsCombineArchive(RTC revision, List<RFTC> files, def resp) {
         if (revision.state == ModelState.PUBLISHED) {
-            LOGGER.info "${revision.modelIdentifier()}: download omex => use case 2 and 4: public - regardless of its size"
+            /*LOGGER.info """${revision.modelIdentifier()}: download omex => use case 2 and 4: public - regardless of
+its size"""
+*/
             serveModelAsCombineArchiveForPublished(revision)
         } else {
-            LOGGER.info "${revision.modelIdentifier()}: download omex => use case 1 and 3: private - considering its size to serve instantly or later"
+            /*LOGGER.info "${revision.modelIdentifier()}: download omex => use case 1 and 3: private - considering its
+ size to serve instantly or later"*/
             serveModelAsCombineArchiveForPrivate(revision, files, resp)
         }
     }
@@ -1017,14 +1020,14 @@ Please contact the developers team for support!"""])
         boolean isLargeSubmission = totalSize >= BioModels.MAX_FILE_SIZE
         if (isLargeSubmission) {
             // Use case 1: large and private
-            LOGGER.info "${revision.modelIdentifier()}: download omex => use case 1: large and private"
+            //LOGGER.info "${revision.modelIdentifier()}: download omex => use case 1: large and private"
             String[] parts = defineMrPathAndFileNameForOmex(revision)
             String filePath = parts[1]
             // the OMEX file could be created using the external FileService
             serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
         } else {
             // Use case 3: small and private, then generate/create CombineArchive on the spot
-            LOGGER.info "${revision.modelIdentifier()}: download omex => use case 3: small and private"
+            //LOGGER.info "${revision.modelIdentifier()}: download omex => use case 3: small and private"
             serveModelAsCombineArchiveInstantly(revision, files, resp)
         }
     }
@@ -1103,13 +1106,13 @@ generate.</p><p>It will be available to download at the following link very soon
 <p>Please be patient and check the link after a few seconds. If the file is still unavailable or you encounter any \
 download issues after 15 minutes, please don't hesitate to <a href='mailto:${curator}'>contact</a> our support \
 team.<p>Thank you for your patience!</p>"""
-                LOGGER.info(msg)
+                //LOGGER.info(msg)
                 render(view: "download/inform", model: [message: msg])
             } else {
                 forward(controller: "errors", action: "error413")
             }
         } else {
-            LOGGER.info("Downloading COMBINE Archive (OMEX) file from the model cache directory: ${filePath}")
+            //LOGGER.info("Downloading COMBINE Archive (OMEX) file from the model cache directory: ${filePath}")
             redirect(url: url)
         }
     }
@@ -1123,11 +1126,9 @@ team.<p>Thank you for your patience!</p>"""
 
         if (revision.state == ModelState.PUBLISHED) {
             // Use case 2 and 4: Revision is public regardless of its size
-            println "use case 2 and 4: public - regardless of its size"
             serveModelAsFileForPublished(revision, rf, fileName, resp, inline, preview)
         } else {
             // Use case 1 and 3: Revision is private and large/small
-            println "use case 1 and 3: private - considering its size to serve instantly or later"
             serveModelAsFileForPrivate(rf, resp, inline, preview)
         }
     }
@@ -1139,7 +1140,7 @@ team.<p>Thank you for your patience!</p>"""
         String mrPath = parts[2]
         String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/${mrPath}/${fileName}"
         if (JummpHttpService.isReachable(url)) {
-            LOGGER.info("Downloading from FTP: ${url}")
+            //LOGGER.info("Downloading from FTP: ${url}")
             redirect(url: url)
         } else {
             // fallback

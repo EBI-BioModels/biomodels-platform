@@ -20,7 +20,7 @@
 
 package net.biomodels.jummp.annotation
 
-import eu.ddmore.metadata.service.MetadataWriterImpl
+//import eu.ddmore.metadata.service.MetadataWriterImpl
 import net.biomodels.jummp.core.MetadataSavingStrategy
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
@@ -31,7 +31,7 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk> on 12/04/2016.
  */
 class SBMLWriter implements  MetadataSavingStrategy {
-    List<RepositoryFileTransportCommand> marshallAnnotations(RevisionTransportCommand revisionTC,
+    /*List<RepositoryFileTransportCommand> marshallAnnotations(RevisionTransportCommand revisionTC,
                                                              List<StatementTransportCommand> statementTransportCommands,
                                                              boolean isUpdate = false)
         throws UnsupportedOperationException {
@@ -41,5 +41,5 @@ class SBMLWriter implements  MetadataSavingStrategy {
     public MetadataWriterImpl createMetadataWriter(RevisionTransportCommand revisionTC,
                                                    List<StatementTransportCommand> statements){
         return new MetadataWriterImpl()
-    }
+    }*/
 }

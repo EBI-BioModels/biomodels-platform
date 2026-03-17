@@ -66,17 +66,15 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.codehaus.org"
         //mavenRepo "http://download.java.net/maven/2/"
         //mavenRepo "http://repository.jboss.com/maven2/"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4.5-b1")
         compile("net.biomodels.jummp:AnnotationStore:0.3.6") {
             excludes 'slf4j-log4j12'
         }
-        compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
-            excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
-        }
+//        compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
+//            excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
+//        }
         compile("uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.3-SNAPSHOT") {
             excludes 'slf4j-log4j12'
         }

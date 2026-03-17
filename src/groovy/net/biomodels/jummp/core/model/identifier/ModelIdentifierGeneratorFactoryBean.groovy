@@ -66,7 +66,11 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
     ApplicationContext applicationContext
     String initializerBeanName
     boolean shouldComputeRegex
-    RedisService redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
+    /**
+     * IMPORTANT: don't eagerly fetch beans from Holders/mainContext at field init time.
+     * Resolve lazily (or let Spring inject).
+     */
+    RedisService redisService
     /**
      * The configuration settings for this model identifier generator
      */
@@ -82,13 +86,16 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
         this(null, null, false, null)
     }
 
-    ModelIdentifierGeneratorFactoryBean(ConfigObject config,
-            String initializerBeanName,
-            boolean computeRegex, String generatorType) {
-        idSettings = config
-        this.initializerBeanName = Optional.ofNullable(initializerBeanName)
+    ModelIdentifierGeneratorFactoryBean(
+        ConfigObject config,
+        String initializerBeanName,
+        boolean computeRegex, String generatorType
+    ) {
+        this.idSettings = config
+        this.initializerBeanName = Optional
+            .ofNullable(initializerBeanName)
             .orElse(defaultInitializerBeanName)
-        shouldComputeRegex = computeRegex
+        this.shouldComputeRegex = computeRegex
         this.generatorType = generatorType
     }
 
@@ -104,6 +111,11 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
     @Override
     ModelIdentifierGenerator getObject() throws Exception {
         synchronized(this) {
+            if (redisService == null) {
+                redisService = Objects.requireNonNull(applicationContext)
+                    .getBean("redisService", RedisService.class)
+            }
+
             if (!idSettings || idSettings.isEmpty()) {
                 return new NullModelIdentifierGenerator()
             }
@@ -123,8 +135,8 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
             }
             LOGGER.debug("Seed: $seed --- type: $type")
 
-            GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(generatorType,
-                idSettings, seed, shouldComputeRegex)
+            GeneratorDetails details = ModelIdentifierUtils.
+                buildDecoratorsFromSettings(generatorType, idSettings, seed, shouldComputeRegex)
 
             new DMIG(details)
         }

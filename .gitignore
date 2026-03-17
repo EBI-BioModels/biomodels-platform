@@ -77,3 +77,4 @@ wrapper/grails-wrapper.properties
 !backuplog.sh
 !docker-build.sh
 lib/classpath.index
+.envrc

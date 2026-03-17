@@ -191,7 +191,7 @@
 
                 <g:if test="${SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
                 <li class="divider"></li>
-                <li><a href="${g.createLink(controller: 'admin', action: 'dashboard')}"
+                <li><a href="${g.createLink(uri: '/administration/dashboard')}"
                        title="Administration Dashboard"><span class="icon icon-common icon-user-md">&nbsp;</span>Admin
                     Dashboard</a></li>
                 </g:if>

@@ -61,7 +61,7 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
     </div>
     <div class="row">
         <div class="columns small-12 medium-12 large-12">
-            <a class="button" href="${createLink(controller: "admin", action: "dashboard")}">
+            <a class="button" href="${createLink(uri: '/administration/dashboard')}">
                 Admin Dashboard
             </a>
             <a class="button" href="${createLink(controller: "curator", action: "dashboard")}">
