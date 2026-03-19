@@ -876,7 +876,7 @@ Please contact the developers team for support!"""])
             final String FS_SVR_URL = System.getenv().getOrDefault("FS_SVR_URL", DEFAULT_FS_SVR)
             String userParams = "metadata=${biomodelsMetadataAdded.toString()}"
             userParams += "&nolargefiles=${noLargeFiles}"
-            final String serviceURI = "$FS_SVR_URL/create-omex?${userParams}"
+            final String serviceURI = "$FS_SVR_URL/create-omex-via-zip?${userParams}"
             String arrayStr = array.toString()
             LOGGER.debug("ServiceURI: ${serviceURI} - Array: ${arrayStr}")
             filePath = WSF.executePostRequest(serviceURI, arrayStr)
