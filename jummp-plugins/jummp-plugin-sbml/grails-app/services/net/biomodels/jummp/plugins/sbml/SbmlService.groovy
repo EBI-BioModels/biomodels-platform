@@ -65,6 +65,8 @@ import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import java.util.regex.Pattern
+import java.util.Collections
+import java.util.Optional
 
 //import org.sbfc.converter.models.BioPaxModel
 //import org.sbfc.converter.models.OctaveModel
@@ -111,6 +113,22 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
     @SuppressWarnings("GrailsStatelessService")
     /** keys are {@link RevisionTC}s */
     SbmlCache cache = new SbmlCache(100)
+    /**
+     * LRU cache keyed by canonical file path, used by getFileAsValidatedSBMLDocument.
+     * Stores Optional.of(doc) for valid files and Optional.empty() for known failures,
+     * so that even consistently-invalid files skip re-parsing and re-validation on
+     * subsequent calls.
+     */
+    @SuppressWarnings("GrailsStatelessService")
+    private final Map<String, Optional<SBMLDocument>> fileDocumentCache =
+        Collections.synchronizedMap(
+            new LinkedHashMap<String, Optional<SBMLDocument>>(100, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Optional<SBMLDocument>> eldest) {
+                    return size() > 100
+                }
+            }
+        )
 
     void afterPropertiesSet() {
         if (Environment.current == Environment.PRODUCTION) {
@@ -246,9 +264,13 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         tobeAdded
     }
 
-    private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
-        // TODO: we should insert the parsed model into the cache
-        String errorMsg = ""
+    private SBMLDocument getFileAsValidatedSBMLDocument(final File model, List<String> errors) {
+        String cacheKey = "${model.canonicalPath}:${model.lastModified()}"
+        Optional<SBMLDocument> cached = fileDocumentCache.get(cacheKey)
+        if (cached != null) {
+            return cached.orElse(null)
+        }
+        String errorMsg
         SBMLDocument doc
         SBMLReader reader = new SBMLReader()
         try {
@@ -278,6 +300,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
 The consistency check for your model is being ignored."""
             errors.add(errorMsg)
             LOGGER.debug(errorMsg)
+            fileDocumentCache.put(cacheKey, Optional.of(doc))
             return doc
         }
 
@@ -290,7 +313,13 @@ to validate the file ${doc.inspect()}\t${doc.properties}. \
 The system has tried to call the fallback to the SBML offline validator..."""
                     println(errorMsg)
                     LOGGER.error(errorMsg)
-                    CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
+                    try {
+                        CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
+                    } catch (Exception exception) {
+                        LOGGER.error(exception.message)
+                        errors.add(exception.message)
+                        doc = null
+                    }
                 }
                 if (CONSISTENCY_ERRORS > 0) {
                     // search for an error
@@ -305,12 +334,13 @@ The system has tried to call the fallback to the SBML offline validator..."""
                         }
                     }
                 }
-                return doc
             } catch (ConversionException e) {
                 LOGGER.error(e.getMessage(), e)
-                return null
+                doc = null
             }
         }
+        fileDocumentCache.put(cacheKey, Optional.ofNullable(doc))
+        return doc
     }
 
     /**
@@ -364,7 +394,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
         return areAllSbml
     }
 
-    private SBMLDocument getDocumentFromFiles(final List<File> model, final List<String> errors = []) {
+    private SBMLDocument getDocumentFromFiles(final List<File> model, List<String> errors = []) {
         SBMLDocument retval = null
         model.each {
             try {
@@ -380,7 +410,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
     }
 
     @Profiled(tag = "SbmlService.validate")
-    boolean validate(final List<File> model, final List<String> errors) {
+    boolean validate(final List<File> model, List<String> errors) {
         if (!grailsApplication.config.jummp.plugins.sbml.validation) {
             LOGGER.info("Validation for ${model.inspect()} skipped due to configuration option")
             return true
@@ -1256,6 +1286,9 @@ the user has attempted to update an blank value for the name attribute.""")
     MA guessModellingApproach(final File modelFile) {
         List<String> errors = new ArrayList<>()
         SBMLDocument document = getFileAsValidatedSBMLDocument(modelFile, errors)
+        if (!document) {
+            return MA.findByName("other")
+        }
         String rID = modelFile.name
         guessModellingApproachFromSBMLDocument(document, rID)
     }
