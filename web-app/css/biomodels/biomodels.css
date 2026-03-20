@@ -1,3 +1,7 @@
+@media (min-width: 769px) and (max-width: 1400px) {
+    .navbar-toggler, .harburger { display: none !important; }
+    .navbar-collapse, .desktop-menu { display: flex !important; }
+}
 h1 {
     color: #0a0a0a;
 }

@@ -41,7 +41,7 @@
           data-use-basic-styles="true"></div>
      <script defer="defer"
              src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/elixirBanner.js"></script>
-%{--    <g:javascript src="hamburger-debug-script.js" async="async"/>--}%
+    <g:javascript src="hamburger-debug-enhanced.js" async="async"/>
      <style>
          .elixir-ribbon {
              padding: 1rem 0;
