@@ -464,7 +464,9 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
         def queryStr = """\
 from CmsContent where parent.aliasURI = :aliasURI and publishedTo >= :now \
 and publishedFrom is not null and publishedTo is not null order by createdOn desc"""
-        def announcements = CmsContent.executeQuery(queryStr, [aliasURI: 'announcements', now: new Date()], [max: 10])
+        def announcements = CmsContent.executeQuery(
+            queryStr, [aliasURI: 'announcements', now: new Date()], [max: 10]
+        )
         for (def entry : announcements) {
             content.append(entry.content as String)
         }
@@ -473,11 +475,10 @@ and publishedFrom is not null and publishedTo is not null order by createdOn des
 
     void updateLatestAnnouncementsOnRedis() {
         String content = loadLatestAnnouncementsFromDB()
-        if (content) {
-            redisService.doRedisSet("hp-latest-announcements", content)
-        } else {
+        if (!content) {
             LOGGER.debug("Cannot update the latest announcements on Redis because of no active announcements")
         }
+        redisService.doRedisSet("hp-latest-announcements", content)
     }
 
     void refreshStatisticsDataForFeatures() {
@@ -516,6 +517,7 @@ and publishedFrom is not null and publishedTo is not null order by createdOn des
         refreshRecentlyPublishedModelsRedisCache()
         refreshModelOfTheMonthEntryRedisCache()
         refreshDataForNewsWidgetRedisCache()
+        updateLatestAnnouncementsOnRedis()
     }
 
     void updateDataForChartsOnHomePage() {

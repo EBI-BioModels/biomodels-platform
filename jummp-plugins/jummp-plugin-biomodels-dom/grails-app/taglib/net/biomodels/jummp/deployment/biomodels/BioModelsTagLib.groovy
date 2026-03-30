@@ -44,7 +44,6 @@ class BioModelsTagLib {
     def grailsApplication
     def grailsLinkGenerator
     def decorationService
-    def modelDelegateService
     def modelOfTheMonthService
     def tagService
     def p2mService
@@ -57,7 +56,7 @@ class BioModelsTagLib {
      * the {@link ModelOfTheMonth} entry.
      */
     def renderModelOfMonth = { attrs ->
-        Long id = attrs.modelId
+        Long id = attrs.modelId as Long
         if (!id) {
             return
         }
@@ -289,8 +288,7 @@ class BioModelsTagLib {
                     '<a href="' + g.createLink(controller: "model", action: "show", id: id) + '" target="_blank">' + id + '</a>'
                 }.join(", ")
                 String momLink = cmd.formattedURL.substring(8) // remove 'content/'
-                Map entryMap = new LinkedHashMap()
-                entryMap = ["monthName": monthName,
+                Map entryMap = ["monthName": monthName,
                        "models": cmd.associatedModelMap,
                        "links": links, "momLink": momLink,
                        "title": cmd.title,
@@ -307,7 +305,7 @@ class BioModelsTagLib {
         def revision = attrs.revision
         boolean withoutPublication = revision.model?.publication == null
         out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
-        String message = ""
+        String message
         if (withoutPublication) {
             message = "This model has been pre-published upon author's request without reference publication."
         } else {
