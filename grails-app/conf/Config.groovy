@@ -48,6 +48,8 @@ grails.plugin.springsecurity.password.hash.iterations = 1
 grails.plugin.springsecurity.useSessionFixationPrevention = false
 grails.plugin.springsecurity.rejectIfNoRule = true
 grails.plugin.springsecurity.fii.rejectPublicInvocations = false
+grails.plugin.springsecurity.scr.disabled = true  // disable session creation for stateless paths
+grails.plugin.springsecurity.sessionFixationPrevention.alwaysCreateSession = false
 
 Properties jummpProperties = new Properties()
 try {
@@ -470,6 +472,10 @@ grails.plugin.springsecurity.filterChain.chainMap = [
     // '/api/**': 'anonymousAuthenticationFilter,restTokenValidationFilter,restExceptionTranslationFilter,filterInvocationInterceptor',
     '/api/**/**': 'JOINED_FILTERS,-exceptionTranslationFilter,-authenticationProcessingFilter,-securityContextPersistenceFilter,-rememberMeAuthenticationFilter',  // Stateless chain
     '/**': 'JOINED_FILTERS,-restTokenValidationFilter,-restExceptionTranslationFilter'                                                                          // Traditional chain
+    '/css/**': 'none',
+    '/images/**': 'none',
+    '/js/**': 'none',
+    '/fonts/**': 'none'
 ]
 grails.plugin.springsecurity.useSecurityEventListener = true
 
