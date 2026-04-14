@@ -23,6 +23,8 @@
 
 
 package net.biomodels.jummp.webapp
+
+import grails.validation.Validateable
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.Person
 import java.util.regex.Pattern
@@ -31,7 +33,7 @@ import java.util.regex.Matcher
 /**
  * @short Command object for User registration
  */
-@grails.validation.Validateable
+@Validateable
 class RegistrationCommand {
     String username
     String email
@@ -39,11 +41,20 @@ class RegistrationCommand {
     String institution
     String orcid
 
+    // HTML metacharacters that enable XSS/injection attacks
+    private static final String HTML_METACHAR_PATTERN = /.*[<>"';&].*/
+
     static constraints = {
-        username(nullable: false, blank: false, unique: true)
+        username(nullable: false, blank: false, unique: true, matches: /^[a-zA-Z0-9._@\-]+$/)
         email(nullable: false, email: true, blank: false, unique: true)
-        userRealName(nullable: false, blank: false)
-        institution(nullable:true)
+        userRealName(nullable: false, blank: false, validator: { val ->
+            if (val =~ HTML_METACHAR_PATTERN) return 'userRealName.invalid.html'
+            return true
+        })
+        institution(nullable: true, validator: { val ->
+            if (val && val =~ HTML_METACHAR_PATTERN) return 'institution.invalid.html'
+            return true
+        })
         orcid(nullable: true, unique: true, validator: {
         	if (it) {
         		Pattern p = Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)\$")

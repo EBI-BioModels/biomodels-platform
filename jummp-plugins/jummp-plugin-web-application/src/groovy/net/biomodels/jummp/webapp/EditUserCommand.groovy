@@ -57,11 +57,19 @@ class EditUserCommand implements Serializable {
      */
     String options
 
+    private static final String HTML_METACHAR_PATTERN = /.*[<>"';&].*/
+
     static constraints = {
-        username(nullable: false, blank: false)
-        userRealName(nullable: false, blank: false)
+        username(nullable: false, blank: false, matches: /^[a-zA-Z0-9._@\-]+$/)
+        userRealName(nullable: false, blank: false, validator: { val ->
+            if (val =~ HTML_METACHAR_PATTERN) return 'userRealName.invalid.html'
+            return true
+        })
         email(nullable: false, blank: false, email: true)
-        institution(nullable: true)
+        institution(nullable: true, validator: { val ->
+            if (val && val =~ HTML_METACHAR_PATTERN) return 'institution.invalid.html'
+            return true
+        })
         orcid nullable: true, validator: {
             if (it) {
                 Pattern p = Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)\$");
@@ -83,11 +91,12 @@ class EditUserCommand implements Serializable {
 
     EditUserCommand sanitise() {
         EditUserCommand cmd = new EditUserCommand()
-        cmd.username = this.username.decodeHTML()
-        cmd.userRealName = this.userRealName.decodeHTML()
-        cmd.institution = this.institution.decodeHTML()
-        cmd.email = this.email.decodeHTML()
-        cmd.orcid = this.orcid.decodeHTML()
+        cmd.username = this.username?.decodeHTML()?.trim()
+        cmd.userRealName = this.userRealName?.trim()
+        cmd.institution = this.institution?.trim()
+        cmd.email = this.email?.decodeHTML()?.trim()
+        cmd.orcid = this.orcid?.trim()
+        cmd.options = this.options
         cmd
     }
 }
