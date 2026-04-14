@@ -148,11 +148,14 @@ class UsermanagementController extends CommonController {
 
 
     boolean validateUserData(def cmd, def params) {
-        params.username = params.username.decodeHTML()
-        params.email = params.email.decodeHTML()
-        params.userRealName = params.userRealName.decodeHTML()
-        params.institution = params.institution.decodeHTML()
-        params.orcid = params.orcid.decodeHTML()
+        // decodeHTML() decodes HTML entities back to raw chars (e.g. &lt; → <), which
+        // is counterproductive for XSS prevention. Use it only where the client is known
+        // to HTML-encode values; for plain-text fields simply trim whitespace.
+        params.username = params.username?.decodeHTML()?.trim()
+        params.email = params.email?.decodeHTML()?.trim()
+        params.userRealName = params.userRealName?.trim()
+        params.institution = params.institution?.trim()
+        params.orcid = params.orcid?.trim()
         bindData(cmd, params)
         if (!cmd.validate()) {
             cmd.errors?.allErrors?.each {
@@ -235,7 +238,7 @@ class UsermanagementController extends CommonController {
     @Secured(["IS_AUTHENTICATED_FULLY"])
     def update(EditUserCommand cmd) {
         if (!cmd.validate()) {
-            flash.message = "Your provided data are invalid.";
+            flash.message = "Your provided data are invalid."
             render(["message": flash.message, "status": "NOT_OK"] as JSON)
         }
         // 1. Save user's info
@@ -329,7 +332,7 @@ class UsermanagementController extends CommonController {
         if (!username) {
             username = currentUser?.username
         }
-        String msg = ""
+        String msg
         if (!springSecurityService.isLoggedIn() || username != currentUser?.username) {
             msg = "You are viewing the public profile of $username"
         } else {
@@ -359,7 +362,7 @@ class UsermanagementController extends CommonController {
             String username = params.username.decodeHTML()
             boolean succeeded = true
             boolean usernameExists = true
-            String message = ""
+            String message
             if (username) {
                 try {
                     userService.requestPassword(username)
