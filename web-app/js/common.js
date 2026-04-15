@@ -6,7 +6,7 @@
 /**
  * Manipulates the stars-based rating system including a modal form and a strip of five stars
  * which are placed in the footer.
- * Notes: Redesigning the rating system will be effected to the following code. Please pay more
+ * Notes: Redesigning the rating system will be affected to the following code. Please pay more
  * attention once you want to customise it.
  */
 $('#submitButtonRate').prop('disabled', true);
@@ -210,7 +210,7 @@ $('input[name=email]').blur(function() {
 });
 
 $('input[name=orcid]').blur(function() {
-    var orcid = $(this).val().trim();
+    const orcid = $(this).val().trim();
     if (orcid !== currentOrcid) {
         var message = "";
         if (orcid.match(orcidRegExp)) {
@@ -268,7 +268,7 @@ function getTimeStamp() {
 
 /**
  * The following functions are used for manipulating data of an array.
- * These functions do basic operations such get, set, remove or retrieve all values, etc.
+ * These functions do basic operations such as get, set, remove or retrieve all values, etc.
  * These operations are being used in handling data entered by the end users at working on
  * Curation Notes and Model Of The Month pages.
  */
@@ -338,7 +338,7 @@ function convertImageURL2Data(imgURL) {
     return imgData;
 }
 /**
- * Patches the issue of hiding dropdown menu partially. Foundation dropdown menu script adds opens-inner class
+ * Patches the issue of hiding a dropdown menu partially. Foundation dropdown menu script adds opens-inner class
  * improperly causing this problem.
  */
 $('#menu-item-myaccount').on('mouseover', function (event) {
@@ -366,6 +366,67 @@ $("#menuItemFeedback").on("click", function() {
     $(this).addClass("active");
 });
 
+/**
+ * Hamburger menu toggle replaces Foundation 6's ResponsiveToggle plugin.
+ *
+ * Foundation's ResponsiveToggle._update() is bound to changed.zf.mediaquery
+ * and unconditionally hides #biomodels-menu on every mobile breakpoint event,
+ * overwriting any state set by toggleMenu(). This means any layout shift
+ * (dropdown opening, sticky recalculation, virtual keyboard) resets the menu,
+ * causing the hamburger to appear/disappear on each menu item tap.
+ *
+ * The toggle bar visibility on medium+ is handled purely by the CSS class
+ * hide-for-medium (applied in the template), so it is correct at first paint
+ * regardless of JS timing. This IIFE manages #biomodels-menu visibility only.
+ */
+(function () {
+    const $menu = $('#biomodels-menu');
+    // Foundation's medium breakpoint default: 640px
+    const MEDIUM_PX = 640;
+    let menuOpenedByUser = false;
+
+    function isDesktop() {
+        return window.innerWidth >= MEDIUM_PX;
+    }
+
+    function applyState(initial) {
+        if (isDesktop()) {
+            $menu.show();
+            menuOpenedByUser = false;
+        } else if (initial || !menuOpenedByUser) {
+            $menu.hide();
+        }
+    }
+
+    applyState(true);
+
+    $('#biomodels-hamburger').on('click', function () {
+        $menu.toggle();
+        menuOpenedByUser = $menu.is(':visible');
+    });
+
+    // Sync menu visibility on resize (e.g. rotating devices, resizing windows)
+    $(window).on('resize', function () {
+        applyState(false);
+    });
+
+    // Close menu when tapping outside the nav on mobile
+    $(document).on('click', function (e) {
+        if (!isDesktop() &&
+            !$(e.target).closest('#biomodels-menu, #biomodels-toggle-bar').length) {
+            $menu.hide();
+            menuOpenedByUser = false;
+        }
+    });
+}());
+
+/**
+ * Check to see if the given HTML element has the length in the range
+ * @param element The given HTML element such as inputs
+ * @param minLength The minimum length
+ * @param maxLength The maximum length
+ * @param messageHolder The element where the message will be displayed
+ */
 function validateInputLength(element, minLength, maxLength, messageHolder) {
     $(element).on('keydown keyup change', function(){
         const char = $(this).val();
