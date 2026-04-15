@@ -1,6 +1,5 @@
 package net.biomodels.jummp.security
 
-import net.biomodels.jummp.core.UnlockAccountJob
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
@@ -132,7 +131,8 @@ Your account has been locked. Please try to log in again after an hour or contac
         // JobDetail jobDetail = new JobDetailImpl('UnlockAccountJob', 'group1', UnlockAccountJob)
         JobDataMap dataMap = new JobDataMap()
         dataMap.putAsString("userId", userId)
-        JobDetail jobDetail = JobBuilder.newJob(UnlockAccountJob.class)
+        Class unlockJobClass = Class.forName('net.biomodels.jummp.core.UnlockAccountJob')
+        JobDetail jobDetail = JobBuilder.newJob(unlockJobClass as Class<? extends Job>)
                 .withIdentity("unlockAccount")
                 .usingJobData(dataMap)
                 .build()

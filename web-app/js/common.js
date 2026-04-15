@@ -370,7 +370,6 @@ $("#menuItemFeedback").on("click", function() {
 });
 
 /**
-<<<<<<< HEAD
  * Hamburger menu toggle replaces Foundation 6's ResponsiveToggle plugin.
  *
  * Foundation's ResponsiveToggle._update() is bound to changed.zf.mediaquery
