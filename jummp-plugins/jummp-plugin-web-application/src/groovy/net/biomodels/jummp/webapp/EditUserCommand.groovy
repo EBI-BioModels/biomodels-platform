@@ -78,6 +78,7 @@ class EditUserCommand implements Serializable {
             }
             return true
         }
+        options(nullable: true)
     }
 
     /**
