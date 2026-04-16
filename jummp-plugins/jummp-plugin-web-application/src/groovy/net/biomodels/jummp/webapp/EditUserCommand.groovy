@@ -57,7 +57,7 @@ class EditUserCommand implements Serializable {
      */
     String options
 
-    private static final String HTML_METACHAR_PATTERN = /.*[<>"';&].*/
+    private static final String HTML_METACHAR_PATTERN = /.*[<>"&].*/
 
     static constraints = {
         username(nullable: false, blank: false, matches: /^[a-zA-Z0-9._@\-]+$/)
@@ -78,6 +78,7 @@ class EditUserCommand implements Serializable {
             }
             return true
         }
+        options(nullable: true)
     }
 
     /**
@@ -92,10 +93,10 @@ class EditUserCommand implements Serializable {
     EditUserCommand sanitise() {
         EditUserCommand cmd = new EditUserCommand()
         cmd.username = this.username?.decodeHTML()?.trim()
-        cmd.userRealName = this.userRealName?.trim()
-        cmd.institution = this.institution?.trim()
+        cmd.userRealName = this.userRealName?.decodeHTML()?.trim()
+        cmd.institution = this.institution?.decodeHTML()?.trim()
         cmd.email = this.email?.decodeHTML()?.trim()
-        cmd.orcid = this.orcid?.trim()
+        cmd.orcid = this.orcid?.decodeHTML()?.trim()
         cmd.options = this.options
         cmd
     }

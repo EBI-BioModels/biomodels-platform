@@ -1,5 +1,4 @@
-/*global $: false
- */
+/*global $: false, toastr: false*/
 $.jummp.userAdministration = {};
 $.jummp.userAdministration.changeUser = function (userId, field, target) {
     "use strict";
@@ -19,6 +18,7 @@ $.jummp.userAdministration.changeUser = function (userId, field, target) {
 };
 
 $(document).on('click', ".chk-feature", function (e) {
+    e.preventDefault();
     if ($(this).prop("checked")) {
         $(this).attr("checked", true);
     } else {
@@ -113,7 +113,7 @@ $.jummp.userAdministration.editUser = function () {
                 if (data.error) {
                     $.jummp.errorMessage(data.error);
                 } else if (data.success) {
-                    var linkText, divInsertId, tableRow;
+                    let linkText, divInsertId, tableRow;
                     linkText = "";
                     divInsertId = "";
                     if (action === "addRole") {
@@ -130,7 +130,7 @@ $.jummp.userAdministration.editUser = function () {
                 }
             },
             error: (jqXHR) => {
-                toastr.error("An error occured: " + jqXHR.status + " " + jqXHR.statusText);
+                toastr.error("An error occurred: " + jqXHR.status + " " + jqXHR.statusText);
             },
             complete: (jqXHR, status) => {
                 toastr.success("The user update has completed " + status);
@@ -155,7 +155,7 @@ $.jummp.userAdministration.editUser = function () {
             },
             success: function (data) {
                 if (data.error) {
-                    msg = "User could not be updated. Please check the values provided and try again";
+                    msg = "User cannot be updated. Please check the values provided and try again";
                     toastr.error(msg);
                 } else if (data.success) {
                     msg = "User details updated";
@@ -192,7 +192,7 @@ $.jummp.userAdministration.register = function () {
             },
             success: function (data) {
                 if (data.error) {
-                	toastr.error("User could not be created. Please check values provided and try again")
+                	toastr.error("User cannot be created. Please check values provided and try again")
                 } else if (data.success) {
                 	toastr.success("User created successfully")
                 }

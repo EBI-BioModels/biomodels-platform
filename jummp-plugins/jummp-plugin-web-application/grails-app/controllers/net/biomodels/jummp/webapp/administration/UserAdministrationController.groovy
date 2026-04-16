@@ -41,8 +41,11 @@ import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.core.user.RoleNotFoundException
+import net.biomodels.jummp.utils.CommandErrorFormatter as CEF
 import net.biomodels.jummp.webapp.RegistrationCommand
 import net.biomodels.jummp.webapp.EditUserCommand
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * @short Controller for user management.
@@ -55,14 +58,12 @@ import net.biomodels.jummp.webapp.EditUserCommand
  */
 @Secured('ROLE_ADMIN')
 class UserAdministrationController extends CommonController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserAdministrationController.class)
+
     /**
      * Dependency Injection of RemoteUserService
      */
     def userService
-    /**
-     * Dependency Injection of SpringSecurityService
-     */
-    def springSecurityService
 
     /**
      * Default action showing the DataTable markup
@@ -132,7 +133,7 @@ class UserAdministrationController extends CommonController {
     def expireAccount = {
         try {
             def data = [success: userService.expireAccount(params.id as Long,
-                Boolean.parseBoolean(params.value))]
+                Boolean.parseBoolean(params.value as String))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -146,9 +147,10 @@ class UserAdministrationController extends CommonController {
     def expirePassword = {
         try {
             def data = [success: userService.expirePassword(params.id as Long,
-                Boolean.parseBoolean(params.value))]
+                Boolean.parseBoolean(params.value as String))]
             render data as JSON
         } catch (UserNotFoundException e) {
+            LOGGER.error(e.message)
             def data = [error: true, message: e.message]
             render data as JSON
         }
@@ -162,9 +164,11 @@ class UserAdministrationController extends CommonController {
             render(template: "/templates/page", model: [link: g.createLink(action: "show", id: params.id), callback: "loadAdminUserCallback"])
             return
         }*/
-        Map data = [user: userService.getUser(params.id as Long),
-         roles: userService.getAllRoles(),
-         userRoles: userService.getRolesForUser(params.id as Long)] as Map
+        Map data = [
+            user: userService.getUser(params.id as Long),
+            roles: userService.getAllRoles(),
+            userRoles: userService.getRolesForUser(params.id as Long)
+        ] as Map
         data.putAll(COMMON_PROPERTIES)
         return data
     }
@@ -180,9 +184,9 @@ class UserAdministrationController extends CommonController {
             try {
                 userService.addRoleToUser(cmd.userId, cmd.id)
                 data.put("success", "true")
-            } catch (UserNotFoundException e) {
+            } catch (UserNotFoundException ignored) {
                 data.put("error", g.message(code: "user.administration.userRole.error.userNotFound"))
-            } catch (RoleNotFoundException e) {
+            } catch (RoleNotFoundException ignored) {
                 data.put("error", g.message(code: "user.administration.userRole.error.roleNotFound"))
             }
         }
@@ -200,9 +204,9 @@ class UserAdministrationController extends CommonController {
             try {
                 userService.removeRoleFromUser(cmd.userId, cmd.id)
                 data.put("success", "true")
-            } catch (UserNotFoundException e) {
+            } catch (UserNotFoundException ignored) {
                 data.put("error", g.message(code: "user.administration.userRole.error.userNotFound"))
-            } catch (RoleNotFoundException e) {
+            } catch (RoleNotFoundException ignored) {
                 data.put("error", g.message(code: "user.administration.userRole.error.roleNotFound"))
             }
         }
@@ -244,10 +248,11 @@ class UserAdministrationController extends CommonController {
      */
     def editUser = { EditUserCommand cmd ->
         Map data = [:]
-        // the value "&#64;" is HTML decoded of the symbol "@"
-        cmd.email = cmd.email.replace("&#64;", "@")
+        cmd = cmd.sanitise()
         cmd.validate()
         if (cmd.hasErrors()) {
+            String errMsg = CEF.summarise(cmd.errors)
+            LOGGER.error("EditUserCommand validation failed — ${errMsg}")
             data.put("error", true)
             data.put("username", resolveErrorMessage(cmd, "username", "Username"))
             data.put("userRealName", resolveErrorMessage(cmd, "userRealName", "Name"))

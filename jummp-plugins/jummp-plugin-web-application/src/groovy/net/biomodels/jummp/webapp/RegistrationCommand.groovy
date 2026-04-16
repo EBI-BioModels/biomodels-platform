@@ -42,7 +42,7 @@ class RegistrationCommand {
     String orcid
 
     // HTML metacharacters that enable XSS/injection attacks
-    private static final String HTML_METACHAR_PATTERN = /.*[<>"';&].*/
+    private static final String HTML_METACHAR_PATTERN = /.*[<>"&].*/
 
     static constraints = {
         username(nullable: false, blank: false, unique: true, matches: /^[a-zA-Z0-9._@\-]+$/)
