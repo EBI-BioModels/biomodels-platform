@@ -523,7 +523,7 @@ The root cause is ${e.toString()}""")
 
     private List<String> fetchFilesFromRevision(RevisionTC rev, boolean filterMains) {
         if (filterMains) {
-            return rev?.files?.findAll{it.mainFile}.collect{it.path}
+            return rev?.files?.findAll{it.mainFile}?.collect{it.path}
         }
         return rev?.files?.collect{it.path}
     }
@@ -559,7 +559,7 @@ The root cause is ${e.toString()}""")
             'levelVersion' : revision.format.formatVersion,
             'submitter' : revision.owner,
             'submitterUsername' :  revision.model.submitterUsername,
-            'publicationLinkType': revision.model.publication ? revision.model.publication?.linkProvider.linkType : "",
+            'publicationLinkType': revision.model.publication ? revision.model.publication?.linkProvider?.linkType : "",
             'publicationLink': revision.model.publication ? revision.model.publication.link : "",
             'publicationTitle' : revision.model.publication ?
                 revision.model.publication.title  :  "",
@@ -605,7 +605,7 @@ The root cause is ${e.toString()}""")
         // compute the delta b/w facets and immutable facets
         List<FacetValue> facetValues = facets.findAll({ Facet f ->
             !(immutableFacets.contains(f.label))
-        })*.facetValues.flatten().findAll { FacetValue value -> !value.label.contains(' ') }
+        })*.facetValues.flatten().findAll { FacetValue value -> !value.label.contains(' ') } as List<FacetValue>
         Map<String, String> labelsForAccessions = new LinkedHashMap<>(facetValues.size())
         List<String> lstAccessions = facetValues.collect { it.label }
 

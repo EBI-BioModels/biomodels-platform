@@ -144,7 +144,6 @@ class SearchController extends CommonController {
                 prefs.save(flush: true)
             }
         }
-        LOGGER.debug("${user?.username}: Updating the search references.")
         return prefs.numResults
     }
 
