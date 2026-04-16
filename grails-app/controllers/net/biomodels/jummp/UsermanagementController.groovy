@@ -219,6 +219,8 @@ class UsermanagementController extends CommonController {
     def editUser(EditUserCommand cmd) {
         cmd = cmd.sanitise()
         if (!cmd.validate()) {
+            flash.message = cmd.errors.toString()
+            LOGGER.error(cmd.errors.toString())
             return redirect(action: "edit")
         }
         try {

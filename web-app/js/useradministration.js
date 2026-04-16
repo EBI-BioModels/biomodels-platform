@@ -130,10 +130,10 @@ $.jummp.userAdministration.editUser = function () {
                 }
             },
             error: (jqXHR) => {
-                console.log("An error occured: " + jqXHR.status + " " + jqXHR.statusText);
+                toastr.error("An error occured: " + jqXHR.status + " " + jqXHR.statusText);
             },
             complete: (jqXHR, status) => {
-                console.log("The user update has completed " + status);
+                toastr.success("The user update has completed " + status);
             }
         });
     });
@@ -156,20 +156,18 @@ $.jummp.userAdministration.editUser = function () {
             success: function (data) {
                 if (data.error) {
                     msg = "User could not be updated. Please check the values provided and try again";
+                    toastr.error(msg);
                 } else if (data.success) {
                     msg = "User details updated";
+                    toastr.success(msg);
                 }
-                showNotification(msg);
-                toastr.success(msg);
             },
             error: (jqXHR) => {
                 msg = "An error occurred: " + jqXHR.status + " " + jqXHR.statusText;
-                console.log(msg);
                 toastr.error(msg);
             },
             complete: (jqXHR, status) => {
                 msg = "The user update has completed " + status;
-                console.log(msg);
                 toastr.info(msg);
             }
         });
@@ -194,9 +192,9 @@ $.jummp.userAdministration.register = function () {
             },
             success: function (data) {
                 if (data.error) {
-                	showNotification("User could not be created. Please check values provided and try again")
+                	toastr.error("User could not be created. Please check values provided and try again")
                 } else if (data.success) {
-                	showNotification("User created successfully")
+                	toastr.success("User created successfully")
                 }
             }
         });
