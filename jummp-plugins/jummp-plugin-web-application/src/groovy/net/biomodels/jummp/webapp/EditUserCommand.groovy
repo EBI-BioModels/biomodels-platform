@@ -92,10 +92,10 @@ class EditUserCommand implements Serializable {
     EditUserCommand sanitise() {
         EditUserCommand cmd = new EditUserCommand()
         cmd.username = this.username?.decodeHTML()?.trim()
-        cmd.userRealName = this.userRealName?.trim()
-        cmd.institution = this.institution?.trim()
+        cmd.userRealName = this.userRealName?.decodeHTML()?.trim()
+        cmd.institution = this.institution?.decodeHTML()?.trim()
         cmd.email = this.email?.decodeHTML()?.trim()
-        cmd.orcid = this.orcid?.trim()
+        cmd.orcid = this.orcid?.decodeHTML()?.trim()
         cmd.options = this.options
         cmd
     }
