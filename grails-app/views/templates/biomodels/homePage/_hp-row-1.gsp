@@ -1,7 +1,13 @@
 <style type="text/css">
-    svg {
+    /* Scoped to the three D3 chart containers — avoid touching unrelated SVGs on the page */
+    #modellingApproachesChart svg,
+    #organismsChart svg,
+    #journalsChart svg {
+        display: block;
         margin: 0 auto;
-        display: inline-block;
+        width: 100%;
+        height: auto;       /* maintain viewBox aspect ratio responsively */
+        max-height: 520px;  /* cap height so no single slide inflates the column */
     }
     .div-center-content {
         text-align: center;
@@ -9,6 +15,18 @@
     }
     .orbit-bullets button.is-active {
         background-color: #008080;
+    }
+    /*
+     * Before Foundation's Orbit JS initialises, all orbit-slide li elements are
+     * position:static and stacked, inflating the column height and causing a
+     * large white blank below hp-row-1.
+     * Constrain the orbit-container height so the stacked slides never overflow
+     * the column. Foundation's JS is unaffected — it uses position:absolute on
+     * slides and sets the container height itself after init.
+     */
+    #item .orbit-container {
+        max-height: 560px;
+        overflow: hidden;
     }
 </style>
 <script>
@@ -109,7 +127,7 @@
     </div>
 </div>
 
-<div id="item" class="large-4 medium-12 small-12 columns chart-placeholder">
+<div id="item" class="large-4 medium-12 small-12 columns chart-placeholder" style="overflow:hidden;">
     <div id="slide-introduction">
         <div class="homepage_info_box"><h3 id="slide-title"></h3></div>
         <p><span id="slide-description"></span><br/>

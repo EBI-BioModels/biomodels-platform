@@ -1,7 +1,10 @@
 <div id="journalsChart" class="div-center-content"></div>
 <g:javascript>
+    // Limit to the top 40 journals by model count to avoid over-crowding the bubble chart
+    var allJournals = ${journals};
+    allJournals.sort(function(a, b) { return b.value - a.value; });
     var dataset = {
-        'children': ${journals}
+        'children': allJournals.slice(0, 40)
     };
 
     var color = d3
