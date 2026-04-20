@@ -23,7 +23,6 @@
 
 
 class VerifyOtpFilters {
-    def configurationService
     List IGNORED_ACTIONS = [
         "load2fa", "verifyOTP", "generateOTP", "checkTrustDevice", "updateTrustDeviceOnRedis", "toggle2FA"
     ]
@@ -38,7 +37,7 @@ class VerifyOtpFilters {
                             && !IGNORED_ACTIONS.contains(action)
                             && !["notification"].contains(controller)) {
                         redirect(controller: "auth", action: "load2fa")
-                        return
+                        return false // stops the action from executing
                     }
                 }
             }
