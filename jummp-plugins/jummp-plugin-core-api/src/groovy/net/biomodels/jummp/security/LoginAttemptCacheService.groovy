@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.TransactionStatus
 import org.springframework.transaction.support.TransactionCallbackWithoutResult
+import org.springframework.transaction.support.TransactionCallback
 import org.springframework.transaction.support.TransactionTemplate
 
 import javax.annotation.PostConstruct
@@ -45,8 +46,12 @@ class LoginAttemptCacheService {
      * @return
      */
     String failLogin(String login) {
+        if (!userExists(login)) {
+            LOGGER.debug("Failed login attempt for non-existing username: $login")
+            return "<b>Invalid login credentials.</b>"
+        }
+
         def numberOfAttempts = attempts.get(login) as int
-        //def numberOfAttempts = redisService.doRedisHGet("Login-Attempts", login)
         if (!numberOfAttempts) {
             numberOfAttempts = 1
         } else {
@@ -60,24 +65,29 @@ class LoginAttemptCacheService {
             s1 = """You can try again. If no further attempts are made within the next hour, your attempt count \
 will reset to $allowedNumberOfAttempts.<br/>"""
         }
-        String warningMessage = """<b>Invalid login credentials.</b><br/><b>Attempts remaining:</b> 
+        String warningMessage = """<b>Invalid login credentials.</b><br/><b>Attempts remaining:</b> \
 ${remainingAttempts}<br/>\
 ${s1}\
-<b>Warning</b>: After $allowedNumberOfAttempts consecutive failed login attempts, you account will be temporarily \
+<b>Warning</b>: After $allowedNumberOfAttempts consecutive failed login attempts, your account will be temporarily \
 locked."""
 
         if (numberOfAttempts > allowedNumberOfAttempts) {
             blockUser(login)
             attempts.invalidate(login)
-            //redisService.doRedisHDel("Login-Attempts", login)
-            // Notes: the message below is the same as the i18n: springSecurity.errors.login.locked
             warningMessage = "Your account has been locked. Please contact an administrator or try again later."
-
         } else {
             attempts.put(login, numberOfAttempts)
-            //redisService.doRedisHSet("Login-Attempts", login, numberOfAttempts.toString())
         }
         return warningMessage
+    }
+
+    private boolean userExists(String login) {
+        PlatformTransactionManager ptm = grailsApplication.mainContext.getBean(PlatformTransactionManager.class)
+        TransactionTemplate tx = new TransactionTemplate(ptm)
+        tx.readOnly = true
+        return tx.execute({ TransactionStatus status ->
+            User.findByUsername(login) != null
+        } as TransactionCallback)
     }
 
     /**
