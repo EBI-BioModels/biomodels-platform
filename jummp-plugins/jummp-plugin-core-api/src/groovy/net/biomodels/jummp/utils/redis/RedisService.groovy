@@ -111,6 +111,14 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         }
     }
 
+    synchronized static void doRedisDel(final String key) {
+        if (key) {
+            jedisPool.getResource().withCloseable { Jedis jedis ->
+                jedis.del(key)
+            }
+        }
+    }
+
     synchronized static void doRedisHSet(final String key, final String field, final String value) {
         if (value) {
             jedisPool.getResource().withCloseable { Jedis jedis ->
