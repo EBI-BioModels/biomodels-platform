@@ -1,5 +1,7 @@
 <div id="journalsChart" class="div-center-content"></div>
 <g:javascript>
+/* global diameter */
+{
     // Show top 40 journals; aggregate the remainder into a single "Others" bubble
     const allJournals = ${journals};
     allJournals.sort(function(a, b) { return b.value - a.value; });
@@ -72,5 +74,6 @@
         .on("mouseout", function() {
             $itemOnFocus.css("color", "#e2e1e1");
         });
+}
 </g:javascript>
 
