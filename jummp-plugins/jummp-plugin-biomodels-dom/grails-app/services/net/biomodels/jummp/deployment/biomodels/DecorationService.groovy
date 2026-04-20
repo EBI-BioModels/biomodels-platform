@@ -388,9 +388,30 @@ WHERE
 GROUP BY p.id, p.journal
 '''
         def matchedModels = Model.executeQuery(query)
-        Map<String, Integer> publications = new HashMap<>()
+
+        // Accumulate raw counts per exact journal name
+        Map<String, Integer> rawCounts = new HashMap<>()
         matchedModels.each {
-            publications.put(it[1] as String, it[2] as Integer)
+            String journal = (it[1] as String)?.trim()
+            if (journal) {
+                rawCounts[journal] = (rawCounts[journal] ?: 0) + (it[2] as Integer)
+            }
+        }
+
+        // Merge case-insensitive duplicates; pick the variant with the highest count as display name
+        Map<String, Integer> normCounts = new HashMap<>()
+        Map<String, String> normNames = new HashMap<>()
+        rawCounts.each { journal, count ->
+            String key = journal.toLowerCase()
+            normCounts[key] = (normCounts[key] ?: 0) + count
+            if (!normNames.containsKey(key) || count > rawCounts[normNames[key]]) {
+                normNames[key] = journal
+            }
+        }
+
+        Map<String, Integer> publications = new HashMap<>()
+        normCounts.each { key, count ->
+            publications[normNames[key]] = count
         }
         publications
     }
@@ -456,6 +477,7 @@ from CmsContent where parent.aliasURI = :aliasuri order by createdOn desc"""
     private void addStatisticsJournalsToRedis(Map pubsMap) {
         LOGGER.debug("Caching the statistics journals to Redis Server")
         Map pubsRedisMap = convert2RedisMap(pubsMap)
+        redisService.doRedisDel("hp-statistics-journals")
         redisService.doRedisHSet("hp-statistics-journals", pubsRedisMap)
     }
 
