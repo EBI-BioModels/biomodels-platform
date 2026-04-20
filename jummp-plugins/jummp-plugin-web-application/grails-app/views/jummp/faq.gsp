@@ -452,6 +452,8 @@
             <a href="${manualURL}/submission-guidelines/index.html#slide5"
                target="_blank">Model
             Submission guidelines (Slide 5-8)</a></p>
+        <p>For information about account security features such as Two-Factor Authentication (2FA), account lockout
+        policy, and compromised password alerts, see <a href="#account-security-section">Account security</a>.</p>
 
         <h4 id="how-to-submit-a-new-model" class="level3">How to submit a new model?</h4>
 
@@ -1061,6 +1063,61 @@
         software tools do not explicitly list the modifiers contained in the model reactions. A consistency check has been
         implemented to identify missing modifier declarations, and is now applied to all models submitted to BioModels
         Repository. This error should not happen any more.</p>
+    </div>
+</div>
+
+<div class="row">
+    &nbsp;
+</div>
+
+<div id="account-security-section" class="row faq-section-box">
+    <div class="columns small-12 medium-2 large-2">
+        <ol start="9" type="I">
+            <li class="faq_title">Account security
+                <ol class="faq_subheading">
+                    <li><a href="#why-security-changes">Why is BioModels making these security changes?</a></li>
+                    <li><a href="#how-2fa-works">How does the 2FA process work?</a></li>
+                    <li><a href="#trust-device">Will I have to enter a code every time I log in?</a></li>
+                    <li><a href="#account-locked">What should I do if my account gets locked?</a></li>
+                    <li><a href="#compromised-password">What does it mean if I get a "Compromised Password" alert?</a></li>
+                    <li><a href="#authenticator-app">Can I use an Authenticator App instead of email for 2FA?</a></li>
+                </ol>
+            </li>
+        </ol>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <h3 id="why-security-changes">Why is BioModels making these security changes?</h3>
+        <p>Cybersecurity threats like "brute-force" and "credential stuffing" are becoming more sophisticated. These
+        enhancements ensure that your research data and personal information remain protected by industry-standard
+        security protocols.</p>
+
+        <h3 id="how-2fa-works">How does the 2FA process work?</h3>
+        <p>Once you enable 2FA, logging in will require two steps:</p>
+        <ol>
+            <li>Entering your standard username and password.</li>
+            <li>Entering a unique One-Time Password (OTP) sent instantly to your registered email address.</li>
+        </ol>
+        <p>For more information about enabling 2FA and trusted devices, please refer to the
+        <a href="${manualURL}/getting-started-with-biomodels.html#2fa" target="_blank">Getting Started guide</a>.</p>
+
+        <h3 id="trust-device">Will I have to enter a code every time I log in?</h3>
+        <p>Not necessarily. If you are using a secure, private computer, you can select the
+        <strong>Trust this device for 30 days</strong> option during the 2FA step. This will bypass the 2FA
+        requirement on that specific device for one month.</p>
+
+        <h3 id="account-locked">What should I do if my account gets locked?</h3>
+        <p>If you enter the wrong password three times, your account will lock for one hour as a security precaution.
+        The lock will clear automatically after 60 minutes. If it does not clear after an hour, please
+        <a href="contact">contact us</a> for further support.</p>
+
+        <h3 id="compromised-password">What does it mean if I get a "Compromised Password" alert?</h3>
+        <p>This means our system detected that your current password has appeared in a known external data leak.
+        You should change it immediately to a new, unique password. BioModels performs this check at each login and
+        will continue sending alerts until the password is reset.</p>
+
+        <h3 id="authenticator-app">Can I use an Authenticator App instead of email for 2FA?</h3>
+        <p>Currently, BioModels supports OTP codes via email only. We are continuously evaluating additional
+        authentication methods for future updates.</p>
     </div>
 </div>
 <p>&nbsp;</p>
