@@ -34,6 +34,7 @@ import grails.plugin.springsecurity.web.authentication.AjaxAwareAuthenticationSu
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.Authentication
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler
 
 import javax.servlet.ServletException
 import javax.servlet.http.HttpServletRequest
@@ -80,7 +81,7 @@ class BioModelsAuthSuccessHandler extends AAASH {
             String di = request.getParameter("j_deviceInfo")
             Map map = authService.validateTrustDevice(username, di)
             LOGGER.info("$username: ${map["message"]}: ${map["expired"]}")
-            session.enabled2FA = authService.is2FAEnabled(username) && map["expired"]
+            session.setAttribute("enabled2FA", authService.is2FAEnabled(username) && map["expired"])
             super.clearAuthenticationAttributes(request)
             handle(request, response, authentication)
             //super.onAuthenticationSuccess(request, response, authentication)
@@ -96,31 +97,20 @@ class BioModelsAuthSuccessHandler extends AAASH {
         String username = authentication.principal.username as String
         String redirectURL = userService.isAllowedMigrationAWS(username)
         if (redirectURL) {
-            request.session.setMaxInactiveInterval(0)
-            targetUrl = redirectURL
-            def session = request.session
-            if (session.enabled2FA) {
-                username = authentication.principal.username
-                def remoteAddress = authentication.details.remoteAddress
-                def sessionId = authentication.details.sessionId
-                authService.doGenerateOTP(username, remoteAddress, sessionId)
-                redirectStrategy.sendRedirect(request, response, "/auth/two-factor-authentication")
-                return
-            } else if (response.isCommitted()) {
-                logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
-                return
-            }
-            if (response.isCommitted()) {
-                session = request.session
-                if (session.enabled2FA) {
-                    redirectStrategy.sendRedirect(request, response, "/auth/two-factor-authentication")
-                    return
-                } else if (response.isCommitted()) {
-                    logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
-                    return
-                }
-
-            }
+            new SecurityContextLogoutHandler().logout(request, response, authentication)
+            redirectStrategy.sendRedirect(request, response, redirectURL)
+            return
+        }
+        def session = request.getSession()
+        if (session.getAttribute("enabled2FA")) {
+            def remoteAddress = authentication.details.remoteAddress
+            def sessionId = authentication.details.sessionId
+            authService.doGenerateOTP(username, remoteAddress, sessionId)
+            redirectStrategy.sendRedirect(request, response, "/auth/two-factor-authentication")
+            return
+        } else if (response.isCommitted()) {
+            logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
+            return
         }
         redirectStrategy.sendRedirect(request, response, targetUrl)
     }

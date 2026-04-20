@@ -24,7 +24,6 @@
 
 package net.biomodels.jummp.core
 
-import grails.converters.JSON
 import grails.transaction.Transactional
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
@@ -94,7 +93,7 @@ class AuthService implements IAuthService {
                 message = ""
             }
         }
-        if (!devices) {
+        if (devices) {
             Set<String> trustDevices = redisService.doRedisSMembers("trustdevices:$username")
             def parser = new JsonSlurper()
             def json
@@ -107,7 +106,7 @@ class AuthService implements IAuthService {
                 expired = isTrustDeviceExpired(json["cachedDate"] as String)
                 message = "This trust device has ${expired ? 'expired' : 'unexpired yet'}."
             } else {
-                message = "No information about this device."
+                message = "No information about this device"
                 expired = true
             }
         }
@@ -276,7 +275,7 @@ When you sign in on a new or untrusted device, you’ll need your second factor 
 You don’t need your second factor to sign in."""
         }
         String BODY = """\
-<div style="background-color: lightgrey; width: 500px; border: 3px solid green; border-radius: 10x; padding: 20px; 
+<div style="background-color: lightgrey; width: 500px; border: 3px solid green; border-radius: 10x; padding: 20px;
 margin: auto">\
 <p style="text-align: center"><a href="https://www.ebi.ac.uk/biomodels" target="_blank" title="BioModels repository">\
 <img src="https://www.ebi.ac.uk/biomodels/images/biomodels/logo_small.png" alt="BioModels logo"/></a></p>\
@@ -319,7 +318,7 @@ identity.</p>\
 Replies to this email address aren't monitored.<br/>\
 &copy; ${new Date().format("YYYY")} <a href="${BioModels.BM_ROOT_URL}" target="_blank">BioModels</a>, \
 <a href="https://www.ebi.ac.uk/about/teams/molecular-networks/" target="_blank">Molecular Networks Team</a>, \
-<a href="https://www.ebi.ac.uk" target="_blank">EMBL-EBI</a>, 
+<a href="https://www.ebi.ac.uk" target="_blank">EMBL-EBI</a>,
 Wellcome Genome Campus, Hinxton, \
 Cambridgeshire, CB10 1SD, UK. +44 (0)1223 49 44 44.</p>
 """

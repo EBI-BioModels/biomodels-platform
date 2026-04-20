@@ -127,7 +127,7 @@ class AuthController extends CommonController {
         String cachedDate = request.getJSON()["cachedDate"].decodeHTML()
         Map mapTrustDevice = [ipaddr: ipaddr, type: type, userAgent: userAgent, cachedDate: cachedDate]
         boolean checked = request.getJSON()["checked"] as boolean
-        //authService.updateTrustDevice(checked, username, mapTrustDevice)
+        authService.updateTrustDevice(checked, username, mapTrustDevice)
         render([message: "OK"] as JSON)
     }
 
