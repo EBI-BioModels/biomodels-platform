@@ -58,6 +58,19 @@
         text-align: right;
         margin: -4px 0 10px 0;
     }
+
+    #faq-back-to-top {
+        display: none;
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 999;
+        opacity: 0.8;
+    }
+
+    #faq-back-to-top:hover {
+        opacity: 1;
+    }
     </style>
 </head>
 
@@ -1104,6 +1117,7 @@
     </li>
 
 </ul>
+<a id="faq-back-to-top" class="button" href="#">&#8679; Top</a>
 <p>&nbsp;</p>
 <script>
     $(document).ready(function () {
@@ -1113,6 +1127,18 @@
         }
 
         $('#faq-accordion').on('down.zf.accordion up.zf.accordion', updateBtn);
+
+        $(window).on('scroll', function () {
+            if ($(this).scrollTop() > 300) {
+                $('#faq-back-to-top').fadeIn(200);
+            } else {
+                $('#faq-back-to-top').fadeOut(200);
+            }
+        });
+
+        $('#faq-back-to-top').on('click', function () {
+            $('html, body').animate({ scrollTop: 0 }, 300);
+        });
 
         $('#faq-expand-all-btn').on('click', function () {
             var anyOpen = $('#faq-accordion .accordion-item.is-active').length > 0;
