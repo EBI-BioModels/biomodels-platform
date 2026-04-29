@@ -138,7 +138,7 @@ class LoginController extends CommonController {
             }
         }
         LOGGER.debug("${msg} --- Login payload: ${params}: ${session}")
-        if (springSecurityService.isAjax(request)) {
+        if (request.getHeader('X-Requested-With') == 'XMLHttpRequest') {
             render([error: msg] as JSON)
         } else {
             flash.flashMessage = msg
