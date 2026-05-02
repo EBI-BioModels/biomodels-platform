@@ -359,7 +359,7 @@ class UsermanagementController extends CommonController {
     def registration() {
         if (forwardIfReadOnly()) return
         User currentUser = springSecurityService.currentUser
-        if (currentUser) {
+        if (currentUser && !session.enabled2FA) {
             render(action: "profile")
         } else {
             forward(action: "create")
