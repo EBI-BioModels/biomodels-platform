@@ -34,7 +34,7 @@
         <title>Reset Password | BioModels</title>
         <g:render template="/usermanagement/head"/>
         <style>
-        	.verysecure {
+        	.very-secure {
         		visibility:hidden;
         	}
         </style>
