@@ -234,6 +234,13 @@
     }
 %>
 <body class="level2 full-width">
+<g:if test="${session.enabled2FA}">
+    <div style="position:fixed;top:0;left:0;width:100%;background:#f0ad4e;color:#333;text-align:center;padding:10px;font-weight:bold;z-index:9999;">
+        You are not fully logged in &mdash; please check your email for the One-Time Passcode and
+        <a href="${createLink(controller:'auth', action:'load2fa')}" style="color:#333;text-decoration:underline;">complete your verification</a>.
+    </div>
+    <div style="height:41px;"></div>
+</g:if>
 <div id="mainframe">
     <g:render template="/templates/${styleName}/header"/>
     <g:render template="/templates/${styleName}/mainbody"/>
