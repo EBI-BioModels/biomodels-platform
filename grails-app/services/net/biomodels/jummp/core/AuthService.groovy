@@ -256,66 +256,82 @@ further support"""
         }
         String MAIN_TEXT
         if (enabled2FA) {
-            MAIN_TEXT = """\
-<p>Your BioModels account <a href="mailto:${USER.email}">${USER.email}</a> is now protected with 2-Step Verification. \
-When you sign in on a new or untrusted device, you’ll need your second factor to verify your identity.</p>\
-<p>You can <a href="${SVR_URL}/user" target="_blank">review your 2FA settings</a> to make changes.</p>
-"""
-// Don't get locked out!
-// You can add a backup phone or get backup codes to use when you don’t have your second factor with you.
+            MAIN_TEXT = """
+      <p style="margin:0 0 16px;">Your BioModels account <a href="mailto:${USER.email}" style="color:#0F5CB1;">${USER.email}</a> is now protected with Two-Factor Authentication.
+      When you sign in on a new or untrusted device, you will need your second factor to verify your identity.</p>
+      <p style="margin:0 0 16px;">You can <a href="${SVR_URL}/user" style="color:#0F5CB1;">review your 2FA settings</a> at any time to make changes.</p>"""
         } else {
-            MAIN_TEXT = """Your BioModels account is no longer protected with 2-Step Verification. \
-You don’t need your second factor to sign in."""
+            MAIN_TEXT = """
+      <p style="margin:0 0 16px;">Two-Factor Authentication has been disabled on your BioModels account. You will no longer need a second factor to sign in.</p>"""
         }
-        String BODY = """\
-<div style="background-color: lightgrey; width: 500px; border: 3px solid green; border-radius: 10x; padding: 20px;
-margin: auto">\
-<p style="text-align: center"><a href="https://www.ebi.ac.uk/biomodels" target="_blank" title="BioModels repository">\
-<img src="https://www.ebi.ac.uk/biomodels/images/biomodels/logo_small.png" alt="BioModels logo"/></a></p>\
-<p>Hi ${USER.person.userRealName},</p>\
-<hr/> \
-<p>${MAIN_TEXT}</p>\
-<p>If you think you didn't perform this operation, please <a href="mailto:${SENDER}">contact us</a>.</p>\
-<p>Thank you for helping us keep your account secure.</p>\
-<p>Kind regards,<br/><em>The BioModels Team</em></p>\
-<div>\
-<hr/>\
-<p style="font-size: smaller">This is an automatically generated email. \
-Replies to this email address aren't monitored.<br/>\
-&copy; ${new Date().format("YYYY")} <a href="${BioModels.BM_ROOT_URL}" target="_blank">BioModels</a>, \
-<a href="https://www.ebi.ac.uk/about/teams/molecular-networks/" target="_blank">Molecular Networks Team</a>, \
-<a href="https://www.ebi.ac.uk" target="_blank">EMBL-EBI</a>, Wellcome Genome Campus, Hinxton, \
-Cambridgeshire, CB10 1SD, UK. +44 (0)1223 49 44 44.</p>\
+        String BODY = """
+<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
+    <div style="background-color:#ED6B21;height:5px;"></div>
+    <div style="background-color:#072C55;padding:24px 32px 20px;">
+      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+    </div>
+    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+      <p style="margin:0 0 16px;">Dear ${USER.person.userRealName},</p>
+      ${MAIN_TEXT}
+      <p style="margin:0 0 16px;">If you did not perform this action, please <a href="mailto:${SENDER}" style="color:#0F5CB1;">contact us</a> immediately.</p>
+      <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
+        <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">${BioModels.BM_ROOT_URL}</a>
+      </p>
+    </div>
+    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
+    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
+      You are receiving this email because you have an account on
+      <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">BioModels</a>,
+      a repository of mathematical models of biological processes.
+      This is an automatically generated email &mdash; replies are not monitored.<br/><br/>
+      BioModels is maintained by the Laboratory for Systems Medicine,
+      Department of Medicine, Division of Pulmonary &ndash; Systems Medicine,
+      <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" style="color:#0F5CB1;">University of Florida</a>.<br/>
+      &copy; ${new Date().format("YYYY")} University of Florida Health
+    </div>
+  </div>
+</div>
 """
         userService.sendEmail(USER, BODY, SUBJECT)
     }
 
     private void emailOTP(final User USER, final String OTP) {
         final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
-        final String BODY = """\
-<div style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: auto">\
-<p style="text-align: center"><a href="https://www.ebi.ac.uk/biomodels" target="_blank" title="BioModels repository">\
-<img src="https://www.ebi.ac.uk/biomodels/images/biomodels/logo_small.png" alt="BioModels logo"/></a></p>\
-<p>Hi ${USER.person.userRealName},</p>\
-<h3>You're nearly there!</h3>\
-<p>As an added layer of security to your account in BioModels, please use the code below to verify your \
-identity.</p>\
-<h2 style="background-color: grey; text-align: center; font-weight: bold; padding: 20px 0px 20px">$OTP</h2>\
-<p>This code expires in 15 minutes. <b>Don't share it with anyone.</b></p>\
-<p>If you think you didn't request this code, please <a href="mailto:${SENDER}">contact us</a>.</p>\
-<p>Thank you for helping us keep your account secure.</p>\
-<p>Kind regards,<br/><em>The BioModels Team</em></p>\
-<div>\
-<hr/>\
-<p style="font-size: smaller">This is an automatically generated email. \
-Replies to this email address aren't monitored.<br/>\
-&copy; ${new Date().format("YYYY")} <a href="${BioModels.BM_ROOT_URL}" target="_blank">BioModels</a>, \
-<a href="https://www.ebi.ac.uk/about/teams/molecular-networks/" target="_blank">Molecular Networks Team</a>, \
-<a href="https://www.ebi.ac.uk" target="_blank">EMBL-EBI</a>, \
-Wellcome Genome Campus, Hinxton, \
-Cambridgeshire, CB10 1SD, UK. +44 (0)1223 49 44 44.</p>\
-</div>\
-</div>\
+        final String BODY = """
+<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
+    <div style="background-color:#ED6B21;height:5px;"></div>
+    <div style="background-color:#072C55;padding:24px 32px 20px;">
+      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+    </div>
+    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+      <p style="margin:0 0 16px;">Dear ${USER.person.userRealName},</p>
+      <p style="margin:0 0 16px;">As an added layer of security to your BioModels account, please use the verification code below to complete your sign-in.</p>
+      <div style="background-color:#f0f4fa;border-left:4px solid #072C55;padding:20px;margin:0 0 20px;text-align:center;border-radius:0 4px 4px 0;">
+        <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#072C55;">$OTP</div>
+      </div>
+      <p style="margin:0 0 16px;">This code expires in <strong>15 minutes</strong>. <strong>Do not share it with anyone.</strong></p>
+      <p style="margin:0 0 16px;">If you did not request this code, please <a href="mailto:${SENDER}" style="color:#0F5CB1;">contact us</a> immediately.</p>
+      <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
+        <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">${BioModels.BM_ROOT_URL}</a>
+      </p>
+    </div>
+    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
+    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
+      You are receiving this email because you have an account on
+      <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">BioModels</a>,
+      a repository of mathematical models of biological processes.
+      This is an automatically generated email &mdash; replies are not monitored.<br/><br/>
+      BioModels is maintained by the Laboratory for Systems Medicine,
+      Department of Medicine, Division of Pulmonary &ndash; Systems Medicine,
+      <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" style="color:#0F5CB1;">University of Florida</a>.<br/>
+      &copy; ${new Date().format("YYYY")} University of Florida Health
+    </div>
+  </div>
+</div>
 """
         final String SUBJECT = "[BioModels] Your verification code"
         userService.sendEmail(USER, BODY, SUBJECT)
