@@ -162,7 +162,11 @@ caused by ${ntp?.errors?.toString()}""")
             final String emailTo = user.email
             String emailSubject = notification.title
             String emailBody = notification.body
-            sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
+            try {
+                sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
+            } catch (Exception e) {
+                logger.warn("Skipped notification email to ${emailTo}: ${e.message}")
+            }
         }
         if (pref.sendNotification) {
             NU userNotify = new NU(notification: notification, user: user)
@@ -199,7 +203,7 @@ caused by ${ntp?.errors?.toString()}""")
         String emailBody
 
         /* email notification to the curators' mailing list */
-        emailTo = body.emails[0]
+        emailTo = body.emails[0] as String
         if (emailTo) {
             emailSubject = messageSource.getMessage("notification.model.created.emailToCurator.subject",
                 [model.id.toString(), model.submissionId] as String[], null)
@@ -220,19 +224,13 @@ caused by ${ntp?.errors?.toString()}""")
         if (emailTo) {
             emailSubject = messageSource.getMessage("notification.model.created.emailToSubmitter.subject",
                 [model.submissionId] as String[], null)
-            String salutation = ""
-            if (null != submitterRealName) {
-                salutation = submitterRealName
-            } else {
-                salutation = "submitter"
-            }
+            String salutation = submitterRealName ?: "submitter"
             String withPubMsgCode = "notification.model.created.emailToSubmitter.body.withPublicationProvided"
             String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
             String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
             String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
             // embed the instructions about citing BioModels regardless of publication details
-            String askAcknowledgement = noPublicationProvided
-            String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
+            String[] args = [salutation, model.name, model.submissionId, noPublicationProvided, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
             sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
         }
@@ -383,7 +381,7 @@ caused by ${ntp?.errors?.toString()}""")
         String emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
         sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody, emailFrom)
 
-        // send an email to the user to request a citation to BioModels
+        // send an email to the user to request a citation to BioModels (removed)
         (emailFrom, emailTo) = [emailTo, emailFrom]
         emailFrom = grailsApplication.config.jummp.model.curators.mailinglist
         notificationTitle = "biomodels.howtoCiteUs.reminder.title"

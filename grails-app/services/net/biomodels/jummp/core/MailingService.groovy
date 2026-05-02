@@ -24,7 +24,6 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
 /**
  * Unified email dispatch service.
  *
@@ -53,8 +52,14 @@ class MailingService {
     def grailsApplication
     def mailService
 
+    private static final java.util.regex.Pattern VALID_EMAIL = ~/^[^@\s]+@[^@\s]+\.[^@\s]+$/
+
     void send(Map params) {
         String toAddr      = params.to as String
+        if (!toAddr || !(toAddr ==~ VALID_EMAIL)) {
+            LOGGER.warn("Skipping email — invalid recipient address: '${toAddr}'")
+            return
+        }
         String subjectStr  = params.subject as String
         String htmlBody    = params.html as String
         String textBody    = params.text as String
@@ -84,9 +89,11 @@ class MailingService {
         }
     }
 
-    private void sendViaBrevoApi(String toEmail, String body, String subject, String sender,
-                                  String apiKey, boolean isHtml, List bcc, String replyTo) {
-        HttpURLConnection conn = (HttpURLConnection) new URL("https://api.brevo.com/v3/smtp/email").openConnection()
+    private void sendViaBrevoApi(
+        String toEmail, String body, String subject, String sender,
+        String apiKey, boolean isHtml, List bcc, String replyTo) {
+        final String API_URL = "https://api.brevo.com/v3/smtp/email"
+        HttpURLConnection conn = (HttpURLConnection) new URL(API_URL).openConnection()
         conn.setRequestMethod("POST")
         conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
         conn.setRequestProperty("api-key", apiKey)
@@ -104,20 +111,25 @@ class MailingService {
         ]
         if (isHtml) payload.htmlContent = body
         else payload.textContent = body
-        if (bcc) payload.bcc = bcc.collect { [email: it as String] }
+        if (bcc) {
+            payload.bcc = bcc.collect { [email: it as String] } as Serializable
+        }
         if (replyTo) payload.replyTo = [email: replyTo]
 
         conn.outputStream.withWriter("UTF-8") { it.write(new JsonBuilder(payload).toString()) }
         int status = conn.responseCode
         if (status != 201) {
             String errorBody = conn.errorStream?.text ?: "(no error body)"
+            LOGGER.error("An error happened when using Brevo API: ${status}: $errorBody")
             throw new RuntimeException("Brevo API returned HTTP $status: $errorBody")
         }
     }
 
-    private void sendViaSmtp2goApi(String toEmail, String body, String subject, String sender,
-                                    String apiKey, boolean isHtml, List bcc) {
-        HttpURLConnection conn = (HttpURLConnection) new URL("https://api.smtp2go.com/v3/email/send").openConnection()
+    private void sendViaSmtp2goApi(
+        String toEmail, String body, String subject, String sender,
+        String apiKey, boolean isHtml, List bcc) {
+        final String API_URL = "https://api.smtp2go.com/v3/email/send"
+        HttpURLConnection conn = (HttpURLConnection) new URL(API_URL).openConnection()
         conn.setRequestMethod("POST")
         conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
         conn.setDoOutput(true)
@@ -132,7 +144,9 @@ class MailingService {
         ]
         if (isHtml) payload.html_body = body
         else payload.text_body = body
-        if (bcc) payload.bcc = bcc
+        if (bcc) {
+            payload.bcc = bcc as Serializable
+        }
 
         conn.outputStream.withWriter("UTF-8") { it.write(new JsonBuilder(payload).toString()) }
         int status = conn.responseCode
@@ -141,6 +155,7 @@ class MailingService {
         }
         def json = new JsonSlurper().parseText(conn.inputStream.text)
         if (!json?.data || (json.data.succeeded as int) < 1) {
+            LOGGER.error("An error happened when using smtp2go API: ${json?.data?.failures}")
             throw new RuntimeException("smtp2go API: email not sent — ${json?.data?.failures}")
         }
     }
