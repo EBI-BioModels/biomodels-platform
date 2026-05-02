@@ -166,7 +166,9 @@ further support"""
         if (!results.isEmpty()) {
             auth = TFA.get(results.first())
         }
-        String msg
+        // Extract strings eagerly while the Hibernate session is still open
+        final String realName = USER.person.userRealName
+        final String toEmail = USER.email
         if (auth) {
             boolean valid
             use(TimeCategory) {
@@ -176,7 +178,8 @@ further support"""
             }
             if (valid) {
                 LOGGER.info("Reused OTP for username: $username; address: $remoteAddress; session: $sessionId")
-                emailOTP(USER, auth.otp)
+                final String existingOtp = auth.otp
+                Thread.start { emailOTP(realName, toEmail, existingOtp) }
                 return auth.otp
             }
         }
@@ -187,8 +190,8 @@ further support"""
             LOGGER.error("Cannot create a new OTP requested by user $username (sessionId: $sessionId).")
             return ""
         }
-        emailOTP(USER, otp)
-        LOGGER.info("A newly issued OTP: $otp for the user $username")
+        Thread.start { emailOTP(realName, toEmail, otp) }
+        LOGGER.info("OTP email dispatched asynchronously for user $username")
         return otp
     }
 
@@ -297,7 +300,7 @@ further support"""
         userService.sendEmail(USER, BODY, SUBJECT)
     }
 
-    private void emailOTP(final User USER, final String OTP) {
+    private void emailOTP(final String realName, final String toEmail, final String OTP) {
         final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
         final String BODY = """
 <div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
@@ -308,7 +311,7 @@ further support"""
       <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
     </div>
     <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
-      <p style="margin:0 0 16px;">Dear ${USER.person.userRealName},</p>
+      <p style="margin:0 0 16px;">Dear ${realName},</p>
       <p style="margin:0 0 16px;">As an added layer of security to your BioModels account, please use the verification code below to complete your sign-in.</p>
       <div style="background-color:#f0f4fa;border-left:4px solid #072C55;padding:20px;margin:0 0 20px;text-align:center;border-radius:0 4px 4px 0;">
         <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#072C55;">$OTP</div>
@@ -334,6 +337,6 @@ further support"""
 </div>
 """
         final String SUBJECT = "[BioModels] Your verification code"
-        userService.sendEmail(USER, BODY, SUBJECT)
+        userService.sendEmail(toEmail, BODY, SUBJECT)
     }
 }

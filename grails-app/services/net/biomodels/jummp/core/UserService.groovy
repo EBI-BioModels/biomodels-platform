@@ -333,15 +333,18 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     }
 
     void sendEmail(final User USER, final String BODY, final String SUBJECT) {
-        final String TO_EMAIL = USER?.email
         if (USER) {
-            final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
-            mailService.sendMail {
-                to TO_EMAIL
-                from SENDER
-                subject SUBJECT
-                html BODY
-            }
+            sendEmail(USER.email, BODY, SUBJECT)
+        }
+    }
+
+    void sendEmail(final String toEmail, final String BODY, final String SUBJECT) {
+        final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
+        mailService.sendMail {
+            to toEmail
+            from SENDER
+            subject SUBJECT
+            html BODY
         }
     }
 

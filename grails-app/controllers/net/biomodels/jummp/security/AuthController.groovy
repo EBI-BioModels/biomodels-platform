@@ -166,6 +166,7 @@ class AuthController extends CommonController {
         String address = "127.0.0.1"
         String sessionId = session.id
         authService.doGenerateOTP(username, address, sessionId)
+        render([message: "A verification code has been sent to your registered email address."] as JSON)
     }
 
     private static Map toMapDeviceInfo(final String deviceInfo) {
