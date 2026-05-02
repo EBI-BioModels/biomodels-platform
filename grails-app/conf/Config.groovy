@@ -795,7 +795,7 @@ if (pluginsToExclude) {
     grails.plugin.excludes = pluginsToExclude
 }
 
-grails.mails.props=[:]
+grails.mail.props=[:]
 if (!(jummpConfig.jummp.security.mailer.host instanceof ConfigObject)) {
 	grails.mail.host=jummpConfig.jummp.security.mailer.host
 }
@@ -807,19 +807,32 @@ if (!(jummpConfig.jummp.security.mailer.password instanceof ConfigObject)) {
 }
 if (!(jummpConfig.jummp.security.mailer.port instanceof ConfigObject)) {
 	grails.mail.port=jummpConfig.jummp.security.mailer.port
-	grails.mails.props["mail.smtp.socketFactory.port"]=grails.mail.port
 }
 if (!(jummpConfig.jummp.security.mailer.auth instanceof ConfigObject)) {
 	grails.mail.props["mail.smtp.auth"]=jummpConfig.jummp.security.mailer.auth
 }
+if (!(jummpConfig.jummp.security.mailer.ssl instanceof ConfigObject)) {
+	grails.mail.props["mail.smtp.ssl.enable"]=jummpConfig.jummp.security.mailer.ssl
+	grails.mail.props["mail.smtp.ssl.protocols"]="TLSv1.2"
+}
 if (!(jummpConfig.jummp.security.mailer.socketFactory instanceof ConfigObject)) {
+	grails.mail.props["mail.smtp.ssl.enable"]="true"
+	grails.mail.props["mail.smtp.ssl.protocols"]="TLSv1.2"
 	grails.mail.props["mail.smtp.socketFactory.class"]=jummpConfig.jummp.security.mailer.socketFactory
+	grails.mail.props["mail.smtp.socketFactory.port"]=grails.mail.port
 }
 if (!(jummpConfig.jummp.security.mailer.fallback instanceof ConfigObject)) {
 	grails.mail.props["mail.smtp.socketFactory.fallback"]=jummpConfig.jummp.security.mailer.fallback
 }
 if (!(jummpConfig.jummp.security.mailer.tlsrequired instanceof ConfigObject)) {
+	grails.mail.props["mail.smtp.starttls.enable"]=jummpConfig.jummp.security.mailer.tlsrequired
 	grails.mail.props["mail.smtp.starttls.required"]=jummpConfig.jummp.security.mailer.tlsrequired
+}
+grails.mail.props["mail.smtp.connectiontimeout"] = "30000"
+grails.mail.props["mail.smtp.timeout"]           = "30000"
+grails.mail.props["mail.smtp.writetimeout"]      = "30000"
+if (!(jummpConfig.jummp.security.mailer.apiKey instanceof ConfigObject)) {
+	jummp.security.mailer.apiKey = jummpConfig.jummp.security.mailer.apiKey
 }
 
 ConfigObject modelIdentifierSettings = jummpConfig.jummp.model.id

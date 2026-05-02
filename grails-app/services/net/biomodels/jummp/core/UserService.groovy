@@ -35,6 +35,7 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclSid
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.util.Metadata
+import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
@@ -340,11 +341,41 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
 
     void sendEmail(final String toEmail, final String BODY, final String SUBJECT) {
         final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
-        mailService.sendMail {
-            to toEmail
-            from SENDER
-            subject SUBJECT
-            html BODY
+        final def apiKey = grailsApplication.config.jummp.security.mailer.apiKey
+        if (apiKey && !(apiKey instanceof ConfigObject)) {
+            sendViaSmtp2goApi(toEmail, BODY, SUBJECT, SENDER, apiKey as String)
+        } else {
+            mailService.sendMail {
+                to toEmail
+                from SENDER
+                subject SUBJECT
+                html BODY
+            }
+        }
+    }
+
+    private void sendViaSmtp2goApi(String toEmail, String body, String subject, String sender, String apiKey) {
+        HttpURLConnection conn = (HttpURLConnection) new URL("https://api.smtp2go.com/v3/email/send").openConnection()
+        conn.setRequestMethod("POST")
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+        conn.setDoOutput(true)
+        conn.setConnectTimeout(10000)
+        conn.setReadTimeout(30000)
+        String payload = new JsonBuilder([
+            api_key  : apiKey,
+            to       : [toEmail],
+            sender   : sender,
+            subject  : subject,
+            html_body: body
+        ]).toString()
+        conn.outputStream.withWriter("UTF-8") { it.write(payload) }
+        int status = conn.responseCode
+        if (status != 200) {
+            throw new RuntimeException("smtp2go API returned HTTP $status")
+        }
+        def json = new JsonSlurper().parseText(conn.inputStream.text)
+        if (!json?.data || (json.data.succeeded as int) < 1) {
+            throw new RuntimeException("smtp2go API: email not sent — ${json?.data?.failures}")
         }
     }
 
