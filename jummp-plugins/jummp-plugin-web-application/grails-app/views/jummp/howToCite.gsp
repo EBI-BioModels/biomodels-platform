@@ -30,7 +30,7 @@
     <script type="text/javascript">
         function toggleDisplayById(theElementId) {
             const obj = document.getElementById(theElementId);
-            if (obj.className == "") {
+            if (obj.className === "") {
                 obj.className = "hidden";
             } else {
                 obj.className = "";

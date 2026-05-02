@@ -534,7 +534,6 @@ further instructions"""
     private void doEmailAndNotifyWhenChangingPassword(final String username) {
         final User USER = User.findByUsername(username)
         if (USER) {
-            final String link = createLink(controller: "usermanagement", action: "editPassword", absolute: true)
             final String SUBJECT = "[BioModels] Your Password Has Been Updated Successfully"
             final String BODY = """Dear ${USER.person.userRealName},\
 <p>We want to inform you that your password has been successfully changed.</p>\
