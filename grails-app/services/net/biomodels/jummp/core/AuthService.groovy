@@ -311,9 +311,11 @@ identity.</p>\
 Replies to this email address aren't monitored.<br/>\
 &copy; ${new Date().format("YYYY")} <a href="${BioModels.BM_ROOT_URL}" target="_blank">BioModels</a>, \
 <a href="https://www.ebi.ac.uk/about/teams/molecular-networks/" target="_blank">Molecular Networks Team</a>, \
-<a href="https://www.ebi.ac.uk" target="_blank">EMBL-EBI</a>,
+<a href="https://www.ebi.ac.uk" target="_blank">EMBL-EBI</a>, \
 Wellcome Genome Campus, Hinxton, \
-Cambridgeshire, CB10 1SD, UK. +44 (0)1223 49 44 44.</p>
+Cambridgeshire, CB10 1SD, UK. +44 (0)1223 49 44 44.</p>\
+</div>\
+</div>\
 """
         final String SUBJECT = "[BioModels] Your verification code"
         userService.sendEmail(USER, BODY, SUBJECT)
