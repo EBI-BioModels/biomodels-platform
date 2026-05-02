@@ -18,14 +18,35 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-
-
-
+import grails.plugin.springsecurity.annotation.Secured as GrailsSecured
+import org.springframework.security.access.annotation.Secured as SpringSecured
 
 class VerifyOtpFilters {
+    def grailsApplication
+
     List IGNORED_ACTIONS = [
         "load2fa", "verifyOTP", "generateOTP", "checkTrustDevice", "updateTrustDeviceOnRedis", "toggle2FA"
     ]
+
+    private static final List PUBLIC_RULES = [
+        'permitAll', 'IS_AUTHENTICATED_ANONYMOUSLY'
+    ]
+
+    private boolean isPublicAction(String controllerName, String actionName) {
+        def artifact = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
+        if (!artifact) return true // unknown controller; Spring Security's own rules apply
+
+        Class clazz = artifact.clazz
+        def method = clazz.methods.find { it.name == actionName }
+        def annotation = method?.getAnnotation(GrailsSecured) ?:
+                         method?.getAnnotation(SpringSecured) ?:
+                         clazz.getAnnotation(GrailsSecured) ?:
+                         clazz.getAnnotation(SpringSecured)
+
+        if (!annotation) return true // no @Secured annotation; defer to Spring Security
+        return annotation.value().any { it in PUBLIC_RULES }
+    }
+
     def filters = {
         verifyOTP(controller:'*', action:'*') {
             before = {
@@ -36,17 +57,15 @@ class VerifyOtpFilters {
                             && !action.contains("error")
                             && !IGNORED_ACTIONS.contains(action)
                             && !["notification"].contains(controller)) {
-                        redirect(controller: "auth", action: "load2fa")
-                        return false // stops the action from executing
+                        if (!isPublicAction(controller, action)) {
+                            redirect(controller: "auth", action: "load2fa")
+                            return false
+                        }
                     }
                 }
             }
-            after = { Map model ->
-                //println model?.dump()
-            }
-            afterView = { Exception e ->
-                //println e
-            }
+            after = { Map model -> }
+            afterView = { Exception e -> }
         }
     }
 }
