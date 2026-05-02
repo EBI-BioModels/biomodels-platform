@@ -58,7 +58,6 @@ class ReviewerAccountService extends UserService implements InitializingBean {
     static private final Logger LOGGER = LoggerFactory.getLogger(ReviewerAccountService.class)
     def ms = Holders.grailsApplication.mainContext.modelService
     def sss = Holders.grailsApplication.mainContext.springSecurityService
-    def mailService = Holders.grailsApplication.mainContext.mailService
 
     User createReviewerUser(final String name, final String password) {
         Person p = new Person(userRealName: name).save()
@@ -129,15 +128,9 @@ ${serverURL}/${modelsToReview}</a></p>
         String emailBody = message
         String emailSubject = "Reviewer account for your model ${modelsToReview}"
         def currentUser = sss.currentUser
-        def bccRecipients = [grailsApplication.config.jummp.security.registration.email.adminAddress].toArray()
-        def sender = grailsApplication.config.jummp.security.registration.email.sender
-        mailService.sendMail {
-            to currentUser.email
-            bcc bccRecipients
-            from sender
-            subject emailSubject
-            html emailBody
-        }
+        def bccRecipients = [grailsApplication.config.jummp.security.registration.email.adminAddress as String]
+        mailingService.send([to: currentUser.email, subject: emailSubject, html: emailBody,
+                             bcc: bccRecipients])
         return message
     }
 

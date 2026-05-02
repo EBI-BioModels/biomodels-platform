@@ -58,7 +58,7 @@ class SubmissionController extends CommonController implements InitializingBean 
     def fileSystemService
     def grailsApplication
     def groovyPageRenderer
-    def mailService
+    def mailingService
     def messageSource
     def modelFileFormatService
     def modelDelegateService
@@ -590,12 +590,9 @@ data type and accession from the URI.""")
         println(submissionLog.text) // sending the logs to the stdout is used for K8s ELK
 
         submissionService.cleanup(working)
-        mailService.sendMail {
-            to grailsApplication.config.jummp.security.registration.email.adminAddress
-            from grailsApplication.config.jummp.security.registration.email.sender
-            subject "Bug in submission: ${ticket}"
-            body "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"
-        }
+        mailingService.send([to: grailsApplication.config.jummp.security.registration.email.adminAddress as String,
+                             subject: "Bug in submission: ${ticket}",
+                             text: "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"])
     }
 
     private Map rebuildSubmissionData() {

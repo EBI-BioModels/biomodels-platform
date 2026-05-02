@@ -64,7 +64,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 class NotificationService implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(NotificationService.class)
     def grailsApplication
-    def mailService
+    def mailingService
     def springSecurityService
     def messageSource
 
@@ -73,24 +73,8 @@ class NotificationService implements InitializingBean {
     void sendConfirmationOrNotificationEmail(final String emailFrom, final String emailTo,
                                              final String emailSubject, final String emailBody,
                                              final String emailReplyTo = null) {
-        if (emailReplyTo) {
-            mailService.sendMail {
-                async true
-                to emailTo
-                from emailFrom
-                replyTo emailReplyTo
-                subject emailSubject
-                html emailBody
-            }
-        } else {
-            mailService.sendMail {
-                async true
-                to emailTo
-                from emailFrom
-                subject emailSubject
-                html emailBody
-            }
-        }
+        mailingService.send([to: emailTo, from: emailFrom, subject: emailSubject,
+                             html: emailBody, replyTo: emailReplyTo ?: null])
     }
 
     void useGenericNotificationStructure(String notificationTitle,

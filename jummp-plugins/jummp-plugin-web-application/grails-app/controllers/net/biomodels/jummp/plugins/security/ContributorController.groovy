@@ -49,7 +49,7 @@ class ContributorController extends CommonController {
     def userService
     def modelDelegateService
     def modelService
-    def mailService
+    def mailingService
     def contributorService
 
     private final Random random = new Random(System.currentTimeMillis())
@@ -317,12 +317,8 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         // 2. Send an email having instructions to the invited contributor
         String htmlBasedContent = g.render(template: "/contributor/inviteEmailTemplate",
             plugin: "jummp-plugin-web-application", model: result)
-        mailService.sendMail {
-            to inviteeEmail
-            from inviterEmail
-            subject subjectLine
-            html htmlBasedContent
-        }
+        mailingService.send([to: inviteeEmail, subject: subjectLine,
+                             html: htmlBasedContent, replyTo: inviterEmail])
 
         LOGGER.debug(msg)
         println(msg)

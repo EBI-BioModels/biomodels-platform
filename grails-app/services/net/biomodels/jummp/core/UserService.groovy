@@ -35,7 +35,6 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclSid
 import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.util.Metadata
-import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
@@ -78,7 +77,7 @@ import java.nio.file.Paths
 class UserService implements IUserService, InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class)
     def springSecurityService
-    def mailService
+    def mailingService
     @SuppressWarnings("GrailsStatelessService")
     def grailsApplication
     def grailsLinkGenerator
@@ -340,76 +339,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     }
 
     void sendEmail(final String toEmail, final String BODY, final String SUBJECT) {
-        final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
-        final def brevoApiKey = grailsApplication.config.jummp.security.mailer.brevoApiKey
-        final def smtp2goApiKey = grailsApplication.config.jummp.security.mailer.apiKey
-        if (brevoApiKey && !(brevoApiKey instanceof ConfigObject)) {
-            sendViaBrevoApi(toEmail, BODY, SUBJECT, SENDER, brevoApiKey as String)
-        } else if (smtp2goApiKey && !(smtp2goApiKey instanceof ConfigObject)) {
-            sendViaSmtp2goApi(toEmail, BODY, SUBJECT, SENDER, smtp2goApiKey as String)
-        } else {
-            mailService.sendMail {
-                to toEmail
-                from SENDER
-                subject SUBJECT
-                html BODY
-            }
-        }
-    }
-
-    private void sendViaBrevoApi(String toEmail, String body, String subject, String sender, String apiKey) {
-        HttpURLConnection conn = (HttpURLConnection) new URL("https://api.brevo.com/v3/smtp/email").openConnection()
-        conn.setRequestMethod("POST")
-        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-        conn.setRequestProperty("api-key", apiKey)
-        conn.setDoOutput(true)
-        conn.setConnectTimeout(10000)
-        conn.setReadTimeout(30000)
-        // Parse "Display Name<email@example.com>" into separate name and email fields
-        Map senderMap
-        def match = sender =~ /^(.+?)\s*<([^>]+)>$/
-        if (match) {
-            senderMap = [name: match[0][1].trim(), email: match[0][2].trim()]
-        } else {
-            senderMap = [email: sender.trim()]
-        }
-        String payload = new JsonBuilder([
-            sender     : senderMap,
-            to         : [[email: toEmail]],
-            subject    : subject,
-            htmlContent: body
-        ]).toString()
-        conn.outputStream.withWriter("UTF-8") { it.write(payload) }
-        int status = conn.responseCode
-        if (status != 201) {
-            String errorBody = conn.errorStream?.text ?: "(no error body)"
-            throw new RuntimeException("Brevo API returned HTTP $status: $errorBody")
-        }
-    }
-
-    private void sendViaSmtp2goApi(String toEmail, String body, String subject, String sender, String apiKey) {
-        HttpURLConnection conn = (HttpURLConnection) new URL("https://api.smtp2go.com/v3/email/send").openConnection()
-        conn.setRequestMethod("POST")
-        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
-        conn.setDoOutput(true)
-        conn.setConnectTimeout(10000)
-        conn.setReadTimeout(30000)
-        String payload = new JsonBuilder([
-            api_key  : apiKey,
-            to       : [toEmail],
-            sender   : sender,
-            subject  : subject,
-            html_body: body
-        ]).toString()
-        conn.outputStream.withWriter("UTF-8") { it.write(payload) }
-        int status = conn.responseCode
-        if (status != 200) {
-            throw new RuntimeException("smtp2go API returned HTTP $status")
-        }
-        def json = new JsonSlurper().parseText(conn.inputStream.text)
-        if (!json?.data || (json.data.succeeded as int) < 1) {
-            throw new RuntimeException("smtp2go API: email not sent — ${json?.data?.failures}")
-        }
+        mailingService.send([to: toEmail, subject: SUBJECT, html: BODY])
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -620,16 +550,9 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
                 webURL = "http://localhost:8080/${Metadata.current.'app.name'}"
             }
             emailBody = emailBody.replace("{{WEBURL}}", webURL)
-            String fromRecipient = grailsApplication.config.jummp.security.registration.email.sender
-            mailService.sendMail {
-                to recipient
-                if (bccRecipients) {
-                    bcc bccRecipients
-                }
-                from fromRecipient
-                subject emailSubject
-                text emailBody
-            }
+            String fromRecipient = grailsApplication.config.jummp.security.registration.email.sender as String
+            mailingService.send([to: recipient, from: fromRecipient, subject: emailSubject,
+                                 text: emailBody, bcc: bccRecipients ?: null])
         }
         return User.findByUsername(user.username).id
     }
@@ -735,12 +658,9 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         emailBody = emailBody.replace("{{USERNAME}}", user.username)
         emailBody = emailBody.replace("{{URL}}", url)
         emailBody = emailBody.replace("{{WEBSITE}}", website)
-        mailService.sendMail {
-                to recipient
-                from grailsApplication.config.jummp.security.registration.email.sender
-                subject grailsApplication.config.jummp.security.resetPassword.email.subject
-                text emailBody
-        }
+        mailingService.send([to: recipient,
+                             subject: grailsApplication.config.jummp.security.resetPassword.email.subject as String,
+                             text: emailBody])
     }
 
     @PostLogging(LoggingEventType.UPDATE)
