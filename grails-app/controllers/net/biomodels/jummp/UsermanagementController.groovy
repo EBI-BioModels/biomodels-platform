@@ -363,7 +363,6 @@ class UsermanagementController extends CommonController {
             render(action: "profile")
         } else {
             forward(action: "create")
-            return
         }
     }
 
