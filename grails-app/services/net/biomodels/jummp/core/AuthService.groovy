@@ -175,17 +175,13 @@ further support"""
                 valid = duration.minutes*60 + duration.seconds < 15*60
             }
             if (valid) {
-                msg = "Reused the OTP ${auth.otp} for username: $username; address: $remoteAddress; session: $sessionId"
-                println(msg)
-                LOGGER.info(msg)
+                LOGGER.info("Reused OTP for username: $username; address: $remoteAddress; session: $sessionId")
                 emailOTP(USER, auth.otp)
                 return auth.otp
             }
         }
         String otp = MathUtils.generatePassword('0123456789', 6)
-        msg = "Created a new OTP $otp for username: $username; address: $remoteAddress; session: $sessionId"
-        println(msg)
-        LOGGER.info(msg)
+        LOGGER.info("Created new OTP for username: $username; address: $remoteAddress; session: $sessionId")
         auth = new TFA(user: USER, sessionId: sessionId, otp: otp, issuedDate: new Date())
         if (!auth.save(flush: true)) {
             LOGGER.error("Cannot create a new OTP requested by user $username (sessionId: $sessionId).")
@@ -198,12 +194,10 @@ further support"""
 
     @Override
     Map doVerifyOTP(final String username, final String otp, final String sessionId) {
-        String msg = "Verifying the OTP $otp for the user $username at the session $sessionId"
-        LOGGER.info(msg)
+        LOGGER.info("Verifying OTP for user: $username at session: $sessionId")
         List<TFA> results = findAll(username, otp, sessionId)
         if (results.isEmpty()) {
-            msg = "Cannot find any match for OTP $otp provided by the user $username at the ssession $sessionId"
-            LOGGER.debug(msg)
+            LOGGER.debug("No OTP match for user: $username at session: $sessionId")
             return [matched: false, cause: "OTP mismatch. Try again or request a new one."]
         }
         TFA first = results?.first()
@@ -221,8 +215,7 @@ further support"""
             }
             return [matched: valid]
         } else {
-            msg = "Cannot find any match for OTP $otp provided by the user $username at the ssession $sessionId"
-            LOGGER.debug(msg)
+            LOGGER.debug("No OTP match for user: $username at session: $sessionId")
             return [matched: false, cause: "OTP doesn't exist. Check it in your email again."]
         }
     }
@@ -322,7 +315,7 @@ Replies to this email address aren't monitored.<br/>\
 Wellcome Genome Campus, Hinxton, \
 Cambridgeshire, CB10 1SD, UK. +44 (0)1223 49 44 44.</p>
 """
-        final String SUBJECT = "[BioModels] $OTP is your verification code"
+        final String SUBJECT = "[BioModels] Your verification code"
         userService.sendEmail(USER, BODY, SUBJECT)
     }
 }
