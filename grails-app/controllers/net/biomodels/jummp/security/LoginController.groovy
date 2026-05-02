@@ -82,10 +82,7 @@ class LoginController extends CommonController {
         def config = SpringSecurityUtils.securityConfig
 
         if (session.enabled2FA) {
-            session.removeAttribute("enabled2FA")
-            request.logout()
-            render(controller: "login", action: "auth")
-            //render(uri: "/auth/two-factor-authentication")
+            redirect(controller: "auth", action: "load2fa")
             return
         } else if (springSecurityService.isLoggedIn()) {
             forward uri: config.successHandler.defaultTargetUrl
