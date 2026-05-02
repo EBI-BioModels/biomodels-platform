@@ -834,6 +834,9 @@ grails.mail.props["mail.smtp.writetimeout"]      = "30000"
 if (!(jummpConfig.jummp.security.mailer.apiKey instanceof ConfigObject)) {
 	jummp.security.mailer.apiKey = jummpConfig.jummp.security.mailer.apiKey
 }
+if (!(jummpConfig.jummp.security.mailer.brevoApiKey instanceof ConfigObject)) {
+	jummp.security.mailer.brevoApiKey = jummpConfig.jummp.security.mailer.brevoApiKey
+}
 
 ConfigObject modelIdentifierSettings = jummpConfig.jummp.model.id
 if (!modelIdentifierSettings) {

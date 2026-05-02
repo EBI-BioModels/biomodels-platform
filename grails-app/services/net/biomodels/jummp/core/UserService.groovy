@@ -341,9 +341,12 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
 
     void sendEmail(final String toEmail, final String BODY, final String SUBJECT) {
         final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
-        final def apiKey = grailsApplication.config.jummp.security.mailer.apiKey
-        if (apiKey && !(apiKey instanceof ConfigObject)) {
-            sendViaSmtp2goApi(toEmail, BODY, SUBJECT, SENDER, apiKey as String)
+        final def brevoApiKey = grailsApplication.config.jummp.security.mailer.brevoApiKey
+        final def smtp2goApiKey = grailsApplication.config.jummp.security.mailer.apiKey
+        if (brevoApiKey && !(brevoApiKey instanceof ConfigObject)) {
+            sendViaBrevoApi(toEmail, BODY, SUBJECT, SENDER, brevoApiKey as String)
+        } else if (smtp2goApiKey && !(smtp2goApiKey instanceof ConfigObject)) {
+            sendViaSmtp2goApi(toEmail, BODY, SUBJECT, SENDER, smtp2goApiKey as String)
         } else {
             mailService.sendMail {
                 to toEmail
@@ -351,6 +354,36 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
                 subject SUBJECT
                 html BODY
             }
+        }
+    }
+
+    private void sendViaBrevoApi(String toEmail, String body, String subject, String sender, String apiKey) {
+        HttpURLConnection conn = (HttpURLConnection) new URL("https://api.brevo.com/v3/smtp/email").openConnection()
+        conn.setRequestMethod("POST")
+        conn.setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+        conn.setRequestProperty("api-key", apiKey)
+        conn.setDoOutput(true)
+        conn.setConnectTimeout(10000)
+        conn.setReadTimeout(30000)
+        // Parse "Display Name<email@example.com>" into separate name and email fields
+        Map senderMap
+        def match = sender =~ /^(.+?)\s*<([^>]+)>$/
+        if (match) {
+            senderMap = [name: match[0][1].trim(), email: match[0][2].trim()]
+        } else {
+            senderMap = [email: sender.trim()]
+        }
+        String payload = new JsonBuilder([
+            sender     : senderMap,
+            to         : [[email: toEmail]],
+            subject    : subject,
+            htmlContent: body
+        ]).toString()
+        conn.outputStream.withWriter("UTF-8") { it.write(payload) }
+        int status = conn.responseCode
+        if (status != 201) {
+            String errorBody = conn.errorStream?.text ?: "(no error body)"
+            throw new RuntimeException("Brevo API returned HTTP $status: $errorBody")
         }
     }
 
