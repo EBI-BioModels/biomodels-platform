@@ -43,15 +43,20 @@
         .otp-field input::-webkit-outer-spin-button {
             display: none;
         }
+        .mfa-box {
+            background-color: lightgrey;
+            border: 3px solid green;
+            padding: 20px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 
 <body>
 <div class="row">
-    <div class="small-12 medium-6 large-6 columns large-centered medium-centered"
-         style="background-color: lightgrey; width: 500px; border: 3px solid green; padding: 20px; margin: auto">
-        <div class='fheader'>
-        <h2 class="green" style="text-align: center">Two-Factor Authentication<br/>(aka. OTP Verification)</h2>
+    <div class="small-12 medium-6 large-6 columns large-centered medium-centered mfa-box">
+        <div class="fheader">
+        <h2 class="green" style="text-align: center">Two-Factor Authentication<br/>(OTP Verification)</h2>
         <p>Please enter the One-Time Passcode (OTP) sent to your registered email to complete your verification.<br/>
             <em>The code expires after 15
             minutes and will no longer work if it was already entered for this account.</em>
@@ -108,7 +113,7 @@
                 deviceInfo: deviceInfo
             }
         }).success(function(data) {
-            console.log(data["message"]);
+            // console.log(data["message"]);
             if (!data["isTrustDeviceExpired"]) {
                 $("#div-trust-device").remove();
             } else {
@@ -122,16 +127,29 @@
     })();
 
     // https://codepen.io/tnguyenv/pen/JodvWZy
-    $(".textcode").on("change keyup", function() {
+    const $textCode = $(".textcode");
+    $textCode.on("focus", function() {
+        $(this).select();
+    });
+
+    $textCode.on("keydown", function(e) {
+        if (e.key === "Backspace" && $(this).val() === "") {
+            const idx = parseInt(this.id.replace("digit", ""));
+            if (idx > 1) $("#digit" + (idx - 1)).focus();
+        }
+    });
+
+    $textCode.on("input", function() {
         if (this.value.length === this.maxLength) {
-            let next = $(this).data('next');
-            $('#digit' + next).focus();
+            const next = $(this).data('next');
+            const idx = parseInt(this.id.replace("digit", ""));
+            if (next > idx) $("#digit" + next).focus();
         }
     });
 
     $("#verify").on("click", function() {
         let otp = "";
-        $(".textcode").each(function(i, obj) {
+        $textCode.each(function(i, obj) {
             otp += $(obj).val();
         });
         const isTrustDeviceChecked = $("#chkTrustDevice").is(":checked");
@@ -241,8 +259,7 @@
         const ua = navigator.userAgent;
         if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
             return "tablet";
-        }
-        else if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+        } else if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
             return "mobile";
         }
         return "desktop";
