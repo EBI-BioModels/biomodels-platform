@@ -66,6 +66,10 @@ class MailingService {
         String fromAddr    = (params.from ?: grailsApplication.config.jummp.security.registration.email.sender) as String
         List   bccList     = params.bcc ? [params.bcc].flatten() as List<String> : null
         String replyToAddr = params.replyTo as String
+        if (replyToAddr && !(replyToAddr ==~ VALID_EMAIL)) {
+            LOGGER.warn("Dropping invalid replyTo address: '${replyToAddr}'")
+            replyToAddr = null
+        }
 
         def brevoKey   = grailsApplication.config.jummp.security.mailer.brevoApiKey
         def smtp2goKey = grailsApplication.config.jummp.security.mailer.apiKey
