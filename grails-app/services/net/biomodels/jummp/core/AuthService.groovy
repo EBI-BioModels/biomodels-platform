@@ -252,21 +252,21 @@ further support"""
     void emailWhenToggle2FA(final User USER, final boolean enabled2FA) {
         final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
         final String SVR_URL = grailsApplication.config.grails.serverURL
-        String SUBJECT = "[BioModels] Two-Factor Authentication turned"
-        if (enabled2FA) {
-            SUBJECT = "$SUBJECT on"
-        } else {
-            SUBJECT = "$SUBJECT off"
-        }
+        String SUBJECT = enabled2FA
+            ? "[BioModels] Two-Factor Authentication Enabled"
+            : "[BioModels] Two-Factor Authentication Disabled"
         String MAIN_TEXT
         if (enabled2FA) {
             MAIN_TEXT = """
-      <p style="margin:0 0 16px;">Your BioModels account <a href="mailto:${USER.email}" style="color:#0F5CB1;">${USER.email}</a> is now protected with Two-Factor Authentication.
-      When you sign in on a new or untrusted device, you will need your second factor to verify your identity.</p>
-      <p style="margin:0 0 16px;">You can <a href="${SVR_URL}/user" style="color:#0F5CB1;">review your 2FA settings</a> at any time to make changes.</p>"""
+      <p style="margin:0 0 16px;">Two-Factor Authentication has been enabled on your BioModels account
+      (<a href="mailto:${USER.email}" style="color:#0F5CB1;">${USER.email}</a>).
+      Each time you sign in from a new or unrecognised device, you will be prompted to verify your identity
+      with a one-time code sent to your registered email address.</p>
+      <p style="margin:0 0 16px;">You can <a href="${SVR_URL}/user" style="color:#0F5CB1;">review or update your 2FA settings</a> at any time from your profile.</p>"""
         } else {
             MAIN_TEXT = """
-      <p style="margin:0 0 16px;">Two-Factor Authentication has been disabled on your BioModels account. You will no longer need a second factor to sign in.</p>"""
+      <p style="margin:0 0 16px;">Two-Factor Authentication has been disabled on your BioModels account. You can now sign in using your username and password only.</p>
+      <p style="margin:0 0 16px;">If you change your mind, you can <a href="${SVR_URL}/user" style="color:#0F5CB1;">re-enable 2FA</a> from your profile at any time.</p>"""
         }
         String BODY = """
 <div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
@@ -279,7 +279,7 @@ further support"""
     <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
       <p style="margin:0 0 16px;">Dear ${USER.person.userRealName},</p>
       ${MAIN_TEXT}
-      <p style="margin:0 0 16px;">If you did not perform this action, please <a href="mailto:${SENDER}" style="color:#0F5CB1;">contact us</a> immediately.</p>
+      <p style="margin:0 0 16px;">If you did not make this change, please <a href="mailto:${SENDER}" style="color:#0F5CB1;">contact us</a> immediately, as your account may be at risk.</p>
       <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
         <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">${BioModels.BM_ROOT_URL}</a>
       </p>
@@ -313,12 +313,12 @@ further support"""
     </div>
     <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
       <p style="margin:0 0 16px;">Dear ${realName},</p>
-      <p style="margin:0 0 16px;">As an added layer of security to your BioModels account, please use the verification code below to complete your sign-in.</p>
+      <p style="margin:0 0 16px;">We received a request to verify your identity on your BioModels account. Please use the code below to complete your request.</p>
       <div style="background-color:#f0f4fa;border-left:4px solid #072C55;padding:20px;margin:0 0 20px;text-align:center;border-radius:0 4px 4px 0;">
         <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#072C55;">$OTP</div>
       </div>
-      <p style="margin:0 0 16px;">This code expires in <strong>15 minutes</strong>. <strong>Do not share it with anyone.</strong></p>
-      <p style="margin:0 0 16px;">If you did not request this code, please <a href="mailto:${CONTACT}" style="color:#0F5CB1;">contact us</a> immediately.</p>
+      <p style="margin:0 0 16px;">This code is valid for <strong>15 minutes</strong>. For your security, do not share it with anyone, including BioModels staff.</p>
+      <p style="margin:0 0 16px;">If you did not request this code, please <a href="mailto:${CONTACT}" style="color:#0F5CB1;">contact us</a> immediately, as your account may be at risk.</p>
       <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
         <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">${BioModels.BM_ROOT_URL}</a>
       </p>
@@ -337,7 +337,7 @@ further support"""
   </div>
 </div>
 """
-        final String SUBJECT = "[BioModels] Your verification code"
+        final String SUBJECT = "[BioModels] Your Verification Code"
         userService.sendEmail(toEmail, BODY, SUBJECT)
     }
 }
