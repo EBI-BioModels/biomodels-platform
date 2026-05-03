@@ -147,6 +147,7 @@ beans = {
         /* Reusing the security configuration */
         def conf = SpringSecurityUtils.securityConfig
         /* Configuring the bean */
+        grailsApplication = ref('grailsApplication')
         requestCache = ref('requestCache')
         redirectStrategy = ref('redirectStrategy')
         loginAttemptCacheService = ref('loginAttemptCacheService')

@@ -376,7 +376,7 @@ log4j.main = {
 }
 
 
-String healthCheckIpRestrictions = null
+String healthCheckIpRestrictions
 if (jummpConfig.jummp.healthcheck.ipRestrictions instanceof String) {
     healthCheckIpRestrictions = jummpConfig.jummp.healthcheck.ipRestrictions
 } else {
@@ -1034,4 +1034,14 @@ brutforce {
         time = 5
         allowedNumberOfAttempts = 3
     }
+}
+
+// When true, every user is required to complete OTP verification at login,
+// regardless of whether they have individually enrolled in 2FA.
+// If this property is missing from the config file, the 2FA is disabled by default.
+boolean twoFaEnforced = Boolean.parseBoolean(jummpConfig.jummp.security.twofa.enforced as String)
+if (!(jummpConfig.jummp.security.twofa.enforced instanceof ConfigObject)) {
+    jummp.security.twofa.enforced = twoFaEnforced
+} else {
+    jummp.security.twofa.enforced = false
 }

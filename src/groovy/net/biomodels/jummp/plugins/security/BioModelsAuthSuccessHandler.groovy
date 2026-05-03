@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletResponse
 class BioModelsAuthSuccessHandler extends AAASH {
     private static final Logger LOGGER = LoggerFactory.getLogger(BioModelsAuthSuccessHandler.class)
 
+    def grailsApplication
     def loginAttemptCacheService
     def userService
     def authService
@@ -81,7 +82,8 @@ class BioModelsAuthSuccessHandler extends AAASH {
             String di = request.getParameter("j_deviceInfo")
             Map map = authService.validateTrustDevice(username, di)
             LOGGER.info("$username: ${map["message"]}: ${map["expired"]}")
-            session.setAttribute("enabled2FA", authService.is2FAEnabled(username) && map["expired"])
+            boolean enforced = grailsApplication.config.jummp.security.twofa.enforced ?: false
+            session.setAttribute("enabled2FA", (enforced || authService.is2FAEnabled(username)) && map["expired"])
             super.clearAuthenticationAttributes(request)
             handle(request, response, authentication)
             //super.onAuthenticationSuccess(request, response, authentication)
