@@ -126,7 +126,7 @@ ${serverURL}/${modelsToReview}</a></p>
 <p>In case of problems, please email <em>biomodels-net-support@lists.sf.net</em>, indicating the username <strong>$u</strong>.</p>
 """
         String emailBody = message
-        String emailSubject = "Reviewer account for your model ${modelsToReview}"
+        String emailSubject = "[BioModels] Reviewer account for your model ${modelsToReview}"
         def currentUser = sss.currentUser
         def bccRecipients = [grailsApplication.config.jummp.security.registration.email.adminAddress as String]
         mailingService.send([to: currentUser.email, subject: emailSubject, html: emailBody,
