@@ -301,7 +301,7 @@ further support"""
     }
 
     private void emailOTP(final String realName, final String toEmail, final String OTP) {
-        final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
+        final String CONTACT = grailsApplication.config.jummp.security.registration.email.contact
         final String BODY = """
 <div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
   <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
@@ -317,7 +317,7 @@ further support"""
         <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#072C55;">$OTP</div>
       </div>
       <p style="margin:0 0 16px;">This code expires in <strong>15 minutes</strong>. <strong>Do not share it with anyone.</strong></p>
-      <p style="margin:0 0 16px;">If you did not request this code, please <a href="mailto:${SENDER}" style="color:#0F5CB1;">contact us</a> immediately.</p>
+      <p style="margin:0 0 16px;">If you did not request this code, please <a href="mailto:${CONTACT}" style="color:#0F5CB1;">contact us</a> immediately.</p>
       <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
         <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">${BioModels.BM_ROOT_URL}</a>
       </p>
