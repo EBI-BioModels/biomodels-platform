@@ -14,7 +14,7 @@
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
  You should have received a copy of the GNU Affero General Public License along
- with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ with Jummp; if not, see <https://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
 
@@ -114,6 +114,7 @@
 
 			<div class="row">
 				<div class="columns small-12 medium-10 large-10"><h2>Two-Factor Authentication</h2></div>
+				<g:if test="${!twoFaEnforced}">
 				<div class="columns small-12 medium-2 large-2">
 					<p id="2fa-status" style="font-weight: bold; color: ${enabled2FA ? 'green' : 'grey'};">
 						<g:if test="${enabled2FA}">
@@ -123,18 +124,29 @@
 							Disabled
 						</g:else>
 					</p></div>
+				</g:if>
 			</div>
+			<g:if test="${twoFaEnforced}">
+				<div class="row">
+					<div class="columns small-12">
+						<p style="color: #072C55;">
+							Two-factor authentication is currently <strong>required for all users</strong>.
+							You will be prompted for a verification code at every login.
+						</p>
+					</div>
+				</div>
+			</g:if>
+			<g:else>
 				<div class="row">
 				<div id="manage2FA"  class="columns small-12 medium-3 large-3" style="margin-top: -30px">
-<g:if test="${enabled2FA}">
-	<input type="checkbox" id="switch-2fa" name="btnToggle2FA" checked/>
-</g:if>
+                    <g:if test="${enabled2FA}">
+                        <input type="checkbox" id="switch-2fa" name="btnToggle2FA" checked/>
+                    </g:if>
 					<g:else>
-	<input type="checkbox" id="switch-2fa" name="btnToggle2FA"/>
+	                    <input type="checkbox" id="switch-2fa" name="btnToggle2FA"/>
 
 					</g:else>
-					<label for="switch-2fa">Toggle</label></div>
-
+                <label for="switch-2fa">Toggle</label></div>
 				<div class="columns small-12 medium-9 large-9">
 						<div class="row" id="otp-verification-code-block">
 							<div class="columns small-12 medium-3 large-3">
@@ -164,6 +176,7 @@
 
 
 				</div>
+			</g:else>
 
             </div>
             <div class="small-6 columns">
@@ -180,21 +193,21 @@
 						<td>
 							<g:if test="${perm.sendNotification}">
 								<img width="20px" height="auto" title="Receiving notifications on the website"
-                                     src="${grailsApplication.config.grails.serverURL}/images/Accept.png"/>
+                                     src="${grailsApplication.config.grails.serverURL}/images/Accept.png" alt="Accept"/>
 							</g:if>
 							<g:else>
 								<img width="20px" height="auto" title="Not receiving notifications on the website"
-                                     src="${grailsApplication.config.grails.serverURL}/images/close.png"/>
+                                     src="${grailsApplication.config.grails.serverURL}/images/close.png" alt="Close"/>
 							</g:else>
 						</td>
 						<td>
 							<g:if test="${perm.sendMail}">
 								<img width="20px" height="auto" title="Receiving notifications by email"
-                                     src="${grailsApplication.config.grails.serverURL}/images/Accept.png"/>
+                                     src="${grailsApplication.config.grails.serverURL}/images/Accept.png" alt="Accept"/>
 							</g:if>
 							<g:else>
 								<img width="20px" height="auto" title="Not receiving notifications by email"
-                                     src="${grailsApplication.config.grails.serverURL}/images/close.png"/>
+                                     src="${grailsApplication.config.grails.serverURL}/images/close.png" alt="Close"/>
 							</g:else>
 						</td></tr>
 					</g:each>
@@ -209,6 +222,7 @@
         </div>
         </div>
         </div>
+<g:if test="${!twoFaEnforced}">
 <g:javascript>
 	const otpVCB = $("#otp-verification-code-block");
 	const otpEle = $("#txt-otp-verification-code");
@@ -295,6 +309,7 @@
 		});
     });
 </g:javascript>
+</g:if>
 </body>
 </html>
 <content tag="myprofile">

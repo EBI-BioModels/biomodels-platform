@@ -108,9 +108,11 @@ class UsermanagementController extends CommonController {
         List notifications = notificationService.getNotificationPermissions(username)
         String titlePage = "${userService.getRealName(username)} | BioModels"
         boolean enabled2FA = authService.is2FAEnabled(username)
+        boolean twoFaEnforced = grailsApplication.config.jummp.security.twofa.enforced ?: false
         render  view: "show",
                 model: [postUrl: "",
                         enabled2FA: enabled2FA,
+                        twoFaEnforced: twoFaEnforced,
                         flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
                         user: currentUser,
