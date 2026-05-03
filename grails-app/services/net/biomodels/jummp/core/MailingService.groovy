@@ -24,6 +24,9 @@ import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.util.regex.Pattern
+
 /**
  * Unified email dispatch service.
  *
@@ -52,12 +55,19 @@ class MailingService {
     def grailsApplication
     def mailService
 
-    private static final java.util.regex.Pattern VALID_EMAIL = ~/^[^@\s]+@[^@\s]+\.[^@\s]+$/
+    private static final Pattern VALID_EMAIL = ~/^[^@\s]+@[^@\s]+\.[^@\s]+$/
+    private static final Pattern NAME_EMAIL = ~/^.+?\s*<([^>]+)>$/
+
+    private static String extractEmail(String addr) {
+        if (!addr) return addr
+        def m = addr =~ NAME_EMAIL
+        return m ? (m[0][1] as String).trim() : addr.trim()
+    }
 
     void send(Map params) {
-        String toAddr      = params.to as String
+        String toAddr      = extractEmail(params.to as String)
         if (!toAddr || !(toAddr ==~ VALID_EMAIL)) {
-            LOGGER.warn("Skipping email — invalid recipient address: '${toAddr}'")
+            LOGGER.warn("Skipping email — invalid recipient address: '${params.to}'")
             return
         }
         String subjectStr  = params.subject as String
@@ -65,9 +75,9 @@ class MailingService {
         String textBody    = params.text as String
         String fromAddr    = (params.from ?: grailsApplication.config.jummp.security.registration.email.sender) as String
         List   bccList     = params.bcc ? [params.bcc].flatten() as List<String> : null
-        String replyToAddr = params.replyTo as String
+        String replyToAddr = params.replyTo ? extractEmail(params.replyTo as String) : null
         if (replyToAddr && !(replyToAddr ==~ VALID_EMAIL)) {
-            LOGGER.warn("Dropping invalid replyTo address: '${replyToAddr}'")
+            LOGGER.warn("Dropping invalid replyTo address: '${params.replyTo}'")
             replyToAddr = null
         }
 
