@@ -115,7 +115,7 @@
 			<div class="row">
 				<div class="columns small-12 medium-10 large-10"><h2>Two-Factor Authentication</h2></div>
 				<div class="columns small-12 medium-2 large-2">
-					<p id="2fa-status" style="font-weight: bold; color: green;">
+					<p id="2fa-status" style="font-weight: bold; color: ${enabled2FA ? 'green' : 'grey'};">
 						<g:if test="${enabled2FA}">
 							Enabled
 						</g:if>
@@ -151,6 +151,13 @@
 										   placeholder="Verification code">
 									<div class="input-group-button">
 										<input type="button" id="btn-confirm" class="button" value="Confirm"/></div></div>
+							</div>
+							<div class="columns small-12" style="margin-top: 6px;">
+								<p style="font-size: 0.85em; color: #666;">
+									To complete this change, click <strong>Request a confirmation code</strong> to receive
+									a one-time code at your registered email address, then enter it above and click
+									<strong>Confirm</strong>.
+								</p>
 							</div>
 						</div>
 				</div>
@@ -207,19 +214,15 @@
 	const otpEle = $("#txt-otp-verification-code");
 	const switch2FA = $("#switch-2fa");
     const requestCC = $("#request-confirmation-code");
+    let savedState = "${enabled2FA}" === "true";
 
 	$(document).ready(function() {
 		otpVCB.hide();
-        requestCC.prop("target", "_blank");
 	});
 
     $(window).on('beforeunload', function() {
-		const checked = switch2FA.is(":checked");
-		const current = Boolean("${enabled2FA}");
-		const message = "The changes you made may not be saved. Do you really want to leave?";
-		let unsaved = checked !== current;
-		if (unsaved) {
-			return message;
+		if (switch2FA.is(":checked") !== savedState) {
+			return "The changes you made may not be saved. Do you really want to leave?";
 		}
 	});
     %{--window.onbeforeunload = function () {
@@ -235,12 +238,25 @@
 
 	switch2FA.on("click", function() {
 		const checked = $(this).is(":checked");
-		console.log(checked);
-        otpVCB.show();
+        if (checked !== savedState) {
+            otpVCB.show();
+        } else {
+            otpVCB.hide();
+        }
 	});
 
-    requestCC.on("click", function() {
-
+    requestCC.on("click", function(e) {
+        e.preventDefault();
+        fetch("${createLink(uri: '/auth/request-new-verification-code')}", {
+            method: 'GET',
+            headers: { 'Accept': 'application/json; charset=utf-8' }
+        }).then(response => response.json())
+          .then(data => {
+              const color = data["status"] === 200 ? "green" : "red";
+              showNotification('<span style="color: ' + color + '">' + data["message"] + '</span>');
+          }).catch(() => {
+              showNotification('<span style="color: red">Failed to send verification code. Please try again.</span>');
+          });
     });
 
     $("#btn-confirm").on("click", function() {
@@ -264,7 +280,13 @@
 		}).then(data => {
 			console.log(data);
             if (data["status"] === 200) {
-                showNotification('<span style="color: green">' + data["message"] + '</span>');
+                savedState = switch2FA.is(":checked");
+                const notifColor = savedState ? "green" : "grey";
+                showNotification('<span style="color: ' + notifColor + '">' + data["message"] + '</span>');
+                const statusEl = $("#2fa-status");
+                statusEl.text(savedState ? "Enabled" : "Disabled");
+                statusEl.css("color", savedState ? "green" : "grey");
+                otpVCB.hide();
             } else {
                 showNotification('<span style="color: red">' + data["message"] + '</span>');
             }

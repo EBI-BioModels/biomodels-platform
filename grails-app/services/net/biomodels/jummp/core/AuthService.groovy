@@ -146,6 +146,7 @@ class AuthService implements IAuthService {
                 try {
                     TFA.where { id == deletedId }.deleteAll()
                     TFA.withSession { it.flush() }
+                    LOGGER.info("Deleted the TFA record [id: ${deletedId}, username: ${username}] successfully.")
                 } catch (Exception e) {
                     status = false
                     cause = """An error happened when trying to disable 2FA. Please try later or contact us for \
