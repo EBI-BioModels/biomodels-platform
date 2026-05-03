@@ -131,7 +131,8 @@
     <p>Revision <a href="${createLink(controller: "model", action: "show", id: "${modelId}")}">
         ${modelId}</a>.${revisionNumber} does not exist.</p>
 </g:else>
-<script>
+<script type="text/javascript">
+    /* global $, toastr, fetch */
     $(document).ready(function() {
         $('#defined-role option:selected').val("Other");
         // AJAX call for autocomplete
