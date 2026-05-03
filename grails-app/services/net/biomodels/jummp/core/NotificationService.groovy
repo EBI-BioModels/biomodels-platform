@@ -375,23 +375,19 @@ caused by ${ntp?.errors?.toString()}""")
         useGenericNotificationStructure(notificationTitle, titleParams,
             notificationBody, bodyParams, NT.SUBMIT_FOR_PUBLICATION, user, watchers, model)
         // send an email to biomodels' cura mailing list
-        String emailTo = grailsApplication.config.jummp.model.curators.mailinglist
-        String emailFrom = user.email //grailsApplication.config.jummp.security.registration.email.sender
-        String emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
-        String emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
-        sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody, emailFrom)
+        String curatorsEmail = grailsApplication.config.jummp.model.curators.mailinglist as String
+        String senderAddr    = grailsApplication.config.jummp.security.registration.email.sender as String
+        String emailSubject  = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
+        String emailBody     = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
+        sendConfirmationOrNotificationEmail(senderAddr, curatorsEmail, emailSubject, emailBody, user.email)
 
-        // send an email to the user to request a citation to BioModels (removed)
-        (emailFrom, emailTo) = [emailTo, emailFrom]
-        emailFrom = grailsApplication.config.jummp.model.curators.mailinglist
+        // send a citation reminder email to the submitter
         notificationTitle = "biomodels.howtoCiteUs.reminder.title"
-        titleParams = []
-        emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
-
+        emailSubject = messageSource.getMessage(notificationTitle, [] as String[], LCH.getLocale())
         notificationBody = "biomodels.howtoCiteUs.reminder.content"
         bodyParams = [serverURL, user?.person?.userRealName ?: user.username, model.submissionId]
         emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
-        sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody, emailFrom)
+        sendConfirmationOrNotificationEmail(senderAddr, user.email, emailSubject, emailBody, curatorsEmail)
     }
 
     void feedback2Admin(def body) {
