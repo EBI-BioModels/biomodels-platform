@@ -113,18 +113,38 @@ class ReviewerAccountService extends UserService implements InitializingBean {
         ReviewerAccountInfo reviewerInfo = createReviewerAccount(modelsToReview)
         String u = reviewerInfo.user.username
         String p = reviewerInfo.password
-        String message = """<p>Please forward the following instructions to the reviewers:</p>
-
-<p>To access these models:</p>
-<p>
-1. Please visit <a href='${serverURL}/login/auth' target='_blank'>
-${serverURL}/login/auth</a><br/>
-2. Log in with username <strong>$u</strong> and password <strong>$p</strong><br/>
-3. Access the model at this link <a href='${serverURL}/${modelsToReview}' target='_blank'>
-${serverURL}/${modelsToReview}</a></p>
-
-<p>In case of problems, please email <em>biomodels-net-support@lists.sf.net</em>, indicating the username <strong>$u</strong>.</p>
-"""
+        final String CURATION_EMAIL = grailsApplication.config.jummp.model.curators.mailinglist
+        String message = """
+<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
+    <div style="background-color:#ED6B21;height:5px;"></div>
+    <div style="background-color:#072C55;padding:24px 32px 20px;">
+      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+    </div>
+    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+      <p style="margin:0 0 16px;">A reviewer account has been created for your model(s) <strong>${modelsToReview}</strong>. Please forward the following credentials to your reviewer(s).</p>
+      <p style="margin:0 0 8px;font-weight:bold;">Access instructions</p>
+      <ol style="margin:0 0 16px;padding-left:20px;">
+        <li style="margin-bottom:8px;">Visit the BioModels login page: <a href="${serverURL}/login/auth" style="color:#0F5CB1;">${serverURL}/login/auth</a></li>
+        <li style="margin-bottom:8px;">Log in with username <strong>${u}</strong> and password <strong>${p}</strong></li>
+        <li style="margin-bottom:8px;">Access the model directly at: <a href="${serverURL}/${modelsToReview}" style="color:#0F5CB1;">${serverURL}/${modelsToReview}</a></li>
+      </ol>
+      <p style="margin:0 0 16px;">If you or your reviewer encounter any problems, please contact us at <a
+      href="mailto:${CURATION_EMAIL}" style="color:#0F5CB1;">${CURATION_EMAIL}</a>, quoting the username
+<strong>${u}</strong>.</p>
+      <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
+        <a href="${serverURL}" style="color:#0F5CB1;">${serverURL}</a>
+      </p>
+    </div>
+    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
+    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
+      You are receiving this email because a reviewer account has been created for your submission on
+      <a href="${serverURL}" style="color:#0F5CB1;">BioModels</a>.
+      This is an automatically generated email &mdash; replies are not monitored.
+    </div>
+  </div>
+</div>"""
         String emailBody = message
         String emailSubject = "[BioModels] Reviewer account for your model ${modelsToReview}"
         def currentUser = sss.currentUser
