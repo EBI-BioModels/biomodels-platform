@@ -92,7 +92,11 @@ class NotificationService implements InitializingBean {
     <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
     <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
       This is an automatically generated email from
-      <a href="${serverURL}" style="color:#0F5CB1;">BioModels</a> &mdash; replies are not monitored.
+      <a href="${serverURL}" style="color:#0F5CB1;">BioModels</a> &mdash; replies are not monitored.<br/><br/>
+      BioModels is maintained by the Laboratory for Systems Medicine,
+      Department of Medicine, Division of Pulmonary &ndash; Systems Medicine,
+      <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" style="color:#0F5CB1;">University of Florida</a>.<br/>
+      &copy; ${new Date().format("YYYY")} University of Florida Health
     </div>
   </div>
 </div>"""
