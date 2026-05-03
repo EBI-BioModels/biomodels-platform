@@ -194,7 +194,7 @@ class ContributorController extends CommonController {
                     String inviterEmail = inviter?.email ?: ""
                     String recipientName = user.person?.userRealName ?: user.username
                     String modelLink = "${serverURL}/${modelId}"
-                    String subjectLine = "${inviterName} has added you as a contributor on BioModels"
+                    String subjectLine = "[BioModels] ${inviterName} has added you as a contributor to $modelId"
                     String htmlBody = """
 <div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
   <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
@@ -351,7 +351,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         refCode = refCode.encodeAsMD5()
         result.putAll([role: role, refCode: refCode, serverURL: serverURL] as Map)
 
-        String subjectLine = "${inviterName} has invited you to contribute to BioModels as a ${roleName}"
+        String subjectLine = "[BioModels] ${inviterName} has invited you to contribute to $modelId as a ${roleName}"
         String howtoAction = "Send"
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
@@ -531,7 +531,7 @@ from the model ${revisionIdentifier}."""
         String removerName = remover?.person?.userRealName ?: "A BioModels curator"
         String recipientName = contributor.person?.userRealName ?: contributor.username
         String modelLink = "${serverURL}/${modelId}"
-        String subjectLine = "Your contributor access to ${modelId} on BioModels has been removed"
+        String subjectLine = "[BioModels] Your contributor access to ${modelId} has been removed"
         String htmlBody = """
 <div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
   <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
