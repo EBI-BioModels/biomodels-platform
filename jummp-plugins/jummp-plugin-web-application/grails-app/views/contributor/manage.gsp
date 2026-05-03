@@ -108,6 +108,7 @@
             </select>
         </div>
         <div class="columns small-12 medium-1 large-1">
+            <label>&nbsp;</label>
             <input type="submit" class="button" value="Add" id="btn-add-contributor-wto-invite">
         </div>
     </div>
