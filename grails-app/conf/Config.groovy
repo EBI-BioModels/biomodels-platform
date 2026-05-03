@@ -480,8 +480,8 @@ grails.plugin.springsecurity.filterChain.chainMap = [
 grails.plugin.springsecurity.useSecurityEventListener = true
 
 // ldap
-if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) ||
-    !Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled)) {
+boolean ldapEnabled = Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled as String)
+if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) || !ldapEnabled) {
     jummp.security.ldap.enabled = false
     println("INFO\tExcluding ldap")
     pluginsToExclude << "springSecurityLdap"
@@ -629,23 +629,27 @@ else {
 }
 
 // registration settings
-if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)) {
-    jummp.security.registration.email.send         = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)
+boolean emailSend = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send as String)
+if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && emailSend) {
+    jummp.security.registration.email.send         = emailSend
     jummp.security.registration.email.sender       = jummpConfig.jummp.security.registration.email.sender
     if (!(jummpConfig.jummp.security.registration.email.sendToAdmin instanceof ConfigObject)) {
-        jummp.security.registration.email.sendToAdmin = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.sendToAdmin)
+        String sendToAdmin = jummpConfig.jummp.security.registration.email.sendToAdmin as String
+        jummp.security.registration.email.sendToAdmin = Boolean.parseBoolean(sendToAdmin)
     } else {
         jummp.security.registration.email.sendToAdmin = false
     }
     jummp.security.registration.email.adminAddress = jummpConfig.jummp.security.registration.email.adminAddress
+    jummp.security.registration.email.contact      = jummpConfig.jummp.security.registration.email.contact
+    jummp.security.registration.email.noreply      = jummpConfig.jummp.security.registration.email.noreply
     jummp.security.registration.email.subject      = jummpConfig.jummp.security.registration.email.subject
     jummp.security.registration.email.body         = jummpConfig.jummp.security.registration.email.body
     jummp.security.registration.verificationURL    = jummpConfig.jummp.security.registration.verificationURL
     jummp.security.activation.email.subject        = jummpConfig.jummp.security.activation.email.subject
     jummp.security.activation.email.body           = jummpConfig.jummp.security.activation.email.body
     jummp.security.activation.activationURL        = jummpConfig.jummp.security.activation.activationURL
-    jummp.security.resetPassword.email.body    = jummpConfig.jummp.security.resetPassword.email.body
-    jummp.security.resetPassword.email.subject = jummpConfig.jummp.security.resetPassword.email.subject
+    jummp.security.resetPassword.email.body        = jummpConfig.jummp.security.resetPassword.email.body
+    jummp.security.resetPassword.email.subject     = jummpConfig.jummp.security.resetPassword.email.subject
 } else {
     jummp.security.registration.email.send = false
 }
@@ -653,7 +657,7 @@ if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject
 // whether a user has curator rights by default, allowing them to publish models
 // they have access to.
 if (!(jummpConfig.jummp.security.curatorByDefault instanceof ConfigObject)) {
-    jummp.security.curatorByDefault = Boolean.parseBoolean(jummpConfig.jummp.security.curatorByDefault)
+    jummp.security.curatorByDefault = Boolean.parseBoolean(jummpConfig.jummp.security.curatorByDefault as String)
 } else {
     // default to true
     jummp.security.curatorByDefault = true
@@ -672,7 +676,7 @@ if (!(jummpConfig.jummp.feedback.receiver.roles instanceof ConfigObject)) {
 }
 
 if (!(jummpConfig.jummp.security.certificationAllowed instanceof ConfigObject)) {
-    jummp.security.certificationAllowed = Boolean.parseBoolean(jummpConfig.jummp.security.certificationAllowed)
+    jummp.security.certificationAllowed = Boolean.parseBoolean(jummpConfig.jummp.security.certificationAllowed as String)
 } else {
     // default to false
     jummp.security.certificationAllowed = false
@@ -680,12 +684,12 @@ if (!(jummpConfig.jummp.security.certificationAllowed instanceof ConfigObject)) 
 
 // whether sbml validation is turned on
 if (!(jummpConfig.jummp.plugins.sbml.validation instanceof ConfigObject)) {
-	jummp.plugins.sbml.validation = Boolean.parseBoolean(jummpConfig.jummp.plugins.sbml.validation)
+	jummp.plugins.sbml.validation = Boolean.parseBoolean(jummpConfig.jummp.plugins.sbml.validation as String)
 }
 
 // file preview size, in bytes
 if (!(jummpConfig.jummp.web.file.preview instanceof ConfigObject)) {
-	jummp.web.file.preview = Integer.parseInt(jummpConfig.jummp.web.file.preview)
+	jummp.web.file.preview = Integer.parseInt(jummpConfig.jummp.web.file.preview as String)
 }
 else {
 	jummp.web.file.preview = 500 * 1024 * 1024 // default preview size: 500 MB
@@ -694,7 +698,7 @@ else {
 // whether a user is allowed to change the password depends on the setting an if LDAP is used
 // in case of LDAP changing the password is not (yet) possible in the application
 if (!(jummpConfig.jummp.security.ui.changePassword instanceof ConfigObject)) {
-    jummp.security.ui.changePassword = Boolean.parseBoolean(jummpConfig.jummp.security.ui.changePassword)
+    jummp.security.ui.changePassword = Boolean.parseBoolean(jummpConfig.jummp.security.ui.changePassword as String)
 } else {
     // default to true
     jummp.security.ui.changePassword = true
@@ -711,7 +715,8 @@ jummp.security.registration.ui.userPassword = !jummp.security.ldap.enabled
 // if not only an administrator can create a new user account
 // default to users can register themselves
 if (!(jummpConfig.jummp.security.anonymousRegistration instanceof ConfigObject)) {
-    jummp.security.anonymousRegistration = Boolean.parseBoolean(jummpConfig.jummp.security.anonymousRegistration)
+    String anonymousRegistration = jummpConfig.jummp.security.anonymousRegistration
+    jummp.security.anonymousRegistration = Boolean.parseBoolean(anonymousRegistration)
 } else {
     jummp.security.anonymousRegistration = true
 }
@@ -719,12 +724,14 @@ if (!(jummpConfig.jummp.security.anonymousRegistration instanceof ConfigObject))
 // For the job, removing authentication hashes that are unused for a configurable time
 // Used by AuthenticationHashService
 if (!(jummpConfig.jummp.authenticationHash.startRemoveOffset instanceof ConfigObject)) {
-    jummp.authenticationHash.startRemoveOffset = Long.parseLong(jummpConfig.jummp.authenticationHash.startRemoveOffset)
+    String sto = jummpConfig.jummp.authenticationHash.startRemoveOffset
+    jummp.authenticationHash.startRemoveOffset = Long.parseLong(sto)
 } else {
     jummp.authenticationHash.startRemoveOffset = 5*60*1000
 }
 if (!(jummpConfig.jummp.authenticationHash.removeInterval instanceof ConfigObject)) {
-    jummp.authenticationHash.removeInterval = Long.parseLong(jummpConfig.jummp.authenticationHash.removeInterval)
+    String interval = jummpConfig.jummp.authenticationHash.removeInterval
+    jummp.authenticationHash.removeInterval = Long.parseLong(interval)
 } else {
     jummp.authenticationHash.removeInterval = 30*60*1000
 }
@@ -779,9 +786,11 @@ if (!(jummpConfig.jummp.database.password instanceof ConfigObject)) {
     jummp.database.password = jummpConfig.jummp.database.password
 }
 
-if (jummpConfig.jummp.firstRun instanceof ConfigObject || !Boolean.parseBoolean(jummpConfig.jummp.firstRun)) {
+boolean firstRun = Boolean.parseBoolean(jummpConfig.jummp.firstRun as String)
+if (jummpConfig.jummp.firstRun instanceof ConfigObject || !firstRun) {
     // only add side protection if not in first run mode
-    if (!(jummpConfig.jummp.server.protection instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.server.protection)) {
+    boolean protection = Boolean.parseBoolean(jummpConfig.jummp.server.protection as String)
+    if (!(jummpConfig.jummp.server.protection instanceof ConfigObject) && protection) {
         jummp.controllerAnnotations.put("/login/**", ['IS_AUTHENTICATED_ANONYMOUSLY'])
         jummp.controllerAnnotations.put("/**", ['ROLE_USER'])
     }
