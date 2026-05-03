@@ -83,7 +83,10 @@ class BioModelsAuthSuccessHandler extends AAASH {
             Map map = authService.validateTrustDevice(username, di)
             LOGGER.info("$username: ${map["message"]}: ${map["expired"]}")
             boolean enforced = grailsApplication.config.jummp.security.twofa.enforced ?: false
-            session.setAttribute("enabled2FA", (enforced || authService.is2FAEnabled(username)) && map["expired"])
+            boolean userHas2FA = authService.is2FAEnabled(username)
+            boolean deviceExpired = map["expired"] as boolean
+            session.setAttribute("enabled2FA", (enforced || userHas2FA) && deviceExpired)
+            session.setAttribute("pendingEnrollment", enforced && !userHas2FA && deviceExpired)
             super.clearAuthenticationAttributes(request)
             handle(request, response, authentication)
             //super.onAuthenticationSuccess(request, response, authentication)
@@ -108,7 +111,10 @@ class BioModelsAuthSuccessHandler extends AAASH {
             def remoteAddress = authentication.details.remoteAddress
             def sessionId = authentication.details.sessionId
             authService.doGenerateOTP(username, remoteAddress, sessionId)
-            redirectStrategy.sendRedirect(request, response, "/auth/two-factor-authentication")
+            String twoFaUrl = session.getAttribute("pendingEnrollment")
+                    ? "/auth/enroll-two-factor"
+                    : "/auth/two-factor-authentication"
+            redirectStrategy.sendRedirect(request, response, twoFaUrl)
             return
         } else if (response.isCommitted()) {
             logger.debug("Response has already been committed. Unable to redirect to $targetUrl")

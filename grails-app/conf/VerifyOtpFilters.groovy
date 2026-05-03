@@ -25,7 +25,7 @@ class VerifyOtpFilters {
     def grailsApplication
 
     List IGNORED_ACTIONS = [
-        "load2fa", "verifyOTP", "generateOTP", "checkTrustDevice", "updateTrustDeviceOnRedis", "toggle2FA"
+        "load2fa", "enrollTwoFactor", "verifyOTP", "generateOTP", "checkTrustDevice", "updateTrustDeviceOnRedis", "toggle2FA"
     ]
 
     private static final List PUBLIC_RULES = [
@@ -58,7 +58,8 @@ class VerifyOtpFilters {
                             && !IGNORED_ACTIONS.contains(action)
                             && !["notification"].contains(controller)) {
                         if (!isPublicAction(controller, action)) {
-                            redirect(controller: "auth", action: "load2fa")
+                            String targetAction = session.pendingEnrollment ? "enrollTwoFactor" : "load2fa"
+                            redirect(controller: "auth", action: targetAction)
                             return false
                         }
                     }

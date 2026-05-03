@@ -55,6 +55,14 @@ class AuthController extends CommonController {
         ]
         render(view: "form2fa", model: userParams)
     }
+
+    def enrollTwoFactor() {
+        if (!session.getAttribute("pendingEnrollment") && springSecurityService.isLoggedIn()) {
+            forward(plugin: "jummp-plugin-web-application", controller: "errors", action: "error405")
+            return
+        }
+        render(view: "enrollTwoFactor", model: [user: userService.currentUser])
+    }
     /**
      * <h4>Check the trust devices of the authenticated user</h4>
      *
@@ -150,6 +158,7 @@ class AuthController extends CommonController {
         }
         if (matched) {
             session.removeAttribute("enabled2FA")
+            session.removeAttribute("pendingEnrollment")
             String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
             if (deviceInfo) {
                 boolean isTrustDeviceChecked = request.getJSON()["isTrustDeviceChecked"].decodeHTML().toBoolean()
