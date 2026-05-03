@@ -179,10 +179,11 @@ class ContributorController extends CommonController {
         User user = userService.lookupUser(email, 1)
         CTC ctc = null
         if (user) {
-            CR modellerRole = CR.findByName("Modeller")
+            String roleName = params["role"]?.decodeHTML() ?: "Modeller"
+            CR selectedRole = CR.findByName(roleName) ?: CR.findByName("Modeller")
             Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
             // create a new record to capture the association among user, model revision and role
-            CD details = new CD(contributor: user, revision: revision, role: modellerRole)
+            CD details = new CD(contributor: user, revision: revision, role: selectedRole)
             if (details.save(flush: true)) {
                 LOGGER.info("Saved contributor record for ${user.username} on ${modelId}.${revisionNumber}")
                 if (!mailingService) {
@@ -204,7 +205,7 @@ class ContributorController extends CommonController {
     </div>
     <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
       <p style="margin:0 0 16px;">Dear ${recipientName},</p>
-      <p style="margin:0 0 16px;">${inviterName} has added you as a <strong>${modellerRole.name}</strong> contributor to the following BioModels submission:</p>
+      <p style="margin:0 0 16px;">${inviterName} has added you as a <strong>${selectedRole.name}</strong> contributor to the following BioModels submission:</p>
       <p style="margin:0 0 16px;"><a href="${modelLink}" style="color:#0F5CB1;">${modelId}</a></p>
       <p style="margin:0 0 16px;">You can view the model and your contribution details by visiting the link above.</p>
       <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
@@ -231,7 +232,7 @@ class ContributorController extends CommonController {
                 LOGGER.error("Failed to save contributor record for ${user.username}: ${details.errors}")
             }
             // create a new record in the contribution_invite table
-            ctc = new CTC(user: user, role: modellerRole,
+            ctc = new CTC(user: user, role: selectedRole,
                 person: user.person, locked: false)
         }
         result.put("newCont", ctc)
