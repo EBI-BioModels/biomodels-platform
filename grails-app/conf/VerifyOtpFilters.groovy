@@ -23,6 +23,8 @@ import org.springframework.security.access.annotation.Secured as SpringSecured
 
 class VerifyOtpFilters {
     def grailsApplication
+    def authService
+    def springSecurityService
 
     List IGNORED_ACTIONS = [
         "load2fa", "enrollTwoFactor", "verifyOTP", "generateOTP", "checkTrustDevice", "updateTrustDeviceOnRedis", "toggle2FA"
@@ -50,6 +52,20 @@ class VerifyOtpFilters {
     def filters = {
         verifyOTP(controller:'*', action:'*') {
             before = {
+                // Config is read on every request (cheap). The DB call (is2FAEnabled) is made
+                // only once per session and cached; flipping the config flag off clears the
+                // banner immediately without waiting for the user to log out.
+                if (springSecurityService.isLoggedIn()) {
+                    boolean enrollmentNotice = grailsApplication.config.jummp.security.twofa.enrollmentNotice ?: false
+                    boolean enforced = grailsApplication.config.jummp.security.twofa.enforced ?: false
+                    if (!enrollmentNotice || enforced) {
+                        session.showEnrollmentNotice = false
+                    } else if (session.getAttribute("showEnrollmentNotice") == null) {
+                        String username = springSecurityService.currentUser?.username
+                        session.showEnrollmentNotice = username ? !authService.is2FAEnabled(username) : false
+                    }
+                }
+
                 String controller = params.get("controller")
                 String action = params.get("action")
                 if (controller && action) {

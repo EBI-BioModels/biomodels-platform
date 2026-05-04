@@ -1045,3 +1045,12 @@ if (!(jummpConfig.jummp.security.twofa.enforced instanceof ConfigObject)) {
 } else {
     jummp.security.twofa.enforced = false
 }
+
+// When true, unenrolled users see an amber notice banner encouraging them to set up
+// 2FA before it becomes mandatory. Use during the grace period before enforcement.
+boolean twoFaEnrollmentNotice = Boolean.parseBoolean(jummpConfig.jummp.security.twofa.enrollmentNotice as String)
+if (!(jummpConfig.jummp.security.twofa.enrollmentNotice instanceof ConfigObject)) {
+    jummp.security.twofa.enrollmentNotice = twoFaEnrollmentNotice
+} else {
+    jummp.security.twofa.enrollmentNotice = false
+}

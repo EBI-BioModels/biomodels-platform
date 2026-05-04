@@ -234,10 +234,17 @@
     }
 %>
 <body class="level2 full-width">
-<g:if test="${session.enabled2FA}">
+<g:if test="${session.enabled2FA || session.showEnrollmentNotice}">
     <div style="position:fixed;top:0;left:0;width:100%;background:#f0ad4e;color:#333;text-align:center;padding:10px;font-weight:bold;z-index:9999;">
-        You are not fully logged in &mdash; please check your email for the One-Time Passcode and
-        <a href="${createLink(controller:'auth', action:'load2fa')}" style="color:#333;text-decoration:underline;">complete your verification</a>.
+        <g:if test="${session.enabled2FA}">
+            You are not fully logged in &mdash; please check your email for the One-Time Passcode and
+            <a href="${createLink(controller:'auth', action:'load2fa')}" style="color:#333;text-decoration:underline;">complete your verification</a>.
+        </g:if>
+        <g:else>
+            Two-factor authentication will soon be required for all accounts.
+            <a href="${createLink(controller:'usermanagement', action:'show')}" style="color:#333;text-decoration:underline;">Set up 2FA now</a>
+            to ensure uninterrupted access.
+        </g:else>
     </div>
     <div style="height:41px;"></div>
 </g:if>

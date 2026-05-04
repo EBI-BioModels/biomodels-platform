@@ -103,6 +103,7 @@ class AuthController extends CommonController {
                 if (checked) {
                     message = "You've successfully enabled 2FA!"
                     status = 200
+                    session.removeAttribute("showEnrollmentNotice")
                 } else {
                     // delete all OTP generations linked to this user
                     result = authService.disable2FA(username)
@@ -159,6 +160,7 @@ class AuthController extends CommonController {
         if (matched) {
             session.removeAttribute("enabled2FA")
             session.removeAttribute("pendingEnrollment")
+            session.removeAttribute("showEnrollmentNotice")
             String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
             if (deviceInfo) {
                 boolean isTrustDeviceChecked = request.getJSON()["isTrustDeviceChecked"].decodeHTML().toBoolean()

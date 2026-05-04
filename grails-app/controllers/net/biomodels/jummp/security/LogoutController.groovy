@@ -50,6 +50,7 @@ class LogoutController {
     def index() {
         session.removeAttribute("enabled2FA")
         session.removeAttribute("pendingEnrollment")
+        session.removeAttribute("showEnrollmentNotice")
         if (!request.post && SpringSecurityUtils.getSecurityConfig().logout.postOnly) {
             response.sendError HttpServletResponse.SC_METHOD_NOT_ALLOWED // 405
             return
