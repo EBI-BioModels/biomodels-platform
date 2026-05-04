@@ -55,15 +55,19 @@ class VerifyOtpFilters {
                 // Config is read on every request (cheap). The DB call (is2FAEnabled) is made
                 // only once per session and cached; flipping the config flag off clears the
                 // banner immediately without waiting for the user to log out.
-                if (springSecurityService.isLoggedIn()) {
-                    boolean enrollmentNotice = grailsApplication.config.jummp.security.twofa.enrollmentNotice ?: false
-                    boolean enforced = grailsApplication.config.jummp.security.twofa.enforced ?: false
-                    if (!enrollmentNotice || enforced) {
-                        session.showEnrollmentNotice = false
-                    } else if (session.getAttribute("showEnrollmentNotice") == null) {
-                        String username = springSecurityService.currentUser?.username
-                        session.showEnrollmentNotice = username ? !authService.is2FAEnabled(username) : false
+                try {
+                    if (springSecurityService.isLoggedIn()) {
+                        boolean enrollmentNotice = grailsApplication.config.jummp.security.twofa.enrollmentNotice ?: false
+                        boolean enforced = grailsApplication.config.jummp.security.twofa.enforced ?: false
+                        if (!enrollmentNotice || enforced) {
+                            session.showEnrollmentNotice = false
+                        } else if (session.getAttribute("showEnrollmentNotice") == null) {
+                            String username = springSecurityService.currentUser?.username
+                            session.showEnrollmentNotice = username ? !authService.is2FAEnabled(username) : false
+                        }
                     }
+                } catch (Exception e) {
+                    log.warn("Could not evaluate enrollment notice state: ${e.message}")
                 }
 
                 String controller = params.get("controller")
