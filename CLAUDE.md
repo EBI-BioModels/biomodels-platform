@@ -77,11 +77,8 @@ Use the standard two-panel HTML layout (orange accent bar + navy header + white 
 # Clean build artifacts
 ./grailsw clean
 
-# Run tests for all plugins (configuration, core-api, git, sbml, security)
-ant test-plugins
-
-# Run tests for a single plugin
-ant test-plugin -Dplugin=core-api
+# Run tests for a specific plugin (each plugin has its own grailsw)
+cd jummp-plugins/jummp-plugin-<name> && ./grailsw test-app <FullyQualifiedTestClassName>
 ```
 
 Test reports go to `target/test-reports/`. Coverage reports use Cobertura.
