@@ -126,6 +126,16 @@
 					</p></div>
 				</g:if>
 			</div>
+			<g:if test="${session.showEnrollmentNotice}">
+				<div class="row">
+					<div class="columns small-12">
+						<div style="background:#f0ad4e;color:#333;padding:10px 15px;border-radius:4px;font-weight:bold;">
+							&#9888; <strong>Action required:</strong> Two-factor authentication will be mandatory from
+							<strong>4 June 2026</strong>. Enable it below before that date to avoid being prompted at your next login.
+						</div>
+					</div>
+				</div>
+			</g:if>
 			<g:if test="${twoFaEnforced}">
 				<div class="row">
 					<div class="columns small-12">
