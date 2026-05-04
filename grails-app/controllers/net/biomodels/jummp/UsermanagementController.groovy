@@ -434,7 +434,7 @@ further instructions"""
                 return redirect(action: "registration")
             }
             String username = params.username.decodeHTML()
-            if (!username || MathUtils.validUsername(username)) {
+            if (!(username && MathUtils.validUsername(username))) {
                 flash.message = "The username is invalid such as containing disallowed characters or too short."
                 return redirect(action: "registration")
             }
