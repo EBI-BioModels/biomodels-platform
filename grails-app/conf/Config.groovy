@@ -416,6 +416,7 @@ jummp.controllerAnnotations = [
     '/requestmap/**':           ['ROLE_ADMIN'],
     '/role/**':                 ['ROLE_ADMIN'],
     '/securityinfo/**':         ['ROLE_ADMIN'],
+    '/user':                    ['isAuthenticated()'],
     '/user/**':                 ['ROLE_ADMIN'],
     "/css/**":                  ["permitAll"],
     "/images/**":               ["permitAll"],
