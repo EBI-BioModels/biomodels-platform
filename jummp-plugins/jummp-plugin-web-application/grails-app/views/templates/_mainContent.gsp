@@ -56,6 +56,9 @@
                     <%
                         def id = model?.publicationId ?: model?.submissionId
                         def modelUrl = createLink(controller: 'model', id: id, action: 'show')
+                        if ("search" == actionName) {
+                            modelUrl = model?.searchableLink
+                        }
                         def description = model?.description ?: ""
                         int maxNumChar = 255
                         boolean haveMoreDetails = description?.length() > maxNumChar
@@ -126,7 +129,7 @@
                             });
                         }
 
-                        // reduce font-size of model's notes (i.e. model description)
+                        // reduce the font-size of model's notes (i.e. model description)
                         $('[class*="dc:"]').css("font-size", "90%");
                         // show the query string on local search box and string query division
                         // at the top of main content division
@@ -153,7 +156,7 @@
                                 url += "&sort=" + selectedValue;
                                 window.location.href = url;
                             });
-                            var selectedModels = [];
+                            let selectedModels = [];
                             $('div.chk-download > input').on("click", function() {
                                 const isChecked = $(this).is(':checked');
                                 const checkedValue = $(this).val();
@@ -186,7 +189,7 @@
                                     $(this).text("Select all");
                                 }
                             });
-                            var link = "";
+                            let link = "";
                             $('#btnDownload').on("click", function() {
                                 if (typeof selectedModels !== undefined && selectedModels.length > 0) {
                                     link = "${g.createLink(controller: "search", action: "download", params: ['models': ''])}";

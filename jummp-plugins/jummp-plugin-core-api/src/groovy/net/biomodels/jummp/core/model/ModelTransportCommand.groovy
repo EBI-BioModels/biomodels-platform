@@ -139,4 +139,7 @@ class ModelTransportCommand implements Serializable {
         final String modelId = publicationId ?: submissionId
         grailsApplication.config.grails.serverURL + "/" + modelId
     }
+
+    /* this property will be populated in OmicsDiBasedSearch, getting from EBI Search */
+    String searchableLink
 }

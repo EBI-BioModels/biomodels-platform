@@ -53,7 +53,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
-import ucar.ma2.Index
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
@@ -65,7 +64,6 @@ import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
 
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
-
 /**
  * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
  *
@@ -89,7 +87,6 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_INFO_ENABLED = LOGGER.isInfoEnabled()
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd")
 
     private final Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
@@ -179,7 +176,6 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
         // This job will call a service running on the ebi-mol-sys-dev machine to launch a job on SLURM cluster
         // It will generate all OmicsDI XML files.
         boolean inProdMode = Environment.current == Environment.PRODUCTION
-        inProdMode = true // test it before committing
         if (inProdMode) {
             LOGGER.info("Submitted the job for exporting OmicsDI XML files...")
             final String SVC_URL = "http://ebi-mol-sys-dev.ebi.ac.uk:8000/search/export/omicsdi"
@@ -221,9 +217,11 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
         // TODO: should allow searching information of other fields
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()
-        String[] fields = ["name", "description", "submitter", "curationstatus",
-                           "last_modification_date", "submission_date", "modellingapproach",
-                           "modelformat", "levelversion", "first_author", "publication_year", "isprivate", "submitter_keywords"]
+        String[] fields = [
+            "name", "description", "submitter", "curationstatus", "last_modification_date", "submission_date",
+            "modellingapproach", "modelformat", "levelversion", "first_author", "publication_year", "isprivate",
+            "submitter_keywords", "full_dataset_link"
+        ]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
         String sort = sortField ? String.format("%s:%s", sortField, sortDir) : ""
@@ -302,6 +300,7 @@ The root cause is ${e.toString()}""")
                         publication: ptc
                     )
                 }
+                mtc.searchableLink = getSingleValueForEntryField(entry, 'full_dataset_link')
                 results.add(mtc)
             }
             // facets
@@ -346,7 +345,7 @@ The root cause is ${e.toString()}""")
         // the insertion order. Here we just copy all facets ordered above to the
         // SearchResponse's facets placeholder
         orderedFacets.each {
-            searchResponse.facets.putAt(it.facet.label, it)
+            (searchResponse.facets[it.facet.label] = it)
         }
         searchResponse.results = results
         searchResponse.totalCount = totalCount
