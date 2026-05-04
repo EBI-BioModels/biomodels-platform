@@ -46,6 +46,12 @@ log4j = {
 
     warn   'org.mortbay.log'
 }
+jummp.redis.host = 'localhost'
+jummp.redis.port = 6379
+jummp.redis.timeout = 2000
+brutforce.loginAttempts.allowedNumberOfAttempts = 3
+brutforce.loginAttempts.time = 60
+
 grails.views.default.codec="none" // none, html, base64
 grails.views.gsp.encoding="UTF-8"
 grails.enable.native2ascii=true

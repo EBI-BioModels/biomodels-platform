@@ -16,7 +16,7 @@ class RestAccessTokenServiceSpec extends Specification {
     }
 
     void "test something"() {
-        expected:
+        expect:
         1 == 1
     }
 }

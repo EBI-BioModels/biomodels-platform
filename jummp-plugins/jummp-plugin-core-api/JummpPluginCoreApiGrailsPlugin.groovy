@@ -63,7 +63,6 @@ All other plugins providing core functionality depend on this plugin and the cor
         shareRevisionToFellowCurators(ShareRevisionToFellowCurators) { bean ->
             bean.autowire = "byName"
             bean.singleton = true
-            modelDelegateService = ref("modelDelegateService")
         }
         redisService(RedisService) { bean ->
             bean.autowire = "byName"

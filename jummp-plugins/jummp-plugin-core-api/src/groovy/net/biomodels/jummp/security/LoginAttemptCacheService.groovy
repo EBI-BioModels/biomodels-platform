@@ -38,7 +38,11 @@ class LoginAttemptCacheService {
                 .expireAfterWrite(time, TimeUnit.MINUTES)
                 .build({0} as CacheLoader)
         // initiate the map of failed login attempts
-        redisService.doRedisHSet("Login-Attempts", "unknown_username", "1000")
+        try {
+            redisService.doRedisHSet("Login-Attempts", "unknown_username", "1000")
+        } catch (Exception e) {
+            LOGGER.warn("Redis unavailable during init, skipping pre-seed: ${e.message}")
+        }
     }
 
     /**
