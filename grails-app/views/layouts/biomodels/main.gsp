@@ -234,7 +234,7 @@
     }
 %>
 <body class="level2 full-width">
-<g:if test="${session.enabled2FA || session.showEnrollmentNotice}">
+<g:if test="${session.enabled2FA || (session.showEnrollmentNotice && !(controllerName == 'usermanagement' && actionName == 'show'))}">
     <div style="position:fixed;top:0;left:0;width:100%;background:#f0ad4e;color:#333;text-align:center;padding:10px;font-weight:bold;z-index:9999;">
         <g:if test="${session.enabled2FA}">
             You are not fully logged in &mdash; please check your email for the One-Time Passcode and
