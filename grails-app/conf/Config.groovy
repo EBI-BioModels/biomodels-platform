@@ -304,7 +304,6 @@ log4j.main = {
         'net.biomodels.jummp.plugins.simplelogging',
         'net.biomodels.jummp.core.events',
         'net.biomodels.jummp.plugins.bives',
-        'net.biomodels.jummp.search',
         'net.biomodels.jummp.webapp'
     ], additivity: false
 
@@ -318,6 +317,8 @@ log4j.main = {
         threshold: Level.DEBUG, additivity: false
     rollingFile name: "apiFilterAppender", file: "${logsDir}/jummp-api-filter.log",
             threshold: Level.INFO, additivity: false
+    rollingFile name: "searchAppender", file: "${logsDir}/jummp-search.log",
+            threshold: Level.DEBUG, additivity: false
     debug debugAppender: [
         'net.biomodels.jummp',
         'net.biomodels.jummp.core',
@@ -333,7 +334,6 @@ log4j.main = {
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.plugins.configuration',
         'net.biomodels.jummp.scms',
-        'net.biomodels.jummp.search',
         'net.biomodels.jummp.security',
         'net.biomodels.jummp.utils.redis',
         'net.biomodels.jummp.webapp',
@@ -341,6 +341,12 @@ log4j.main = {
         /*"grails.plugin.springsecurity",
         "org.springframework.security",
         "org.pac4j"*/
+    ], additivity: false
+
+    debug searchAppender: [
+        'net.biomodels.jummp.core.SearchService',
+        'net.biomodels.jummp.webapp.SearchController',
+        'net.biomodels.jummp.search'
     ], additivity: false
 
     debug irreproducibleAppender: [
