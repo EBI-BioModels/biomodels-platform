@@ -221,6 +221,23 @@ ORDER BY model.firstPublished DESC'''
         mapModels
     }
 
+    // Fire-and-forget variant for the admin endpoint. Binds a fresh Hibernate session
+    // to the background thread so GORM queries work outside the HTTP request context.
+    void refreshRecentlyAccessedModelsCacheAsync() {
+        LOGGER.info("Starting background refresh of recently accessed models cache")
+        Thread.start {
+            try {
+                Model.withNewSession {
+                    Map<String, RAM> mapModels = buildListOfRecentlyAccessedModels() as Map<String, RAM>
+                    addListOfRecentlyAccessedModelsToRedis(mapModels)
+                }
+                LOGGER.info("Background refresh of recently accessed models cache completed")
+            } catch (Exception e) {
+                LOGGER.error("Background refresh of recently accessed models cache failed: {}", e.message, e)
+            }
+        }
+    }
+
     private void addListOfRecentlyAccessedModelsToRedis(Map<String, RAM> mapModels) {
         LOGGER.debug("Caching the list of recently ACCESSED models to Redis Server")
         final String key = "hp-recently-accessed-models"

@@ -85,13 +85,14 @@ class HomePageController extends CommonController {
         render(view: "report", model: [message: message, title: title, layout: layout])
     }
     /**
-     * Updates the list of recently accessed models on Redis Cache
+     * Triggers a background refresh of the recently accessed models Redis cache and
+     * returns immediately to avoid CloudFront origin timeout.
      */
     def updateRecentlyAccessedModels() {
-        Map<String, RecentlyAccessedModel> models = decorationService.refreshRecentlyAccessedModelsRedisCache()
+        decorationService.refreshRecentlyAccessedModelsCacheAsync()
         String title = "${PRE_TITLE} recently accessed models | BioModels"
-        render(view: "update-recently-accessed-models",
-            model: [models: models, title: title, layout: layout])
+        String message = "Cache refresh started in the background. The widget will update within a few minutes."
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
 
     /**
