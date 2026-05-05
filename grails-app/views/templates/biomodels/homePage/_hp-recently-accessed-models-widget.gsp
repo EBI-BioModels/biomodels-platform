@@ -13,10 +13,9 @@
             <div class="hide-for-small-only" style="text-indent: 0.0em; font-size: 90%">
                 Submitter: <a href="${searchBySubmitterLink}" target="_blank">${submitter}</a>&nbsp;|
                 Format: ${model.value.format}&nbsp;|
-                Accessed: ${model.value.accessCount} time(s)</div>
-            <div class="show-for-large hide-for-medium-only" style="text-indent: 0.0em; font-size: 90%">
                 Submitted: ${model.value.submittedDate}&nbsp;|
-                Published: ${model.value.publishedDate ?: 'N/A'}</div>
+                Published: ${model.value.publishedDate ?: 'N/A'}&nbsp;|
+                Accessed: ${model.value.accessCount} time(s)</div>
         </li>
     </g:each>
 </ul>
