@@ -15,7 +15,7 @@
                 Format: ${model.value.format}&nbsp;|
                 Submitted: ${model.value.submittedDate}&nbsp;|
                 Published: ${model.value.publishedDate ?: 'N/A'}&nbsp;|
-                Accessed: ${model.value.accessCount} time(s)</div>
+                Accessed: ${String.format('%,d', model.value.accessCount)} time(s)</div>
         </li>
     </g:each>
 </ul>
