@@ -137,9 +137,10 @@ GROUP BY rev.model, rev.name
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
     model.firstPublished,
-    rev.name, rev.owner, model.publication.title, model.publication.journal, model.publication.year
+    rev.name, rev.owner, pub.title, pub.journal, pub.year
 FROM Model AS model
 JOIN model.revisions AS rev
+LEFT JOIN model.publication AS pub
 WHERE
   rev.id IN(
      SELECT aoi.objectId
@@ -153,6 +154,7 @@ WHERE
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
   AND model.firstPublished IS NOT NULL
+  AND model.deleted = false
   AND rev.revisionNumber = (SELECT MAX(revisionNumber) FROM Revision r2
                             WHERE r2.model.id=rev.model.id AND r2.state='PUBLISHED')
 ORDER BY model.firstPublished DESC'''
