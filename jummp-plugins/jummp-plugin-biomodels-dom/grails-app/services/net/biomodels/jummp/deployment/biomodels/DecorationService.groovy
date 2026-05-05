@@ -86,7 +86,8 @@ class DecorationService implements InitializingBean {
         String query ='''
 SELECT
     coalesce(m.publicationId, m.submissionId) as modelId,
-    rev.name
+    rev.name,
+    COUNT(ma.id) as accessCount
 FROM
     ModelAudit AS ma
     JOIN ma.model AS m
@@ -105,7 +106,8 @@ WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
-GROUP BY rev.model, rev.name
+GROUP BY m.publicationId, m.submissionId, rev.model, rev.name
+ORDER BY COUNT(ma.id) DESC
 '''
         def now = new Date()
         def then = null
