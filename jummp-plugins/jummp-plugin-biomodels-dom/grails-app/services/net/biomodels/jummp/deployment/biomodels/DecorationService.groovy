@@ -83,45 +83,69 @@ class DecorationService implements InitializingBean {
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyAccessedModels')
     private static Map<String, String> buildListOfRecentlyAccessedModels() {
-        String query ='''
-SELECT
-    coalesce(m.publicationId, m.submissionId) as modelId,
-    rev.name,
-    COUNT(ma.id) as accessCount
-FROM
-    ModelAudit AS ma
-    JOIN ma.model AS m
-    JOIN m.revisions AS rev
-WHERE
-  ma.dateCreated BETWEEN :then AND :now AND
-  ma.success = 1 AND
-  rev.id IN(
-     SELECT aoi.objectId
-        FROM
-            AclEntry AS ace
-            JOIN ace.aclObjectIdentity AS aoi
-            JOIN aoi.aclClass AS aclClass
-            JOIN ace.sid AS sid
-        WHERE
-            aclClass.className = 'net.biomodels.jummp.model.Revision'
-            AND sid.sid = 'ROLE_ANONYMOUS'
-            AND ace.mask = 1)
-GROUP BY m.publicationId, m.submissionId, rev.model, rev.name
-ORDER BY COUNT(ma.id) DESC
-'''
         def now = new Date()
         def then = null
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query,
-            [then: then, now: now, max: ACCESSED_MAX_RECORDS]) as List<List>
-        Map<String, String> returnedModels = new LinkedHashMap<>()
-        matchedModels.each { row ->
-            String id = row[0] as String
-            String name = row[1]
-            returnedModels.put(id, name)
+
+        // Step 1: aggregate audit table only — no revision join, fast.
+        // Over-fetch (×5) so the subsequent ACL/visibility filter still yields enough results.
+        String auditQuery = '''
+SELECT ma.model.id, COUNT(ma.id) AS accessCount
+FROM ModelAudit AS ma
+WHERE ma.dateCreated BETWEEN :then AND :now
+  AND ma.success = 1
+GROUP BY ma.model.id
+ORDER BY COUNT(ma.id) DESC
+'''
+        List auditRows = Model.executeQuery(auditQuery,
+            [then: then, now: now], [max: ACCESSED_MAX_RECORDS * 5]) as List
+
+        if (!auditRows) {
+            LOGGER.debug("No model audit records found in the last 6 months")
+            return new LinkedHashMap<>()
         }
+
+        // Step 2: fetch display metadata for the candidate models only,
+        // constraining to the latest published revision with anonymous read access.
+        List<Long> candidateIds = auditRows.collect { it[0] as Long }
+        String metaQuery = '''
+SELECT
+    m.id,
+    coalesce(m.publicationId, m.submissionId),
+    rev.name
+FROM Model AS m
+JOIN m.revisions AS rev
+WHERE
+  m.id IN (:ids) AND
+  rev.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision r2
+                        WHERE r2.model.id = m.id AND r2.state = 'PUBLISHED') AND
+  rev.id IN (
+     SELECT aoi.objectId
+        FROM AclEntry AS ace
+        JOIN ace.aclObjectIdentity AS aoi
+        JOIN aoi.aclClass AS aclClass
+        JOIN ace.sid AS sid
+        WHERE aclClass.className = 'net.biomodels.jummp.model.Revision'
+          AND sid.sid = 'ROLE_ANONYMOUS'
+          AND ace.mask = 1)
+'''
+        List metaRows = Model.executeQuery(metaQuery, [ids: candidateIds]) as List
+
+        Map<Long, Object[]> metaByDbId = [:]
+        metaRows.each { row -> metaByDbId[row[0] as Long] = row }
+
+        // Merge: iterate in access-count order, skip non-public models, stop at the configured limit.
+        Map<String, String> returnedModels = new LinkedHashMap<>()
+        for (row in auditRows) {
+            def meta = metaByDbId[row[0] as Long]
+            if (meta) {
+                returnedModels.put(meta[1] as String, meta[2] as String)
+                if (returnedModels.size() >= ACCESSED_MAX_RECORDS) break
+            }
+        }
+
         LOGGER.debug("Extracting the list of recently ACCESSED models from the database")
         returnedModels
     }
