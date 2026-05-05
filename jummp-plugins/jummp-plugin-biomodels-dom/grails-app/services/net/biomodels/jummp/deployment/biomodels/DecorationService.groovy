@@ -159,7 +159,7 @@ WHERE
                             WHERE r2.model.id=rev.model.id AND r2.state='PUBLISHED')
 ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: PUBLISHED_MAX_RECORDS])
-        Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
+        Map<String, RecentlyPublishedModel> returnedModels = new LinkedHashMap<String, RecentlyPublishedModel>()
         matchedModels.each {
             User owner = it[3] as User
             RecentlyPublishedModel rpm = new RecentlyPublishedModel(id: it[0],
@@ -312,12 +312,25 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
         } else {
             for (String modelId in models.keySet()) {
                 Map rpm = redisService.doRedisHGetAll("$key-$modelId" as String)
+                if (!rpm) {
+                    LOGGER.warn("Per-model Redis entry missing for {}, skipping", modelId)
+                    continue
+                }
                 RecentlyPublishedModel model =
                     new RecentlyPublishedModel(id: rpm.get("id"), submitter: rpm.get("submitter"),
                         lastPublished: rpm.get("lastPublished"),
                         title: rpm.get("title"), pubJournal: rpm.get("pubJournal"),
                         pubTitle: rpm.get("pubTitle"), pubYear: rpm.get("pubYear"))
                 returnedMap.put(model.id, model)
+            }
+            if (!returnedMap) {
+                LOGGER.warn("All per-model Redis entries missing; falling back to DB and rebuilding cache")
+                returnedMap = buildListOfRecentlyPublishedModels()
+                addRecentlyPublishedModelsToRedis(returnedMap)
+            } else {
+                returnedMap = returnedMap.sort { a, b ->
+                    (b.value.lastPublished ?: "") <=> (a.value.lastPublished ?: "")
+                } as LinkedHashMap<String, RecentlyPublishedModel>
             }
         }
         return returnedMap
