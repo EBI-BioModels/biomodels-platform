@@ -29,6 +29,7 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.CommonController
+import net.biomodels.jummp.statistic.RecentlyAccessedModel
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class HomePageController extends CommonController {
@@ -87,7 +88,7 @@ class HomePageController extends CommonController {
      * Updates the list of recently accessed models on Redis Cache
      */
     def updateRecentlyAccessedModels() {
-        Map<String, String> models = decorationService.refreshRecentlyAccessedModelsRedisCache()
+        Map<String, RecentlyAccessedModel> models = decorationService.refreshRecentlyAccessedModelsRedisCache()
         String title = "${PRE_TITLE} recently accessed models | BioModels"
         render(view: "update-recently-accessed-models",
             model: [models: models, title: title, layout: layout])

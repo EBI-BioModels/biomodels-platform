@@ -29,6 +29,7 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.scms.CmsContent
 import net.biomodels.jummp.statistic.OrganismData
+import net.biomodels.jummp.statistic.RecentlyAccessedModel
 import net.biomodels.jummp.statistic.RecentlyPublishedModel
 import net.biomodels.jummp.utils.redis.RedisService
 import org.perf4j.aop.Profiled
@@ -114,7 +115,11 @@ ORDER BY COUNT(ma.id) DESC
 SELECT
     m.id,
     coalesce(m.publicationId, m.submissionId),
-    rev.name
+    rev.name,
+    rev.owner,
+    rev.format.name,
+    rev.uploadDate,
+    m.firstPublished
 FROM Model AS m
 JOIN m.revisions AS rev
 WHERE
@@ -137,11 +142,21 @@ WHERE
         metaRows.each { row -> metaByDbId[row[0] as Long] = row }
 
         // Merge: iterate in access-count order, skip non-public models, stop at the configured limit.
-        Map<String, String> returnedModels = new LinkedHashMap<>()
-        for (row in auditRows) {
-            def meta = metaByDbId[row[0] as Long]
+        Map<String, RecentlyAccessedModel> returnedModels = new LinkedHashMap<>()
+        for (auditRow in auditRows) {
+            def meta = metaByDbId[auditRow[0] as Long]
             if (meta) {
-                returnedModels.put(meta[1] as String, meta[2] as String)
+                User owner = meta[3] as User
+                RecentlyAccessedModel ram = new RecentlyAccessedModel(
+                    id: meta[1] as String,
+                    title: meta[2] as String,
+                    submitter: owner?.person?.userRealName ?: "",
+                    format: meta[4] as String,
+                    submittedDate: (meta[5] as Date)?.format("yyyy-MM-dd") ?: "",
+                    publishedDate: (meta[6] as Date)?.format("yyyy-MM-dd") ?: "",
+                    accessCount: auditRow[1] as long
+                )
+                returnedModels.put(ram.id, ram)
                 if (returnedModels.size() >= ACCESSED_MAX_RECORDS) break
             }
         }
@@ -205,15 +220,27 @@ ORDER BY model.firstPublished DESC'''
         returnedModels
     }
 
-    Map<String, String> refreshRecentlyAccessedModelsRedisCache() {
-        Map<String, String> mapModels = buildListOfRecentlyAccessedModels()
+    Map<String, RecentlyAccessedModel> refreshRecentlyAccessedModelsRedisCache() {
+        Map<String, RecentlyAccessedModel> mapModels = buildListOfRecentlyAccessedModels()
         addListOfRecentlyAccessedModelsToRedis(mapModels)
         mapModels
     }
 
-    private void addListOfRecentlyAccessedModelsToRedis(Map mapModels) {
+    private void addListOfRecentlyAccessedModelsToRedis(Map<String, RecentlyAccessedModel> mapModels) {
         LOGGER.debug("Caching the list of recently ACCESSED models to Redis Server")
-        redisService.doRedisHSet("hp-recently-accessed-models", mapModels)
+        final String key = "hp-recently-accessed-models"
+        Map existing = redisService.doRedisHGetAll(key)
+        existing?.keySet()?.each { redisService.doRedisDel("$key-$it" as String) }
+        redisService.doRedisDel(key)
+        Map<String, String> index = [:]
+        mapModels.each { modelId, ram ->
+            Map value = ["id": ram.id, "title": ram.title, "submitter": ram.submitter,
+                         "format": ram.format, "submittedDate": ram.submittedDate,
+                         "publishedDate": ram.publishedDate, "accessCount": ram.accessCount.toString()]
+            redisService.doRedisHSet("$key-${ram.id}" as String, value)
+            index.put(ram.id, ram.title)
+        }
+        redisService.doRedisHSet(key, index)
     }
 
     Map<String, String> refreshRecentlyPublishedModelsRedisCache() {
@@ -315,15 +342,36 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
         return journalsMap
     }
 
-    Map<String, String> fetchRecentlyAccessedModels() {
-        Map models = redisService.doRedisHGetAll("hp-recently-accessed-models")
+    Map<String, RecentlyAccessedModel> fetchRecentlyAccessedModels() {
+        final String key = "hp-recently-accessed-models"
+        Map models = redisService.doRedisHGetAll(key)
+        Map<String, RecentlyAccessedModel> returnedMap = [:]
         if (!models) {
-            // call the fallback
             LOGGER.debug("Falling back to build the list of Recently Accessed Models")
-            models = buildListOfRecentlyAccessedModels()
-            addListOfRecentlyAccessedModelsToRedis(models)
+            returnedMap = buildListOfRecentlyAccessedModels()
+            addListOfRecentlyAccessedModelsToRedis(returnedMap)
+        } else {
+            for (String modelId in models.keySet()) {
+                Map ram = redisService.doRedisHGetAll("$key-$modelId" as String)
+                if (!ram) {
+                    LOGGER.warn("Per-model Redis entry missing for {}, skipping", modelId)
+                    continue
+                }
+                returnedMap.put(modelId, new RecentlyAccessedModel(
+                    id: ram.get("id"), title: ram.get("title"),
+                    submitter: ram.get("submitter"), format: ram.get("format"),
+                    submittedDate: ram.get("submittedDate"),
+                    publishedDate: ram.get("publishedDate"),
+                    accessCount: ram.get("accessCount") as long
+                ))
+            }
+            if (!returnedMap) {
+                LOGGER.warn("All per-model Redis entries missing; falling back to DB and rebuilding cache")
+                returnedMap = buildListOfRecentlyAccessedModels()
+                addListOfRecentlyAccessedModelsToRedis(returnedMap)
+            }
         }
-        return models
+        return returnedMap
     }
 
     Map<String, RecentlyPublishedModel> fetchRecentlyPublishedModels() {
