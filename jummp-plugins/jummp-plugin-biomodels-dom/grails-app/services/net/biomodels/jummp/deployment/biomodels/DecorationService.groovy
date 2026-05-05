@@ -91,7 +91,7 @@ class DecorationService implements InitializingBean {
         }
 
         // Step 1: aggregate audit table only — no revision join, fast.
-        // Over-fetch (×5) so the subsequent ACL/visibility filter still yields enough results.
+        // Over-fetch (×5) to ensure enough candidates survive the deleted/no-published-revision filter.
         String auditQuery = '''
 SELECT ma.model.id, COUNT(ma.id) AS accessCount
 FROM ModelAudit AS ma
@@ -108,33 +108,28 @@ ORDER BY COUNT(ma.id) DESC
             return new LinkedHashMap<>()
         }
 
-        // Step 2: fetch display metadata for the candidate models only,
-        // constraining to the latest published revision with anonymous read access.
+        // Step 2: fetch display metadata for the candidate models only.
+        // Published revisions (state = 'PUBLISHED') are always publicly accessible in BioModels,
+        // so the ACL subquery is redundant. LEFT JOIN on owner/person avoids N+1 lazy loads.
         List<Long> candidateIds = auditRows.collect { it[0] as Long }
         String metaQuery = '''
 SELECT
     m.id,
     coalesce(m.publicationId, m.submissionId),
     rev.name,
-    rev.owner,
+    p.userRealName,
     rev.format.name,
     rev.uploadDate,
     m.firstPublished
 FROM Model AS m
 JOIN m.revisions AS rev
+LEFT JOIN rev.owner AS u
+LEFT JOIN u.person AS p
 WHERE
   m.id IN (:ids) AND
+  m.deleted = false AND
   rev.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision r2
-                        WHERE r2.model.id = m.id AND r2.state = 'PUBLISHED') AND
-  rev.id IN (
-     SELECT aoi.objectId
-        FROM AclEntry AS ace
-        JOIN ace.aclObjectIdentity AS aoi
-        JOIN aoi.aclClass AS aclClass
-        JOIN ace.sid AS sid
-        WHERE aclClass.className = 'net.biomodels.jummp.model.Revision'
-          AND sid.sid = 'ROLE_ANONYMOUS'
-          AND ace.mask = 1)
+                        WHERE r2.model.id = m.id AND r2.state = 'PUBLISHED')
 '''
         List metaRows = Model.executeQuery(metaQuery, [ids: candidateIds]) as List
 
@@ -146,11 +141,10 @@ WHERE
         for (auditRow in auditRows) {
             def meta = metaByDbId[auditRow[0] as Long]
             if (meta) {
-                User owner = meta[3] as User
                 RecentlyAccessedModel ram = new RecentlyAccessedModel(
                     id: meta[1] as String,
                     title: meta[2] as String,
-                    submitter: owner?.person?.userRealName ?: "",
+                    submitter: meta[3] as String ?: "",
                     format: meta[4] as String,
                     submittedDate: (meta[5] as Date)?.format("yyyy-MM-dd") ?: "",
                     publishedDate: (meta[6] as Date)?.format("yyyy-MM-dd") ?: "",
