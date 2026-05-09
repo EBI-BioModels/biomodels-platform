@@ -36,8 +36,8 @@ class RefreshSearchCacheJob {
     def searchService
 
     static triggers = {
-        // the job is run at 10:00 AM every day
-        cron name: "refreshSearchCache", cronExpression: "0 0 10 * * ?"
+        // the job is run at 10:30 AM every day
+        cron name: "refreshSearchCache", cronExpression: "0 30 10 * * ?"
     }
 
     def execute() {
