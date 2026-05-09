@@ -457,11 +457,8 @@ under the format: ${response.format}"""
 
     private Map<String, Object> initSearchResults(final String query) {
         Map<String, Object> result = ["imagePath": "/images"]
-        def domain = params.domain
-        if (!domain) {
-            domain = "biomodels"
-            result.put("domain", domain)
-        }
+        def domain = params.domain ?: "biomodels"
+        result.put("domain", domain)
         String queryString = query?.replaceAll('([^\\\\])"', '$1\\\\"')
         result.put("queryString", queryString)
 
