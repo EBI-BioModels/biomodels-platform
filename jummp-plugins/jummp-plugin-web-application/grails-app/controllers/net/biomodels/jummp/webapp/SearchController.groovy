@@ -353,16 +353,16 @@ under the format: ${response.format}"""
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         Map<String, Object> results = initSearchResults(query)
-        if (query == "*:*" && domain == "biomodels") {
-            Map cached = searchService.retrieveCachedSearchAllResult()
+        if (query == "*:*") {
+            Map cached = searchService.retrieveCachedSearchAllResult(domain)
             if (cached["models"]) {
-                LOGGER.info("Load the search result from the cached: query ${query}, offset $offset, length $length")
+                LOGGER.info("Load the search result from the cached: query ${query}, domain ${domain}, offset $offset, length $length")
                 results.putAll([query : query, offset: offset, length: length,
                         sortBy: sortBy, sortDirection: sortDirection, models: cached["models"],
                         facets: cached["facets"], facetStats: cached["facetStats"], matches: cached["matches"]
                 ])
             } else {
-                LOGGER.info("Hit EBI search due to the empty cached: query ${query}, offset $offset, length  $length")
+                LOGGER.info("Hit EBI search due to the empty cached: query ${query}, domain ${domain}, offset $offset, length  $length")
                 results.putAll(doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy,
                         sortDirection))
             }
@@ -383,7 +383,7 @@ under the format: ${response.format}"""
         String facetStats = ""
         if (query?.trim()) {
             SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
-            Map extractedSearchModels = searchService.extractSearchModels(response)
+            Map extractedSearchModels = searchService.extractSearchModels(response, domain)
             totalCount = extractedSearchModels["totalCount"] as Integer
             models = extractedSearchModels["models"] as List<MTC>
             facets = extractedSearchModels["facets"] as List<Facet>

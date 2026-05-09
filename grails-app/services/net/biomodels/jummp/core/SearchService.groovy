@@ -203,7 +203,7 @@ class SearchService implements InitializingBean {
         return strategy.searchModels(query, domain, sortOrder, paginationCriteria)
     }
 
-    Map extractSearchModels(SearchResponse response) {
+    Map extractSearchModels(SearchResponse response, String domain = "biomodels") {
         Integer totalCount = (Integer) response.totalCount
         ArrayList<ModelTransportCommand> results = response.results
         List<ModelTransportCommand> models = []
@@ -223,7 +223,7 @@ class SearchService implements InitializingBean {
         JsonBuilder builder = new JsonBuilder(facets)
         String facetStats = builder.toString()
 
-        doUpdateCachedSearchAll(totalCount, models, facets, facetStats)
+        doUpdateCachedSearchAll(totalCount, models, facets, facetStats, domain)
 
         [totalCount: totalCount, models: models, facets: facets, facetStats: facetStats]
     }
@@ -254,11 +254,12 @@ class SearchService implements InitializingBean {
         strategy.getSortFields()
     }
 
-    Map retrieveCachedSearchAllResult() {
-        if (!redisService.exists("search-result:all")) {
+    Map retrieveCachedSearchAllResult(String domain = "biomodels") {
+        String cacheKey = "search-result:all:${domain}"
+        if (!redisService.exists(cacheKey)) {
             return [:]
         }
-        Map result = redisService.doRedisHGetAll("search-result:all")
+        Map result = redisService.doRedisHGetAll(cacheKey)
         Integer matches = result.get("totalCount") as Integer
         String facetStats = result.get("facetStats")
         List<ModelTransportCommand> models = convert2MTC(result.get("models"))
@@ -268,7 +269,8 @@ class SearchService implements InitializingBean {
     }
 
     private void doUpdateCachedSearchAll(Integer totalCount, List<ModelTransportCommand> models,
-                                         List<Facet> facets, String facetStats) {
+                                         List<Facet> facets, String facetStats, String domain = "biomodels") {
+        String cacheKey = "search-result:all:${domain}"
         Map<String, String> data = ["totalCount": Integer.toString(totalCount), facetStats: facetStats]
 
         StringBuilder str = new StringBuilder()
@@ -283,7 +285,7 @@ class SearchService implements InitializingBean {
         }
         data.put("facets", str.toString())
 
-        redisService.doRedisHSet("search-result:all", data)
+        redisService.doRedisHSet(cacheKey, data)
     }
 
     private static String strFacet(Facet facet) {
