@@ -847,8 +847,8 @@ if (!(jummpConfig.jummp.security.mailer.tlsrequired instanceof ConfigObject)) {
 grails.mail.props["mail.smtp.connectiontimeout"] = "30000"
 grails.mail.props["mail.smtp.timeout"]           = "30000"
 grails.mail.props["mail.smtp.writetimeout"]      = "30000"
-if (!(jummpConfig.jummp.security.mailer.apiKey instanceof ConfigObject)) {
-	jummp.security.mailer.apiKey = jummpConfig.jummp.security.mailer.apiKey
+if (!(jummpConfig.jummp.security.mailer.smtp2goApiKey instanceof ConfigObject)) {
+	jummp.security.mailer.smtp2goApiKey = jummpConfig.jummp.security.mailer.smtp2goApiKey
 }
 if (!(jummpConfig.jummp.security.mailer.brevoApiKey instanceof ConfigObject)) {
 	jummp.security.mailer.brevoApiKey = jummpConfig.jummp.security.mailer.brevoApiKey

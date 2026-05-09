@@ -76,13 +76,13 @@ class MailingService {
         }
 
         def brevoKey   = grailsApplication.config.jummp.security.mailer.brevoApiKey
-        def smtp2goKey = grailsApplication.config.jummp.security.mailer.apiKey
+        def smtp2goKey = grailsApplication.config.jummp.security.mailer.smtp2goApiKey
 
         if (brevoKey && !(brevoKey instanceof ConfigObject)) {
             sendViaBrevoApi(toAddr, htmlBody ?: textBody, subjectStr, fromAddr,
                     brevoKey as String, htmlBody != null, bccList, replyToAddr)
         } else if (smtp2goKey && !(smtp2goKey instanceof ConfigObject)) {
-            sendViaSmtp2goApi(toAddr, htmlBody ?: textBody, subjectStr, fromAddr,
+            sendViaSmtp2GoApi(toAddr, htmlBody ?: textBody, subjectStr, fromAddr,
                     smtp2goKey as String, htmlBody != null, bccList)
         } else {
             mailService.sendMail {
@@ -133,7 +133,7 @@ class MailingService {
         }
     }
 
-    private void sendViaSmtp2goApi(
+    private void sendViaSmtp2GoApi(
         String toEmail, String body, String subject, String sender,
         String apiKey, boolean isHtml, List bcc) {
         final String API_URL = "https://api.smtp2go.com/v3/email/send"
