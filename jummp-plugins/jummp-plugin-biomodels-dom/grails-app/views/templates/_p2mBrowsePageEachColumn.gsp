@@ -5,7 +5,7 @@
                 def modelUrl = c.searchableLink ?:
                     createLink(controller: 'model', action: 'show', id: c.modelIdentifier)
             %>
-            <li class="category-name"><a href="${modelUrl}">${c.categoryName}</a></li>
+            <li class="category-name"><a href="${modelUrl}" target="_blank">${c.categoryName}</a></li>
         </g:each>
     </ul>
 </div>

@@ -60,7 +60,7 @@
                 let v = $(this).val();
                 $(".results").removeClass("results");
                 $("li.category-name").each(function () {
-                    if (v != "" && $(this).text().search(new RegExp(v,'gi')) != -1) {
+                    if (v !== "" && $(this).text().search(new RegExp(v,'gi')) !== -1) {
                         $(this).addClass("results");
                     }
                 });

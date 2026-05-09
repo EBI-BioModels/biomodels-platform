@@ -44,7 +44,9 @@ abstract class AutoGenModelService implements InitializingBean {
             SortOrder sortOrder = new SortOrder("relevance", "desc")
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 1000, "facetCount": 0]
             SearchResponse response = searchService.searchModels("*:*", domain, sortOrder, paginationCriteria)
-            return response?.results?.collectEntries { [it.submissionId, it.searchableLink] } ?: [:]
+            return response?.results
+                ?.findAll { it.searchableLink?.startsWith('http') }
+                ?.collectEntries { [it.submissionId, it.searchableLink] } ?: [:]
         } catch (Exception e) {
             log.warn("Could not fetch searchable links for domain ${domain}: ${e.message}")
             return [:]
