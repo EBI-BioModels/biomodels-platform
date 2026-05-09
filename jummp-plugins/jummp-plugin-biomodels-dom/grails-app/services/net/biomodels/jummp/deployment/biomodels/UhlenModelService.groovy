@@ -21,8 +21,6 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
-import net.biomodels.jummp.search.SearchResponse
-import net.biomodels.jummp.search.SortOrder
 
 /**
  * This service provides means of operating and managing the map between representative and missing models in
@@ -32,7 +30,6 @@ import net.biomodels.jummp.search.SortOrder
  */
 @Transactional
 class UhlenModelService extends AutoGenModelService {
-    def searchService
     List<String> findMissing() {
         // executeQuery() queries are not supported in unit tests with Grails 2.5, use criteria queries instead
         UhlenModelMapping.createCriteria().list {
@@ -89,17 +86,5 @@ class UhlenModelService extends AutoGenModelService {
             entry.searchableLink = searchableLinkMap.get(entry.modelIdentifier)
         }
         returned
-    }
-
-    private Map<String, String> fetchSearchableLinks(String domain) {
-        try {
-            SortOrder sortOrder = new SortOrder("relevance", "desc")
-            Map<String, Integer> paginationCriteria = ["start": 0, "length": 1000, "facetCount": 0]
-            SearchResponse response = searchService.searchModels("*:*", domain, sortOrder, paginationCriteria)
-            return response?.results?.collectEntries { [it.submissionId, it.searchableLink] } ?: [:]
-        } catch (Exception e) {
-            log.warn("Could not fetch searchable links for domain ${domain}: ${e.message}")
-            return [:]
-        }
     }
 }
