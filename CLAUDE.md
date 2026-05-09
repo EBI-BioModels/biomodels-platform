@@ -116,6 +116,17 @@ URL routing is defined in `grails-app/conf/UrlMappings.groovy`. Incoming request
 
 GORM domain classes in `grails-app/domain/net/biomodels/jummp/` represent: `Model`, `Revision`, `Publication`, `Person`, `Team`, `RepositoryFile`.
 
+### GSP Layouts
+
+Two site-wide layouts live in `grails-app/views/layouts/biomodels/`:
+
+- **`main.gsp`** — the primary layout used by almost every page (login, registration, user management, auth/2FA views, homepage, maintenance). Pages opt in via `<meta name="layout" content="${session['branding.style']}/main"/>` (or hardcoded `biomodels/main`). Contains the 2FA/enrollment amber banner, contextual help panel, and all shared JS/CSS.
+- **`newmain.gsp`** — a slimmer layout used only by `jummp-plugin-web-application/.../views/model/display.gsp`. Delegates contextual-help JS to a separate `setup-contextual-help` template; has no 2FA banner. Treat it as legacy — do not add new pages to it.
+
+When adding a new page, use `main.gsp`. When touching the 2FA banner or global JS/CSS, edit `main.gsp` only.
+
+`display.gsp` itself is a debug/staging alternative to `show.gsp` for the model detail page. `ModelController.show` only renders it when the Redis `DEBUGGING_MODE` flag is `true`; in normal production flow it is never reached.
+
 ### Configuration
 
 - `grails-app/conf/Config.groovy` — main app config (Spring Security, CORS, logging, mail)
