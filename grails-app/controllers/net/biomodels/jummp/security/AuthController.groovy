@@ -151,7 +151,7 @@ class AuthController extends CommonController {
             postURL = createLink(controller: "errors", action: "error403")
         } else {
             message = "valid"
-            LOGGER.info "OTP: $otp has been entered by the user: ${currentUser.username}"
+            LOGGER.info "An OTP has been entered by the user: ${currentUser.username}"
             Map m = authService.doVerifyOTP(currentUser.username, otp, session.id)
             matched = m["matched"]
             cause = m["cause"]

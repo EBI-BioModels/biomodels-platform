@@ -222,14 +222,18 @@ caused by ${ntp?.errors?.toString()}""")
         User submitter = body.user
         String submitterRealName = submitter.person.userRealName
         String submitterEmail = submitter.email
-        String emailTo
+        String adminEmail = grailsApplication.config.jummp.security.registration.email.adminAddress
         String emailFrom = grailsApplication.config.jummp.security.registration.email.sender
         String emailSubject
         String emailBody
 
         /* email notification to the curators' mailing list */
-        emailTo = body.emails[0] as String
-        if (emailTo) {
+        String curatorMailingList = body.emails[0] as String
+        if (!curatorMailingList) {
+            curatorMailingList = adminEmail
+            logger.debug("Missing the curator mailing list in the configuration file!")
+        }
+        if (curatorMailingList) {
             emailSubject = messageSource.getMessage("notification.model.created.emailToCurator.subject",
                 [model.id.toString(), model.submissionId] as String[], null)
             MFTC formatTC = model.format
@@ -242,21 +246,26 @@ caused by ${ntp?.errors?.toString()}""")
             String[] args = [model.id.toString(), model.name, model.submissionId, format,
                              submitterInfo, pubData, submissionTime, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToCurator.body", args, null)
-            sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
+            sendConfirmationOrNotificationEmail(emailFrom, curatorMailingList, emailSubject, emailBody)
         }
         /* email notification to the submitter */
-        emailTo = body.emails[1] ?: submitterEmail
+        String emailTo = body.emails[1] ?: submitterEmail
         if (emailTo) {
             emailSubject = messageSource.getMessage("notification.model.created.emailToSubmitter.subject",
                 [model.submissionId] as String[], null)
             String salutation = submitterRealName ?: "submitter"
+            // retrieve the message codes and populate the arguments to them according to two cases
+            // 1. the submission was provided the publication
+            // 2. the submission wasn't added the publication
+            // So that we can add a custom message to suggest citing BioModels if the manuscript is peer-reviewing.
             String withPubMsgCode = "notification.model.created.emailToSubmitter.body.withPublicationProvided"
             String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
-            String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[], null)
-            String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
-            String pubInfo = model.publication ? withPublicationProvided : noPublicationProvided
-            String[] args = [salutation, model.name, model.submissionId, pubInfo, modelLink]
+            String withPubProvided = messageSource.getMessage(withPubMsgCode, [] as String[], null)
+            String noPubProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
+            String pubInfo = model.publication ? withPubProvided : noPubProvided
+            String[] args = [salutation, model.name, model.submissionId, pubInfo, modelLink, curatorMailingList]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
+
             sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
         }
     }
