@@ -245,17 +245,17 @@ caused by ${ntp?.errors?.toString()}""")
             sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
         }
         /* email notification to the submitter */
-        emailTo = body.emails[1]
+        emailTo = body.emails[1] ?: submitterEmail
         if (emailTo) {
             emailSubject = messageSource.getMessage("notification.model.created.emailToSubmitter.subject",
                 [model.submissionId] as String[], null)
             String salutation = submitterRealName ?: "submitter"
             String withPubMsgCode = "notification.model.created.emailToSubmitter.body.withPublicationProvided"
             String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
-            String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
+            String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[], null)
             String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
-            // embed the instructions about citing BioModels regardless of publication details
-            String[] args = [salutation, model.name, model.submissionId, noPublicationProvided, modelLink]
+            String pubInfo = model.publication ? withPublicationProvided : noPublicationProvided
+            String[] args = [salutation, model.name, model.submissionId, pubInfo, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
             sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
         }
