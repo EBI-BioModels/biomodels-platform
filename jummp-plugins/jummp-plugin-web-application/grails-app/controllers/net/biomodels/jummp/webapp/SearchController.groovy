@@ -204,7 +204,7 @@ class SearchController extends CommonController {
         if (!query) {
             query = params.query.decodeHTML()
         }
-        String domain = params.chosenDomain
+        String domain = params.chosenDomain ?: params.domain
         sanitiseParams()
 
         params.query = query
@@ -353,7 +353,7 @@ under the format: ${response.format}"""
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         Map<String, Object> results = initSearchResults(query)
-        if (query == "*:*") {
+        if (query == "*:*" && domain == "biomodels") {
             Map cached = searchService.retrieveCachedSearchAllResult()
             if (cached["models"]) {
                 LOGGER.info("Load the search result from the cached: query ${query}, offset $offset, length $length")
