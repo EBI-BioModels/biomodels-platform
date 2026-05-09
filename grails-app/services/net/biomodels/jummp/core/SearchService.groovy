@@ -204,6 +204,10 @@ class SearchService implements InitializingBean {
     }
 
     void refreshSearchAllCache() {
+        if (!redisService) {
+            LOGGER.warn("redisService unavailable, skipping search cache refresh")
+            return
+        }
         SortOrder sortOrder = new SortOrder("relevance", "desc")
         Map<String, Integer> paginationCriteria = ["start": 0, "length": 20, "facetCount": 1000]
         ["biomodels", "biomodels_autogen", "biomodels_all"].each { String domain ->
@@ -271,7 +275,7 @@ class SearchService implements InitializingBean {
 
     Map retrieveCachedSearchAllResult(String domain = "biomodels") {
         String cacheKey = "search-result:all:${domain}"
-        if (!redisService.exists(cacheKey)) {
+        if (!redisService || !redisService.exists(cacheKey)) {
             return [:]
         }
         Map result = redisService.doRedisHGetAll(cacheKey)
@@ -285,6 +289,10 @@ class SearchService implements InitializingBean {
 
     private void doUpdateCachedSearchAll(Integer totalCount, List<ModelTransportCommand> models,
                                          List<Facet> facets, String facetStats, String domain = "biomodels") {
+        if (!redisService) {
+            LOGGER.warn("redisService unavailable, skipping cache update for domain: ${domain}")
+            return
+        }
         String cacheKey = "search-result:all:${domain}"
         Map<String, String> data = ["totalCount": Integer.toString(totalCount), facetStats: facetStats]
 
