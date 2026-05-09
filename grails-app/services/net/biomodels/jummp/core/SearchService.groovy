@@ -203,6 +203,21 @@ class SearchService implements InitializingBean {
         return strategy.searchModels(query, domain, sortOrder, paginationCriteria)
     }
 
+    void refreshSearchAllCache() {
+        SortOrder sortOrder = new SortOrder("relevance", "desc")
+        Map<String, Integer> paginationCriteria = ["start": 0, "length": 20, "facetCount": 1000]
+        ["biomodels", "biomodels_autogen", "biomodels_all"].each { String domain ->
+            LOGGER.info("Refreshing *:* search cache for domain: ${domain}")
+            try {
+                SearchResponse response = strategy.searchModels("*:*", domain, sortOrder, paginationCriteria)
+                extractSearchModels(response, domain)
+                LOGGER.info("Refreshed *:* search cache for domain: ${domain}")
+            } catch (Exception e) {
+                LOGGER.error("Failed to refresh search cache for domain ${domain}: ${e.message}", e)
+            }
+        }
+    }
+
     Map extractSearchModels(SearchResponse response, String domain = "biomodels") {
         Integer totalCount = (Integer) response.totalCount
         ArrayList<ModelTransportCommand> results = response.results
