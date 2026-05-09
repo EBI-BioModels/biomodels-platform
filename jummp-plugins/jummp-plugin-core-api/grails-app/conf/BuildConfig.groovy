@@ -86,6 +86,8 @@ grails.project.dependency.resolution = {
         compile "org.apache.commons:commons-lang3:3.3.2"
         compile "org.apache.tika:tika-core:1.23"
         compile "redis.clients:jedis:2.9.0"
+        compile "org.apache.httpcomponents:httpclient:4.5.14"
+        compile "org.json:json:20251224"
     }
     plugins {
         build ":tomcat:7.0.55.3"
@@ -94,5 +96,10 @@ grails.project.dependency.resolution = {
         compile ":spring-security-acl:2.0.1"
         compile ":spring-security-core:2.0.0"
         compile ":spring-security-ldap:2.0.1"
+        compile ":rest-client-builder:2.1.1"
+        compile ":quartz:1.0.2"
+        compile(":spring-security-rest:1.5.3") {
+            excludes "rest-client-builder"
+        }
     }
 }

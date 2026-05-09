@@ -5,6 +5,7 @@ import grails.plugin.springsecurity.web.authentication.AjaxAwareAuthenticationFa
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.authentication.LockedException
 import org.springframework.security.core.AuthenticationException
 
 import javax.servlet.ServletException
@@ -23,7 +24,9 @@ class BioModelsAuthFailureHandler extends AAAFH {
         AuthenticationException exception) throws IOException, ServletException {
         String username = exception.authentication.principal as String
         String warningMessage
-        if (username) {
+        if (exception instanceof LockedException) {
+            warningMessage = exception.message
+        } else if (username) {
             String redirectURL = userService.isAllowedMigrationAWS(username)
             if (redirectURL) {
                 request.session.setMaxInactiveInterval(0)

@@ -19,10 +19,13 @@
     </script>
     <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
     <style>
+        /* used in the template `showHeaderTitle` */
         .contributor-header {
             font-size: x-large;
             font-weight: bolder;
         }
+
+        /* used in the template `listOfFoundUsers` */
         #users-list {
             list-style-type: none; /* Remove bullets */
             padding: 0; /* Remove padding */
@@ -52,15 +55,22 @@
 <div class="add-contributor">
     <h3 class="padding-top-xlarge">Add an existing user as a contributor</h3>
     <div class="row">
-        <div class="columns large-3 medium-3 small-12">
-            <label for="txt-email-or-name" class="text-right middle">Search</label>
-        </div>
-        <div class="columns large-8 medium-8 small-12">
+        <div class="columns small-12 medium-8 large-8">
+            <label for="txt-email-or-name">Search</label>
             <input type="text" id="txt-email-or-name" name="txt-email-or-name"
-                   placeholder="Type a valid email address" >
+                   placeholder="Type a valid email address">
             <div id="suggestion-box"></div>
         </div>
-        <div class="columns large-1 medium-1 small-12">
+        <div class="columns small-12 medium-3 large-3">
+            <label for="add-existing-role">Role</label>
+            <select id="add-existing-role" name="add-existing-role" class="form-control">
+                <g:each in="${roles}" var="role">
+                    <option value="${role}">${role}</option>
+                </g:each>
+            </select>
+        </div>
+        <div class="columns small-12 medium-1 large-1">
+            <label>&nbsp;</label>
             <input type="submit" class="button" value="Add" id="btn-add-contributor">
         </div>
     </div>
@@ -98,6 +108,7 @@
             </select>
         </div>
         <div class="columns small-12 medium-1 large-1">
+            <label>&nbsp;</label>
             <input type="submit" class="button" value="Add" id="btn-add-contributor-wto-invite">
         </div>
     </div>
@@ -106,14 +117,13 @@
 <div class="invite-contributor">
     <h3 class="padding-top-xlarge">Invite a contributor</h3>
     <div class="row">
-        <div class="columns small-12 medium-3 large-3">
-            <label for="txt-email-invite" class="text-right middle">Email</label>
-        </div>
-        <div class="columns small-12 medium-4 large-4">
+        <div class="columns small-12 medium-8 large-8">
+            <label for="txt-email-invite">Email</label>
             <input type="text" id="txt-email-invite" name="txt-email-invite"
                    placeholder="Type a valid email address">
         </div>
-        <div class="columns small-12 medium-4 large-4">
+        <div class="columns small-12 medium-3 large-3">
+            <label for="defined-role">Role</label>
             <select name="defined-role" required id="defined-role" class="form-control">
                 <g:each in="${roles}" var="role">
                     <option value="${role}">${role}</option>
@@ -121,6 +131,7 @@
             </select>
         </div>
         <div class="columns small-12 medium-1 large-1">
+            <label>&nbsp;</label>
             <input type="submit" class="button" value="Invite" id="btn-invite">
         </div>
     </div>
@@ -131,15 +142,23 @@
     <p>Revision <a href="${createLink(controller: "model", action: "show", id: "${modelId}")}">
         ${modelId}</a>.${revisionNumber} does not exist.</p>
 </g:else>
-<script>
+<script type="text/javascript">
+    /* global $, toastr, fetch */
+    const $suggestionBox = $("#suggestion-box");
+    const $txtEmailOrNameBox = $("#txt-email-or-name");
+    const $txtDisplayNameBox = $("#txt-display-name");
+    const $txtOrcidBox = $("#txt-orcid");
+    const $txtAffiliationBox = $("#txt-affiliation");
+    const $divContributorsHeader = $(".row .contributors-header");
+    const $divContributorsBody = $(".row .contributors-body");
+    const $listModelContributors = $("#model-contributor-list");
+
     $(document).ready(function() {
-        $('#defined-role option:selected').val("Other");
-        // AJAX call for autocomplete
         searchAutocomplete();
     });
 
     function searchAutocomplete() {
-        $("#txt-email-or-name").keyup(function(){
+        $txtEmailOrNameBox.keyup(function(){
             const postURL = "${createLink(controller: "usermanagement", action: "searchUsersForAddContributors")}";
             $.ajax({
                 type: "POST",
@@ -149,17 +168,17 @@
                     column: 1 // or 2
                 },
                 beforeSend: function(){
-                    $("#txt-email-or-name").css("background", "#FFF url(${serverURL}/images/loading.gif) no-repeat 225px");
+                    $txtEmailOrNameBox.css("background", "#FFF url(${serverURL}/images/loading.gif) no-repeat 225px");
                 },
                 success: function(data){
                     const usersList = data["users"];
                     if (usersList !== undefined && usersList.length > 0) {
-                        $("#suggestion-box").show();
-                        $("#suggestion-box").html(data["htmlBasedStringOfUsers"]);
+                        $suggestionBox.show();
+                        $suggestionBox.html(data["htmlBasedStringOfUsers"]);
                     } else {
-                        $("#suggestion-box").hide();
+                        $suggestionBox.hide();
                     }
-                    $("#txt-email-or-name").css("background", "#ffffff"); //"#87cefa"
+                    $txtEmailOrNameBox.css("background", "#ffffff"); //"#87cefa"
                 }
             });
         });
@@ -167,8 +186,8 @@
 
     // To select user found: to display
     function selectFoundUser(val) {
-        $("#txt-email-or-name").val(val);
-        $("#suggestion-box").hide();
+        $txtEmailOrNameBox.val(val);
+        $suggestionBox.hide();
     }
 
     function doCheckEmail(email) {
@@ -196,12 +215,12 @@
             clearNotification();
             showNotification(message);
             toastr.warning(message);
-        };
+        }
         return returned;
     }
 
 
-    $("#txt-email-or-name").on("blur", function() {
+    $txtEmailOrNameBox.on("blur", function() {
         let email = $(this).val().trim();
         doCheckEmail(email);
     });
@@ -226,6 +245,7 @@
         data.append("modelId", "${modelId}");
         data.append("revisionNumber", ${revisionNumber});
         data.append("email", email);
+        data.append("role", $("#add-existing-role").val());
         fetch(urlPost, {
             method: "POST",
             body: data
@@ -300,10 +320,10 @@
             showNotification(msg);
             toastr.success(msg);
             contributorEmails.push(response["email"]);
-            if ($(".row .contributors-body").length) {
-                $(".row .contributors-header").after(response["htmlBasedStringForNewContributor"]);
+            if ($divContributorsBody.length) {
+                $divContributorsHeader.after(response["htmlBasedStringForNewContributor"]);
             } else {
-                $(".row .contributors-body").after(response["htmlBasedStringForNewContributor"]);
+                $divContributorsBody.after(response["htmlBasedStringForNewContributor"]);
             }
         }).catch((error) => {
             const errMsg = "There has been an internal error. Please try again or later. " +
@@ -329,7 +349,7 @@
             return false;
         }
 
-        let role = $("#defined-role option:selected").text();
+        let role = $("#defined-role").val();
         const urlPost = $.jummp.createLink("contributor", "invite");
         let data = new FormData();
         data.append("serverURL", "${serverURL}");
@@ -369,7 +389,7 @@
         return true;
     });
 
-    $("#model-contributor-list").on("change", "#role", function () {
+    $listModelContributors.on("change", "#role", function () {
         const currentRole = $(this).val();
         console.log("Current Role: " + currentRole);
         const parentRow = $(this).parent().parent();
@@ -415,7 +435,7 @@
         return true;
     });
 
-    $("#model-contributor-list").on("click", ".contributor-remove.unlocked", function () {
+    $listModelContributors.on("click", ".contributor-remove.unlocked", function () {
         const parentRow = $(this).parent().parent();
         const usernameAndEmailElement = parentRow.find(".username-email");
         const usernameAndEmail = usernameAndEmailElement.text().trim("\n");
@@ -492,8 +512,8 @@
             showNotification(message);
             toastr.success(message);
             console.log("htmlBasedStringOfContributors: " + response["htmlBasedStringOfContributors"]);
-            $(".row .contributors-body").remove();
-            $(".row .contributors-header").after(response["htmlBasedStringOfContributors"]);
+            $divContributorsBody.remove();
+            $divContributorsHeader.after(response["htmlBasedStringOfContributors"]);
         }).catch((error) => {
             console.log(error);
             return false;

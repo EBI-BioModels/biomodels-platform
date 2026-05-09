@@ -304,7 +304,6 @@ log4j.main = {
         'net.biomodels.jummp.plugins.simplelogging',
         'net.biomodels.jummp.core.events',
         'net.biomodels.jummp.plugins.bives',
-        'net.biomodels.jummp.search',
         'net.biomodels.jummp.webapp'
     ], additivity: false
 
@@ -318,6 +317,8 @@ log4j.main = {
         threshold: Level.DEBUG, additivity: false
     rollingFile name: "apiFilterAppender", file: "${logsDir}/jummp-api-filter.log",
             threshold: Level.INFO, additivity: false
+    rollingFile name: "searchAppender", file: "${logsDir}/jummp-search.log",
+            threshold: Level.DEBUG, additivity: false
     debug debugAppender: [
         'net.biomodels.jummp',
         'net.biomodels.jummp.core',
@@ -333,7 +334,6 @@ log4j.main = {
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.plugins.configuration',
         'net.biomodels.jummp.scms',
-        'net.biomodels.jummp.search',
         'net.biomodels.jummp.security',
         'net.biomodels.jummp.utils.redis',
         'net.biomodels.jummp.webapp',
@@ -341,6 +341,12 @@ log4j.main = {
         /*"grails.plugin.springsecurity",
         "org.springframework.security",
         "org.pac4j"*/
+    ], additivity: false
+
+    debug searchAppender: [
+        'net.biomodels.jummp.core.SearchService',
+        'net.biomodels.jummp.webapp.SearchController',
+        'net.biomodels.jummp.search'
     ], additivity: false
 
     debug irreproducibleAppender: [
@@ -376,7 +382,7 @@ log4j.main = {
 }
 
 
-String healthCheckIpRestrictions = null
+String healthCheckIpRestrictions
 if (jummpConfig.jummp.healthcheck.ipRestrictions instanceof String) {
     healthCheckIpRestrictions = jummpConfig.jummp.healthcheck.ipRestrictions
 } else {
@@ -410,6 +416,7 @@ jummp.controllerAnnotations = [
     '/requestmap/**':           ['ROLE_ADMIN'],
     '/role/**':                 ['ROLE_ADMIN'],
     '/securityinfo/**':         ['ROLE_ADMIN'],
+    '/user':                    ['isAuthenticated()'],
     '/user/**':                 ['ROLE_ADMIN'],
     "/css/**":                  ["permitAll"],
     "/images/**":               ["permitAll"],
@@ -480,8 +487,8 @@ grails.plugin.springsecurity.filterChain.chainMap = [
 grails.plugin.springsecurity.useSecurityEventListener = true
 
 // ldap
-if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) ||
-    !Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled)) {
+boolean ldapEnabled = Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled as String)
+if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) || !ldapEnabled) {
     jummp.security.ldap.enabled = false
     println("INFO\tExcluding ldap")
     pluginsToExclude << "springSecurityLdap"
@@ -510,7 +517,8 @@ if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) ||
     grails.plugin.springsecurity.providerNames = [
         'ldapAuthProvider',
         'anonymousAuthenticationProvider',
-        'rememberMeAuthenticationProvider'
+        'rememberMeAuthenticationProvider',
+        'twoFactorAuthenticationProvider',
     ]
 }
 
@@ -628,23 +636,27 @@ else {
 }
 
 // registration settings
-if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)) {
-    jummp.security.registration.email.send         = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)
+boolean emailSend = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send as String)
+if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && emailSend) {
+    jummp.security.registration.email.send         = emailSend
     jummp.security.registration.email.sender       = jummpConfig.jummp.security.registration.email.sender
     if (!(jummpConfig.jummp.security.registration.email.sendToAdmin instanceof ConfigObject)) {
-        jummp.security.registration.email.sendToAdmin = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.sendToAdmin)
+        String sendToAdmin = jummpConfig.jummp.security.registration.email.sendToAdmin as String
+        jummp.security.registration.email.sendToAdmin = Boolean.parseBoolean(sendToAdmin)
     } else {
         jummp.security.registration.email.sendToAdmin = false
     }
     jummp.security.registration.email.adminAddress = jummpConfig.jummp.security.registration.email.adminAddress
+    jummp.security.registration.email.contact      = jummpConfig.jummp.security.registration.email.contact
+    jummp.security.registration.email.noreply      = jummpConfig.jummp.security.registration.email.noreply
     jummp.security.registration.email.subject      = jummpConfig.jummp.security.registration.email.subject
     jummp.security.registration.email.body         = jummpConfig.jummp.security.registration.email.body
     jummp.security.registration.verificationURL    = jummpConfig.jummp.security.registration.verificationURL
     jummp.security.activation.email.subject        = jummpConfig.jummp.security.activation.email.subject
     jummp.security.activation.email.body           = jummpConfig.jummp.security.activation.email.body
     jummp.security.activation.activationURL        = jummpConfig.jummp.security.activation.activationURL
-    jummp.security.resetPassword.email.body    = jummpConfig.jummp.security.resetPassword.email.body
-    jummp.security.resetPassword.email.subject = jummpConfig.jummp.security.resetPassword.email.subject
+    jummp.security.resetPassword.email.body        = jummpConfig.jummp.security.resetPassword.email.body
+    jummp.security.resetPassword.email.subject     = jummpConfig.jummp.security.resetPassword.email.subject
 } else {
     jummp.security.registration.email.send = false
 }
@@ -652,7 +664,7 @@ if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject
 // whether a user has curator rights by default, allowing them to publish models
 // they have access to.
 if (!(jummpConfig.jummp.security.curatorByDefault instanceof ConfigObject)) {
-    jummp.security.curatorByDefault = Boolean.parseBoolean(jummpConfig.jummp.security.curatorByDefault)
+    jummp.security.curatorByDefault = Boolean.parseBoolean(jummpConfig.jummp.security.curatorByDefault as String)
 } else {
     // default to true
     jummp.security.curatorByDefault = true
@@ -671,7 +683,7 @@ if (!(jummpConfig.jummp.feedback.receiver.roles instanceof ConfigObject)) {
 }
 
 if (!(jummpConfig.jummp.security.certificationAllowed instanceof ConfigObject)) {
-    jummp.security.certificationAllowed = Boolean.parseBoolean(jummpConfig.jummp.security.certificationAllowed)
+    jummp.security.certificationAllowed = Boolean.parseBoolean(jummpConfig.jummp.security.certificationAllowed as String)
 } else {
     // default to false
     jummp.security.certificationAllowed = false
@@ -679,12 +691,12 @@ if (!(jummpConfig.jummp.security.certificationAllowed instanceof ConfigObject)) 
 
 // whether sbml validation is turned on
 if (!(jummpConfig.jummp.plugins.sbml.validation instanceof ConfigObject)) {
-	jummp.plugins.sbml.validation = Boolean.parseBoolean(jummpConfig.jummp.plugins.sbml.validation)
+	jummp.plugins.sbml.validation = Boolean.parseBoolean(jummpConfig.jummp.plugins.sbml.validation as String)
 }
 
 // file preview size, in bytes
 if (!(jummpConfig.jummp.web.file.preview instanceof ConfigObject)) {
-	jummp.web.file.preview = Integer.parseInt(jummpConfig.jummp.web.file.preview)
+	jummp.web.file.preview = Integer.parseInt(jummpConfig.jummp.web.file.preview as String)
 }
 else {
 	jummp.web.file.preview = 500 * 1024 * 1024 // default preview size: 500 MB
@@ -693,7 +705,7 @@ else {
 // whether a user is allowed to change the password depends on the setting an if LDAP is used
 // in case of LDAP changing the password is not (yet) possible in the application
 if (!(jummpConfig.jummp.security.ui.changePassword instanceof ConfigObject)) {
-    jummp.security.ui.changePassword = Boolean.parseBoolean(jummpConfig.jummp.security.ui.changePassword)
+    jummp.security.ui.changePassword = Boolean.parseBoolean(jummpConfig.jummp.security.ui.changePassword as String)
 } else {
     // default to true
     jummp.security.ui.changePassword = true
@@ -710,7 +722,8 @@ jummp.security.registration.ui.userPassword = !jummp.security.ldap.enabled
 // if not only an administrator can create a new user account
 // default to users can register themselves
 if (!(jummpConfig.jummp.security.anonymousRegistration instanceof ConfigObject)) {
-    jummp.security.anonymousRegistration = Boolean.parseBoolean(jummpConfig.jummp.security.anonymousRegistration)
+    String anonymousRegistration = jummpConfig.jummp.security.anonymousRegistration
+    jummp.security.anonymousRegistration = Boolean.parseBoolean(anonymousRegistration)
 } else {
     jummp.security.anonymousRegistration = true
 }
@@ -718,12 +731,14 @@ if (!(jummpConfig.jummp.security.anonymousRegistration instanceof ConfigObject))
 // For the job, removing authentication hashes that are unused for a configurable time
 // Used by AuthenticationHashService
 if (!(jummpConfig.jummp.authenticationHash.startRemoveOffset instanceof ConfigObject)) {
-    jummp.authenticationHash.startRemoveOffset = Long.parseLong(jummpConfig.jummp.authenticationHash.startRemoveOffset)
+    String sto = jummpConfig.jummp.authenticationHash.startRemoveOffset
+    jummp.authenticationHash.startRemoveOffset = Long.parseLong(sto)
 } else {
     jummp.authenticationHash.startRemoveOffset = 5*60*1000
 }
 if (!(jummpConfig.jummp.authenticationHash.removeInterval instanceof ConfigObject)) {
-    jummp.authenticationHash.removeInterval = Long.parseLong(jummpConfig.jummp.authenticationHash.removeInterval)
+    String interval = jummpConfig.jummp.authenticationHash.removeInterval
+    jummp.authenticationHash.removeInterval = Long.parseLong(interval)
 } else {
     jummp.authenticationHash.removeInterval = 30*60*1000
 }
@@ -778,9 +793,11 @@ if (!(jummpConfig.jummp.database.password instanceof ConfigObject)) {
     jummp.database.password = jummpConfig.jummp.database.password
 }
 
-if (jummpConfig.jummp.firstRun instanceof ConfigObject || !Boolean.parseBoolean(jummpConfig.jummp.firstRun)) {
+boolean firstRun = Boolean.parseBoolean(jummpConfig.jummp.firstRun as String)
+if (jummpConfig.jummp.firstRun instanceof ConfigObject || !firstRun) {
     // only add side protection if not in first run mode
-    if (!(jummpConfig.jummp.server.protection instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.server.protection)) {
+    boolean protection = Boolean.parseBoolean(jummpConfig.jummp.server.protection as String)
+    if (!(jummpConfig.jummp.server.protection instanceof ConfigObject) && protection) {
         jummp.controllerAnnotations.put("/login/**", ['IS_AUTHENTICATED_ANONYMOUSLY'])
         jummp.controllerAnnotations.put("/**", ['ROLE_USER'])
     }
@@ -794,7 +811,7 @@ if (pluginsToExclude) {
     grails.plugin.excludes = pluginsToExclude
 }
 
-grails.mails.props=[:]
+grails.mail.props=[:]
 if (!(jummpConfig.jummp.security.mailer.host instanceof ConfigObject)) {
 	grails.mail.host=jummpConfig.jummp.security.mailer.host
 }
@@ -806,19 +823,35 @@ if (!(jummpConfig.jummp.security.mailer.password instanceof ConfigObject)) {
 }
 if (!(jummpConfig.jummp.security.mailer.port instanceof ConfigObject)) {
 	grails.mail.port=jummpConfig.jummp.security.mailer.port
-	grails.mails.props["mail.smtp.socketFactory.port"]=grails.mail.port
 }
 if (!(jummpConfig.jummp.security.mailer.auth instanceof ConfigObject)) {
 	grails.mail.props["mail.smtp.auth"]=jummpConfig.jummp.security.mailer.auth
 }
+if (!(jummpConfig.jummp.security.mailer.ssl instanceof ConfigObject)) {
+	grails.mail.props["mail.smtp.ssl.enable"]=jummpConfig.jummp.security.mailer.ssl
+	grails.mail.props["mail.smtp.ssl.protocols"]="TLSv1.2"
+}
 if (!(jummpConfig.jummp.security.mailer.socketFactory instanceof ConfigObject)) {
+	grails.mail.props["mail.smtp.ssl.enable"]="true"
+	grails.mail.props["mail.smtp.ssl.protocols"]="TLSv1.2"
 	grails.mail.props["mail.smtp.socketFactory.class"]=jummpConfig.jummp.security.mailer.socketFactory
+	grails.mail.props["mail.smtp.socketFactory.port"]=grails.mail.port
 }
 if (!(jummpConfig.jummp.security.mailer.fallback instanceof ConfigObject)) {
 	grails.mail.props["mail.smtp.socketFactory.fallback"]=jummpConfig.jummp.security.mailer.fallback
 }
 if (!(jummpConfig.jummp.security.mailer.tlsrequired instanceof ConfigObject)) {
+	grails.mail.props["mail.smtp.starttls.enable"]=jummpConfig.jummp.security.mailer.tlsrequired
 	grails.mail.props["mail.smtp.starttls.required"]=jummpConfig.jummp.security.mailer.tlsrequired
+}
+grails.mail.props["mail.smtp.connectiontimeout"] = "30000"
+grails.mail.props["mail.smtp.timeout"]           = "30000"
+grails.mail.props["mail.smtp.writetimeout"]      = "30000"
+if (!(jummpConfig.jummp.security.mailer.apiKey instanceof ConfigObject)) {
+	jummp.security.mailer.apiKey = jummpConfig.jummp.security.mailer.apiKey
+}
+if (!(jummpConfig.jummp.security.mailer.brevoApiKey instanceof ConfigObject)) {
+	jummp.security.mailer.brevoApiKey = jummpConfig.jummp.security.mailer.brevoApiKey
 }
 
 ConfigObject modelIdentifierSettings = jummpConfig.jummp.model.id
@@ -860,7 +893,8 @@ grails {
 }
 
 if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
-    def pages=["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile", "sharing", "teams", "notifications","annotate"]
+    def pages = ["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile",
+                "sharing", "teams", "notifications", "annotate", "getting-started-with-biomodels"]
     pages.each {
         if (!(jummpConfig.jummp.context.help."${it}" instanceof ConfigObject)) {
             jummp.context.help."${it}" = jummpConfig.jummp.context.help."${it}"
@@ -1007,4 +1041,23 @@ brutforce {
         time = 5
         allowedNumberOfAttempts = 3
     }
+}
+
+// When true, every user is required to complete OTP verification at login,
+// regardless of whether they have individually enrolled in 2FA.
+// If this property is missing from the config file, the 2FA is disabled by default.
+boolean twoFaEnforced = Boolean.parseBoolean(jummpConfig.jummp.security.twofa.enforced as String)
+if (!(jummpConfig.jummp.security.twofa.enforced instanceof ConfigObject)) {
+    jummp.security.twofa.enforced = twoFaEnforced
+} else {
+    jummp.security.twofa.enforced = false
+}
+
+// When true, unenrolled users see an amber notice banner encouraging them to set up
+// 2FA before it becomes mandatory. Use during the grace period before enforcement.
+boolean twoFaEnrollmentNotice = Boolean.parseBoolean(jummpConfig.jummp.security.twofa.enrollmentNotice as String)
+if (!(jummpConfig.jummp.security.twofa.enrollmentNotice instanceof ConfigObject)) {
+    jummp.security.twofa.enrollmentNotice = twoFaEnrollmentNotice
+} else {
+    jummp.security.twofa.enrollmentNotice = false
 }

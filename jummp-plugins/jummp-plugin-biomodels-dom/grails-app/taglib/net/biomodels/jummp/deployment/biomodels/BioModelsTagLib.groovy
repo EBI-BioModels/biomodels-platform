@@ -23,6 +23,7 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.converters.JSON
 import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.statistic.RecentlyAccessedModel
 import net.biomodels.jummp.statistic.RecentlyPublishedModel
 import net.biomodels.jummp.deployment.biomodels.ModelOfTheMonthTransportCommand as MOMTC
 
@@ -213,12 +214,13 @@ class BioModelsTagLib {
     }
 
     def renderRecentlyAccessedModels = {
-        Map<String, String> models = decorationService.fetchRecentlyAccessedModels()
+        Map<String, RecentlyAccessedModel> models = decorationService.fetchRecentlyAccessedModels()
         if (models?.isEmpty()) {
             out << render(template: "/templates/biomodels/homePage/theEmptyEntry")
         } else {
+            String serverURL = grailsApplication.config.grails.serverURL
             out << render(template: "/templates/biomodels/homePage/hp-recently-accessed-models-widget",
-                    model: [models: models])
+                    model: [models: models, serverURL: serverURL])
         }
     }
 

@@ -1,6 +1,8 @@
 package net.biomodels.jummp
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.annotation.Secured
+
 /**
 * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
@@ -21,15 +23,16 @@ import grails.converters.JSON
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.utils.MathUtils
 import net.biomodels.jummp.webapp.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.mail.MailAuthenticationException
 
 import javax.mail.AuthenticationFailedException
+
 /**
  * @short Controller for managing user registrations
  *
@@ -40,6 +43,7 @@ import javax.mail.AuthenticationFailedException
 class UsermanagementController extends CommonController {
     private static final Logger LOGGER = LoggerFactory.getLogger(UsermanagementController.class)
     def simpleCaptchaService
+    def authService
     def userService
     def springSecurityService
     def messageSource
@@ -60,13 +64,19 @@ class UsermanagementController extends CommonController {
     	return null
     }
 
-     /**
+    /**
      * Passes on any info messages needed to be displayed and renders the register gsp
      */
     @Secured(["isAnonymous()"])
     def create() {
-        render view: "register", model: [postUrl: "", flashMessage: checkForMessage(), title: "Register | BioModels",
-    									validationErrorOn: checkForErrorBean()]
+        Map model = COMMON_PROPERTIES
+        model.putAll([
+            postUrl: "",
+            flashMessage: checkForMessage(),
+            title: "${g.message(code: "user.administration.ui.heading.register")} | BioModels",
+            validationErrorOn: checkForErrorBean()
+        ])
+        render view: "register", model: model
     }
 
     @Secured(["isAuthenticated()"])
@@ -97,8 +107,12 @@ class UsermanagementController extends CommonController {
         String username = currentUser.username
         List notifications = notificationService.getNotificationPermissions(username)
         String titlePage = "${userService.getRealName(username)} | BioModels"
+        boolean enabled2FA = authService.is2FAEnabled(username)
+        boolean twoFaEnforced = grailsApplication.config.jummp.security.twofa.enforced ?: false
         render  view: "show",
                 model: [postUrl: "",
+                        enabled2FA: enabled2FA,
+                        twoFaEnforced: twoFaEnforced,
                         flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
                         user: currentUser,
@@ -347,8 +361,8 @@ class UsermanagementController extends CommonController {
     def registration() {
         if (forwardIfReadOnly()) return
         User currentUser = springSecurityService.currentUser
-        if (currentUser) {
-            redirect(action: "profile")
+        if (currentUser && !session.enabled2FA) {
+            render(action: "profile")
         } else {
             forward(action: "create")
         }
@@ -417,6 +431,11 @@ further instructions"""
         withForm {
             RegistrationCommand cmd = new RegistrationCommand()
             if (!validateUserData(cmd, params)) {
+                return redirect(action: "registration")
+            }
+            String username = params.username.decodeHTML()
+            if (!(username && MathUtils.validUsername(username))) {
+                flash.message = "The username is invalid such as containing disallowed characters or too short."
                 return redirect(action: "registration")
             }
             String captcha = params.captcha

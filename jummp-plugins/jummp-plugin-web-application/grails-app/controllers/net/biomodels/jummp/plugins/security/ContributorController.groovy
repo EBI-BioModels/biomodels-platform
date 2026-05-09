@@ -47,9 +47,8 @@ class ContributorController extends CommonController {
     static allowedMethods = [update: "POST"]
 
     def userService
-    def modelDelegateService
     def modelService
-    def mailService
+    def mailingService
     def contributorService
 
     private final Random random = new Random(System.currentTimeMillis())
@@ -180,18 +179,60 @@ class ContributorController extends CommonController {
         User user = userService.lookupUser(email, 1)
         CTC ctc = null
         if (user) {
-            CR modellerRole = CR.findByName("Modeller")
+            String roleName = params["role"]?.decodeHTML() ?: "Modeller"
+            CR selectedRole = CR.findByName(roleName) ?: CR.findByName("Modeller")
             Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
             // create a new record to capture the association among user, model revision and role
-            CD details = new CD(contributor: user, revision: revision, role: modellerRole)
+            CD details = new CD(contributor: user, revision: revision, role: selectedRole)
             if (details.save(flush: true)) {
-                LOGGER.debug("Sent a contribution invite (user: ${user.username}) successfully")
-                println("Sent a contribution invite (user: ${user.username}) successfully")
+                LOGGER.info("Saved contributor record for ${user.username} on ${modelId}.${revisionNumber}")
+                if (!mailingService) {
+                    LOGGER.error("mailingService is null — skipping contributor notification email to ${user.email}")
+                } else {
+                    def inviter = userService.currentUser
+                    String inviterName = inviter?.person?.userRealName ?: "A BioModels curator"
+                    String inviterEmail = inviter?.email ?: ""
+                    String recipientName = user.person?.userRealName ?: user.username
+                    String modelLink = "${serverURL}/${modelId}"
+                    String subjectLine = "[BioModels] ${inviterName} has added you as a contributor to $modelId"
+                    String htmlBody = """
+<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
+    <div style="background-color:#ED6B21;height:5px;"></div>
+    <div style="background-color:#072C55;padding:24px 32px 20px;">
+      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+    </div>
+    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+      <p style="margin:0 0 16px;">Dear ${recipientName},</p>
+      <p style="margin:0 0 16px;">${inviterName} has added you as a <strong>${selectedRole.name}</strong> contributor to the following BioModels submission:</p>
+      <p style="margin:0 0 16px;"><a href="${modelLink}" style="color:#0F5CB1;">${modelId}</a></p>
+      <p style="margin:0 0 16px;">You can view the model and your contribution details by visiting the link above.</p>
+      <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
+        <a href="${serverURL}" style="color:#0F5CB1;">${serverURL}</a>
+      </p>
+    </div>
+    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
+    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
+      You are receiving this email because you have been added as a contributor on
+      <a href="${serverURL}" style="color:#0F5CB1;">BioModels</a>.
+      This is an automatically generated email &mdash; replies are not monitored.
+    </div>
+  </div>
+</div>"""
+                    try {
+                        LOGGER.info("Sending contributor notification email to ${user.email}")
+                        mailingService.send([to: user.email, subject: subjectLine, html: htmlBody, replyTo: inviterEmail])
+                        LOGGER.info("Contributor notification email sent successfully to ${user.email}")
+                    } catch (Exception e) {
+                        LOGGER.error("Failed to send contributor notification email to ${user.email}: ${e.message}")
+                    }
+                }
             } else {
-                println("Failed: ${details.allErrors().toString()}")
+                LOGGER.error("Failed to save contributor record for ${user.username}: ${details.errors}")
             }
             // create a new record in the contribution_invite table
-            ctc = new CTC(user: user, role: modellerRole,
+            ctc = new CTC(user: user, role: selectedRole,
                 person: user.person, locked: false)
         }
         result.put("newCont", ctc)
@@ -247,39 +288,45 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
     def handleInviteResponse() {
         String refCode = params["ref"]?.decodeHTML()
         String op = params["op"]?.decodeHTML()
-        Map retMap = [:]
-        retMap.put("reference", refCode)
-        retMap.put("inviteeResponse", op)
+        Map retMap = [reference: refCode, op: op]
+
+        CI ci = CI.findWhere(reference: refCode)
+        if (!ci) {
+            retMap.put("msgUser", "This invitation link has expired or is no longer valid.")
+            retMap.put("confirmed", true)
+            render(view: "handleInviteResponse", model: retMap)
+            return
+        }
+
+        if (request.method == "GET") {
+            // Show confirmation page only — do NOT process the action.
+            // Security scanners follow GET links; the action must require a deliberate POST.
+            retMap.put("inviterName", ci.inviter?.person?.userRealName ?: ci.inviter?.username)
+            retMap.put("confirmed", false)
+            render(view: "handleInviteResponse", model: retMap)
+            return
+        }
+
+        // POST — user deliberately clicked Accept or Decline on the confirmation page
         String msgLog = ""
         String msgUser = ""
-        CI ci = CI.findWhere(reference: refCode)
-
-        if (!ci) {
-            msgLog = "The invitation with the reference ${refCode} could be expired or invalid."
-            msgUser = msgLog
-            retMap.putAll([msgLog: msgLog, msgUser: msgUser])
+        User currentUser = userService.currentUser
+        if (currentUser.email != ci.inviteeEmail) {
+            msgLog = "User ${currentUser.email} attempted to respond to invite ${refCode} belonging to ${ci.inviteeEmail}."
+            msgUser = "You are not authorised to respond to this invitation — it was sent to a different email address."
         } else {
-            User currentUser = userService.currentUser
-            if (currentUser.email != ci.inviteeEmail) {
-                msgLog = "The user (${currentUser.email}) shouldn't have the access of the invite ${refCode}."
-                msgUser = "Unfortunately, you are not allowed to perform this operation. You're an user registered with another email!"
+            if ("accept" == op) {
+                retMap.putAll(contributorService.processAccept(ci))
+            } else if ("reject" == op) {
+                retMap.putAll(contributorService.processReject(ci))
             } else {
-                if ("accept" == op) {
-                    retMap.putAll(contributorService.processAccept(ci))
-                } else if ("reject" == op) {
-                    retMap.putAll(contributorService.processReject(ci))
-                } else {
-                    msgLog = "Please stop cheating our system. Thanks!"
-                    msgUser = msgLog
-                }
-            }
-            if (!retMap.containsKey("msgLog")) { retMap.put("msgLog", msgLog) }
-            if (!retMap.containsKey("msgUser")) { retMap.put("msgUser", msgUser) }
-            if (retMap.get("msgLog")) {
-                LOGGER.debug(retMap.get("msgLog") as String)
-                println(retMap["msgLog"]) // for K8s log
+                msgUser = "Invalid response. Please use the Accept or Decline buttons."
             }
         }
+        retMap.put("confirmed", true)
+        if (!retMap.containsKey("msgLog")) retMap.put("msgLog", msgLog)
+        if (!retMap.containsKey("msgUser")) retMap.put("msgUser", msgUser)
+        if (retMap.get("msgLog")) LOGGER.debug(retMap.get("msgLog") as String)
         render(view: "handleInviteResponse", model: retMap)
     }
 
@@ -300,12 +347,11 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         result["inviteeEmail"] = inviteeEmail
         String roleName = params["role"]?.decodeHTML()
         CR role = CR.findByName(roleName)
-        String refCode = String.valueOf(random.nextInt()) + params["inviterUsername"]?.decodeHTML()
+        String refCode = "${String.valueOf(random.nextInt())} ${params["inviterUsername"]?.decodeHTML()}"
         refCode = refCode.encodeAsMD5()
         result.putAll([role: role, refCode: refCode, serverURL: serverURL] as Map)
 
-        String msg = ""
-        String subjectLine = "${inviterName} invited you to join BioModels as ${roleName}"
+        String subjectLine = "[BioModels] ${inviterName} has invited you to contribute to $modelId as a ${roleName}"
         String howtoAction = "Send"
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
@@ -315,17 +361,52 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
         result.putAll(r)
 
         // 2. Send an email having instructions to the invited contributor
-        String htmlBasedContent = g.render(template: "/contributor/inviteEmailTemplate",
-            plugin: "jummp-plugin-web-application", model: result)
-        mailService.sendMail {
-            to inviteeEmail
-            from inviterEmail
-            subject subjectLine
-            html htmlBasedContent
+        String acceptURL = g.createLink(controller: "contributor", action: "handleInviteResponse",
+                params: [ref: refCode, op: 'accept'], absolute: true) as String
+        String rejectURL = g.createLink(controller: "contributor", action: "handleInviteResponse",
+                params: [ref: refCode, op: 'reject'], absolute: true) as String
+        String htmlBody = """
+<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
+    <div style="background-color:#ED6B21;height:5px;"></div>
+    <div style="background-color:#072C55;padding:24px 32px 20px;">
+      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+    </div>
+    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+      <p style="margin:0 0 16px;">${inviterName} has invited you to contribute to a BioModels submission as a <strong>${roleName}</strong>.</p>
+      <p style="margin:0 0 16px;">Please indicate whether you would like to accept or decline this invitation:</p>
+      <p style="margin:0 0 24px;">
+        <a href="${acceptURL}" style="display:inline-block;background-color:#007c82;color:#ffffff;padding:10px 24px;border-radius:4px;text-decoration:none;font-weight:bold;margin-right:12px;">Accept</a>
+        <a href="${rejectURL}" style="display:inline-block;background-color:#cccccc;color:#333333;padding:10px 24px;border-radius:4px;text-decoration:none;font-weight:bold;">Decline</a>
+      </p>
+      <p style="margin:0 0 8px;font-size:13px;color:#666666;">Buttons not working? Copy and paste the links below into your browser:</p>
+      <p style="margin:0 0 4px;font-size:13px;">Accept: <a href="${acceptURL}" style="color:#0F5CB1;">${acceptURL}</a></p>
+      <p style="margin:0 0 16px;font-size:13px;">Decline: <a href="${rejectURL}" style="color:#0F5CB1;">${rejectURL}</a></p>
+      <p style="margin:0 0 16px;">If you do not yet have a BioModels account, please <a href="${serverURL}/registration" style="color:#0F5CB1;">register</a> before accepting.</p>
+      <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
+        <a href="${serverURL}" style="color:#0F5CB1;">${serverURL}</a>
+      </p>
+    </div>
+    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
+    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
+      You are receiving this email because ${inviterName} has invited you to contribute to
+      <a href="${serverURL}" style="color:#0F5CB1;">BioModels</a>.
+      This is an automatically generated email &mdash; replies are not monitored.
+    </div>
+  </div>
+</div>"""
+        if (!mailingService) {
+            LOGGER.error("mailingService is null — skipping invitation email to ${inviteeEmail}")
+        } else {
+            try {
+                LOGGER.info("Sending invitation email to ${inviteeEmail}")
+                mailingService.send([to: inviteeEmail, subject: subjectLine, html: htmlBody, replyTo: inviterEmail])
+                LOGGER.info("Invitation email sent successfully to ${inviteeEmail}")
+            } catch (Exception e) {
+                LOGGER.error("Failed to send invitation email to ${inviteeEmail}: ${e.message}")
+            }
         }
-
-        LOGGER.debug(msg)
-        println(msg)
 
         render(result as JSON)
     }
@@ -407,6 +488,7 @@ ${role.name}] into the database due to ${cDWI.errors.toString()}.""")
             message = contributorService.removeExternalContributor(parsedParameters)
         } else {
             String revisionIdentifier = parsedParameters["revisionIdentifier"]
+            String modelId = parsedParameters["modelId"] as String
             User contributor = parsedParameters["contributor"] as User
             Revision revision = parsedParameters["revision"] as Revision
             CD details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
@@ -422,6 +504,7 @@ from the model ${revisionIdentifier} unsuccessfully."""
                     message = """\
 The contributor ${contributor.person.userRealName} (${contributor.username}, ${contributor.email}) \
 from the model ${revisionIdentifier} has been removed successfully."""
+                    sendRemovalEmail(contributor, modelId, revisionIdentifier)
                 }
                 LOGGER.debug(message)
             } catch (OptimisticLockingFailureException exception) {
@@ -437,6 +520,50 @@ from the model ${revisionIdentifier}."""
 
         result.put("message", message)
         render(result as JSON)
+    }
+
+    private void sendRemovalEmail(User contributor, String modelId, String revisionIdentifier) {
+        if (!mailingService) {
+            LOGGER.error("mailingService is null — skipping removal notification email to ${contributor.email}")
+            return
+        }
+        def remover = userService.currentUser
+        String removerName = remover?.person?.userRealName ?: "A BioModels curator"
+        String recipientName = contributor.person?.userRealName ?: contributor.username
+        String modelLink = "${serverURL}/${modelId}"
+        String subjectLine = "[BioModels] Your contributor access to ${modelId} has been removed"
+        String htmlBody = """
+<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
+    <div style="background-color:#ED6B21;height:5px;"></div>
+    <div style="background-color:#072C55;padding:24px 32px 20px;">
+      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+    </div>
+    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+      <p style="margin:0 0 16px;">Dear ${recipientName},</p>
+      <p style="margin:0 0 16px;">This email is to inform you that ${removerName} has removed you as a contributor from the following BioModels submission:</p>
+      <p style="margin:0 0 16px;"><a href="${modelLink}" style="color:#0F5CB1;">${revisionIdentifier}</a></p>
+      <p style="margin:0 0 16px;">You will no longer have contributor access to this model. If you believe this was done in error, please contact the BioModels team.</p>
+      <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
+        <a href="${serverURL}" style="color:#0F5CB1;">${serverURL}</a>
+      </p>
+    </div>
+    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
+    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
+      You are receiving this email because your contributor access on
+      <a href="${serverURL}" style="color:#0F5CB1;">BioModels</a> has changed.
+      This is an automatically generated email &mdash; replies are not monitored.
+    </div>
+  </div>
+</div>"""
+        try {
+            LOGGER.info("Sending contributor removal notification email to ${contributor.email}")
+            mailingService.send([to: contributor.email, subject: subjectLine, html: htmlBody])
+            LOGGER.info("Contributor removal notification email sent successfully to ${contributor.email}")
+        } catch (Exception e) {
+            LOGGER.error("Failed to send contributor removal notification email to ${contributor.email}: ${e.message}")
+        }
     }
 
     private Map parseParameters() {

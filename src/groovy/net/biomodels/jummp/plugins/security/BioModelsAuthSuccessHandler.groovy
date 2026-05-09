@@ -34,6 +34,7 @@ import grails.plugin.springsecurity.web.authentication.AjaxAwareAuthenticationSu
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.Authentication
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler
 
 import javax.servlet.ServletException
 import javax.servlet.http.HttpServletRequest
@@ -47,16 +48,18 @@ import javax.servlet.http.HttpServletResponse
 class BioModelsAuthSuccessHandler extends AAASH {
     private static final Logger LOGGER = LoggerFactory.getLogger(BioModelsAuthSuccessHandler.class)
 
+    def grailsApplication
     def loginAttemptCacheService
     def userService
+    def authService
 
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
         String preURL = request.getParameter("j_previousURL")
-        boolean isUnpublishedModel = preURL?.indexOf("/biomodels/MODEL")  >= 0
+        boolean isUnpublishedModel = preURL?.indexOf("/biomodels/MODEL") >= 0
         if (isUnpublishedModel) {
             String username = request.getParameter("username")
-            LOGGER.debug("The user '${username}' has logged in to access this unpublished model $preURL.")
+            LOGGER.debug("The user [${username}] has logged in to access this unpublished model $preURL.")
         } else {
             preURL = super.determineTargetUrl(request, response)
         }
@@ -74,8 +77,19 @@ class BioModelsAuthSuccessHandler extends AAASH {
                 String warningMessage = "Cannot recognise the username who has tried to log in."
                 LOGGER.error(warningMessage)
             }
-            handle(request, response, authentication)
+            LOGGER.info "Successful login event triggered: ${authentication.principal.username}"
+            def session = request.getSession()
+            String di = request.getParameter("j_deviceInfo")
+            Map map = authService.validateTrustDevice(username, di)
+            LOGGER.info("$username: ${map["message"]}: ${map["expired"]}")
+            boolean enforced = grailsApplication.config.jummp.security.twofa.enforced ?: false
+            boolean userHas2FA = authService.is2FAEnabled(username)
+            boolean deviceExpired = map["expired"] as boolean
+            session.setAttribute("enabled2FA", (enforced || userHas2FA) && deviceExpired)
+            session.setAttribute("pendingEnrollment", enforced && !userHas2FA && deviceExpired)
             super.clearAuthenticationAttributes(request)
+            handle(request, response, authentication)
+            //super.onAuthenticationSuccess(request, response, authentication)
         } finally {
             // always remove the saved request
             requestCache.removeRequest(request, response)
@@ -88,14 +102,24 @@ class BioModelsAuthSuccessHandler extends AAASH {
         String username = authentication.principal.username as String
         String redirectURL = userService.isAllowedMigrationAWS(username)
         if (redirectURL) {
-            request.session.setMaxInactiveInterval(0)
-            targetUrl = redirectURL
+            new SecurityContextLogoutHandler().logout(request, response, authentication)
+            redirectStrategy.sendRedirect(request, response, redirectURL)
+            return
         }
-        if (response.isCommitted()) {
+        def session = request.getSession()
+        if (session.getAttribute("enabled2FA")) {
+            def remoteAddress = authentication.details.remoteAddress
+            def sessionId = authentication.details.sessionId
+            authService.doGenerateOTP(username, remoteAddress, sessionId)
+            String twoFaUrl = session.getAttribute("pendingEnrollment")
+                    ? "/auth/enroll-two-factor"
+                    : "/auth/two-factor-authentication"
+            redirectStrategy.sendRedirect(request, response, twoFaUrl)
+            return
+        } else if (response.isCommitted()) {
             logger.debug("Response has already been committed. Unable to redirect to $targetUrl")
             return
         }
-
         redirectStrategy.sendRedirect(request, response, targetUrl)
     }
 }

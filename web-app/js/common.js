@@ -9,7 +9,9 @@
  * Notes: Redesigning the rating system will be affected to the following code. Please pay more
  * attention once you want to customise it.
  */
-$('#submitButtonRate').prop('disabled', true);
+/* global currentUsername, actionName, currentEmail, currentOrcid, controllerName */
+const submitButtonRate = $('#submitButtonRate');
+submitButtonRate.prop('disabled', true);
 const ALL_STARS = ["star1", "star2", "star3", "star4", "star5"];
 let stackOfStars = [];
 let currentStar;
@@ -21,14 +23,15 @@ $('span[id^=star]').on('click', function() {
     if (currentStar !== undefined) {
         const currentStarId = currentStar.substring(4);
         stackOfStars = [];
-        const currentStarClass = $('#' + currentStar).attr('class');
+        const currentStartEle = $('#' + currentStar);
+        const currentStarClass = currentStartEle.attr('class');
         for (let i = 1; i <= currentStarId; i++) {
             const idx = i;
             stackOfStars.push("star" + idx);
             $('#star'+ idx).attr('class', 'star-icon full');
         }
-        if (currentStarClass == 'star-icon full') {
-            $('#'+currentStar).attr('class', 'star-icon');
+        if (currentStarClass === 'star-icon full') {
+            currentStartEle.attr('class', 'star-icon');
             stackOfStars.pop();
         }
         const remainingStars = ALL_STARS.diff(stackOfStars);
@@ -37,15 +40,15 @@ $('span[id^=star]').on('click', function() {
         });
 
         $('#rateStar').val(stackOfStars.length);
-        if (stackOfStars.length == 0) {
-            $('#submitButtonRate').prop('disabled', true);
+        if (stackOfStars.length === 0) {
+            submitButtonRate.prop('disabled', true);
         } else {
-            $('#submitButtonRate').prop('disabled', false);
+            submitButtonRate.prop('disabled', false);
         }
         console.log(stackOfStars);
     }
 });
-$('#submitButtonRate').on("click", function(event) {
+submitButtonRate.on("click", function(event) {
     "use strict";
     event.preventDefault();
     $.ajax({
@@ -64,16 +67,17 @@ $('#submitButtonRate').on("click", function(event) {
         },
         success: function (response) {
             if (response.status === "200") {
-                let thankyouMessage = '<div style="text-align:center;">';
-                thankyouMessage += '<img style="text-align: center;" src="' +
-                    $.serverUrl + '/images/img_done_check_2x_1.png" />';
-                thankyouMessage += '</div>';
-                thankyouMessage += '<button class="button" ' +
+                let thankfulMessage = '<div style="text-align:center;">';
+                thankfulMessage += '<img style="text-align: center;" src="' +
+                    $.serverUrl + '/images/img_done_check_2x_1.png"  alt="thank you"/>';
+                thankfulMessage += '</div>';
+                thankfulMessage += '<button class="button" ' +
                     'style="background-color: grey;" onclick="closeForm()">Done</button>';
-                $('#messageTitle').html('Thank you for your feedback');
-                $('#messageTitle').css('color', '#ffffff');
+                const msgTitleEle = $('#messageTitle');
+                msgTitleEle.html('Thank you for your feedback');
+                msgTitleEle.css('color', '#ffffff');
                 $('#rate_review_form').css('background-color', '#007c96')
-                $('#feedback_panel').html(thankyouMessage);
+                $('#feedback_panel').html(thankfulMessage);
             } else {
                 $("#feedback_panel").addClass("failure");
                 $('#feedback_panel').html(response.message);
@@ -91,7 +95,7 @@ function closeForm() {
  * In the section, some variables are defined in specific views, for instance, user edit view
  */
 // reference: https://wiki.eprints.org/w/ORCID
-const orcidRegExp = /^\d{4}-\d{4}-\d{4}-\d{3}(?:\d|X)$/gi;
+const orcidRegExp = /^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/gi;
 const emailRegExp = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 $("#registerForm #resetFormButton").click(function() {
     $('#registerForm')[0].reset();
@@ -115,7 +119,7 @@ $('input[id=username]').blur(function() {
                 username = response[0];
                 username = username.trim();
                 if (username) {
-                    message = "A user with this username " + username + " already exists. Please try another one."
+                    message = "Use another username. This one is unavailable."
                 } else {
                     message = "This username does not exist. Please check typos and spelling or try again."
                 }
@@ -179,6 +183,9 @@ $('input[name=email]').blur(function() {
         let returned;
         let LOOKUP_EMAIL_RESULT = LOOKUP_USER_INFO_STATUS_CODE.NOT_FOUND;
         if (email.match(emailRegExp)) {
+            if (window.location.pathname === $.jummp.createLink("usermanagement", "edit")) {
+                return true;
+            }
             LOOKUP_EMAIL_RESULT = doLookUpUserEmail(email);
             if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FETCH_FAILED) {
                 message = "There has been an internal error happening. Please try again!";
@@ -187,7 +194,7 @@ $('input[name=email]').blur(function() {
                 message = "The email address " + email + " could not be found, or does not exist.";
                 returned = false;
             } else if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FOUND) {
-                message = "The email " + email + " used by another BioModels user. Choose a different address.";
+                message = "The email " + email + " used by another BioModels user. Choose a different one.";
                 returned = true;
             } else {
                 message = "An unknown error has happened! Please try again.";
@@ -212,7 +219,7 @@ $('input[name=email]').blur(function() {
 $('input[name=orcid]').blur(function() {
     const orcid = $(this).val().trim();
     if (orcid !== currentOrcid) {
-        var message = "";
+        let message = "";
         if (orcid.match(orcidRegExp)) {
             // look it up in the database
             $.ajax({
@@ -349,7 +356,8 @@ $('#menu-item-myaccount').on('mouseover', function (event) {
     }
 });
 
-$('.is-submenu-item').on("mouseover click", function() {
+const $isSubMenuItem = $('.is-submenu-item');
+$isSubMenuItem.on("mouseover click", function() {
     $('.main-menu-item').removeClass("active");
     $('.main-menu-item a').removeAttr("style");
     let grand = $(this).parent().parent().find('a');
@@ -357,7 +365,7 @@ $('.is-submenu-item').on("mouseover click", function() {
     $(grand[0]).css("background-color", "white");
 });
 
-$('.is-submenu-item').on("mouseout", function() {
+$isSubMenuItem.on("mouseout", function() {
     $('.main-menu-item a').removeAttr("style");
 });
 

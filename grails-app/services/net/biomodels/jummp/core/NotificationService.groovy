@@ -64,7 +64,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 class NotificationService implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(NotificationService.class)
     def grailsApplication
-    def mailService
+    def mailingService
     def springSecurityService
     def messageSource
 
@@ -73,31 +73,40 @@ class NotificationService implements InitializingBean {
     void sendConfirmationOrNotificationEmail(final String emailFrom, final String emailTo,
                                              final String emailSubject, final String emailBody,
                                              final String emailReplyTo = null) {
-        if (emailReplyTo) {
-            mailService.sendMail {
-                async true
-                to emailTo
-                from emailFrom
-                replyTo emailReplyTo
-                subject emailSubject
-                html emailBody
-            }
-        } else {
-            mailService.sendMail {
-                async true
-                to emailTo
-                from emailFrom
-                subject emailSubject
-                html emailBody
-            }
-        }
+        mailingService.send([to: emailTo, from: emailFrom, subject: emailSubject,
+                             html: wrapInHtmlTemplate(emailBody), replyTo: emailReplyTo ?: null])
+    }
+
+    private String wrapInHtmlTemplate(String content) {
+        return """
+<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
+  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
+    <div style="background-color:#ED6B21;height:5px;"></div>
+    <div style="background-color:#072C55;padding:24px 32px 20px;">
+      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+    </div>
+    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+      ${content}
+    </div>
+    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
+    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
+      This is an automatically generated email from
+      <a href="${serverURL}" style="color:#0F5CB1;">BioModels</a> &mdash; replies are not monitored.<br/>
+      BioModels is maintained by the Laboratory for Systems Medicine,
+      Department of Medicine, Division of Pulmonary &ndash; Systems Medicine,
+      <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" style="color:#0F5CB1;">University of Florida</a>.<br/>
+      &copy; ${new Date().format("YYYY")} University of Florida Health
+    </div>
+  </div>
+</div>"""
     }
 
     void useGenericNotificationStructure(String notificationTitle,
                                          String[] titleParams, String notificationBody, String[] bodyParams,
                                          NT type, User sender, Set<User> watchers, MTC model) {
         Notification notification = new Notification()
-        notification.title = messageSource.getMessage(notificationTitle, titleParams, null)
+        notification.title = "[BioModels] ${messageSource.getMessage(notificationTitle, titleParams, null)}"
         notification.body = messageSource.getMessage(notificationBody, bodyParams, null)
         notification.notificationType = type
         notification.sender = sender
@@ -178,7 +187,11 @@ caused by ${ntp?.errors?.toString()}""")
             final String emailTo = user.email
             String emailSubject = notification.title
             String emailBody = notification.body
-            sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
+            try {
+                sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
+            } catch (Exception e) {
+                logger.warn("Skipped notification email to ${emailTo}: ${e.message}")
+            }
         }
         if (pref.sendNotification) {
             NU userNotify = new NU(notification: notification, user: user)
@@ -215,7 +228,7 @@ caused by ${ntp?.errors?.toString()}""")
         String emailBody
 
         /* email notification to the curators' mailing list */
-        emailTo = body.emails[0]
+        emailTo = body.emails[0] as String
         if (emailTo) {
             emailSubject = messageSource.getMessage("notification.model.created.emailToCurator.subject",
                 [model.id.toString(), model.submissionId] as String[], null)
@@ -236,19 +249,13 @@ caused by ${ntp?.errors?.toString()}""")
         if (emailTo) {
             emailSubject = messageSource.getMessage("notification.model.created.emailToSubmitter.subject",
                 [model.submissionId] as String[], null)
-            String salutation = ""
-            if (null != submitterRealName) {
-                salutation = submitterRealName
-            } else {
-                salutation = "submitter"
-            }
+            String salutation = submitterRealName ?: "submitter"
             String withPubMsgCode = "notification.model.created.emailToSubmitter.body.withPublicationProvided"
             String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
             String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
             String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
             // embed the instructions about citing BioModels regardless of publication details
-            String askAcknowledgement = noPublicationProvided
-            String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
+            String[] args = [salutation, model.name, model.submissionId, noPublicationProvided, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
             sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody)
         }
@@ -393,23 +400,19 @@ caused by ${ntp?.errors?.toString()}""")
         useGenericNotificationStructure(notificationTitle, titleParams,
             notificationBody, bodyParams, NT.SUBMIT_FOR_PUBLICATION, user, watchers, model)
         // send an email to biomodels' cura mailing list
-        String emailTo = grailsApplication.config.jummp.model.curators.mailinglist
-        String emailFrom = user.email //grailsApplication.config.jummp.security.registration.email.sender
-        String emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
-        String emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
-        sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody, emailFrom)
+        String curatorsEmail = grailsApplication.config.jummp.model.curators.mailinglist as String
+        String senderAddr    = grailsApplication.config.jummp.security.registration.email.sender as String
+        String emailSubject  = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
+        String emailBody     = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
+        sendConfirmationOrNotificationEmail(senderAddr, curatorsEmail, emailSubject, emailBody, user.email)
 
-        // send an email to the user to request a citation to BioModels
-        (emailFrom, emailTo) = [emailTo, emailFrom]
-        emailFrom = grailsApplication.config.jummp.model.curators.mailinglist
+        // send a citation reminder email to the submitter
         notificationTitle = "biomodels.howtoCiteUs.reminder.title"
-        titleParams = []
-        emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
-
+        emailSubject = messageSource.getMessage(notificationTitle, [] as String[], LCH.getLocale())
         notificationBody = "biomodels.howtoCiteUs.reminder.content"
         bodyParams = [serverURL, user?.person?.userRealName ?: user.username, model.submissionId]
         emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
-        sendConfirmationOrNotificationEmail(emailFrom, emailTo, emailSubject, emailBody, emailFrom)
+        sendConfirmationOrNotificationEmail(senderAddr, user.email, emailSubject, emailBody, curatorsEmail)
     }
 
     void feedback2Admin(def body) {

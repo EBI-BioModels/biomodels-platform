@@ -79,7 +79,7 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         FIXED_PARAMS = "query=*:*&size=0&facetfields"
         println "${new Date().format("yyyy-MM-dd HH:mm:ss")} ${this.getClass().name} LOADING CONFIG SERVICE..."
 
-        proxy = configurationService.verifyHttpProxy()
+        proxy = configurationService?.verifyHttpProxy()
 
         def config = new JedisPoolConfig()
         config.setJmxEnabled(true)
@@ -170,6 +170,12 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
     synchronized static void doRedisSAdd(final String key, final String... values) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.sadd(key, values)
+        }
+    }
+
+    synchronized static void doRedisSRem(final String key, final String... values) {
+        jedisPool.getResource().withCloseable { Jedis jedis ->
+            jedis.srem(key, values)
         }
     }
 

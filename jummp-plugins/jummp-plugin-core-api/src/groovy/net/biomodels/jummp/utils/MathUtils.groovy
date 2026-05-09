@@ -116,4 +116,16 @@ class MathUtils {
             return PWD_HARD_LEVEL.X_HARD.label
         }
     }
+
+    /**
+     * <h4>Check a given username complying with the general rules for usernames or not</h4>
+     * <p>This utility function is used to validate a given username whether it complies with the general rules
+     * for usernames and passwords or not.</p>
+     * @param username  A string indicating the username.
+     * @return true|false
+     */
+    static boolean validUsername(final String username) {
+        String regex = "^[a-zA-Z0-9_.-]{4,64}" // Allowed characters and the length range
+        username.matches(regex)
+    }
 }

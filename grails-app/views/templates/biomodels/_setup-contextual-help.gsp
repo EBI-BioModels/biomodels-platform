@@ -57,9 +57,9 @@ let helpHidden = 1;
             var isDragged=false;
 </g:if>
 $(function() {
-<sec:ifLoggedIn>
+<bmsec:whenLoggedIn>
     pollForNotifications('<g:createLink controller="notification" action="unreadNotificationCount"/>')
-</sec:ifLoggedIn>
+</bmsec:whenLoggedIn>
 <g:if test="${contextHelpLocation}">
     $("#helpPanel").resizable({
                 handles: 'n,e,s,w',

@@ -166,7 +166,7 @@
 <div class="top-bar-right">
 <ul class="main-menu dropdown menu"
         data-description="navigational" data-dropdown-menu role="menubar">
-    <sec:ifLoggedIn>
+    <bmsec:whenLoggedIn>
         <li <g:if test="${selectedMyAccountItems}">
             class="active functional first float-right opens-left main-menu-item"</g:if>
             <g:else>
@@ -213,8 +213,8 @@
                 </li>
             </ul>
         </li>
-    </sec:ifLoggedIn>
-    <sec:ifNotLoggedIn>
+    </bmsec:whenLoggedIn>
+    <bmsec:whenNotLoggedIn>
         <li <g:if test="${registerSelected}"> class="active main-menu-item functional first float-right " </g:if>
             <g:else>class="main-menu-item functional first float-right "</g:else>
             role="menuitem">
@@ -224,11 +224,11 @@
         <li <g:if test="${loginSelected}"> class="active main-menu-item functional first float-right " </g:if>
             <g:else>class="main-menu-item functional first float-right "</g:else>
             role="menuitem">
-            <a href='<g:createLink uri="/login" />'>
+            <a href="${grailsApplication.config.grails.serverURL}/login/auth">
                 <span class="icon icon-common icon-sign-in-alt">&nbsp;</span><g:message code="jummp.main.login"/>
             </a>
         </li>
-    </sec:ifNotLoggedIn>
+    </bmsec:whenNotLoggedIn>
 </ul>
 </div></div>
 </nav>

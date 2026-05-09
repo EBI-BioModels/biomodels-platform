@@ -1,13 +1,21 @@
-<ul style="list-style: none inside none; padding: 0; margin-left: 0">
-    <g:each in="${models}" var="it">
+<ul style="list-style-type: none; list-style-position: inside; padding: 0; margin-left: 0">
+    <g:each in="${models}" var="model">
         <%
-            String modelId = it.key
+            String modelId = model.key
             String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
-            String modelName = it.value
+            String submitter = model.value.submitter
+            String searchBySubmitterLink =
+                "${serverURL}/search?query=*%3A*+AND+submitter%3A'${submitter}'&domain=biomodels_all"
         %>
         <li style="text-indent: -1.5em; padding-left: 1.5em">
-            <span class='icon icon-functional' data-icon='4'>&nbsp;</span>
-                <a href='${modelURI}'>${modelName}</a></li>
+            <i class="icon icon-common icon-unlock">&nbsp;</i>
+            <a href='${modelURI}'>${model.value.title}</a><br/>
+            <div class="hide-for-small-only" style="text-indent: 0.0em; font-size: 90%">
+                Submitter: <a href="${searchBySubmitterLink}" target="_blank">${submitter}</a>&nbsp;|
+                Format: ${model.value.format}&nbsp;|
+                Submitted: ${model.value.submittedDate}&nbsp;|
+                Published: ${model.value.publishedDate ?: 'N/A'}&nbsp;|
+                Accessed: ${String.format('%,d', model.value.accessCount)} time(s)</div>
+        </li>
     </g:each>
 </ul>
-

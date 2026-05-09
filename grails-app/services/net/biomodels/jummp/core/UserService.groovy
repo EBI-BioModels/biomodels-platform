@@ -77,7 +77,7 @@ import java.nio.file.Paths
 class UserService implements IUserService, InitializingBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class)
     def springSecurityService
-    def mailService
+    def mailingService
     @SuppressWarnings("GrailsStatelessService")
     def grailsApplication
     def grailsLinkGenerator
@@ -333,16 +333,13 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     }
 
     void sendEmail(final User USER, final String BODY, final String SUBJECT) {
-        final String TO_EMAIL = USER?.email
         if (USER) {
-            final String SENDER = grailsApplication.config.jummp.security.registration.email.sender
-            mailService.sendMail {
-                to TO_EMAIL
-                from SENDER
-                subject SUBJECT
-                html BODY
-            }
+            sendEmail(USER.email, BODY, SUBJECT)
         }
+    }
+
+    void sendEmail(final String toEmail, final String BODY, final String SUBJECT) {
+        mailingService.send([to: toEmail, subject: SUBJECT, html: BODY])
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -553,16 +550,9 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
                 webURL = "http://localhost:8080/${Metadata.current.'app.name'}"
             }
             emailBody = emailBody.replace("{{WEBURL}}", webURL)
-            String fromRecipient = grailsApplication.config.jummp.security.registration.email.sender
-            mailService.sendMail {
-                to recipient
-                if (bccRecipients) {
-                    bcc bccRecipients
-                }
-                from fromRecipient
-                subject emailSubject
-                text emailBody
-            }
+            String fromRecipient = grailsApplication.config.jummp.security.registration.email.sender as String
+            mailingService.send([to: recipient, from: fromRecipient, subject: emailSubject,
+                                 text: emailBody, bcc: bccRecipients ?: null])
         }
         return User.findByUsername(user.username).id
     }
@@ -625,6 +615,24 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     }
 
     @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag = "userService.unlockAccount")
+    @PreAuthorize("isAnonymous()")
+    boolean unlockAccount(final String username) {
+        User user = User.findByUsername(username)
+        if (!user || !user.accountLocked) {
+            return false
+        } else {
+            user.accountLocked = false
+            if (!user.save(flush: true)) {
+                LOGGER.error("Cannot unlock the user ${username} because of ${user.errors.toString()}.")
+                return false
+            } else {
+                return true
+            }
+        }
+    }
+
+    @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="userService.requestPassword")
     @PreAuthorize("isAnonymous()")
     void requestPassword(String usernameOrEmail)
@@ -650,12 +658,9 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         emailBody = emailBody.replace("{{USERNAME}}", user.username)
         emailBody = emailBody.replace("{{URL}}", url)
         emailBody = emailBody.replace("{{WEBSITE}}", website)
-        mailService.sendMail {
-                to recipient
-                from grailsApplication.config.jummp.security.registration.email.sender
-                subject grailsApplication.config.jummp.security.resetPassword.email.subject
-                text emailBody
-        }
+        mailingService.send([to: recipient,
+                             subject: grailsApplication.config.jummp.security.resetPassword.email.subject as String,
+                             text: emailBody])
     }
 
     @PostLogging(LoggingEventType.UPDATE)

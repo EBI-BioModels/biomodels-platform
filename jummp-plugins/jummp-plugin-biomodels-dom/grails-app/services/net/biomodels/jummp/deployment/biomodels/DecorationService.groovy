@@ -29,7 +29,9 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.scms.CmsContent
 import net.biomodels.jummp.statistic.OrganismData
-import net.biomodels.jummp.statistic.RecentlyPublishedModel
+import net.biomodels.jummp.statistic.RecentlyAccessedModel
+import net.biomodels.jummp.statistic.RecentlyAccessedModel as RAM
+import net.biomodels.jummp.statistic.RecentlyPublishedModel as RPM
 import net.biomodels.jummp.utils.redis.RedisService
 import org.perf4j.aop.Profiled
 import org.slf4j.Logger
@@ -83,45 +85,79 @@ class DecorationService implements InitializingBean {
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyAccessedModels')
     private static Map<String, String> buildListOfRecentlyAccessedModels() {
-        String query ='''
-SELECT
-    coalesce(m.publicationId, m.submissionId) as modelId,
-    rev.name
-FROM
-    ModelAudit AS ma
-    JOIN ma.model AS m
-    JOIN m.revisions AS rev
-WHERE
-  ma.dateCreated BETWEEN :then AND :now AND
-  ma.success = 1 AND
-  rev.id IN(
-     SELECT aoi.objectId
-        FROM
-            AclEntry AS ace
-            JOIN ace.aclObjectIdentity AS aoi
-            JOIN aoi.aclClass AS aclClass
-            JOIN ace.sid AS sid
-        WHERE
-            aclClass.className = 'net.biomodels.jummp.model.Revision'
-            AND sid.sid = 'ROLE_ANONYMOUS'
-            AND ace.mask = 1)
-GROUP BY rev.model, rev.name
-'''
         def now = new Date()
         def then = null
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query,
-            [then: then, now: now, max: ACCESSED_MAX_RECORDS]) as List<List>
-        Map<String, String> returnedModels = new LinkedHashMap<>()
-        matchedModels.each { row ->
-            String id = row[0] as String
-            String name = row[1]
-            returnedModels.put(id, name)
+
+        // Step 1: aggregate audit table only — no revision join, fast.
+        // Over-fetch (×5) to ensure enough candidates survive the deleted/no-published-revision filter.
+        String auditQuery = '''
+SELECT ma.model.id, COUNT(ma.id) AS accessCount
+FROM ModelAudit AS ma
+WHERE ma.dateCreated BETWEEN :then AND :now
+  AND ma.success = 1
+GROUP BY ma.model.id
+ORDER BY COUNT(ma.id) DESC
+'''
+        List auditRows = Model.executeQuery(auditQuery,
+            [then: then, now: now], [max: ACCESSED_MAX_RECORDS * 5]) as List
+
+        if (!auditRows) {
+            LOGGER.debug("No model audit records found in the last 6 months")
+            return new LinkedHashMap<>()
         }
+
+        // Step 2: fetch display metadata for the candidate models only.
+        // Published revisions (state = 'PUBLISHED') are always publicly accessible in BioModels,
+        // so the ACL subquery is redundant. LEFT JOIN on owner/person avoids N+1 lazy loads.
+        List<Long> candidateIds = auditRows.collect { it[0] as Long }
+        String metaQuery = '''
+SELECT
+    m.id,
+    coalesce(m.publicationId, m.submissionId),
+    rev.name,
+    p.userRealName,
+    rev.format.name,
+    rev.uploadDate,
+    m.firstPublished
+FROM Model AS m
+JOIN m.revisions AS rev
+LEFT JOIN rev.owner AS u
+LEFT JOIN u.person AS p
+WHERE
+  m.id IN (:ids) AND
+  m.deleted = false AND
+  rev.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision r2
+                        WHERE r2.model.id = m.id AND r2.state = 'PUBLISHED')
+'''
+        List metaRows = Model.executeQuery(metaQuery, [ids: candidateIds]) as List
+
+        Map<Long, Object[]> metaByDbId = [:]
+        metaRows.each { row -> metaByDbId[row[0] as Long] = row }
+
+        // Merge: iterate in access-count order, skip non-public models, stop at the configured limit.
+        Map<String, RAM> returnedModels = new LinkedHashMap<>()
+        for (auditRow in auditRows) {
+            def meta = metaByDbId[auditRow[0] as Long]
+            if (meta) {
+                RAM ram = new RAM(
+                    id: meta[1] as String,
+                    title: meta[2] as String,
+                    submitter: meta[3] as String ?: "",
+                    format: meta[4] as String,
+                    submittedDate: (meta[5] as Date)?.format("yyyy-MM-dd") ?: "",
+                    publishedDate: (meta[6] as Date)?.format("yyyy-MM-dd") ?: "",
+                    accessCount: auditRow[1] as long
+                )
+                returnedModels.put(ram.id, ram)
+                if (returnedModels.size() >= ACCESSED_MAX_RECORDS) break
+            }
+        }
+
         LOGGER.debug("Extracting the list of recently ACCESSED models from the database")
-        returnedModels
+        returnedModels as Map<String, String>
     }
 
     /**
@@ -129,17 +165,18 @@ GROUP BY rev.model, rev.name
      * <br/>
      * <p>Due to needing more fields to be shown on the widget, this service will have to include
      * some fields like revision owner as submitter, publication title, publication journal and year.</p>
-     * @return A {@link Map} of {@link net.biomodels.jummp.statistic.RecentlyPublishedModel} objects
+     * @return A map of {@link net.biomodels.jummp.statistic.RPM} objects
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
-    private static Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
+    private static Map<String, RPM> buildListOfRecentlyPublishedModels() {
         String query = '''
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
     model.firstPublished,
-    rev.name, rev.owner, model.publication.title, model.publication.journal, model.publication.year
+    rev.name, rev.owner, pub.title, pub.journal, pub.year
 FROM Model AS model
 JOIN model.revisions AS rev
+LEFT JOIN model.publication AS pub
 WHERE
   rev.id IN(
      SELECT aoi.objectId
@@ -153,14 +190,15 @@ WHERE
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
   AND model.firstPublished IS NOT NULL
+  AND model.deleted = false
   AND rev.revisionNumber = (SELECT MAX(revisionNumber) FROM Revision r2
                             WHERE r2.model.id=rev.model.id AND r2.state='PUBLISHED')
 ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: PUBLISHED_MAX_RECORDS])
-        Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
+        Map<String, RPM> returnedModels = new LinkedHashMap<String, RPM>()
         matchedModels.each {
             User owner = it[3] as User
-            RecentlyPublishedModel rpm = new RecentlyPublishedModel(id: it[0],
+            RPM rpm = new RPM(id: it[0],
                 title: it[2],
                 lastPublished: (it[1] as Date).format("yyyy-MM-dd"),
                 submitter: owner.person.userRealName,
@@ -177,24 +215,53 @@ ORDER BY model.firstPublished DESC'''
         returnedModels
     }
 
-    Map<String, String> refreshRecentlyAccessedModelsRedisCache() {
-        Map<String, String> mapModels = buildListOfRecentlyAccessedModels()
+    Map<String, RAM> refreshRecentlyAccessedModelsRedisCache() {
+        Map<String, RAM> mapModels = buildListOfRecentlyAccessedModels() as Map<String, RAM>
         addListOfRecentlyAccessedModelsToRedis(mapModels)
         mapModels
     }
 
-    private void addListOfRecentlyAccessedModelsToRedis(Map mapModels) {
+    // Fire-and-forget variant for the admin endpoint. Binds a fresh Hibernate session
+    // to the background thread so GORM queries work outside the HTTP request context.
+    void refreshRecentlyAccessedModelsCacheAsync() {
+        LOGGER.info("Starting background refresh of recently accessed models cache")
+        Thread.start {
+            try {
+                Model.withNewSession {
+                    Map<String, RAM> mapModels = buildListOfRecentlyAccessedModels() as Map<String, RAM>
+                    addListOfRecentlyAccessedModelsToRedis(mapModels)
+                }
+                LOGGER.info("Background refresh of recently accessed models cache completed")
+            } catch (Exception e) {
+                LOGGER.error("Background refresh of recently accessed models cache failed: {}", e.message, e)
+            }
+        }
+    }
+
+    private void addListOfRecentlyAccessedModelsToRedis(Map<String, RAM> mapModels) {
         LOGGER.debug("Caching the list of recently ACCESSED models to Redis Server")
-        redisService.doRedisHSet("hp-recently-accessed-models", mapModels)
+        final String key = "hp-recently-accessed-models"
+        Map existing = redisService.doRedisHGetAll(key)
+        existing?.keySet()?.each { redisService.doRedisDel("$key-$it" as String) }
+        redisService.doRedisDel(key)
+        Map<String, String> index = [:]
+        mapModels.each { modelId, ram ->
+            Map value = ["id": ram.id, "title": ram.title, "submitter": ram.submitter,
+                         "format": ram.format, "submittedDate": ram.submittedDate,
+                         "publishedDate": ram.publishedDate, "accessCount": ram.accessCount.toString()]
+            redisService.doRedisHSet("$key-${ram.id}" as String, value)
+            index.put(ram.id, ram.title)
+        }
+        redisService.doRedisHSet(key, index)
     }
 
     Map<String, String> refreshRecentlyPublishedModelsRedisCache() {
-        Map<String, RecentlyPublishedModel> mapModels = buildListOfRecentlyPublishedModels()
+        Map<String, RPM> mapModels = buildListOfRecentlyPublishedModels()
         Map<String, String> models = addRecentlyPublishedModelsToRedis(mapModels)
         models
     }
 
-    private Map<String, String> addRecentlyPublishedModelsToRedis(Map<String, RecentlyPublishedModel> mapModels) {
+    private Map<String, String> addRecentlyPublishedModelsToRedis(Map<String, RPM> mapModels) {
         LOGGER.debug("Caching the list of recently PUBLISHED models to Redis Server")
         Jedis jedis = null
         Map<String, String> models = [:]
@@ -203,8 +270,8 @@ ORDER BY model.firstPublished DESC'''
             jedis = redisService.jedisPool.getResource()
             clearRedisCacheOfRecentlyPublishedModels(jedis, key)
 
-            for (Map.Entry<String, RecentlyPublishedModel> entry : mapModels) {
-                RecentlyPublishedModel m = entry.value
+            for (Map.Entry<String, RPM> entry : mapModels) {
+                RPM m = entry.value
                 Map value = ["id": m.id, "title": m.title, "submitter": m.submitter,
                              "lastPublished": m.lastPublished, "pubTitle": m.pubTitle,
                              "pubJournal": m.pubJournal, "pubYear": m.pubYear ?: "Unpublished"]
@@ -287,38 +354,58 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
         return journalsMap
     }
 
-    Map<String, String> fetchRecentlyAccessedModels() {
-        Map models = redisService.doRedisHGetAll("hp-recently-accessed-models")
-        if (!models) {
-            // call the fallback
-            LOGGER.debug("Falling back to build the list of Recently Accessed Models")
-            models = buildListOfRecentlyAccessedModels()
-            addListOfRecentlyAccessedModelsToRedis(models)
-        }
-        return models
-    }
-
-    Map<String, RecentlyPublishedModel> fetchRecentlyPublishedModels() {
-        final String key = "hp-recently-published-models"
+    Map<String, RAM> fetchRecentlyAccessedModels() {
+        final String key = "hp-recently-accessed-models"
         Map models = redisService.doRedisHGetAll(key)
-        Map<String, RecentlyPublishedModel> returnedMap = [:]
+        Map<String, RAM> returnedMap = [:]
         if (!models) {
-            // call the fallback
-            LOGGER.debug("Falling back to build the list of Recently Published Models")
-            returnedMap = buildListOfRecentlyPublishedModels()
-            addRecentlyPublishedModelsToRedis(returnedMap)
-        } else {
-            for (String modelId in models.keySet()) {
-                Map rpm = redisService.doRedisHGetAll("$key-$modelId" as String)
-                RecentlyPublishedModel model =
-                    new RecentlyPublishedModel(id: rpm.get("id"), submitter: rpm.get("submitter"),
-                        lastPublished: rpm.get("lastPublished"),
-                        title: rpm.get("title"), pubJournal: rpm.get("pubJournal"),
-                        pubTitle: rpm.get("pubTitle"), pubYear: rpm.get("pubYear"))
-                returnedMap.put(model.id, model)
+            // Cache is cold (first deploy or Redis restart). Return empty rather than
+            // running the heavy audit query synchronously on a live request. The
+            // HomePageUpdaterJob (2 AM daily) or the admin refresh endpoint will populate it.
+            LOGGER.warn("Recently accessed models cache is empty; widget will be blank until cache is populated")
+            return returnedMap
+        }
+        for (String modelId in models.keySet()) {
+            Map ram = redisService.doRedisHGetAll("$key-$modelId" as String)
+            if (!ram) {
+                LOGGER.warn("Per-model Redis entry missing for {}, skipping", modelId)
+                continue
             }
+            returnedMap.put(modelId, new RAM(
+                id: ram.get("id"), title: ram.get("title"),
+                submitter: ram.get("submitter"), format: ram.get("format"),
+                submittedDate: ram.get("submittedDate"),
+                publishedDate: ram.get("publishedDate"),
+                accessCount: ram.get("accessCount") as long
+            ))
         }
         return returnedMap
+    }
+
+    Map<String, RPM> fetchRecentlyPublishedModels() {
+        final String key = "hp-recently-published-models"
+        Map models = redisService.doRedisHGetAll(key)
+        Map<String, RPM> returnedMap = [:]
+        if (!models) {
+            LOGGER.warn("Recently published models cache is empty; widget will be blank until cache is populated")
+            return returnedMap
+        }
+        for (String modelId in models.keySet()) {
+            Map rpm = redisService.doRedisHGetAll("$key-$modelId" as String)
+            if (!rpm) {
+                LOGGER.warn("Per-model Redis entry missing for {}, skipping", modelId)
+                continue
+            }
+            RPM model =
+                new RPM(id: rpm.get("id"), submitter: rpm.get("submitter"),
+                    lastPublished: rpm.get("lastPublished"),
+                    title: rpm.get("title"), pubJournal: rpm.get("pubJournal"),
+                    pubTitle: rpm.get("pubTitle"), pubYear: rpm.get("pubYear"))
+            returnedMap.put(model.id, model)
+        }
+        return returnedMap.sort { a, b ->
+            (b.value.lastPublished ?: "") <=> (a.value.lastPublished ?: "")
+        } as LinkedHashMap<String, RPM>
     }
 
     Map<String, String> fetchMomEntry() {
@@ -342,15 +429,14 @@ Publication: ${m.pubTitle};<br/>Published in ${m.pubYear} at ${m.pubJournal}."""
             LOGGER.debug("Caching the News entry to Redis server")
             redisService.doRedisHSet("hp-news-widget", news)
         } else {
-            Map sortedNews = new LinkedHashMap()
-            sortedNews = news.sort { n1, n2 ->
+            Map sortedNews = news.sort { n1, n2 ->
                 String strDate1 = n1.value.take(10)
                 String strDate2 = n2.value.take(10)
                 Date date1 = new Date().parse("dd/MM/yyyy", strDate1)
                 Date date2 = new Date().parse("dd/MM/yyyy", strDate2)
                 return date2 <=> date1
             } as Map<String, String>
-            news = sortedNews as Map<String, String>
+             news = sortedNews as Map<String, String>
         }
         return news
     }

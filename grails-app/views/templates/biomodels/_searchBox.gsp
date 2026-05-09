@@ -121,8 +121,10 @@
         e.stopImmediatePropagation();
 
         const query = document.getElementById('local-search-box').value;
+        const domain = document.getElementById('chosenDomain').value;
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set('query', query);
+        urlParams.set('domain', domain);
         const searchPattern = /^\/search(?:\/|$)/i;
         let newURL;
         if (searchPattern.test(window.location.pathname)) {

@@ -33,16 +33,18 @@
         <meta name="layout" content="${session['branding.style']}/main" />
         <title>${title}</title>
         <style>
-        	.verysecure {
+        	.very-secure {
         		visibility:hidden;
         	}
         </style>
+    <g:render template="head"/>
     </head>
     <body>
         <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
         <div id="register" class="row">
-            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode !== 13;" useToken="true">
+            <div class="small-12 medium-8 medium-centered large-6 large-centered columns">
+                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode !== 13;" useToken="true"
+                        onsubmit="return validateForm()" >
                     <div class="row column register-form">
                         <g:render template="/templates/newAccountRegistrationForm"
                                   plugin="jummp-plugin-web-application" model="[user: null]" />
@@ -55,12 +57,59 @@
                         <input type="reset" class="button" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
                         </p>
                     </div>
-                    <label class="verysecure">You shouldn't see me.</label>
-                    <input class="verysecure" name="securityfeature" value=""/>
+                    <label class="very-secure">You shouldn't see me.</label>
+                    <label>
+                        <input class="very-secure" name="securityfeature" value=""/>
+                    </label>
                 </g:form>
             </div>
         </div>
+<g:javascript>
+    /* global toastr, validateAllowedCharacters */
+    const usernameEle = $("#username");
+    const emailEle    = $("#email");
+    const realNameEle = $("#userRealName");
 
+    function validateEmail(val) {
+        if (!val) return "Email address is required.";
+        if (!/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(val)) {
+            return "Please enter a valid email address.";
+        }
+        return "";
+    }
+
+    emailEle.on("blur", function() {
+        const msg = validateEmail($(this).val().trim());
+        if (msg) toastr.error(msg);
+    });
+
+    realNameEle.on("blur", function() {
+        if (!$(this).val().trim()) toastr.error("Real name is required.");
+    });
+
+    function validateForm() {
+        let valid = true;
+
+        const usernameMsg = validateAllowedCharacters(usernameEle.val().trim());
+        if (usernameMsg) {
+            toastr.error(usernameMsg);
+            valid = false;
+        }
+
+        const emailMsg = validateEmail(emailEle.val().trim());
+        if (emailMsg) {
+            toastr.error(emailMsg);
+            valid = false;
+        }
+
+        if (!realNameEle.val().trim()) {
+            toastr.error("Real name is required.");
+            valid = false;
+        }
+
+        return valid;
+    }
+</g:javascript>
     </body>
 </html>
 <content tag="register">

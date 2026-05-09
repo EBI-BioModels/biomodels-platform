@@ -204,7 +204,7 @@ class SearchController extends CommonController {
         if (!query) {
             query = params.query.decodeHTML()
         }
-        String domain = params.chosenDomain
+        String domain = params.chosenDomain ?: params.domain
         sanitiseParams()
 
         params.query = query
@@ -354,15 +354,15 @@ under the format: ${response.format}"""
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         Map<String, Object> results = initSearchResults(query)
         if (query == "*:*") {
-            Map cached = searchService.retrieveCachedSearchAllResult()
+            Map cached = searchService.retrieveCachedSearchAllResult(domain)
             if (cached["models"]) {
-                LOGGER.info("Load the search result from the cached: query ${query}, offset $offset, length $length")
+                LOGGER.info("Load the search result from the cached: query ${query}, domain ${domain}, offset $offset, length $length")
                 results.putAll([query : query, offset: offset, length: length,
                         sortBy: sortBy, sortDirection: sortDirection, models: cached["models"],
                         facets: cached["facets"], facetStats: cached["facetStats"], matches: cached["matches"]
                 ])
             } else {
-                LOGGER.info("Hit EBI search due to the empty cached: query ${query}, offset $offset, length  $length")
+                LOGGER.info("Hit EBI search due to the empty cached: query ${query}, domain ${domain}, offset $offset, length  $length")
                 results.putAll(doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy,
                         sortDirection))
             }
@@ -383,7 +383,7 @@ under the format: ${response.format}"""
         String facetStats = ""
         if (query?.trim()) {
             SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
-            Map extractedSearchModels = searchService.extractSearchModels(response)
+            Map extractedSearchModels = searchService.extractSearchModels(response, domain)
             totalCount = extractedSearchModels["totalCount"] as Integer
             models = extractedSearchModels["models"] as List<MTC>
             facets = extractedSearchModels["facets"] as List<Facet>
@@ -457,11 +457,8 @@ under the format: ${response.format}"""
 
     private Map<String, Object> initSearchResults(final String query) {
         Map<String, Object> result = ["imagePath": "/images"]
-        def domain = params.domain
-        if (!domain) {
-            domain = "biomodels"
-            result.put("domain", domain)
-        }
+        def domain = params.domain ?: "biomodels"
+        result.put("domain", domain)
         String queryString = query?.replaceAll('([^\\\\])"', '$1\\\\"')
         result.put("queryString", queryString)
 

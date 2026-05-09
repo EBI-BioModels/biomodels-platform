@@ -60,13 +60,13 @@
     function setTwitterHeight() {
         /**
          * Because D3 charts are automatically responsive so that
-         * we set the height of Twitter widget equal to theirs.
+         * we set the height of the Twitter widget equal to theirs.
          * @type {*|jQuery}
          * See the solution was posted here https://stackoverflow.com/a/18390628/865603
          */
         //setTwitterHeight();
         if ($('.twitter-timeline').length) {
-            //Timeline exists is it rendered ?
+            //Timeline exists is it rendered?
             interval_timeline = false;
             interval_timeline = setInterval(function(){
                 if ($('.twitter-timeline').hasClass('twitter-timeline-rendered')) {
@@ -92,16 +92,16 @@
 <div id="hp-intro" class="row text-center">
     <div class="large-12 medium-12 small-12 columns">
     <p class="welcome-message" style="margin-top: 0.5em;">
-        BioModels is a repository of mathematical models of biological and biomedical systems.
+        BioModels is a repository housing mathematical models of biological and biomedical systems.
         It hosts a vast selection of existing literature-based physiologically and pharmaceutically
-        relevant mechanistic models in standard formats. Our mission  is to provide the systems
+        relevant mechanistic models in standard formats. Our mission is to provide the systems
         modelling community with reproducible, high-quality,
-        <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">freely-accessible</a>
+        <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank">freely accessible</a>
         models published in the scientific literature. More information about using BioModels such as <a
         href="faq#submit-model"
         class="tag">model submission</a>, <a href="faq#update-existing-model"
         class="tag">update</a>, <a href="faq#access-after-submission"
-        class="tag">publication</a>, or <a href="faq#reviewer-access" class="tag">reviewers access</a>
+        class="tag">publication</a>, or <a href="faq#reviewer-access" class="tag">reviewer access</a>
         can be found in the <a href="faq">FAQ</a>.
     </p></div>
 </div>

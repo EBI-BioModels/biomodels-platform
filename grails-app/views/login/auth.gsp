@@ -53,6 +53,10 @@
                         <label for='j_previousURL'>
                             <input type='text' name='j_previousURL' id='j_previousURL'  value="${j_previousURL}"
                                    style="display: none"/></label>
+                        <label for="j_deviceInfo">
+                            <input type='text' name='j_deviceInfo' id='j_deviceInfo' value=""
+                                   style="display: none"/>
+                        </label>
                         <p><button type="button" class="button expanded" id="btnLogIn">Log In</button></p>
                         <p class="text-center">
                             <a href="${grailsApplication.config.grails.serverURL}/forgotpassword">Forgot your password?</a></p>
@@ -89,12 +93,14 @@
             });
             const loginSubmit = $("#btnLogIn");
             loginSubmit.on("click", function() {
+                const deviceInfo = $("#j_deviceInfo");
+                $(deviceInfo).val(localStorage.getItem(loginUsername.val()));
                 loginForm.submit();
                 checkCompromisedPasswordOnServerSide(loginUsername.val(), loginPassword.val());
             });
             $(document).ready(function() {
                 if (referrer.indexOf("biomodels/MODEL") > 0) {
-                    const previousURL = $("#previousURL");
+                    const previousURL = $("#j_previousURL");
                     previousURL.val(referrer);
                 }
             });

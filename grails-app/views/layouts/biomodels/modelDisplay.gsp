@@ -189,12 +189,12 @@
 
     <script>
         $(function() {
-            <sec:ifLoggedIn>
+            <bmsec:whenLoggedIn>
             displayToolbar(true, true);
-            </sec:ifLoggedIn>
-            <sec:ifNotLoggedIn>
+            </bmsec:whenLoggedIn>
+            <bmsec:whenNotLoggedIn>
             displayToolbar(false, true);
-            </sec:ifNotLoggedIn>
+            </bmsec:whenNotLoggedIn>
             // displayToolbar(true, true);
         });
     </script>

@@ -23,9 +23,11 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import net.biomodels.jummp.webapp.rest.errors.Error
 import grails.converters.XML
+import org.springframework.security.access.annotation.Secured
 
 import javax.servlet.http.HttpServletResponse
 
+@Secured('permitAll')
 class ErrorsController {
 
     def springSecurityService

@@ -81,8 +81,11 @@ class LoginController extends CommonController {
     def auth() {
         def config = SpringSecurityUtils.securityConfig
 
-        if (springSecurityService.isLoggedIn()) {
-            redirect uri: config.successHandler.defaultTargetUrl
+        if (session.enabled2FA) {
+            redirect(controller: "auth", action: "load2fa")
+            return
+        } else if (springSecurityService.isLoggedIn()) {
+            forward uri: config.successHandler.defaultTargetUrl
             return
         }
 
@@ -90,9 +93,12 @@ class LoginController extends CommonController {
         String j_previousURL = request.getHeader("referer")
         String view = 'auth'
         String postUrl = "${request.contextPath}${config.apf.filterProcessesUrl}"
-        render view: view, model: [postUrl: postUrl, previousURL: previousURL, j_previousURL: j_previousURL,
-                                   rememberMeParameter: config.rememberMe.parameter,
-                                   flashMessage: flash.flashMessage?:""]
+        Map mModel = [postUrl: postUrl, previousURL: previousURL,
+            j_previousURL: j_previousURL,
+            rememberMeParameter: config.rememberMe.parameter,
+            flashMessage: flash.flashMessage?:"",
+        ]
+        render view: view, model: mModel
     }
 
     /**
