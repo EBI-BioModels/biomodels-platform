@@ -26,21 +26,21 @@ package net.biomodels.jummp.core
 
 import grails.async.Promise
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.adapters.RevisionAdapter
+import grails.util.Holders
+import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.search.OmicsdiBasedSearch
-import net.biomodels.jummp.search.SearchResponse
-import net.biomodels.jummp.search.SolrBasedSearch
-import net.biomodels.jummp.search.SortOrder
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import net.biomodels.jummp.search.*
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
@@ -59,19 +59,19 @@ import java.util.concurrent.atomic.AtomicReference
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @date   20160710
  */
-class SearchService {
+class SearchService implements InitializingBean {
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(SearchService.class)
+    static final Logger LOGGER = LoggerFactory.getLogger(SearchService.class)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    static final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    static final boolean IS_INFO_ENABLED = LOGGER.isInfoEnabled()
     /**
      * Disable default transactional behaviour.
      */
@@ -87,7 +87,7 @@ class SearchService {
     /*
      * Dependency injection of grailsApplication
      */
-    def grailsApplication
+    def redisService
 
     ModelSearchStrategy strategy
 
@@ -96,11 +96,11 @@ class SearchService {
     }
 
     private void loadSearchStrategy() {
-        String strategySetting = grails.util.Holders.grailsApplication.config.jummp.search.strategy
+        String strategySetting = Holders.grailsApplication.config.jummp.search.strategy
         if (!strategySetting) {
-            log.error "Cannot load the setting model search strategy."
+            LOGGER.error "Cannot load the setting model search strategy."
             strategySetting = "solr"
-            log.error "... using the default value: ${strategySetting}"
+            LOGGER.error "... using the default value: ${strategySetting}"
         }
         strategy = strategySetting.equalsIgnoreCase("omicsdi") ? new OmicsdiBasedSearch() : new SolrBasedSearch()
         //setSearchStrategy("omicsdi") // For testing immediately without changing .jummp.properties
@@ -116,9 +116,20 @@ class SearchService {
     @Secured(['ROLE_ADMIN'])
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="searchService.clearIndex")
-    void clearIndex() {
-        strategy.clearIndex()
-        clearAnnotationStatementsFromDatabase()
+    void clearIndex(def revision = null) {
+        if (revision) {
+            if (revision instanceof RevisionTC) {
+                LOGGER.info("Clearing the indexes of the ${revision.identifier()}.")
+                strategy.clearIndex(revision as RevisionTC)
+            } else if (revision instanceof Long) {
+                LOGGER.info("Clearing the indexes of the revision which the id is ${revision}.")
+                strategy.clearIndex(revision as long)
+            }
+        } else {
+            LOGGER.info("Clearing all indexes from the database.")
+            strategy.clearIndex()
+            clearAnnotationStatementsFromDatabase()
+        }
     }
 
     /**
@@ -129,8 +140,10 @@ class SearchService {
      **/
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="searchService.updateIndex")
-    void updateIndex(RevisionTransportCommand revision) {
-        strategy.updateIndex(revision)
+    void updateIndex(RevisionTC revision,
+                     Map<String, String> options = ["level": "full", "indexer": ""] as Map) {
+        clearIndex(revision)
+        strategy.updateIndex(revision, options)
     }
 
     /**
@@ -142,12 +155,12 @@ class SearchService {
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="searchService.regenerateIndices")
     void regenerateIndices() {
-        strategy.clearIndex()
-        List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
+        clearIndex()
+        List<RevisionTC> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
             new RevisionAdapter(revision: r).toCommandObject()
         }
         if (IS_DEBUG_ENABLED) {
-            log.debug "Indexing ${revisions.size()} revisions."
+            LOGGER.debug "Indexing ${revisions.size()} revisions."
         }
         Authentication auth = springSecurityService.authentication
         AtomicReference<Authentication> authRef = new AtomicReference<>(auth)
@@ -160,19 +173,19 @@ class SearchService {
                     updateIndex(revision)
                 }
                 catch(Exception e) {
-                    log.error("Exception thrown while indexing ${revision.properties} ${e.getMessage()}", e)
+                    LOGGER.error("Exception thrown while indexing ${revision.properties} ${e.getMessage()}", e)
                 } finally {
-                    log.info "Revision ${revision.id} has been indexed. Iteration ${index.incrementAndGet()} of $revisionCount."
+                    LOGGER.info "Revision ${revision.id} has been indexed. Iteration ${index.incrementAndGet()} of $revisionCount."
                 }
             }
         }
         p.onComplete {
             if (IS_INFO_ENABLED) {
-                log.info "Finished regenerating the index."
+                LOGGER.info "Finished regenerating the index."
             }
         }
         p.onError { Throwable e ->
-            log.error("Error regenerating the index: ${e.message}", e)
+            LOGGER.error("Error regenerating the index: ${e.message}", e)
         }
     }
 
@@ -185,9 +198,53 @@ class SearchService {
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    SearchResponse searchModels(String query, String domain, SortOrder sortOrder, Map<String, Integer>
-        paginationCriteria) {
+    SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
+                                       Map<String, Integer> paginationCriteria) {
         return strategy.searchModels(query, domain, sortOrder, paginationCriteria)
+    }
+
+    void refreshSearchAllCache() {
+        if (!redisService) {
+            LOGGER.warn("redisService unavailable, skipping search cache refresh")
+            return
+        }
+        SortOrder sortOrder = new SortOrder("relevance", "desc")
+        Map<String, Integer> paginationCriteria = ["start": 0, "length": 20, "facetCount": 1000]
+        ["biomodels", "biomodels_autogen", "biomodels_all"].each { String domain ->
+            LOGGER.info("Refreshing *:* search cache for domain: ${domain}")
+            try {
+                SearchResponse response = strategy.searchModels("*:*", domain, sortOrder, paginationCriteria)
+                extractSearchModels(response, domain)
+                LOGGER.info("Refreshed *:* search cache for domain: ${domain}")
+            } catch (Exception e) {
+                LOGGER.error("Failed to refresh search cache for domain ${domain}: ${e.message}", e)
+            }
+        }
+    }
+
+    Map extractSearchModels(SearchResponse response, String domain = "biomodels") {
+        Integer totalCount = (Integer) response.totalCount
+        ArrayList<ModelTransportCommand> results = response.results
+        List<ModelTransportCommand> models = []
+        List<Facet> facets = []
+        if (results?.size() > 0) {
+            results.each {
+                models.add(it)
+            }
+        }
+        LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
+        if (respondedFacets?.size() > 0) {
+            respondedFacets.each {
+                facets.add(it.value.facet)
+            }
+        }
+        LOGGER.info("Found: ${results?.size() ?: 0} records, ${respondedFacets?.size() ?: 0} facets.")
+        JsonBuilder builder = new JsonBuilder(facets)
+        String facetStats = builder.toString()
+
+        doUpdateCachedSearchAll(totalCount, models, facets, facetStats, domain)
+
+        [totalCount: totalCount, models: models, facets: facets, facetStats: facetStats]
     }
 
     /*
@@ -198,14 +255,90 @@ class SearchService {
      */
     @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
     void clearAnnotationStatementsFromDatabase() {
-        log.debug("Begin prunning annotation statements from database")
+        LOGGER.debug("Begin cleaning annotation statements from database")
         Revision.executeUpdate("delete ElementAnnotation")
         Revision.executeUpdate("delete Statement")
-        log.debug("Finished prunning annotation statements from database")
+        LOGGER.debug("Finished cleaning annotation statements from database")
+    }
+
+    Map checkIndexedData() {
+        strategy.checkIndexedData()
+    }
+
+    void indexDB() {
+        strategy.indexDB()
     }
 
     String[] getSearchFields() {
         strategy.getSortFields()
+    }
+
+    Map retrieveCachedSearchAllResult(String domain = "biomodels") {
+        String cacheKey = "search-result:all:${domain}"
+        if (!redisService || !redisService.exists(cacheKey)) {
+            return [:]
+        }
+        Map result = redisService.doRedisHGetAll(cacheKey)
+        Integer matches = result.get("totalCount") as Integer
+        String facetStats = result.get("facetStats")
+        List<ModelTransportCommand> models = convert2MTC(result.get("models"))
+        List<Facet> facets = convert2Facet(result.get("facets"))
+
+        [matches: matches, models: models, facets: facets, facetStats: facetStats]
+    }
+
+    private void doUpdateCachedSearchAll(Integer totalCount, List<ModelTransportCommand> models,
+                                         List<Facet> facets, String facetStats, String domain = "biomodels") {
+        if (!redisService) {
+            LOGGER.warn("redisService unavailable, skipping cache update for domain: ${domain}")
+            return
+        }
+        String cacheKey = "search-result:all:${domain}"
+        Map<String, String> data = ["totalCount": Integer.toString(totalCount), facetStats: facetStats]
+
+        StringBuilder str = new StringBuilder()
+        for (ModelTC model : models) {
+            str.append strMTC(model)
+        }
+        data.put("models", str.toString())
+
+        str = new StringBuilder()
+        for (Facet facet : facets) {
+            str.append(strFacet(facet))
+        }
+        data.put("facets", str.toString())
+
+        redisService.doRedisHSet(cacheKey, data)
+    }
+
+    private static String strFacet(Facet facet) {
+        // TODO: correct me
+        facet.id + "|" + facet.label
+    }
+
+    private static String strMTC(ModelTC model) {
+        // TODO: correct me
+        model.id + "|" + model.name
+    }
+
+    private static Facet toFacet(final String input) {
+        // TODO: implement me
+        null
+    }
+
+    private static ModelTC toMTC(final String input) {
+        // TODO: implement me
+        null
+    }
+
+
+    private static List<ModelTC> convert2MTC(Object o) {
+        // TODO: implement me
+        null
+    }
+
+    private static List<Facet> convert2Facet(Object o) {
+        null
     }
 
     List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {
@@ -289,6 +422,11 @@ class SearchService {
         facets << facet
 
         facets
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }
 

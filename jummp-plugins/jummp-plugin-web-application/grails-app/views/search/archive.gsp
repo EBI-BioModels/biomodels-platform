@@ -34,7 +34,7 @@
          <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
     </head>
     <body>
-        <g:render template="/templates/datatable" model="['action': 'archive']"/>
+        <g:render template="/templates/search/datatable" model="['action': 'archive']"/>
     </body>
     <content tag="title">
         Archived Models

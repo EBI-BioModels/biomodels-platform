@@ -31,12 +31,12 @@
 <html>
     <head>
         <title><g:message code="user.administration.ui.heading.user"/></title>
-        <meta name="layout" content="${session['branding.style']}/main" />
+        <meta name="layout" content="${theme}/main" />
         <g:javascript contextPath="" src="useradministration.js"/>
-        <g:javascript contextPath="" src="jquery/jquery.i18n.properties-min-1.0.9.js"/>
+        <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
+        <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
      </head>
     <body>
-        <div>
         <form id="edit-user-form" method="POST">
             <table class="responsive-table">
                 <thead></thead>
@@ -68,7 +68,6 @@
                 <input type="submit" class="button" value="${g.message(code: 'user.administration.save')}"/>
             </div>
         </form>
-        </div>
         <div id="user-role-management">
             <h2><g:message code="user.administration.userRole.ui.heading" args="[user.username]"/></h2>
             <div id="userRoles">

@@ -62,6 +62,7 @@ Brief description of the plugin.
     def doWithSpring = {
         Properties props = new Properties()
         try {
+            println "${new Date().format("yyyy-MM-dd HH:mm:ss")} ${this.getClass().name} LOADING THE EXTERNAL CONFIG FILE..."
         	ConfigurationService service = new ConfigurationService()
         	String pathToConfig=service.getConfigFilePath()
         	if (!pathToConfig) {

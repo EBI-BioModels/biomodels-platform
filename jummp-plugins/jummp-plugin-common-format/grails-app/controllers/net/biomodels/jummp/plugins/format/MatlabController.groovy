@@ -21,9 +21,10 @@
 package net.biomodels.jummp.plugins.format
 
 import net.biomodels.jummp.core.IMetadataService
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 
 class MatlabController {
     def matlabFormatService
@@ -31,12 +32,8 @@ class MatlabController {
 
     def show() {
         def model = flash.genericModel
-        final RevisionTransportCommand revision = model.revision as RevisionTransportCommand
+        final RevisionTC revision = model.revision as RevisionTC
         Set<File> matlabFiles = matlabFormatService.getMatlabFilesFromRevision revision
-        Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> anno =
-                metadataDelegateService.fetchGenericAnnotations(revision)
-
-        model['annotations'] = anno
         model['matlabFiles'] = matlabFiles
         model
     }

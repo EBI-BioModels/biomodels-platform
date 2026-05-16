@@ -33,7 +33,7 @@ grails.project.groupId = "net.biomodels.jummp"
 grails.project.source.level = 1.8
 grails.project.target.level = 1.8
 grails.server.host="0.0.0.0"
-grails.server.port=8080
+grails.server.port.http = 8080
 grails.project.dependency.resolver = "maven"
 
 customJvmArgs = ["-server", "-noverify", "-XX:+UseConcMarkSweepGC", "-XX:+UseParNewGC" ]
@@ -42,11 +42,11 @@ grails.project.fork = [
     //test: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, daemon: true],
     test: false,
     // configure settings for the run-app JVM
-    run: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
+    run: [maxMemory: 4098, minMemory: 64, debug: false, maxPerm: 1024, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the run-war JVM
     war: [maxMemory: 8192, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the Console UI JVM
-    console: [maxMemory: 1024, minMemory: 64, debug: false, maxPerm: 256, jvmArgs: customJvmArgs]
+    console: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 256, jvmArgs: customJvmArgs]
 ]
 
 grails.project.dependency.resolution = {
@@ -55,8 +55,9 @@ grails.project.dependency.resolution = {
         // uncomment to disable ehcache
         // excludes 'ehcache'
         excludes 'javassist'
+        excludes 'grails-plugin-logging', 'grails-plugin-log4j', 'log4j'
     }
-    log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
+    log "verbose" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     legacyResolve false // whether to do a secondary resolve on plugin installation, not advised and here for backwards compatibility
     repositories {
         inherits true //inherit repo definitions from plugins
@@ -69,8 +70,8 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenLocal()
         mavenCentral()
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-release"
+        mavenRepo "https://www.ebi.ac.uk/Tools/maven/repos/content/repositories/pst-snapshots"
         mavenRepo "https://repo.spring.io/milestone"
         mavenRepo "http://repo.grails.org/grails/core"
 
@@ -80,20 +81,20 @@ grails.project.dependency.resolution = {
     dependencies {
         // required by OntologyLookupResolver
         compile "org.ccil.cowan.tagsoup:tagsoup:1.2"
-        compile 'org.codehaus.groovy:groovy-backports-compat23:2.4.13'
+        compile 'org.codehaus.groovy:groovy-backports-compat23:2.4.21'
         compile "com.googlecode.multithreadedtc:multithreadedtc:1.01"
         runtime 'mysql:mysql-connector-java:5.1.34'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
-        compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.2.1"
+        compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.3-SNAPSHOT"
         // Jackson DataBinder has 'provided' scope in DDI: See
         //      https://github.com/BD2K-DDI/ddi-base-master/blob/2326b4/pom.xml
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
-        compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
-        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.5.2"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.9.0"
+        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.0"
 
         // remember to update this setting in jummp-plugin-configuration, jummp-plugin-core-api
-        compile "net.biomodels.jummp:AnnotationStore:0.3.5"
+        compile "net.biomodels.jummp:AnnotationStore:0.3.6"
         compile "org.apache.solr:solr-solrj:5.4.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
@@ -118,7 +119,7 @@ grails.project.dependency.resolution = {
                     'xalan',
                     'xml-apis'
         }*/
-        compile 'log4j:log4j:1.2.17'
+        runtime "ch.qos.logback:logback-core:0.9.29"
         compile "org.apache.tika:tika-core:1.23"
         /**
          * Weceem lists it as a runtime dependency, while jsbml needs it during compilation.
@@ -142,24 +143,28 @@ grails.project.dependency.resolution = {
         runtime "org.apache.camel:camel-exec:2.13.0"
 
         // DDMoRe Metadata Information Service uses jena 2.13
-        compile("org.mbine.co:libCombineArchive:0.1") {
-            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core'
+        compile("org.mbine.co:libCombineArchive:0.3.2-SNAPSHOT") {
+            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4'
         }
-        compile "de.unirostock.sems:CombineExt:1.2.4"
+        compile "de.uni-rostock.sbi:CombineExt:1.3.1"
         // need to add this as an explicit dependency to configure exclusions
         // can't use apache-jena-libs due to pom packaging, rely on jena-tdb instead
-        compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {
+        /*compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {
             excludes 'apache-jena-libs'
-        }
-        compile("org.apache.jena:jena-tdb:1.1.2") {
+        }*/
+        compile("org.apache.jena:jena-tdb:3.17.0") {
             excludes 'slf4j-log4j12', 'slf4j-log4j12-impl'
         }
-        compile("org.apache.jena:jena-core:2.13.0") {
-            excludes 'slf4j-log4j12'
+        compile("org.apache.jena:jena-core:3.17.0") {
+            excludes 'slf4j-log4j12', 'icu4j'
         }
-        compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
+        compile("org.apache.jena:jena-arq:3.17.0") {
+            excludes 'slf4j-log4j12', 'icu4j'
+        }
+        compile "com.ibm.icu:icu4j:4.8.1"
+        /*compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
-        }
+        }*/
         compile "com.rometools:rome:1.11.1"
         /* Jedis and spring-data-redis clash in Grails2,
            though not Grails 3 https://stackoverflow.com/a/30776364 */
@@ -167,6 +172,7 @@ grails.project.dependency.resolution = {
             excludes("spring-context", "spring-context-support", "spring-aop")
         }
         compile "redis.clients:jedis:2.9.0"
+        compile "org.json:json:20251224"
     }
 
     plugins {
@@ -181,7 +187,9 @@ grails.project.dependency.resolution = {
         compile ":routing:1.3.2" //1.4.0
         //compile ":jms:1.2"
         compile(":mail:1.0.7")
-        compile ":simple-captcha:1.0.0"
+        compile (":simple-captcha:1.0.0") {
+            excludes("rest-client-builder")
+        }
         compile(":quartz:1.0.2")
         compile ":scaffold-core:1.3.2"
         compile ":spring-security-acl:2.0.1"
@@ -194,16 +202,15 @@ grails.project.dependency.resolution = {
             excludes "spring-data-redis"
         }
 
-        runtime (":weceem:1.4") {
-            /* feeds plugin clashes with rome api rendering Model of The Month RSS feed */
-            excludes "feeds"
+        compile(":spring-security-rest:1.5.3") {
+            excludes('spring-security-core', 'log4j-over-slf4j', 'slf4j-log4j12')
         }
-        //compile ":weceem-spring-security:1.4"
+        runtime (":cors:1.3.0") {
+            excludes("rest-client-builder")
+        }
+
         runtime ":database-migration:1.4.1"
         runtime ":hibernate4:4.3.10"
-        runtime ":jquery:1.11.1"
-        runtime ":jquery-datatables:1.7.5"
-        runtime ":jquery-ui:1.10.4"
         runtime ":console:1.5.8"
     }
 }
@@ -220,9 +227,10 @@ grails.plugin.location.'jummp-plugin-pharmml' = "jummp-plugins/jummp-plugin-phar
 grails.plugin.location.'jummp-plugin-mdl' = "jummp-plugins/jummp-plugin-mdl"
 grails.plugin.location.'jummp-plugin-bives' = "jummp-plugins/jummp-plugin-bives"
 grails.plugin.location.'jummp-plugin-simple-logging' = "jummp-plugins/jummp-plugin-simple-logging"
+grails.plugin.location.'jummp-plugin-simple-cms' = "jummp-plugins/jummp-plugin-simple-cms"
 grails.plugin.location.'jummp-plugin-web-application' = "jummp-plugins/jummp-plugin-web-application"
 grails.plugin.location.'jummp-plugin-biomodels-dom' = "jummp-plugins/jummp-plugin-biomodels-dom"
-grails.plugin.location.'jummp-plugin-annotation-source-ddmore' = "jummp-plugins/jummp-plugin-annotation-source-ddmore"
+//grails.plugin.location.'jummp-plugin-annotation-source-ddmore' = "jummp-plugins/jummp-plugin-annotation-source-ddmore"
 grails.plugin.location.'jummp-plugin-annotation-core' = "jummp-plugins/jummp-plugin-annotation-core"
 grails.plugin.location.'jummp-plugin-omicsdi' = "jummp-plugins/jummp-plugin-omicsdi"
 grails.plugin.location.'jummp-plugin-qc-info' = "jummp-plugins/jummp-plugin-qc-info"

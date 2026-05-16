@@ -1,3 +1,10 @@
+/* Hide the hamburger toggle bar on medium+ screens.
+   This mirrors Foundation's hide-for-medium class but is inlined here so it
+   takes effect at first paint, independently of the lazily-loaded EBI CSS. */
+@media screen and (min-width: 40em) {
+    #biomodels-toggle-bar { display: none !important; }
+}
+
 /* For star based rating system */
 .rating {
     unicode-bidi: bidi-override;
@@ -51,4 +58,10 @@
         line-height: 34px;
         cursor: default;
     }
+}
+
+.assistive-example {
+    font-size: small;
+    font-style: italic;
+    color: #007c82;
 }

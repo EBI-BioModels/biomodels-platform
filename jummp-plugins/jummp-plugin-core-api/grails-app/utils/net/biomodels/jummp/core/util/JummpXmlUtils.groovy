@@ -108,7 +108,7 @@ public class JummpXmlUtils {
         }
         if (IS_INFO_ENABLED) {
             def info = new StringBuilder("Extracting attribute ").append(attributeName).
-                        append(" of element ").append(elementName).append(" from ").append(model.properties)
+                append(" of element ").append(elementName).append(" from ").append(model.properties)
             log.info(info.toString())
         }
         String attr = parseXmlFile.curry(model)({ XMLStreamReader reader ->
@@ -116,7 +116,7 @@ public class JummpXmlUtils {
                 if (attributeName.startsWith("xmlns")) {
                     if (attributeName.contains(":")) {
                         // Can't use substring() as the underlying array reference has been dropped
-                        String ns = attributeName.dropWhile{it != ':'}.drop(1)
+                        String ns = attributeName.dropWhile { it != ':' }.drop(1)
                         return reader.getNamespaceURI(ns)
                     }
                     return reader.getNamespaceURI()
@@ -124,6 +124,7 @@ public class JummpXmlUtils {
                 return reader.getAttributeValue(null, attributeName)
             }
             return ""
-       })
+        })
+        return attr
     }
 }

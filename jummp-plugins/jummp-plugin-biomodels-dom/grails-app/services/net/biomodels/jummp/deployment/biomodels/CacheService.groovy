@@ -25,6 +25,7 @@ import net.biomodels.jummp.models.KV
 import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.TimeUtils
 import org.apache.commons.lang.NullArgumentException
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.annotation.Scope
 import org.springframework.context.annotation.ScopedProxyMode
 
@@ -44,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap
  * @author: Vu Tu <tvu@ebi.ac.uk>
  */
 @Scope(value = "application", proxyMode = ScopedProxyMode.TARGET_CLASS)
-class CacheService {
+class CacheService implements InitializingBean {
     static transactional = false
 
     /**
@@ -169,5 +170,10 @@ class CacheService {
             TimeUtils.currentTimestamp + expired, value)
         cached.put(name, new SoftReference<>(cache))
         FileUtils.writeObjectToFile(new File(getCacheDir(), name), cache)
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

@@ -23,9 +23,12 @@ package net.biomodels.jummp.core.model;
 import net.biomodels.jummp.model.ModellingApproach;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class FileFormatServiceAdapter implements FileFormatService {
+    // TODO: implement InitializingBean here
     @Override
     public boolean validate(List<File> model, List<String> errors) {
         return false;
@@ -33,12 +36,12 @@ public class FileFormatServiceAdapter implements FileFormatService {
 
     @Override
     public String extractName(List<File> model) {
-        return null;
+        return "";
     }
 
     @Override
     public String extractDescription(List<File> model) {
-        return null;
+        return "";
     }
 
     @Override
@@ -53,12 +56,32 @@ public class FileFormatServiceAdapter implements FileFormatService {
 
     @Override
     public List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public List<String> getPubMedAnnotation(RevisionTransportCommand revision) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Map<String, String> getContentsOfSpecificTabs(RevisionTransportCommand revision) {
         return null;
+    }
+
+    @Override
+    public List<String> getNamesOfSpecificTabs(RevisionTransportCommand revision) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> getPublicationAnnotations(File modelFile) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> getPublicationAnnotations(RevisionTransportCommand revision) {
+        return Collections.emptyList();
     }
 
     @Override
@@ -68,7 +91,7 @@ public class FileFormatServiceAdapter implements FileFormatService {
 
     @Override
     public String getFormatVersion(RevisionTransportCommand revision) {
-        return null;
+        return "";
     }
 
     @Override

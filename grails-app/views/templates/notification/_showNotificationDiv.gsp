@@ -1,5 +1,5 @@
-<div class="row" style="margin: 5px 0px 5px 0px">
-    <div class="columns small-12">
+<div class="row" style="padding: 5px 0px 0px 0px">
+    <div class="columns small-12 medium-12 large-12">
         <div class='flashNotificationDiv'>
             <g:if test="${flashMessage && flashMessage.length() > 0}">
                 <% flashMessage = message(code: flashMessage, default: flashMessage) %>

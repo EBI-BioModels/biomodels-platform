@@ -169,6 +169,13 @@ class SbmlTagLib {
             model:[title: name, metaLink: metaLink, allSpecies: compartment.allSpecies])
     }
 
+    def renderParameterSearchComponents = { attrs ->
+        Map components = attrs.components as Map
+        final String perennialId = attrs.perennialId
+        out << render(template: "/templates/psComponents", plugin: "jummp-plugin-sbml",
+            model: [components: components, perennialId: perennialId])
+    }
+
     /**
      * Renders the title row of one SBML parameter section.
      * @attr title REQUIRED The title for the following parameter section

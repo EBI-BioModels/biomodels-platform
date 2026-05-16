@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.validation.Validateable
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.plugins.security.User
 
@@ -28,7 +29,7 @@ import net.biomodels.jummp.plugins.security.User
  *
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@grails.validation.Validateable
+@Validateable
 class CurationNotesTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
     private static final long MAX_IMG_SIZE =  1_500_000 // bytes ~ 1.44MB = 1024*1024*1.44

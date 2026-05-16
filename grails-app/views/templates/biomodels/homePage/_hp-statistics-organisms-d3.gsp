@@ -1,5 +1,7 @@
 <div id="organismsChart" class="div-center-content"></div>
 <g:javascript>
+/* global diameter */
+{
     var dataset = ${organisms};
     var color = d3.scaleOrdinal(d3.schemeCategory20);
     var bubble = d3.pack(dataset).size([diameter, diameter]).padding(1.5);
@@ -76,5 +78,6 @@
     node.on("mouseout", function(d) {
         $('#item-on-focus').css("color", "#e2e1e1");
     });
+}
 </g:javascript>
 

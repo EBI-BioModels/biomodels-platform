@@ -72,15 +72,12 @@ grails.project.dependency.resolution = {
     }
 
     dependencies {
-        compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
-        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.5.2"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.9.0"
+        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.0"
     }
 
     plugins {
         build ":tomcat:7.0.55.3"
-
-        runtime ":jquery:1.11.1"
-        runtime ":jquery-datatables:1.7.5"
     }
 }
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"

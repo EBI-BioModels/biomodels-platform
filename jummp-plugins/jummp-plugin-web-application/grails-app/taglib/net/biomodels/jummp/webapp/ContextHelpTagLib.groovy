@@ -38,20 +38,20 @@ package net.biomodels.jummp.webapp
 class ContextHelpTagLib {
 	static namespace="ContextHelp"
 	def grailsApplication
-	
+
 	private String computeLocation(String location) {
-		
-		String helpRoot=grailsApplication.config.jummp.context.help.root
-		if (location=="manual") {
-			return helpRoot+"manual.html";
+
+		String helpRoot = grailsApplication.config.jummp.context.help.root
+		if (location == "manual") {
+			return helpRoot + "/" + "manual.html"
 		}
-		String defined=grailsApplication.config.jummp.context.help."${location}"
+		String defined = grailsApplication.config.jummp.context.help."${location}"
 		if (defined) {
-			return helpRoot+defined;
+			return helpRoot + "/" + defined
 		}
-		return null;
+		return null
 	}
-	
+
 	def getURL = { attrs ->
 		if (attrs.location!=null && attrs.location) {
 			String url=computeLocation(attrs.location)
@@ -60,7 +60,7 @@ class ContextHelpTagLib {
 			}
 		}
 	}
-	
+
 	def getLink = { attrs ->
 		if (attrs.location!=null) {
 			StringBuilder builder=new StringBuilder("<iframe id='helpFrame' src='");
@@ -75,6 +75,6 @@ class ContextHelpTagLib {
 			out<<"NO LOCATION PROVIDED!"
 		}
 	}
-	
-	
+
+
 }

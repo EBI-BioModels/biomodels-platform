@@ -26,6 +26,7 @@ package net.biomodels.jummp.plugins.omicsdi
 
 import grails.util.Environment
 import groovy.json.JsonBuilder
+import net.biomodels.jummp.core.constants.BioModels
 import org.perf4j.aop.Profiled
 
 /**
@@ -78,7 +79,7 @@ class OmicsdiService {
         String dbPassword = dsConfig?.password
         def dbSettings = ['url': dbUrl, 'username': dbUsername, 'password': dbPassword]
         def builder = new JsonBuilder()
-        String serverUrl = "https://www.ebi.ac.uk/biomodels"
+        String serverUrl = BioModels.BM_ROOT_URL
         if (Environment.current != Environment.PRODUCTION) {
             serverUrl = grailsApplication.config.grails.serverURL
         }
@@ -101,23 +102,14 @@ class OmicsdiService {
         File indexingData = saveOmicsdiExportSettings(options)
         String jarJummpIndexerPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
 
-        def argsMap = [jarPath: jarJummpIndexerPath, jsonPath: indexingData.getCanonicalPath(), omicsdi: "OmicsDIXml"]
+        def argsMap = [
+            jarPath: jarJummpIndexerPath,
+           jsonPath: indexingData.getCanonicalPath(),
+           omicsdi: "OmicsDIXml"
+        ]
 
-        String httpProxy = System.getProperty("http.proxyHost")
-        if (httpProxy) {
-            String proxyPort = System.getProperty("http.proxyPort") ?: '80'
-            String nonProxyHosts = "'${System.getProperty("http.nonProxyHosts")}'"
-            StringBuilder proxySettings = new StringBuilder()
-            proxySettings.append(" -Dhttp.proxyHost=").append(httpProxy).append(
-                " -Dhttp.proxyPort=").append(proxyPort).append(" -Dhttp.nonProxyHosts=").append(
-                nonProxyHosts)
-            argsMap['proxySettings'] = proxySettings.toString()
-            if (IS_INFO_ENABLED) {
-                log.info("Proxy settings for the indexer are $proxySettings")
-            }
-        } else {
-            argsMap['proxySettings'] = ""
-        }
+        argsMap.putAll(configurationService.configureProxySettings() as Map<? extends String, ? extends String>)
+
         try {
             sendMessage("seda:omicsDiExport", argsMap)
         } catch (Exception e) {

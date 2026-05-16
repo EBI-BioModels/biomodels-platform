@@ -41,7 +41,14 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
                 <p>List of the recently accessed models</p>
                 <ul>
                     <g:each in="${models}" var="model">
-                        <li>${model.key}: ${model.value}</li>
+                        <li>
+                            <strong>${model.key}</strong>: ${model.value.title}
+                            &mdash; ${model.value.submitter}
+                            &mdash; ${model.value.format}
+                            &mdash; submitted: ${model.value.submittedDate}
+                            &mdash; published: ${model.value.publishedDate ?: 'N/A'}
+                            &mdash; accessed: ${model.value.accessCount} time(s)
+                        </li>
                     </g:each>
                 </ul>
             </g:if>

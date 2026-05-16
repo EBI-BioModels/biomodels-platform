@@ -11,7 +11,7 @@
                 </td>
 			</tr>
 			<tr>
-				<td class="tableLabels"><label for="description">Description</label></td>
+				<td class="tableLabels"><label for="teamDescription">Description</label></td>
 				<td>
                     <g:textField value="${description}" id="teamDescription"
                                  placeholder="Give a bit more details of your team"

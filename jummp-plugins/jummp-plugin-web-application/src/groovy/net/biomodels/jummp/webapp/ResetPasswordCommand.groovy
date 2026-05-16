@@ -38,4 +38,13 @@ class ResetPasswordCommand {
         	return repeatValue && cmd.newPassword == repeatValue
         }
     }
+
+    ResetPasswordCommand sanitise() {
+        new ResetPasswordCommand(
+            username: this.username.decodeHTML(),
+            hashCode: this.hashCode.decodeHTML(),
+            newPassword: this.newPassword.decodeHTML(),
+            newPasswordRpt: this.newPasswordRpt.decodeHTML()
+        )
+    }
 }

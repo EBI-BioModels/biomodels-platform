@@ -49,11 +49,11 @@
     }
 </style>
 <form id="local-search" name="local-search"
-      action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
-    <fieldset>
+      action="${createLink(controller: 'search', action: 'search')}" method="post">
+    <fieldset><div class="row">
         <div class="input-group margin-bottom-none margin-top-large padding-bottom-medium">
-            <div class="input-group-field" style="vertical-align: text-top">
-                <select class="margin-bottom-none align-self-top" id="domain_switcher" name="domain_switcher">
+            <div class="input-group-field columns large-3 medium-3 small-12" style="vertical-align: text-top">
+                <select class="margin-bottom-none align-self-top" id="domain_switcher" name="domain_switcher" title="Please choose a domain">
                     <option value="biomodels_all"><g:message code="net.biomodels.jummp.domain.name.BioModelsAll"/></option>
                     <option value="biomodels"><g:message code="net.biomodels.jummp.domain.name.BioModels"/></option>
                     <option value="biomodels_autogen"><g:message code="net.biomodels.jummp.domain.name.BioModelsAutogen"/></option>
@@ -62,12 +62,11 @@
                 <a class="help-text label-floating-left secondary label"
                    title="Learn more"
                    data-open="domainSwitcherExplanationBox">What is this box used for?</a>
-                <input type="text" id="chosenDomain" name="chosenDomain"
-                       style="display: none" value="biomodels"/>
+                <input type="text" id="chosenDomain" name="chosenDomain" style="display: none" value="biomodels" aria-label="Choose a domain"/>
             </div>
 
-            <div class="input-group-field">
-                <input type="text" name="search_block_form" id="local-searchbox"
+            <div class="input-group-field columns large-8 medium-8 small-12">
+                <input type="text" name="search_block_form" id="local-search-box"
                    placeholder="Search..." class="input-group-field search_box_style clearable"
                    title="Search"
                    tabindex="1" style="width: 100%;">
@@ -87,12 +86,12 @@
                     <a title="Search tips/tricks" data-open="searchTipsBox"
                        class="secondary label label-floating-right">Search tips</a>
                 </p></div>
-            <div class="input-group-button">
-                <input id="search_submit" class="button icon icon-functional" tabindex="2"
+            <div class="input-group-button columns large-1 medium-2 small-12" style="float: left">
+                <input id="btn-search-submit" class="button icon icon-functional" tabindex="2"
                        type="submit" name="searchSubmit" value="1" />
             </div>
         </div>
-    </fieldset>
+    </div></fieldset>
 </form>
 <script type="text/javascript">
     $(document).ready(function () {
@@ -101,10 +100,41 @@
         let chosenDomain = domain.length > 0 ? domain : "biomodels";
         $('#chosenDomain').val(chosenDomain);
         $('#domain_switcher').val(chosenDomain);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('query');
+
+        if (query) {
+            $("#local-search-box").val(query);
+        }
+
     });
     $(document).on('change', '#domain_switcher', {}, function(e) {
         e.preventDefault();
         let domain = $(this).val();
         $('#chosenDomain').val(domain);
     });
+
+    /* Use event capturing (runs before other handlers) */
+    document.getElementById('local-search').addEventListener('submit', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const query = document.getElementById('local-search-box').value;
+        const domain = document.getElementById('chosenDomain').value;
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('query', query);
+        urlParams.set('domain', domain);
+        const searchPattern = /^\/search(?:\/|$)/i;
+        let newURL;
+        if (searchPattern.test(window.location.pathname)) {
+            // Matches /search or /search/ but NOT /search-results
+            newURL = window.location.pathname + '?' + urlParams.toString();
+        } else {
+            newURL = "${grailsApplication.config.grails.serverURL}/search?" + urlParams.toString();
+        }
+        window.location.href = newURL;
+
+        return false;
+    }, true); // true = use capture phase
 </script>

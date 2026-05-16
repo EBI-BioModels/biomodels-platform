@@ -20,7 +20,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <title><g:message code="${titleCode}" default="Developer's Zone | BioModels"/></title>
+    <title><g:message code="${titleCode}" default="Developer's Zone"/> | BioModels</title>
 </head>
 
 <body>
@@ -31,9 +31,30 @@
             <a href="${createLink(uri: '/docs', absolute: true)}" target="_blank">RESTful Web Services API Documentation</a><br>
             BioModels provides programmatic access to its content via RESTful Web Services Interface. The Web Services API covers everything users can do on the Web interface.
         </li>
+        <li>
+            <a href="${grailsApplication.config.jummp.ws.client.japi.docs}" target="_blank">Java based API client
+            to consume BioModels' RESTful Web Services</a><br>
+            The Java-based API client provides a convenient way to consume a few of the API endpoints requested by
+            BioModels' existing users.
+            <ul>
+                <li><a href="https://bitbucket.org/biomodels/testbiomodelswsclient/src/master/" target="_blank">A Java program
+                to demonstrate how to use the library</a><br>
+                    The toy program written in Java to demonstrate the usages of the library.</li>
+            </ul>
+        </li>
+        <li>
+            <a href="${grailsApplication.config.jummp.ws.client.pyapi.docs}"
+               target="_blank">Python-based client library to consume BioModels' RESTful Web Services</a><br/>
+            The Python-based API client provides a convenient way to consume a few of the API endpoints that BioModels' existing clients request.
+            <ul>
+                <li><a href="https://bitbucket.org/biomodels/workspace/snippets/k7nkBr"
+                       target="_blank">A Python script to demonstrate how to use the library</a><br/>
+                    The toy program is written in Python to illustrate the usage of the library.</li>
+            </ul>
+        </li>
     </ul>
 </body>
-<content tag="developerZone">
+<content tag="developer-zone">
     selected
 </content>
 <content tag="title">

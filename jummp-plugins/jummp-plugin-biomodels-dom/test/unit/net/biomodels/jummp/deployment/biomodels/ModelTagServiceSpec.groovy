@@ -69,14 +69,14 @@ class ModelTagServiceSpec extends Specification {
         Set updatedTags = ["Sample Model", "Annotated", "Reproducible"] as Set
 
         when:
-        Map result = service.update(updatedTags, modelId, user)
+        Map result = service.saveOrUpdate(updatedTags, modelId, user)
         then:
         result["status"] == 200
-        result["message"].contains("Labels [${updatedTags.join(', ')}] have been applied successfully to the model")
+        result["message"].contains("The tags [${updatedTags.join(', ')}] have been applied successfully to the model $modelId.")
 
         when:
         updatedTags = [] as Set
-        result = service.update(updatedTags, modelId, user)
+        result = service.saveOrUpdate(updatedTags, modelId, user)
         then:
         result["status"] == 200
         result["message"] == "The model has no longer been tagged any label"
@@ -84,7 +84,7 @@ class ModelTagServiceSpec extends Specification {
         when:
         modelId = "M003"
         updatedTags = [] as Set
-        result = service.update(updatedTags, modelId, user)
+        result = service.saveOrUpdate(updatedTags, modelId, user)
         then:
         result["status"] == 422
         result["message"] == "Cannot save nothing for labels to the model"

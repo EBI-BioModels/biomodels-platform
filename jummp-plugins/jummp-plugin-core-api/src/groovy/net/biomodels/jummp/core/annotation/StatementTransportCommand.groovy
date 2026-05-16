@@ -19,10 +19,6 @@
  */
 
 package net.biomodels.jummp.core.annotation
-
-import groovy.transform.CompileStatic
-import groovy.transform.Immutable
-
 /**
  * Lightweight representation of the Statement domain class.
  *

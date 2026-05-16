@@ -33,17 +33,24 @@ package net.biomodels.jummp.core
 
 import grails.converters.JSON
 import grails.plugin.cache.Cacheable
+import groovy.json.JsonSlurper
+import groovy.time.TimeCategory
+import groovy.time.TimeDuration
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
-import net.biomodels.jummp.core.adapters.ModelFormatAdapter
-import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter as MFAdapter
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPAdapter
+import net.biomodels.jummp.core.model.CurationState
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.ModelState
+
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
-import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.model.ContributionRole
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
@@ -54,6 +61,7 @@ import org.perf4j.aop.Profiled
 import org.apache.commons.io.FilenameUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Service that provides model building functionality to a wizard-style model
@@ -67,7 +75,7 @@ import org.slf4j.LoggerFactory
  * @date 20160216
  */
 @CompileStatic
-class SubmissionService {
+class SubmissionService implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionService.class)
 
     // concrete strategies for the submission state machine
@@ -85,6 +93,7 @@ class SubmissionService {
     ModelService modelService
     ModelDelegateService modelDelegateService
     FileSystemService fileSystemService
+    PublicationService publicationService
     def springSecurityService
     def userService
     /**
@@ -93,8 +102,15 @@ class SubmissionService {
      */
     transient SessionFactory sessionFactory
 
+    String EXCH_DIR
 
-    /**
+    @Override
+    @CompileStatic(TypeCheckingMode.SKIP)
+    void afterPropertiesSet() throws Exception {
+        EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
+        logger.info("Finished the bean initialisation")
+    }
+/**
      * Abstract state machine strategy, to be extended by the two concrete
      * strategy implementations
      */
@@ -112,14 +128,18 @@ class SubmissionService {
         //@Cacheable('definedModellingApproaches') // should split it into two methods so as to apply cacheable
         void initialise(Map<String, Object> workingMemory) {
             // TODO: clean up this method when re-implementing submission process finished
-            List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
+            final String submitterEmail = userService.getEmailAddress()
+            final String username = userService.getUsername()
+            workingMemory.put("submitterInfo", "[$username, $submitterEmail]")
+            List<ModelFormat> sortedModelFormats = ModelFormat.list().sort { it.name }
             workingMemory.put("sorted_model_formats", sortedModelFormats)
             List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
             List definedModellingApproachNames = definedModellingApproaches.collect { it.name }
             workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
             ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
-            MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
+            MFTC unknownFormatTC = new MFAdapter(format: unknownFormat).toCommandObject()
             workingMemory.put("unknown_format_command", unknownFormatTC)
+            List<ContributionRole> roles = ContributionRole.list().sort { it.name }
 
             String serverURL = grailsApplication.config.grails.serverURL
             Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
@@ -135,14 +155,18 @@ class SubmissionService {
             workingMemory.put("serverURL", serverURL)
             workingMemory.put("submissionCssHref", submissionCssHref)
             workingMemory.put("publicationCssHref", publicationCssHref)
+
             workingMemory.put("publication", null)
+
             workingMemory.put("definedModellingApproachNames", definedModellingApproachNames)
             workingMemory.put("unknownFormat", unknownFormatTC)
             workingMemory.put("modelFormatsSortedByName", sortedModelFormats)
             workingMemory.put("selectedModelFormat", selectedValue)
             workingMemory.put("otherInfo", "")
             workingMemory.put("modellingApproach", "")
-            workingMemory.put("readmeSubmission", "readme submission")
+            workingMemory.put("readmeSubmission", "")
+            workingMemory.put("modelContributorRolesSortedByName", roles)
+            workingMemory.put("isMetadataSubmission", false)
         }
 
         /**
@@ -297,13 +321,27 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
+        @TypeChecked(TypeCheckingMode.SKIP)
         @Profiled(tag = "submissionService.inferModelFormatType")
         void inferModelFormatType(Map<String, Object> workingMemory) {
-            if (workingMemory['changedMainFiles'] || !workingMemory['model_type']) {
-                MFTC format = modelFileFormatService.inferModelFormat(getRepFiles(workingMemory))
+            List repFiles = getRepFiles(workingMemory)
+            boolean areMainFilesLarge = checkMainFilesAreLarge(repFiles)
+            boolean areMainFilesChanged = workingMemory['changedMainFiles']
+            boolean isModelTypeEmpty = !workingMemory['model_type']
+            boolean cond2InferModelFormat = !areMainFilesLarge && (areMainFilesChanged || isModelTypeEmpty)
+
+            ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
+            MFTC fmTC = new MFAdapter(format: format).toCommandObject()
+            if (cond2InferModelFormat) {
+                fmTC = modelFileFormatService.inferModelFormat(getRepFiles(workingMemory))
                 if (format) {
-                    workingMemory.put("model_type", format)
+                    workingMemory.put("model_format", format)
                     // revision.format will be updated in updateRevisionFromFiles
+                } else {
+                    workingMemory.put("model_format", fmTC)
+                    String submissionFolder = workingMemory.get("submissionFolder")
+                    logger.debug("""One(s) of the uploading files of the submission $submissionFolder exceed \
+the allowed maximum size. Therfore, the automatic process of detecting the model format has been ignored.""")
                 }
             }
         }
@@ -368,30 +406,29 @@ class SubmissionService {
             PublicationLinkProvider.LinkType linkType = PublicationLinkProvider.LinkType.findLinkTypeByLabel(publinkType)
             if (publinkType) {
                 if (!model.publication) {
-                    model.publication = new PublicationTransportCommand()
+                    model.publication = new PubTC()
                 }
                 refreshPublication = true
             }
             model.publication.link = publink
-            PublicationLinkProvider publSrc = PublicationLinkProvider.withCriteria(uniqueResult: true) {
+            PublicationLinkProvider pubSrc = PublicationLinkProvider.withCriteria(uniqueResult: true) {
                 eq("linkType", linkType)
-            }
-            model.publication.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
-                    publSrc).toCommandObject()
+            } as PublicationLinkProvider
+            model.publication.linkProvider = new PLPAdapter(linkProvider: pubSrc).toCommandObject()
             return refreshPublication
         }
 
         /**
-         * This tries to capture readme information about unknown format and other modelling approach.
+         * Capture the metadata information about model format, modelling approach, model name and description.
          *
          * Retrieving all these information from the working memory and update the revision in question.
          *
          * @param revision  Revision
-         * @param workingMemory a map of temporary variables
+         * @param workingMemory a map of temporary variables being used for the submission
          */
-        @Profiled(tag = "submissionService.storeReadmeInfo")
+        @Profiled(tag = "submissionService.storeModelInfo")
         @TypeChecked(TypeCheckingMode.SKIP)
-        protected void storeReadmeInfo(RTC revision, Map<String, Object> workingMemory) {
+        protected void storeModelInfo(RTC revision, Map<String, Object> workingMemory) {
             // update modelling approach
             String modellingApproach = workingMemory.get("modelling_approach")
             ModellingApproach approach = ModellingApproach.findByName(modellingApproach)
@@ -404,20 +441,49 @@ class SubmissionService {
             // add MAMO term representing the modelling approach into the SBML file if the curators or the submitter
             // has not added it to model level annotations yet
             if (revision.format.identifier == "SBML") {
-                modelService.addModellingApproachAsAnnotation(revision, approach)
+                try {
+                    modelService.addModellingApproachAsAnnotation(revision, approach)
+                } catch (Exception e) {
+                    logger.error "${e.message}"
+                }
             }
 
-            // update model format
-            final long fmtId = workingMemory.get("model_format") as Long
+            // update model format, accepted Other as the default if no selection or missing
+            final long fmtId = ModelFormat.findByIdentifier("UNKNOWN")?.getId()
+            if (workingMemory.containsKey("model_format")) {
+                if (workingMemory.get("model_format")) {
+                    fmtId = Long.parseLong(workingMemory.get("model_format"))
+                }
+            }
             if (fmtId != revision.format.id) {
                 // the model format has been changed by the user
-                MFTC formatTC = new ModelFormatAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
+                MFTC formatTC = new MFAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
                 revision.format = formatTC
                 revision.model.format = revision.model.format
             }
             // TODO: check that 'Original code *' is the currently chosen value. If not, don't do the statement below
             if (workingMemory.get("readme_submission")) {
                 revision.readmeSubmission = workingMemory.get("readme_submission")
+            }
+        }
+
+        @Profiled(tag = "submissionService.addPublicationAsAnnotation")
+        @TypeChecked(TypeCheckingMode.SKIP)
+        protected void addPublicationAsAnnotation(Map<String, Object> workingMemory) {
+            RTC revision = workingMemory.get("RevisionTC") as RTC
+            MFTC format = revision.format
+            if ("sbml" == format.identifier.toLowerCase()) {
+                MTC model = revision.model
+                PubTC pub = model.publication
+                if (pub) {
+                    boolean result = modelService.addPublicationAsAnnotation(revision, pub)
+                    if (!result) {
+                        logger.error("""\
+There has been error while adding ${pub.link} (${pub.linkProvider.linkType}) to the model main file of \
+the ${revision.identifier()}. Otherwise, BioModels only supports to add a PubMed or DOI publication as \
+an annotation to SBML document.""")
+                    }
+                }
             }
         }
 
@@ -654,15 +720,188 @@ class SubmissionService {
             returnMe
         }
 
-        /*
+        /**
          * Convenience method for creating
-         * @link{net.biomodels.jummp.core.model.RepositoryFileTransportCommand} objects
+         * {@link net.biomodels.jummp.core.model.RepositoryFileTransportCommand} objects
          */
-        public RFTC createRFTC(File file, boolean isMain, String description) {
+        RFTC createRFTC(File file, boolean isMain, String description) {
             new RFTC(path: file.getCanonicalPath(), mainFile: isMain, userSubmitted: true,
                     hidden: false, description: description)
         }
 
+        // TODO: cut the method down and move some codes to smaller methods/functions because it is too long
+        @CompileStatic(TypeCheckingMode.SKIP)
+        void buildFromJSONFile(String metadata, Map working) {
+            def slurper = new JsonSlurper()
+            def jsonObj = slurper.parseText(metadata)
+            if (jsonObj instanceof String) {
+                // Just want to make sure the double quotes in the JSON input won't be escaped.
+                logger.info("Parsing the JSON string as the input again")
+                jsonObj = slurper.parseText(jsonObj)
+            }
+            String submissionFolder = working.get("submissionFolder")
+            List<RFTC> allFiles = null
+            try {
+                allFiles = buildModelFilesFromJSONObject(jsonObj, submissionFolder)
+            } catch (Exception e) {
+                logger.error("File not found because of ${e.message}")
+                working.put("cause", "Files not found because of ${e.message}")
+            } finally {
+                if (!allFiles) {
+                    logger.error("Files not found. The create or update process has been terminated unexpectedly!")
+                    throw new FileNotFoundException("Cannot find the model files. The submission process has to be terminated!")
+                }
+            }
+            String formatName = jsonObj["format"]["name"] as String
+            String formatVersion = jsonObj["format"]["version"] as String
+            ModelFormat format = ModelFormat.findByNameAndFormatVersion(formatName, formatVersion)
+            if (!format) {
+                format = ModelFormat.findByName("Other")
+            }
+            MFTC formatTC = new MFAdapter(format: format).toCommandObject()
+
+            String modelName = jsonObj["name"]
+            String modelDescription = jsonObj["description"]
+            String userRealName = working["submitterInfo"]["userRealName"]
+            String modellingApproach = jsonObj["modelling_approach"] ?: ""
+            def otherMA = ModellingApproach.findByAccession("OTHER")
+            PubTC suppliedPublication = buildPublicationTCFromJSON(jsonObj["publication"])
+
+            // initialise a completely new Transport Command for Model and Revision if it is a new submission
+            MTC modelTC = new MTC(name: modelName, description: modelDescription, submitter: userRealName)
+            RTC revisionTC = new RTC(model: modelTC, owner: userRealName, name: modelName,
+                state: ModelState.UNPUBLISHED, curationState: CurationState.NON_CURATED,
+                format: formatTC, files: allFiles, minorRevision: false, validated: true)
+            boolean isAmend = jsonObj["isAmend"] ?: false
+            if (working["isUpdate"]) {
+                String submissionId = jsonObj["submissionId"] as String
+                if (!submissionId) {
+                    working.put("cause", "The model identifier is missing.")
+                    throw new IllegalAccessException("The model identifier is missing. The update process has been terminated!")
+                }
+
+                Set<String> changesMade = new HashSet<>()
+                // get the latest revision
+                revisionTC = modelDelegateService.getLatestRevision(submissionId, true)
+                modelTC = revisionTC.model
+                String comment = jsonObj["comment"] ?: (isAmend ? revisionTC.comment : "Updated the model revision.")
+                revisionTC.comment = comment
+                if (modelTC.name != modelName && modelName) {
+                    modelTC.name = modelName
+                    changesMade.add("MODEL INFO: The model name has been modified.")
+                } else if (!modelName) {
+                    modelName = modelTC.name
+                }
+                if (revisionTC.description != modelDescription && modelDescription) {
+                    modelTC.description = modelDescription
+                    revisionTC.description = modelDescription
+                    changesMade.add("MODEL INFO: The model description has been modified.")
+                } else if (!modelDescription) {
+                    modelDescription = revisionTC.description
+                }
+                if (modelTC.submitter != userRealName && userRealName) {
+                    modelTC.submitter = userRealName
+                } else if (!userRealName) {
+                    userRealName = modelTC.submitter
+                }
+                if (revisionTC.owner != userRealName && userRealName) {
+                    revisionTC.owner = userRealName
+                }
+
+                if (modellingApproach && modellingApproach?.toLowerCase() != "other") {
+                    modelTC.modellingApproach = ModellingApproach.findByName(modellingApproach) ?: otherMA
+                    changesMade.add("MODEL INFO: The modelling approach has been updated.")
+                }
+                // we need to reassign the variable modellingApproach because it is propagated later
+                modellingApproach = modelTC.modellingApproach.name
+
+                revisionTC.files = allFiles
+                // TODO: write a private service to check the modifications made on the files. Here, we just use hard code
+                changesMade.add("MODEL FILES: The model files have been likely updated.")
+
+                if (modelTC.publication && suppliedPublication) {
+                    // TODO: write a procedure to check which fields have been modified for the publication details
+                    // and have a corresponding message. Here is just a simple check
+                    if (modelTC.publication.link != suppliedPublication.link ||
+                        modelTC.publication.linkProvider != suppliedPublication.linkProvider) {
+                        modelTC.publication = suppliedPublication
+                    }
+                } else if (suppliedPublication) {
+                    modelTC.publication = suppliedPublication
+                }
+                working.put("modelId", submissionId)
+                working.put("changesMade", changesMade)
+            } else {
+                // By default, the modelling approach will be assigned 'other' if it is omitted or empty
+                if (!modellingApproach) {
+                    modellingApproach = otherMA.name
+                }
+                if (!modelName || !formatTC) {
+                    working.put("cause", "Cannot leave the model name and format properties empty!")
+                    throw new IllegalAccessException("Cannot leave the model name and format properties empty!")
+                }
+            }
+
+            String submitterInfo = "[${working['submitterInfo']['username']}, ${working['submitterInfo']['email']}]"
+            working["submitterInfo"] = submitterInfo
+            working.put("RevisionTC", revisionTC)
+            working.put("ModelTC", modelTC)
+            working.put("format", formatTC)
+            working.put("model_format", formatTC.id as String)
+            working.put("modelling_approach", modellingApproach)
+            working.put("repository_files", allFiles)
+            working.put("new_description", modelDescription)
+            working.put("new_name", modelName)
+            working.put("latestModelDescription", modelDescription)
+            working.put("latestModelName", modelName)
+            working.put("other_info", jsonObj["other_info"] ?: modelTC.otherInfo ?: "")
+            working.put("readme_submission", jsonObj["readme_submission"] ?: revisionTC.readmeSubmission ?: "")
+            working.put("shouldCreateNewRevision", true)
+            working.put("isMetadataSubmission", jsonObj["isMetadataSubmission"] ?: modelTC.isMetadataSubmission ?: false)
+            working.put("isAmend", isAmend)
+            // If the contributor role isn't provided, adding "Modeller" as the default role
+            working.put("contributorRole", jsonObj["contributorRole"] ?: "Modeller")
+
+            logger.info("Built the submission data completely from the JSON input.")
+        }
+
+        private List buildModelFilesFromJSONObject(def jsonObj, String submissionFolder) {
+            if (!jsonObj) {
+                logger.error("Cannot build up the list of model files from the empty input!")
+                return null
+            }
+            def main = jsonObj["files"]["main"]
+            def additional = jsonObj["files"]["additional"]
+            List<RFTC> allFiles = new ArrayList()
+            for (def f : main) {
+                File file = new File(EXCH_DIR + File.separator + submissionFolder, f["name"] as String)
+                RFTC obj = createRFTC(file, true, f["description"] as String)
+                allFiles.add(obj)
+            }
+
+            for (def f : additional) {
+                File file = new File(EXCH_DIR + File.separator + submissionFolder, f["name"] as String)
+                RFTC obj = createRFTC(file, false, f["description"] as String)
+                allFiles.add(obj)
+            }
+
+            return allFiles
+        }
+
+        private PubTC buildPublicationTCFromJSON(def pubJSON) {
+            PubTC pubTC = null
+            if (pubJSON) {
+                String pubLinkProvider = pubJSON["type"]
+                String pubLink = pubJSON["accession"]
+                if (pubLinkProvider && pubLink) {
+                    Map result = publicationService.doVerifyPubLinkAndFetchData(pubLinkProvider, pubLink)
+                    pubTC = result["publication"] as PubTC
+                }
+            } else {
+                // TODO: should we parse the full publication?
+            }
+            pubTC
+        }
 
         /**
          * Purpose: Utility method to generate the publication map of
@@ -710,25 +949,44 @@ class SubmissionService {
 
         @TypeChecked(TypeCheckingMode.SKIP)
         Map detectModelInfo(final File modelFile, final String modelFormat) {
+            Date start = new Date()
             ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(modelFormat, "*")
-            String name = modelFileFormatService.extractName([modelFile], format)
-            String description = modelFileFormatService.extractDescription([modelFile], format)
-            ModellingApproach approach = modelFileFormatService.guessModellingApproachFromFiles(modelFile, modelFormat)
-            String modellingApproach = approach ? approach.name : ""
-            ["name": name, "description": description, "modellingApproach": modellingApproach]
+            def threads = []
+            String name = ""
+            def th1 = Thread.start {
+                name = modelFileFormatService.extractName([modelFile], format)
+            }
+            threads << th1
+            String description = ""
+            def th2 = Thread.start {
+                description = modelFileFormatService.extractDescription([modelFile], format)
+            }
+            threads << th2
+            String modellingApproach = ""
+            def th3 = Thread.start {
+                ModellingApproach approach = modelFileFormatService.guessModellingApproachFromFiles(modelFile, modelFormat)
+                modellingApproach = approach ? approach.name : ""
+            }
+            threads << th3
+            threads.each { it.join() }
+            Map info = ["name": name, "description": description, "modellingApproach": modellingApproach]
+            Date stop = new Date()
+            TimeDuration td = TimeCategory.minus(stop, start)
+            logger.debug("Detecting the model info ${info} of the model main file ${modelFile.absolutePath} took $td")
+            return info
         }
 
         @TypeChecked(TypeCheckingMode.SKIP)
         HashSet<String> processPostSubmission(Map<String, Object> working) {
             HashSet<String> returned = new HashSet<String>()
             // update the model history
-            String modelId = working.get("modelId")
+            MTC model = working.get("ModelTC")
             String username = userService.getUsername()
             String accessType = working.get("accessType")
-            String formatType = "html"
+            String accessFormat = working.get("accessFormat") ?: "html"
             def changesMade = working.get("changesMade")
             changesMade = changesMade.join(", ")
-            int result = modelDelegateService.updateHistory(modelId, username, accessType, formatType, changesMade)
+            int result = modelDelegateService.updateHistory(model, username, accessType, accessFormat, changesMade)
             returned.add(result.toString())
             returned
         }
@@ -827,10 +1085,11 @@ class SubmissionService {
             RTC revision = workingMemory.get("RevisionTC") as RTC
             MTC model = revision.model
             model.format = revision.format
-            // update model format, modelling approach and readme info if they're provided
-            storeReadmeInfo(revision, workingMemory)
+            // store model format, modelling approach and readme info if they're provided
+            storeModelInfo(revision, workingMemory)
             revision.comment = "Import of ${revision.name}".toString()
-
+            Boolean isMetadataSubmission = workingMemory.get("isMetadataSubmission") as Boolean
+            model.isMetadataSubmission = isMetadataSubmission
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
             if (NEW_NAME) {
@@ -841,7 +1100,13 @@ class SubmissionService {
                 revision.description = NEW_DESCRIPTION
                 modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
             }
-            Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
+
+            // store publication identifier to the model file (which format supports to store annotations)
+            // if it has been provided
+            addPublicationAsAnnotation(workingMemory)
+
+            // store files
+            Model newModel = modelService.uploadValidatedModel(repoFiles, revision, workingMemory)
             String modelId = newModel.submissionId
             workingMemory.put("model_id", modelId)
             HashSet<String> result = [modelId] as HashSet
@@ -914,13 +1179,33 @@ class SubmissionService {
                 File fileCopied = fileSystemService.transferFile(submissionFolder, file)
                 logger.debug("File ${fileCopied.absolutePath} copied to the submission directory $submissionFolder".toString())
             }
+            files = sortByRole(files)
+            String previousContributorRole = "Modeller" // TODO: improve me!
             workingMemory.put("RevisionTC", latest)
             workingMemory.put("RevisionID", latest.id)
             workingMemory.put("RevisionNumber", latest.revisionNumber)
             workingMemory.put("publication", latest.model.publication)
+            workingMemory.put("selectedModelFormat", latest.format.id)
+            workingMemory.put("latestModelName", latest.name)
+            workingMemory.put("latestModelDescription", latest.description)
+            workingMemory.put("latestModelFormat", latest.format.id)
+            workingMemory.put("latestModelFormatNameAndVersion", "${latest.format.name} ${latest.format.formatVersion}")
+            workingMemory.put("latestModellingApproach", modellingApproach)
+            workingMemory.put("latestOtherInfo", latest.model.otherInfo)
+            workingMemory.put("latestReadmeSubmission", latest.readmeSubmission)
             workingMemory.put("modellingApproach", modellingApproach)
             workingMemory.put("otherInfo", latest.model.otherInfo)
+            workingMemory.put("previousContributorRole", previousContributorRole)
             workingMemory.put("files", files)
+
+            // protect the first version: only allow to amend from the second version
+            List revisions = Model.get(latest.model.id).revisions as List
+            boolean amendable = revisions.size() >= 2
+            workingMemory.put("amendable", amendable)
+
+            // is it metadata submission? this property should be updated here
+            workingMemory.put("isMetadataSubmission", latest.model.isMetadataSubmission)
+
             // the variable below is used for comparing the existing files and updated ones
             // then decide which changes have been made
             List existingFiles = files
@@ -999,29 +1284,39 @@ class SubmissionService {
         @Profiled(tag = "submissionService.NewRevisionStateMachine.completeSubmission")
         @TypeChecked(TypeCheckingMode.SKIP)
         HashSet<String> completeSubmission(Map<String, Object> workingMemory) {
-            HashSet<String> changes = workingMemory['changesMade']
+            HashSet<String> changes = workingMemory['changesMade'] as HashSet<String>
             RTC revision = workingMemory.get("RevisionTC") as RTC
             List<RFTC> repoFiles = getRepFiles(workingMemory)
             List<RFTC> deleteFiles = getRepFiles(workingMemory, "removeFromVCS")
 
             // update model format, modelling approach and readme info if they're provided and changed
-            storeReadmeInfo(revision, workingMemory)
+            storeModelInfo(revision, workingMemory)
+            Boolean isMetadataSubmission = workingMemory.get("isMetadataSubmission") as Boolean
+            revision.model.isMetadataSubmission = isMetadataSubmission
+
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
-            if (NEW_NAME) {
+            final String LATEST_NAME = workingMemory["latestModelName"]
+            final String LATEST_DESCRIPTION = workingMemory["latestModelDescription"]
+            if (NEW_NAME != LATEST_NAME) {
                 revision.name = NEW_NAME
                 modelFileFormatService.updateName(revision, NEW_NAME)
-                changes.add("Edited model name")
+                changes.add("MODEL INFO: Edited the model name.")
             }
-            if (NEW_DESCRIPTION) {
+            if (NEW_DESCRIPTION != LATEST_DESCRIPTION) {
                 revision.description = NEW_DESCRIPTION
                 modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
-                changes.add("Edited model description")
+                changes.add("MODEL INFO: Edited the short submission description.")
             }
+
+            // store publication identifier to the model file (which format supports to store annotations)
+            // if it has been provided
+            addPublicationAsAnnotation(workingMemory)
+
             if (workingMemory.get("isAmend")) {
-                modelService.amendRevision(repoFiles, deleteFiles, revision)
+                modelService.amendRevision(repoFiles, deleteFiles, revision, workingMemory)
             } else {
-                modelService.addRevision(repoFiles, deleteFiles, revision)
+                modelService.addRevision(repoFiles, deleteFiles, revision, workingMemory)
             }
             return changes
         }
@@ -1030,13 +1325,14 @@ class SubmissionService {
         HashSet<String> processPostSubmission(final Map working) {
             HashSet<String> returned = super.processPostSubmission(working)
 
-            // send a confirmation email to the subscribers
+            // send a confirmation email to the subscribers such as the submitter, model owner...
             def currentUser = springSecurityService.currentUser
             def changesMade = working.get("changesMade")
             if (currentUser && changesMade) {
                 String model = working.get("modelId")
                 def notification = [
                     model: modelDelegateService.getModel(model),
+                    revision: modelDelegateService.getLatestRevision(model, false),
                     user: currentUser,
                     update: changesMade,
                     perms : modelDelegateService.getPermissionsMap(model, false)]
@@ -1044,6 +1340,24 @@ class SubmissionService {
             }
 
             returned
+        }
+
+        /**
+         * Sorts the model file to the top and following by the additional ones
+         *
+         * @param files A list of customised repository file objects
+         * @return A sorted array list
+         */
+        private ArrayList sortByRole(List files) {
+            List tmpList = new ArrayList()
+            def mF = files.find { it["isModelFile"]}
+            tmpList.add(mF)
+            List addList = files.findAll { !it["isModelFile"] } as List
+            if (!addList?.isEmpty()) {
+                addList.sort { it["filename"] }
+                tmpList.addAll(addList)
+            }
+            return tmpList
         }
     }
 
@@ -1219,6 +1533,16 @@ class SubmissionService {
     }
 
     /**
+     * This function is used to build a {@link Map} of all submission info/data for
+     * the submission performed via REST API call.
+     * @param metadata is a JSON String
+     * @param working is the map
+     */
+    void buildFromJSONFile(String metadata, Map working) {
+        getStrategyFromContext(working).buildFromJSONFile(metadata, working)
+    }
+
+    /**
      * Purpose: Get the appropriate strategy for the flow (update or create)
      *
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
@@ -1244,7 +1568,7 @@ class SubmissionService {
      * @param filterMain a boolean parameter specifying whether or not to exclude additional files
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
-    protected List getFilesFromMemory(Map workingMemory, boolean filterMain) {
+    protected static List getFilesFromMemory(Map workingMemory, boolean filterMain) {
         List<RFTC> repFiles = getRepFiles(workingMemory)
         if (!repFiles) {
             repFiles = new LinkedList<RFTC>();
@@ -1266,7 +1590,7 @@ class SubmissionService {
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
-    protected List getFilesFromRepFiles(List<RFTC> repFiles) {
+    protected static List getFilesFromRepFiles(List<RFTC> repFiles) {
         return repFiles?.collect { RFTC it -> new File(it.path) }
     }
 
@@ -1276,8 +1600,17 @@ class SubmissionService {
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
-    protected List getRepFiles(Map workingMemory,
-            String mapName = "repository_files") {
+    protected static List getRepFiles(Map workingMemory,
+                                      String mapName = "repository_files") {
         return (List) workingMemory.get(mapName)
+    }
+
+    private static boolean checkMainFilesAreLarge(List<File> mainFiles) {
+        // As of this point in time, each submission has only one main file
+        def result = mainFiles.find { File file ->
+            // 100 MB is the maximum size to be allowed to infer the model format
+            file.size() >= 100*1024*1024
+        }
+        result != null
     }
 }

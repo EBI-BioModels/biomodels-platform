@@ -1,13 +1,15 @@
-/*global $: false
- */
+/*global $: false, toastr: false*/
 $.jummp.userAdministration = {};
 $.jummp.userAdministration.changeUser = function (userId, field, target) {
     "use strict";
+    const value = $("#" + field).prop("checked");
     $.ajax({
-        url: target + "/" + userId,
-        dataType: 'json',
-        data: {value: $("#" + field).prop("checked")},
-        cache: 'false',
+        url: "/biomodels/userAdministration/" + target + "/" + userId,
+        dataType: "json",
+        data: {
+            value: value
+        },
+        cache: "false",
         success: function () {
             // redraw the dataTable to reset all changes
             $('#userTable').dataTable().fnDraw();
@@ -15,28 +17,43 @@ $.jummp.userAdministration.changeUser = function (userId, field, target) {
     });
 };
 
+$(document).on('click', ".chk-feature", function (e) {
+    e.preventDefault();
+    if ($(this).prop("checked")) {
+        $(this).attr("checked", true);
+    } else {
+        $(this).removeAttr("checked");
+    }
+});
+
 $.jummp.userAdministration.loadUserList = function () {
     "use strict";
-    var createUserChangeMarkup = function (id, target, enabled) {
-        var html, checkboxId;
-        checkboxId = "user-change-" + id + "-" + target;
+    const createUserChangeMarkup = function (id, target, enabled) {
+        let html;
+        const checkboxId = "user-change-" + id + "-" + target;
         html = '<input type="checkbox" id="' + checkboxId + '" ';
         if (enabled) {
-            html += 'checked="checked"';
+            html += 'checked="checked" class="chk-feature"';
         }
-        html += '/><input type="button" value="update" onclick="$.jummp.userAdministration.changeUser(' + id + ', \'' + checkboxId + '\', \'' + target + '\')"/>';
+        html += '/>&nbsp;<input type="button" class="button" value="update" ' +
+            'onclick="$.jummp.userAdministration.changeUser(' + id + ', \'' + checkboxId + '\', \'' + target + '\')"/>';
         return html;
     };
+
     $('#userTable').dataTable({
         // TODO: in future it might be interesting to allow filtering
         responsive: true,
         bFilter: false,
         columnDefs: [{
             targets: 2, /* For real name column */
-            width: "12%"
-        },{
+            width: "5%"
+        }, {
+            targets: 4, /* For institution column */
+            width: "10%",
+            visible: false
+        }, {
             targets: 5, /* For ORCID Identifier column */
-            width: "12%"
+            width: "5%"
         }],
         aLengthMenu: [[5, 10, 15, 20, 25, 50, 100, -1], [5, 10, 15, 20, 25, 50, 100, "All"]],
         bProcessing: true,
@@ -55,7 +72,7 @@ $.jummp.userAdministration.loadUserList = function () {
                     fnCallback({aaData: [], iTotalRecords: 0, iTotalDisplayRecords: 0});
                 },
                 "success": function (json) {
-                    var rowData, id, i;
+                    let rowData, id, i;
                     for (i = 0; i < json.aaData.length; i += 1) {
                         rowData = json.aaData[i];
                         id = rowData[0];
@@ -77,8 +94,8 @@ $.jummp.userAdministration.loadUserList = function () {
 
 $.jummp.userAdministration.editUser = function () {
     "use strict";
-    $("#user-role-management table tr a").click(function () {
-        var link, id, container, userId, action;
+    $("#user-role-management table tr a").on("click", function () {
+        let link, id, container, userId, action;
         link = $(this);
         id = link.prev().val();
         container = link.parents("div")[0];
@@ -89,18 +106,21 @@ $.jummp.userAdministration.editUser = function () {
             url: "../" + action + "/" + id + "?userId=" + userId,
             dataType: 'json',
             cache: 'false',
+            beforeSend: function(jqXHR) {
+
+            },
             success: function (data) {
                 if (data.error) {
                     $.jummp.errorMessage(data.error);
                 } else if (data.success) {
-                    var linkText, divInsertId, tableRow;
+                    let linkText, divInsertId, tableRow;
                     linkText = "";
                     divInsertId = "";
                     if (action === "addRole") {
-                        linkText = $.i18n.prop("user.administration.userRole.ui.removeRole");
+                        linkText = "Remove Role from User";
                         divInsertId = "#userRoles";
                     } else if (action === "removeRole") {
-                        linkText = $.i18n.prop("user.administration.userRole.ui.addRole");
+                        linkText = "Add Role to User";
                         divInsertId = "#availableRoles";
                     }
                     tableRow = link.parents("tr");
@@ -108,11 +128,19 @@ $.jummp.userAdministration.editUser = function () {
                     tableRow.detach();
                     tableRow.appendTo($("table tbody", $(divInsertId)));
                 }
+            },
+            error: (jqXHR) => {
+                toastr.error("An error occurred: " + jqXHR.status + " " + jqXHR.statusText);
+            },
+            complete: (jqXHR, status) => {
+                toastr.success("The user update has completed " + status);
             }
         });
     });
     $("#edit-user-form").submit(function (event) {
+        let msg = "";
         event.preventDefault();
+        hideNow();
         $.ajax({
             type: 'GET',
             url: "../editUser",
@@ -127,10 +155,20 @@ $.jummp.userAdministration.editUser = function () {
             },
             success: function (data) {
                 if (data.error) {
-                	showNotification("User could not be updated. Please check the values provided and try again")
+                    msg = "User cannot be updated. Please check the values provided and try again";
+                    toastr.error(msg);
                 } else if (data.success) {
-                	showNotification("User details updated")
+                    msg = "User details updated";
+                    toastr.success(msg);
                 }
+            },
+            error: (jqXHR) => {
+                msg = "An error occurred: " + jqXHR.status + " " + jqXHR.statusText;
+                toastr.error(msg);
+            },
+            complete: (jqXHR, status) => {
+                msg = "The user update has completed " + status;
+                toastr.info(msg);
             }
         });
     });
@@ -154,9 +192,9 @@ $.jummp.userAdministration.register = function () {
             },
             success: function (data) {
                 if (data.error) {
-                	showNotification("User could not be created. Please check values provided and try again")
+                	toastr.error("User cannot be created. Please check values provided and try again")
                 } else if (data.success) {
-                	showNotification("User created successfully")
+                	toastr.success("User created successfully")
                 }
             }
         });

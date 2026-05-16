@@ -41,7 +41,7 @@
         <strong>${publication.title}</strong></a>
         <a class="expander" title="Click to see more" href="#">
             <span>
-                <img style="width:12px;margin:2px;float:none"
+                <img style="width:12px;margin:2px;float:none" alt="Click here to expand"
                      src="${grailsApplication.config.grails.serverURL}/images/expand.png"/>
             </span>
         </a>

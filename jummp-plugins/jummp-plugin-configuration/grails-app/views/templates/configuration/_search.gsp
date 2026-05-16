@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -31,7 +31,7 @@
     <table class="formtable">
         <tbody>
             <tr class="prop">
-                <td class="name"><label for="Search Index Location">Search Index Directory:</label></td>
+                <td class="name"><label for="indexDirectory">Search Index Directory:</label></td>
                 <td class="value ${hasErrors(bean: search, field: 'indexDirectory', 'errors')}">
                     <input type="text" name="indexDirectory" id="indexDirectory" value="${search?.indexDirectory}"/>
                 </td>

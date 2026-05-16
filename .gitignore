@@ -60,9 +60,13 @@ Doxyfile
 *.patch
 .project
 build.gradle
+gradlew
+gradlew.bat
+gradle
+gradle/
 .gradle/
 .settings/
-
+tmp/
 ## For k8s deployment
 ## The folder contains yaml files
 k8s/
@@ -70,4 +74,7 @@ k8s/
 wrapper/grails-wrapper.properties
 ## utility scripts
 *.sh
+!backuplog.sh
 !docker-build.sh
+lib/classpath.index
+.envrc

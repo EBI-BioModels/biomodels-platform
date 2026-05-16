@@ -20,10 +20,12 @@
 
 package net.biomodels.jummp.plugins.format
 
+import com.google.common.io.Files
 import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import org.apache.tika.Tika
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * <p>Abstract class for handling multiple format services sharing many common methods</p>
@@ -33,7 +35,7 @@ import org.slf4j.LoggerFactory
  *   <li>Tung Nguyen&nbsp;<a href="mailto:tung.nguyen@ebi.ac.uk">tung.nguyen@ebi.ac.uk</a></li>
  *  </ul>
  */
-abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
+abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter implements InitializingBean {
     static transactional = false
     public static final String EXPECTED_FORMAT_REQUIRED = "Please set expectedFormat before calling this method"
     protected final Logger logger = LoggerFactory.getLogger(this.getClass())
@@ -41,6 +43,11 @@ abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
 
     AbstractFormatDetectionService(CommonFormat expectedFormat) {
         this.expectedFormat = expectedFormat
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        logger.info("Finished the bean initialisation")
     }
 
     /**
@@ -63,6 +70,20 @@ abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
         return result
     }
 
+    static boolean hasExt(final File file, final String ext) {
+        String fileExtension = Files.getFileExtension(file.name)
+        boolean hasThisExt = fileExtension.equalsIgnoreCase(ext)
+        hasThisExt
+    }
+
+    static boolean hasRoot(final File xmlBasedFile, final String root) {
+        if (!hasExt(xmlBasedFile, "xml")) {
+            return false
+        }
+        def parsedDoc = new XmlSlurper().parse(xmlBasedFile)
+        parsedDoc.name().toLowerCase() == root?.toLowerCase()
+    }
+
     /**
      * <p>Utility method for checking whether a file's MIME type falls in a given set.</p>
      *
@@ -81,5 +102,9 @@ abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
             logger.error("Could not probe $n for MIME type detection.", e)
         }
         return false
+    }
+
+    boolean validate(final List<File> model, final List<String> errors) {
+        areFilesThisFormat(model)
     }
 }

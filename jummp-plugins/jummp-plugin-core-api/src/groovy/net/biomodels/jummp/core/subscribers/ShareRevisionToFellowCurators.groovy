@@ -64,8 +64,7 @@ class ShareRevisionToFellowCurators implements ApplicationListener<RevisionCreat
                 modelDelegateService.submitModelRevisionForPublication(command)
             } else {
                 String message = """Unknown error (i.e. model revision is null) has happened when trying to share a
-model submitted by a curator to fellow
-curators"""
+model submitted by a curator to fellow curators"""
                 logger.error(message)
             }
         }

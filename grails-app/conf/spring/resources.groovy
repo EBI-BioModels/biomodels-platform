@@ -1,45 +1,63 @@
 /**
-* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* Grails (or a modified version of that library), containing parts
-* covered by the terms of Apache License v2.0, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of Grails used as well as
-* that of the covered work.}
-**/
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * Grails (or a modified version of that library), containing parts
+ * covered by the terms of Apache License v2.0, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of Grails used as well as
+ * that of the covered work.}
+ **/
 
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect
+import com.fasterxml.jackson.annotation.PropertyAccessor
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.persistence.Entity
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
+import net.biomodels.jummp.core.MaintenanceBean
+import net.biomodels.jummp.core.ModelFileFormatConfig
+import net.biomodels.jummp.core.ReferenceTracker
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
+import net.biomodels.jummp.core.events.PostLoggingAdvice
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorFactoryBean
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryFactory
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
+import net.biomodels.jummp.plugins.bives.RevisionCreatedListener
+import net.biomodels.jummp.plugins.security.BioModelsAuthFailureHandler
+import net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler
+import net.biomodels.jummp.security.LoginAttemptCacheService
+import net.biomodels.jummp.search.OmicsdiBasedSearch
+import net.biomodels.jummp.search.SolrBasedSearch
+import net.biomodels.jummp.search.SolrServerHolder
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
+import org.perf4j.log4j.aop.TimingAspect
 import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.beans.factory.config.ObjectFactoryCreatingFactoryBean
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
@@ -60,35 +78,34 @@ beans = {
         pointcut(id: "postLoggingPointcut", expression: "@annotation(net.biomodels.jummp.core.events.PostLogging)")
         advisor('pointcut-ref': "postLoggingPointcut", 'advice-ref': "postLogging")
     }
-    postLogging(net.biomodels.jummp.core.events.PostLoggingAdvice)
+    postLogging(PostLoggingAdvice)
 
-    referenceTracker(net.biomodels.jummp.core.ReferenceTracker) { bean ->
+    referenceTracker(ReferenceTracker) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
     }
-    maintenanceMode(net.biomodels.jummp.core.MaintenanceBean) { bean ->
+    maintenanceMode(MaintenanceBean) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
     }
-    modelFileFormatConfig(net.biomodels.jummp.core.ModelFileFormatConfig) { bean ->
+    modelFileFormatConfig(ModelFileFormatConfig) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
     }
 
     if (Environment.isDevelopmentMode()) {
-        timingAspect(org.perf4j.log4j.aop.TimingAspect)
+        timingAspect(TimingAspect)
     }
 
     def searchStrategy = application.config.jummp.search.strategy
-    println("INFO\tUsing $searchStrategy as current model search strategy")
     if (searchStrategy == "solr") {
-        solrServerHolder(net.biomodels.jummp.search.SolrServerHolder) { bean ->
+        solrServerHolder(SolrServerHolder) { bean ->
             bean.scope = "singleton"
             bean.autowire = "byName"
             bean.initMethod = "init"
             bean.destroyMethod = "destroy"
         }
-        solrBasedSearch(net.biomodels.jummp.search.SolrBasedSearch) { bean ->
+        solrBasedSearch(SolrBasedSearch) { bean ->
             bean.scope = "singleton"
             bean.autowire = "byName"
             bean.singleton = true
@@ -102,7 +119,7 @@ beans = {
             aclUtilService = ref("aclUtilService")
         }
     } else {
-        omicsdiBasedSearch(net.biomodels.jummp.search.OmicsdiBasedSearch) { bean ->
+        omicsdiBasedSearch(OmicsdiBasedSearch) { bean ->
             bean.scope = "singleton"
             bean.autowire = "byName"
             bean.singleton = true
@@ -117,7 +134,7 @@ beans = {
         }
     }
 
-    revisionCreatedListener(net.biomodels.jummp.plugins.bives.RevisionCreatedListener) { bean ->
+    revisionCreatedListener(RevisionCreatedListener) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
     }
@@ -126,6 +143,34 @@ beans = {
         it.initMethod = "init"
     }
 
+    authenticationSuccessHandler(BioModelsAuthSuccessHandler) {
+        /* Reusing the security configuration */
+        def conf = SpringSecurityUtils.securityConfig
+        /* Configuring the bean */
+        grailsApplication = ref('grailsApplication')
+        requestCache = ref('requestCache')
+        redirectStrategy = ref('redirectStrategy')
+        loginAttemptCacheService = ref('loginAttemptCacheService')
+        authService = ref('authService')
+        userService = ref('userService')
+        defaultTargetUrl = conf.successHandler.defaultTargetUrl
+        alwaysUseDefaultTargetUrl = conf.successHandler.alwaysUseDefault
+        targetUrlParameter = conf.successHandler.targetUrlParameter
+        ajaxSuccessUrl = conf.successHandler.ajaxSuccessUrl
+        useReferer = conf.successHandler.useReferer
+    }
+
+    authenticationFailureHandler(BioModelsAuthFailureHandler) {
+        def conf = SpringSecurityUtils.securityConfig
+        redirectStrategy = ref('redirectStrategy')
+        userService = ref('userService')
+        loginAttemptCacheService = ref('loginAttemptCacheService')
+        defaultFailureUrl = conf.failureHandler.defaultFailureUrl //'/login/authfail?login_error=1'
+        useForward = conf.failureHandler.useForward // false
+        ajaxAuthenticationFailureUrl = conf.failureHandler.ajaxAuthFailUrl // '/login/authfail?ajax=true'
+        exceptionMappings = conf.failureHandler.exceptionMappings // [:]
+        allowSessionCreation = conf.failureHandler.allowSessionCreation // true
+    }
     //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
     // This section defines model identifier related beans.
@@ -177,16 +222,16 @@ beans = {
     }
 
     // this is the only mandatory identifier generator, all others are optional
-    submissionIdGenerator(ModelIdentifierGeneratorFactoryBean) { bean ->
-        bean.scope  = 'prototype'
-        idSettings  = idGeneratorSettings.get('submission')
-        initializerBeanName = "submissionIdGeneratorInitializer"
-        shouldComputeRegex  = !regexPresent
-        generatorType       = 'submission'
+    submissionIdGenerator(ModelIdentifierGeneratorFactoryBean,
+        idGeneratorSettings.get('submission'),
+        "submissionIdGeneratorInitializer",
+        !regexPresent,
+        'submission') { bean ->
+        bean.scope = 'prototype'
     }
 
     Map<String, ConfigObject> optionalGeneratorBeanDefs = [:]
-    idGeneratorSettings.each { String name, def /*ConfigObject or String*/ cfg ->
+    idGeneratorSettings.each { def name, def /*ConfigObject or String*/ cfg ->
         String beanName = name + ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
         if (name != 'submission' && name != 'regex')
             optionalGeneratorBeanDefs.put(beanName, cfg)
@@ -198,15 +243,18 @@ beans = {
     def parentContext = ((GrailsApplicationContext) getParentCtx())
     optionalGeneratorBeanDefs.each { String name, ConfigObject c ->
         // don't touch bean definitions from BeanDefinitionRegistryPostProcessors, doWithSpring etc
-        if (null == parentContext || !parentContext.containsBeanDefinition(name)) {
+        if (!parentContext || !parentContext.containsBeanDefinition(name)) {
             String initializerBean = "${name}Initializer"
-            "$name"(ModelIdentifierGeneratorFactoryBean) { bean ->
+            String generatorType = name - ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
+
+            // Use constructor args (like submissionIdGenerator) to avoid brittle property binding
+            "$name"(ModelIdentifierGeneratorFactoryBean,
+                c,
+                initializerBean,
+                !regexPresent,
+                generatorType
+            ) { bean ->
                 bean.scope = 'prototype'
-                idSettings = c
-                // the initializer bean should exist, even if it's a NullModelIdGeneratorInitializer
-                initializerBeanName = initializerBean
-                shouldComputeRegex  = !regexPresent
-                generatorType       = name - ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
             }
         }
     }
@@ -259,14 +307,37 @@ beans = {
                 Class.forName(beanClassName, true, Thread.currentThread().contextClassLoader))
     }
 
-    importBeans('classpath:/metadatalib-spring-config.xml')
-    // override definition to use the one from the annotation-source-ddmore plugin
-    springConfig.addAlias("metadataInfoService", "metadataInformationService")
+    def metaSpringConfig = this.class.classLoader.getResource('metadatalib-spring-config.xml')
+    if (metaSpringConfig) {
+        importBeans('classpath:/metadatalib-spring-config.xml')
+        // override definition to use the one from the annotation-source-ddmore plugin
+        springConfig.addAlias("metadataInfoService", "metadataInformationService")
+    } else {
+        println "WARN\tmetadatalib-spring-config.xml not found on classpath; skipping importBeans()."
+        // If other code expects the alias, you can either leave it out or ensure the target bean exists.
+    }
 
-    jf(com.fasterxml.jackson.core.JsonFactory)
+    jf(JsonFactory)
 
-    objectMapper(com.fasterxml.jackson.databind.ObjectMapper, jf) {
-        visibility(com.fasterxml.jackson.annotation.PropertyAccessor.ALL, com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
-        configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    objectMapper(ObjectMapper, jf) {
+        visibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY)
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
+
+    /*
+    pirateCache(EhCacheFactoryBean) { bean ->
+        cacheManager = ref("springcacheCacheManager")
+        cacheName = "cacheJummpBioModels"
+        // these are just examples of properties you could set
+        eternal = false
+        diskPersistent = false
+        memoryStoreEvictionPolicy = "LRU"
+    }*/
+
+    loginAttemptCacheService(LoginAttemptCacheService) { bean ->
+        bean.scope = "singleton"
+        bean.autowire = "byName"
+        bean.singleton = true
+        grailsApplication = ref("grailsApplication")
     }
 }

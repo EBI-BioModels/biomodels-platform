@@ -24,14 +24,162 @@
 
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <title><g:message code="${titleCode}" default="Internship or Job Opportunities"/> | BioModels</title>
 </head>
 <body>
 
 <h2>Internship opportunities</h2>
+<h3>Currently, all internship adverts are closed. Please come back later.</h3>
+<!--
+<h3 style="border-bottom: 1px solid grey">
+    Curation internship: Literature curation of Genome-Scale metabolic models</h3>
 
+<p><a href="${serverURL}" title="BioModels Database">BioModels</a> is a
+central repository of mathematical models of biological/biomedical processes. It is hosted
+at EMBL-EBI and is one of the resources of the molecular systems cluster. The models
+distributed through BioModels are extensively tested and encoded in standard formats
+(for example, SBML (Systems Biology Markup Language)) and are free to use. In addition,
+the models and their components are cross-referenced with external data resources and
+ontologies, which facilitates search and retrieval, and maximises the benefits of the
+growing number of already existing models.</p>
+<div class="row">
+    <div class="columns small-12 medium-4 large-4">
+        <img src="${bmStaticAssetsURL}/images/curation/FROG/FROG_analysis_green_BG.svg"/>
+    </div>
+    <div class="columns small-12 medium-8 large-8">
+        <p> Curating models of biological processes is an effective training in computational
+        systems biology, where the curators gain an integrative knowledge on biological systems,
+        modelling and bioinformatics. We have a number of internship opportunities available within
+        the team, to carry out the curation of constraint-based models including Genome-Scale Metabolic models (GEMs).
+        </p>
+        <p>The internship is suitable for a student who is pursuing or completed master's or PhD degree and has experience
+        in constraint-based modelling approaches including genome-scale metabolic model reconstruction, flux balance analysis
+        or equivalent methods. The intern will apply the recently developed community standard FROG to assess the
+        reproducibility of the constraint-based models and perform semantic enrichment to curate. Training will be given
+        to understand the basics of FROG analysis and relevant tools. Potential possibilities exist for the intern to be
+        a co-author of our community manuscript on FROG analysis.
+        </p>
+    </div>
+</div>
+
+<p>This is an in-person internship at the EMBL-EBI Campus based in Hinxton, Cambridge, UK. The provisional starting
+date is September 2022, however, it can be adjusted. The position is for 6 months but can be extended up to one year.
+A fixed monthly allowance is provided to help towards living costs. Support for the visa will be offered to the
+selected candidate when required.
+</p>
+<p>For further enquiries or to make an application (with your CV and a cover letter),
+please contact: Dr Rahuman Sheriff (sheriff AT ebi.ac.uk). The application is open until filled.</p>
+-->
+
+<!-- First intern -->
+<!--
+<h3 style="border-bottom: 1px solid grey">
+    <em>Joint internship between EMBL-EBI and Ersilia</em><br/>
+    Curation of Metadata of AI/ML Models for Inclusion in the BioModels Database (EBI-EMBL)
+</h3>
+
+<p><strong>Background and Impact</strong></p>
+<p>
+The field of antimicrobial drug discovery is of paramount importance, especially in the context of global health.
+Enhancing the visibility and accessibility of computational models in this domain can catalyze research,
+accelerating the discovery of novel medicines. The <a href="https://ersilia.io" target="_blank">Ersilia Open Source Initiative</a> is
+dedicated to developing AI/ML models in infectious disease research. Through the Ersilia Model Hub, we provide a repository AI/ML tools that
+address pressing global health challenges.<br/>
+<br/>
+BioModels is a well-established resource offering a centralized platform for biologically relevant mathematical models.
+Prioritizing quality and annotation, it equips researchers with thousands of interoperable, curated models over a
+broad range of topics. Hosted at the EMBL-EBI, BioModels is an indispensable instrument in global computational biology
+research.<br/>
+<br/>
+By integrating models from the Ersilia Model Hub into BioModels, this collaboration aims to enhance the visibility
+and effectiveness of the antimicrobial drug discovery AI/ML models available within Ersilia.
+</p>
+
+<p><strong>Internship Details</strong></p>
+<p>This collaboration between EMBL-EBI and Ersilia entails a 4-month hybrid internship. The partnership focuses on
+combining the expertise of both entities to promote the adoption of AI/ML models in antimicrobial drug discovery.</p>
+
+<p><strong>Key Responsibilities</strong></p>
+<ul>
+    <li>Engage with <a href="https://europepmc.org/article/MED/31701150" target="_blank">BioModels</a> and
+        <a href="https://www.biorxiv.org/content/10.1101/2023.05.22.540599v1" target="_blank">BioModelsML</a>.</li>
+    <li>Curate and collect metadata for the existing models within the Ersilia Model Hub,
+        ensuring alignment with BioModels' standards of quality and annotation.</li>
+    <li>Contribute to the refinement of the BioModelsML curation workflow.</li>
+    <li>Collaborate with interdisciplinary teams from both EMBL-EBI and the Ersilia Open Source Initiative.</li>
+    <li>Aid in the incorporation of Ersilia's models into BioModels.</li>
+</ul>
+
+<p><strong>Requirements</strong></p>
+<ul>
+    <li>A foundation in biology, bioinformatics, or a similar discipline.</li>
+    <li>Broad comprehension of machine learning, with emphasis on its application to drug discovery.</li>
+    <li>Ability to work efficiently in a hybrid setup and collaborate within a team.</li>
+    <li>Strong written communication abilities.</li>
+</ul>
+
+<p><strong>Internship Benefits</strong></p>
+<ul>
+    <li>Joint Charity/Academic Institute setting.</li>
+    <li>Hybrid work pattern.</li>
+    <li>Daily interaction with the Ersilia community via Slack, GitHub and Online meetings.</li>
+    <li>Weekly meeting with Ersilia and/or EMBL-EBI supervisor.</li>
+    <li>Monthly stipend to support living expenses.</li>
+</ul>
+
+<p><strong>Internship timeline</strong></p>
+<ul>
+    <li>From as soon as possible, for four months.</li>
+</ul>
+<p>This internship presents a unique opportunity to delve into computational biology and collaborate with two recognized
+institutions leading the charge. Candidates are urged to forward their CV and a cover letter that speaks to their
+aptitude and enthusiasm for the role.
+<br/><br/>
+    Applications will be reviewed on a rolling basis. Please submit applications
+    via email to <a href="mailto:hello@ersilia.io">hello@ersilia.io</a> and <a href="mailto:sheriff@ebi.ac.uk">sheriff@ebi.ac.uk</a>.</p>
+-->
+
+<!-- Second intern -->
+<!--
+<h3 style="border-bottom: 1px solid grey">
+    EMBL-EBI - IITM Internship on Curation of Machine Learning Models in BioModels</h3>
+
+<p>Machine learning (ML) models are widely used as tools in life science and medical research.
+However, ML models are scattered across various resources including personal websites, git-hub, bitbucket,
+and supplementary material, making it difficult to find, access, and reuse them.
+We aim to extend the <a href="${serverURL}" target="_blank">BioModels</a> to support Findable, Accessible,
+Interoperable, and Reusable (<a href="https://www.go-fair.org/fair-principles/" target="_blank">FAIR</a>)
+dissemination of ML models in biomedical sciences.  BioModels is a world-leading repository of mechanistic models
+of biological processes, hosted by EMBL-EBI. BioModels’s infrastructure was
+recently enhanced to support version-controlled dissemination and curation of a
+wide range of modelling frameworks and formats, providing capabilities to host
+and disseminate ML models.</p>
+
+<p>The internship is ideal for a student who is pursuing or completed a master's or PhD degree and aiming
+to move towards the next step of their career. The applicant should have experience in machine learning
+approaches including deep learning neural networks and other equivalent methods. During the internship,
+the intern will rebuild ML models published in life science journals and submit them to the BioModels
+repository. Potential possibilities exist for the intern to be a co-author on our high-impact manuscript.</p>
+
+<p><strong>Prerequisite</strong>: very good programming skills in Python, R or equivalent languages, experience in building
+machine learning models, and a good background in biological science. Experience in deep learning will be a plus.</p>
+
+<p>The first 3 months of the internship are based at the <a href="https://rbcdsai.iitm.ac.in/" target="_blank">Robert
+Bosch Centre for Data Science and Artificial Intelligence</a> &
+<a href="https://www.iitm.ac.in/academics/departments/department-of-biotechnology"
+   target="_blank">Dept. of Biotechnology</a>,
+    <a href="https://www.iitm.ac.in/" target="_blank">Indian Institute of Technology Madras</a> at
+    <a href="https://home.iitm.ac.in/kraman/lab/karthik/" target="_blank">Prof. Raman’s lab, Chennai, India</a>. The next 3 months will be based at the European Bioinformatics Institute (EMBL-EBI) Campus at Hinxton, Cambridge, UK. The position is for 6 months but can be extended up to one year. The provisional starting date is September 2022, however, it can be adjusted. A fixed monthly allowance is provided to help towards living costs. Support for a UK visa will be offered to the selected candidate.</p>
+
+<p>For further enquiries or to make an application (with your CV and a cover letter),
+please contact Prof. Karthik Raman (kraman AT iitm.ac.in) and or Dr Rahuman Sheriff (sheriff AT ebi.ac.uk).
+The application is open until filled.</p>
+-->
+
+<!--
 <h3 style="border-bottom: 1px solid grey">Curation internship: Literature curation of mechanistic models of disease pathways</h3>
 
-<p><a href="http://www.ebi.ac.uk/biomodels/" title="BioModels Database">BioModels</a> is a
+<p><a href="${serverURL}" title="BioModels Database">BioModels</a> is a
 central repository of mathematical models of biological/biomedical processes. It is hosted
 at EMBL-EBI and is one of the resources of the molecular systems cluster. The models
 distributed through BioModels are extensively tested and encoded in standard formats
@@ -67,6 +215,7 @@ please contact: Rahuman Sheriff (sheriff AT ebi.ac.uk).</p>
         neurodegeneration: evolving dimensions and future directions.</a>
         <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. 2017</li>
 </ol>
+-->
 
 %{--<h3 style="border-bottom: 1px solid grey">Software development internship:
 Cluster Analysis of BioModels using Biomedical Ontologies</h3>

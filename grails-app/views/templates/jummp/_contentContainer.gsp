@@ -44,6 +44,5 @@
             <g:pageProperty name="page.sidebar"/>
         </div>
     </div>
-    <wcm:render path="links"/>
 </div>
 

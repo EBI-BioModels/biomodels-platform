@@ -53,4 +53,8 @@ class ModelFormatTransportCommand implements Serializable {
      * The version of the format in question.
      */
     String formatVersion
+
+    String toString() {
+        "$id: $name".toString()
+    }
 }

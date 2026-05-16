@@ -34,3 +34,6 @@
 </div>
 </body>
 </html>
+<content tag="adminboard">
+    selected
+</content>

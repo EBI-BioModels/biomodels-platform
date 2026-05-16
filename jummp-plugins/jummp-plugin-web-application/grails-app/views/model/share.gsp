@@ -30,12 +30,13 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
         <meta name="layout" content="${session['branding.style']}/main" />
+        <title>Share model | BioModels</title>
         <g:javascript src="underscore-min.js"/>
         <g:javascript src="handlebars.min.js"/>
         <g:javascript src="backbone-min.js"/>
         <script id="collaborator-list-template" type="text/x-handlebars-template">
             <div id="currentCollabs">
-            <h2>Collaborators</h2>
+            <h2>Contributors</h2>
             {{#if hasCollabs}}
             <table class='responsive-table'>
             <thead>
@@ -68,7 +69,7 @@
         <div id="ui" class="row">
             <div id="collabUI">
                 <div id="collabCreate" class="small-12 medium-6 columns">
-                    <h2>Add New Collaborator</h2>
+                    <h2>Add New Contributor</h2>
                     <form id="collaboratorAddForm">
                         <div id="formElements" class="formElements">
                             <div class="formElement">

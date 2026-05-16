@@ -46,14 +46,13 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenLocal()
         mavenCentral()
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
 
     String ddmoreMetadataIntegrationServiceVersion = "0.1.3-SNAPSHOT"
     String jungVersion = "2.0.1"
 
     dependencies {
-        compile "eu.ddmore:lib-metadata-api:$ddmoreMetadataIntegrationServiceVersion"
+        /*compile "eu.ddmore:lib-metadata-api:$ddmoreMetadataIntegrationServiceVersion"
         // can't use apache-jena-libs due to pom packaging, rely on jena-tdb instead
         compile("eu.ddmore:lib-metadata:$ddmoreMetadataIntegrationServiceVersion") {
             excludes 'apache-jena-libs'
@@ -63,7 +62,7 @@ grails.project.dependency.resolution = {
         compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             // can't use Spring 4.1 yet, fall back on Grails defaults
             excludes 'spring-core', 'spring-context', 'slf4j-log4j12'
-        }
+        }*/
 
         compile("net.sf.jung:jung-graph-impl:$jungVersion")
 
@@ -73,7 +72,7 @@ grails.project.dependency.resolution = {
 
     plugins {
         build(":release:3.1.1",
-              ":rest-client-builder:1.0.3") {
+              ":rest-client-builder:2.1.1") {
             export = false
         }
     }

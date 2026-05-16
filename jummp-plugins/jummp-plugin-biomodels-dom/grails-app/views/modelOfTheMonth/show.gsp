@@ -12,9 +12,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
-    <g:javascript src="toastr.min.js" contextPath=""/>
-    <link rel="stylesheet"
-          href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'css', file: 'toastr.min.css')}"/>
+    <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
     <script type="javascript">
         toastr.options = {
             "progressBar": true
@@ -25,7 +23,8 @@
 
 <body>
     <g:if test="${errMsg}">
-        <p>The errors have been reported<br/>${errMsg}</p>
+        <h2 style="color: orange">The errors have been reported!</h2>
+        <h3>${errMsg}</h3>
     </g:if>
     <g:else>
         <g:if test="${entry}">

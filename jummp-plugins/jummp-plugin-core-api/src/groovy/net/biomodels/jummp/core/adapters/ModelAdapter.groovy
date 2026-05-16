@@ -25,6 +25,8 @@ import grails.util.Holders
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.model.ContributionDetails
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 
@@ -41,12 +43,18 @@ class ModelAdapter {
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
         Set<String> creators = []
         Map<String, String> creatorUsernames = [:]
+        Map<String, String> contributors = [:]
         if (model.revisions?.size() > 0) {
-            for (Revision revision: model.revisions) {
-                creators.add(revision.owner.person.userRealName)
-                String realName = revision.owner.person.userRealName ?: revision.owner.username
-                creatorUsernames.put(revision.owner.username, realName)
-            }
+            /*List revisions = model.revisions.collect { it.id }
+            String queryString = "from ContributionDetails as CD where CD.revision.id in (:revisions)"
+            List otherContributors = ContributionDetails.findAll(queryString, [revisions: revisions])
+            for (ContributionDetails contributionDetail: otherContributors) {
+                String username = contributionDetail.contributor.username
+                String fullName = contributionDetail.contributor.person.userRealName ?: username
+                creators.add(fullName)
+                creatorUsernames.put(username, fullName)
+                contributors.put(username, "${contributionDetail.role.name} - ${fullName}".toString())
+            }*/
         }
         Revision latestRev
         Revision firstRev
@@ -70,7 +78,8 @@ class ModelAdapter {
             latestRev = revisions?.first()
             firstRev = latestRev
         }
-
+        PubTC pubTC = model.publication ?
+            new PublicationAdapter(publication:  model.publication).toCommandObject() : null
         return new ModelTransportCommand(
             id: modelId,
             submissionId: model.submissionId,
@@ -81,16 +90,18 @@ class ModelAdapter {
             state: latestRev?.state,
             lastModifiedDate: latestRev?.uploadDate,
             format: latestRev ? new ModelFormatAdapter(format: latestRev.format).toCommandObject() : null,
-            publication: model.publication ? new PublicationAdapter(publication:  model.publication).toCommandObject() : null,
+            publication: pubTC,
             deleted: model.deleted,
             submitter: firstRev?.owner?.person?.userRealName,
             submitterUsername: firstRev?.owner?.username,
             submissionDate: firstRev?.uploadDate,
             creators: creators,
             creatorUsernames: creatorUsernames,
+            contributors: contributors,
             flagLevel: latestRev?.qcInfo?.flag,
             modellingApproach: model.modellingApproach,
-            otherInfo: model.otherInfo
+            otherInfo: model.otherInfo,
+            isMetadataSubmission: model.isMetadataSubmission
         )
     }
 

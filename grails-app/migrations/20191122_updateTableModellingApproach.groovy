@@ -28,22 +28,26 @@ databaseChangeLog = {
                         )
                     group by m
                 """, [readOnly: true]
-                resultSet.eachWithIndex { Model model, Revision revision, ResourceReference mamoXref, int index ->
-                     String mamoTermLabel = mamoXref.accession
+                resultSet.eachWithIndex { def item, int index ->
+                    Model model = item[0]
+                    Revision revision = item[1]
+                    String mamoTermLabel = item[2].accession
+                    println mamoTermLabel
                     if (MODELLING_APPROACHES.containsKey(mamoTermLabel)) {
                         // update modelling approach
                         ModellingApproach approach = ModellingApproach.findByAccession(mamoTermLabel)
                         model.modellingApproach = approach
                         if (model.save(flush: true)) {
                             println """\
-set modelling approach ${approach.properties} to model ${model.properties} successfully"""
+set modelling approach (${approach.accession}: ${approach.name}) to model ${model.submissionId} successfully"""
                         } else {
                             String msg = """\
-cannot update modelling apporach ${approach.properties} to model ${model.properties}"""
+cannot update modelling apporach (${approach.accession}: ${approach.name}) to model ${model.submissionId} \
+due to the errors: ${model.getErrors().toString()}"""
                             throw new IllegalStateException(msg)
                         }
                     } else {
-                        println "cannot find any MAMO term describing a modelling approach"
+                        println "cannot find any MAMO term describing a modelling approach for model ${model.submissionId}"
                     }
 
                     // clear session and save records after every 100 entries created

@@ -33,35 +33,18 @@
         <meta name="layout" content="${session['branding.style']}/main" />
         <title>${title}</title>
         <style>
-        	.verysecure {
+        	.very-secure {
         		visibility:hidden;
         	}
-            #announcementBox {
-                background-color: yellow;
-                border-style: solid;
-                border-color: #ffcc00;
-                border-width: 2px;
-                padding: 10px 10px 0px 10px;
-            }
         </style>
+    <g:render template="head"/>
     </head>
     <body>
-        <div class="row">
-            <div class="columns small-12 medium-6 medium-centered large-6 large-centered">
-                <div id="announcementBox">
-                    <p>If you were already registered with us in
-                    <a href="https://www.ebi.ac.uk/biomodels/content/news/retirement-party-for-the-classic-biomodels">the retired platform</a> and haven't logged in this new one yet,
-                    please request a new password by
-                clicking <a href="${grailsApplication.config.grails.serverURL}/forgotpassword">forgot password</a>
-                        and entering your username.</p>
-                    <p>If you prefer, you can create a new account with BioModels by completing the form below.</p>
-                </div>
-            </div>
-        </div>
         <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
         <div id="register" class="row">
-            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;" useToken="true">
+            <div class="small-12 medium-8 medium-centered large-6 large-centered columns">
+                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode !== 13;" useToken="true"
+                        onsubmit="return validateForm()" >
                     <div class="row column register-form">
                         <g:render template="/templates/newAccountRegistrationForm"
                                   plugin="jummp-plugin-web-application" model="[user: null]" />
@@ -74,15 +57,64 @@
                         <input type="reset" class="button" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
                         </p>
                     </div>
-                    <label class="verysecure">You shouldn't see me.</label>
-                    <input class="verysecure" name="securityfeature" value=""/>
+                    <label class="very-secure">You shouldn't see me.</label>
+                    <label>
+                        <input class="very-secure" name="securityfeature" value=""/>
+                    </label>
                 </g:form>
             </div>
         </div>
+<g:javascript>
+    /* global toastr, validateAllowedCharacters */
+    const usernameEle = $("#username");
+    const emailEle    = $("#email");
+    const realNameEle = $("#userRealName");
 
-        <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
+    function validateEmail(val) {
+        if (!val) return "Email address is required.";
+        if (!/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(val)) {
+            return "Please enter a valid email address.";
+        }
+        return "";
+    }
+
+    emailEle.on("blur", function() {
+        const msg = validateEmail($(this).val().trim());
+        if (msg) toastr.error(msg);
+    });
+
+    realNameEle.on("blur", function() {
+        if (!$(this).val().trim()) toastr.error("Real name is required.");
+    });
+
+    function validateForm() {
+        let valid = true;
+
+        const usernameMsg = validateAllowedCharacters(usernameEle.val().trim());
+        if (usernameMsg) {
+            toastr.error(usernameMsg);
+            valid = false;
+        }
+
+        const emailMsg = validateEmail(emailEle.val().trim());
+        if (emailMsg) {
+            toastr.error(emailMsg);
+            valid = false;
+        }
+
+        if (!realNameEle.val().trim()) {
+            toastr.error("Real name is required.");
+            valid = false;
+        }
+
+        return valid;
+    }
+</g:javascript>
     </body>
 </html>
+<content tag="register">
+    selected
+</content>
 <content tag="title">
     <g:message code="user.signup.ui.heading.register"/>
 </content>

@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -30,6 +30,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
         <meta name="layout" content="${session['branding.style']}/main" />
+        <title>My Notifications | BioModels</title>
     </head>
     <body activetab="search">
     	<div class="content">
@@ -88,12 +89,15 @@
          			if (!seen) {
          				$( this ).removeClass( "unseenNotification" )
          				markAsRead('<g:createLink controller="notification" action="markAsRead"/>'+"?msg="+showThis,'<g:createLink controller="notification" action="unreadNotificationCount"/>');
-         				
+
          			}
          		});
          	});
          </g:javascript>
     </body>
+    <content tag="mynotifications">
+        selected
+    </content>
     <content tag="title">
         <g:message code="user.notifications.heading"/>
     </content>

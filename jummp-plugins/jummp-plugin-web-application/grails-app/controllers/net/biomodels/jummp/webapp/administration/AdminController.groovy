@@ -21,7 +21,7 @@
 package net.biomodels.jummp.webapp.administration
 
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.deployment.biomodels.CommonController
+import net.biomodels.jummp.CommonController
 
 /**
  * Controller for handling administration tasks
@@ -33,6 +33,8 @@ class AdminController extends CommonController {
 
     def dashboard() {
         String title = "Administration Dashboard | BioModels"
-        [layout: layout, title: title]
+        Map map = COMMON_PROPERTIES
+        map.putAll([layout: layout, title: title])
+        return map
     }
 }

@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -35,25 +35,38 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.constants.BioModels
+import net.biomodels.jummp.core.constants.Redis
 import net.biomodels.jummp.core.events.*
+import net.biomodels.jummp.core.events.RevisionCreatedEvent as RevisionCE
 import net.biomodels.jummp.core.model.*
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService as MIGRS
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
+import net.biomodels.jummp.core.util.JummpHttpService
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.*
+import net.biomodels.jummp.model.ContributionDetails as CD
+import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
+import org.codehaus.groovy.grails.web.json.JSONObject
 import org.perf4j.StopWatch
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectFactory
+import org.springframework.context.ApplicationListener
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
@@ -63,6 +76,7 @@ import org.springframework.security.acls.domain.GrantedAuthoritySid
 import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.AccessControlEntry
 import org.springframework.security.acls.model.Acl
+import org.springframework.security.acls.model.NotFoundException
 import org.springframework.security.core.Authentication
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
@@ -71,7 +85,6 @@ import org.springframework.transaction.annotation.Propagation
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantLock
-
 /**
  * Service class for managing Models.
  *
@@ -107,52 +120,36 @@ import java.util.concurrent.locks.ReentrantLock
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
-class ModelService {
+class ModelService implements ApplicationListener<ModelOperationEvent> {
     private static final Logger logger = LoggerFactory.getLogger(ModelService.class)
     def springSecurityService
-    /**
-     * Dependency Injection of AclUtilService
-     */
     def aclUtilService
-    /**
-     * Dependency Injection of VcsService
-     */
     def vcsService
-    /**
-     * Dependency Injection of ModelFileFormatService
-     */
     def modelFileFormatService
-    /**
-     * Dependency Injection for GrailsApplication
-     */
-    @SuppressWarnings("GrailsStatelessService")
     def grailsApplication
-    /**
-     * Dependency Injection for PublicationService
-     */
     def publicationService
-    /**
-     * Dependency injection of ModelHistoryService
-     */
     def modelHistoryService
-    /**
-     * Dependency Injection of FileSystemService
-     */
     def fileSystemService
-    /**
-     * Dependency Injection of userService
-     */
     def userService
-
     //def publishValidator
-
     def modelConversionService
-
     def repositoryFileService
+    def redisService
+    def contributorService
 
-    ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
+    ObjectFactory<MIGRS> idGeneratorRegistryFactoryBean
 
-    final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
+    /**
+     * Decide dynamically whether publication IDs should be generated.
+     *
+     * IMPORTANT: ModelService is a singleton. Do NOT compute this once at field-init time,
+     * because grailsApplication/mainContext may not be available yet and the decision would
+     * be cached incorrectly for the lifetime of the bean.
+     */
+    private boolean shouldMakePublicationId() {
+        def gen = getPublicationIdGenerator()
+        return (gen != null) && !(gen instanceof NullModelIdentifierGenerator)
+    }
 
     /**
      * Guard insertion of ACL entries from concurrent access.
@@ -367,7 +364,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count, boolean sortOrder) {
+    List<Model> getAllModels(int offset, int count, boolean sortOrder) {
         getAllModels(offset, count, sortOrder, ModelListSorting.ID)
     }
 
@@ -379,7 +376,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count, ModelListSorting sortColumn) {
+    List<Model> getAllModels(int offset, int count, ModelListSorting sortColumn) {
         return getAllModels(offset, count, true, sortColumn)
     }
 
@@ -391,7 +388,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count) {
+    List<Model> getAllModels(int offset, int count) {
         return getAllModels(offset, count, ModelListSorting.ID)
     }
 
@@ -404,7 +401,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(ModelListSorting sortColumn) {
+    List<Model> getAllModels(ModelListSorting sortColumn) {
         return getAllModels(0, 10, true, sortColumn)
     }
 
@@ -416,7 +413,7 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels() {
+    List<Model> getAllModels() {
         return getAllModels(ModelListSorting.ID)
     }
 
@@ -529,8 +526,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
                 max: count, offset: offset
             ]
         }
-
-        query ="$query ORDER BY m.id desc, r.revisionNumber, r.owner.username desc"
+        query ="$query ORDER BY m.id desc"
         List models = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
         return models
     }
@@ -563,6 +559,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
         } else {
             throw new AccessDeniedException("No access to Model with Id ${id}".toString())
         }
+
         return model
     }
 
@@ -586,7 +583,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
         perennialId = -1 == dot ? perennialId : perennialId.substring(0, dot)
 
         Set<String> idFields = getPerennialIdentifierTypes()
-        Model.withCriteria(uniqueResult: true) {
+        Model model = Model.withCriteria(uniqueResult: true) {
             or {
                 for (String f : idFields) {
                     eq(f, perennialId)
@@ -594,6 +591,7 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
             }
             cache true
         } as Model
+        return model
     }
 
     /**
@@ -605,27 +603,35 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
     @CompileStatic
     @NotTransactional
     Set<String> getPerennialIdentifierTypes() {
-        ModelIdentifierGeneratorRegistryService registry = idGeneratorRegistryFactoryBean.object
+        MIGRS registry = idGeneratorRegistryFactoryBean.object
         registry.generatorTypes
     }
 
     /**
-    * Queries the @p model for the latest available revision the user has read access to.
-    * @param model The Model for which the latest revision should be retrieved.
-    * @param addToHistory Optional field to allow history not to be modified - e.g. if called from modelhistoryService
-    * @return Latest Revision the current user has read access to. If there is no such revision null is returned
-    **/
+     * Queries the @p model for the latest available revision the user has read access to.
+     * @param model The Model for which the latest revision should be retrieved.
+     * @param addToHistory Optional field to allow history not to be modified - e.g. if called from modelhistoryService
+     * @return Latest Revision the current user has read access to. If there is no such revision null is returned
+     */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getLatestRevision")
     Revision getLatestRevision(Model model, boolean addToHistory = true) {
-        logger.debug("Get the latest revision of the model: ${model.submissionId}")
         if (!model) {
             return null
         }
-        /*if (model.deleted) {
+        if (model.deleted) {
             // exclude deleted models
             return null
-        }*/
+        }
+//        String strCachedLatestRevs = redisService.doRedisHGet(model.submissionId, "latest-revision")
+//        Map cachedLatestRevs = new HashMap()
+//        if (strCachedLatestRevs?.trim()) {
+//            cachedLatestRevs = new JsonSlurper().parseText(strCachedLatestRevs) as Map
+//            if (cachedLatestRevs.containsKey(userService.username)) {
+//                long id = cachedLatestRevs[userService.username] as long
+//                return Revision.get(id)
+//            }
+//        }
         // admin gets max (non deleted) revision
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             List<Long> result = Revision.executeQuery('''
@@ -636,12 +642,14 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
                 rev.model = :model
                 AND revisions.deleted = false
                 GROUP BY rev.model, rev.id, rev.revisionNumber
-                HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [model: model]) as List
+                HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [model: model]) as List<Long>
             if (!result) {
                 return null
             }
-//            modelHistoryService.addModelToHistory(model)
-            return Revision.get(result[0])
+            modelHistoryService.addModelToHistory(model)
+            Revision revision = Revision.get(result[0])
+            //cacheLatestRevision(cachedLatestRevs, revision, userService.username)
+            return revision
         }
 
         Set<String> roles = getSpringDatabaseRoles()
@@ -665,14 +673,23 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 model: model,
                 className: Revision.class.getName(),
                 roles: roles,
-                permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()] ]) as List
-            if (!result) {
-                return null
-            }
-            if (addToHistory) {
-            	modelHistoryService.addModelToHistory(model)
-            }
-            return Revision.get(result[0])
+                permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()] ]) as List<Long>
+        if (!result) {
+            return null
+        }
+        if (addToHistory) {
+            modelHistoryService.addModelToHistory(model)
+        }
+        //ModelPublishedEvent event = new ModelPublishedEvent()
+        Revision revision = Revision.get(result[0])
+        //cacheLatestRevision(cachedLatestRevs, revision, userService.username)
+        revision
+    }
+
+    private void cacheLatestRevision(final Map cachedLatestRevs, final Revision revision, final String username) {
+        cachedLatestRevs.put(username, revision.id)
+        String strJson = JsonOutput.toJson(cachedLatestRevs)
+        redisService.doRedisHSet(revision.model.submissionId, "latest-revision", strJson)
     }
 
     /** deduplication method for getting Spring's authorities as Database-Role strings */
@@ -680,26 +697,28 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         Set<String> roles = SpringSecurityUtils.authoritiesToRoles(SpringSecurityUtils.getPrincipalAuthorities())
         if (springSecurityService.isLoggedIn()) {
             // anonymous users do not have a principal
-            roles.add(getUsername())
+            roles.add(userService.username)
         }
         return roles
     }
 
     /**
-    * Queries the @p model for all revisions the user has read access to.
-    * The returned list is ordered by revision number of the model.
-    * @param model The Model for which all revisions should be retrieved
-    * @return List of Revisions ordered by revision numbers of underlying VCS.
-    * If the user has no access to any revision an empty list is returned
-    * @todo: add paginated version with offset and count. Problem: filter
-    **/
+     * Queries the @p model for all revisions the user has read access to.
+     * The returned list is ordered by revision number of the model.
+     * @param model The Model for which all revisions should be retrieved
+     * @return List of Revisions ordered by revision numbers of underlying VCS.
+     * If the user has no access to any revision an empty list is returned
+     * @todo: add paginated version with offset and count. Problem: filter
+     * @param model
+     * @return
+     */
     @PostFilter("hasPermission(filterObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllRevisions")
-    public List<Revision> getAllRevisions(Model model) {
-        /*if (model.deleted) {
+    List<Revision> getAllRevisions(Model model) {
+        if (model.deleted) {
             return []
-        }*/
+        }
         // exclude deleted revisions
         modelHistoryService.addModelToHistory(model)
         List<Revision> revisions = model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
@@ -710,12 +729,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * Parses the @p identifier to query for a model and optionally
      * a revision number, separated by the . character. If no revision
      * is specified the latest revision is returned.
+     * The authorisation has been disabled because model.findByPerennialIdentifier
+     * calls this method indirectly.
      * @param identifier The identifier in the format Model.Revision
      * @return The revision or @c null if there is no such revision
-     */
-    /*
-     * The authorisation has been disabled because model.findByPerennialIdentifier calls
-     * this method indirectly.
      */
     //@PostAuthorize("hasPermission(returnObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -745,7 +762,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostAuthorize("hasPermission(returnObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getRevision")
-    public Revision getRevision(Model model, int revisionNumber) {
+    Revision getRevision(Model model, int revisionNumber) {
         Revision revision = Revision.findByRevisionNumberAndModel(revisionNumber, model)
         if (!revision || revision.deleted /*|| model.deleted */) {
             throw new AccessDeniedException("Sorry you are not allowed to access this Model.")
@@ -766,7 +783,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getPublication")
-    public Publication getPublication(final Model model) throws AccessDeniedException, IllegalArgumentException {
+    Publication getPublication(final Model model) throws AccessDeniedException, IllegalArgumentException {
         if (!model) {
             throw new IllegalArgumentException("Model may not be null")
         }
@@ -777,21 +794,21 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-    * Creates a new Model and stores it in the VCS.
-    *
-    * Stores the @p repoFile as a new file in the VCS and creates a Model for it.
-    * The Model will have one Revision attached to it. The MetaInformation for this
-    * Model is taken from @p meta. The user who uploads the Model becomes the owner of
-    * this Model. The new Model is not visible to anyone except the owner.
-    * @param repoFile The wrapper for the model file that will be stored in the VCS.
-    * @param meta Meta Information to be added to the model
-    * @return The newly-created Model, or null if the model could not be created
-    * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
-    **/
+     * Creates a new Model and stores it in the VCS.
+     *
+     * Stores the @p repoFile as a new file in the VCS and creates a Model for it.
+     * The Model will have one Revision attached to it. The MetaInformation for this
+     * Model is taken from @p meta. The user who uploads the Model becomes the owner of
+     * this Model. The new Model is not visible to anyone except the owner.
+     * @param repoFile The wrapper for the model file that will be stored in the VCS.
+     * @param meta Meta Information to be added to the model
+     * @return The newly-created Model, or null if the model could not be created
+     * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
+     */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsFile")
-    Model uploadModelAsFile(final RepositoryFileTransportCommand repoFile, ModelTransportCommand meta)
+    Model uploadModelAsFile(final RFTC repoFile, ModelTC meta)
             throws ModelException {
         if (repoFile) {
            return uploadModelAsList([repoFile], meta)
@@ -820,19 +837,21 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevision")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    Revision addRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                         final List<RepositoryFileTransportCommand> deleteFiles,
-                         final RevisionTransportCommand rev) throws ModelException {
-        Revision revision
+    Revision addRevision(final List<RFTC> repoFiles,
+                         final List<RFTC> deleteFiles,
+                         final RevisionTC rev,
+                         final Map working = null) throws ModelException {
+        Revision revision = null
         def txDefinition = [
             // this tx will use a different session than the current one
             propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW
         ]
         Revision.withTransaction(txDefinition) {
             // the returned revision is detached from the Hibernate session
-            revision = persistRevision(repoFiles, deleteFiles, rev)
+
+            revision = doPersistRevision(repoFiles, deleteFiles, rev)
         }
-        Revision attachedRevision = doPostPersistRevision(revision)
+        Revision attachedRevision = doPostPersistRevision(revision, working)
         return attachedRevision ?: revision
     }
 
@@ -840,11 +859,12 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.amendRevision")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    Revision amendRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                         final List<RepositoryFileTransportCommand> deleteFiles,
-                         final RevisionTransportCommand rev) throws ModelException {
+    Revision amendRevision(final List<RFTC> repoFiles,
+                           final List<RFTC> deleteFiles,
+                           final RevisionTC rev,
+                           final Map working = null) throws ModelException {
         logger.debug("Amending the revision: ${rev.dump()}")
-        Revision revision
+        Revision revision = null
         def txDefinition = [
             // this tx will use a different session than the current one
             propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW
@@ -853,9 +873,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             // the returned revision is detached from the Hibernate session
             revision = doAmendRevision(repoFiles, deleteFiles, rev)
         }
-        Revision attachedRevision = doPostPersistRevision(revision)
+        Revision attachedRevision = doPostPersistRevision(revision, working)
         return attachedRevision ?: revision
-        return revision
     }
     /**
      * Persists a new model revision in the database and upload the repository files in VCS.
@@ -871,10 +890,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * @throws ModelException if there is no model associated with @p rev, if its model has
      * been deleted or if the comment is null.
      */
-    Revision persistRevision(List<RepositoryFileTransportCommand> repoFiles,
-                             List<RepositoryFileTransportCommand> deleteFiles,
-                             RevisionTransportCommand rev) throws ModelException {
-        StopWatch stopWatch = new Log4JStopWatch("modelService.persistRevision")
+    Revision doPersistRevision(List<RFTC> repoFiles,
+                               List<RFTC> deleteFiles,
+                               RevisionTC rev) throws ModelException {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doPersistRevision")
         // TODO: the method should be thread safe, add a lock
         validateModelRevision(rev)
         List<File> modelFiles = repositoryFileService.getFilesFromRF(repoFiles)
@@ -883,6 +902,9 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
         final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
         Model model = getModel(PERENNIAL_ID)
+        if (rev.format.identifier == "SBML") {
+            addModelIdentifiersAsAnnotation(rev)
+        }
         // initialise a new revision
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
                     comment: rev.comment, uploadDate: new Date(), owner: currentUser,
@@ -892,7 +914,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                     readmeSubmission: rev.readmeSubmission)
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
 
-        putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, false)
+        revision = putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, false)
 
         // calculate the new revision number - accessing the revisions directly to circumvent ACL
         revision.revisionNumber = model.revisions.sort {it.revisionNumber}.last().revisionNumber + 1
@@ -914,9 +936,9 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         return revision
     }
 
-    Revision doAmendRevision(List<RepositoryFileTransportCommand> repoFiles,
-                             List<RepositoryFileTransportCommand> deleteFiles,
-                             RevisionTransportCommand rev) throws ModelException {
+    Revision doAmendRevision(List<RFTC> repoFiles,
+                             List<RFTC> deleteFiles,
+                             RevisionTC rev) throws ModelException {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doAmendRevision")
         validateModelRevision(rev)
 
@@ -927,11 +949,14 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         Model model = getModel(PERENNIAL_ID)
         // fetch the current revision from the database
         Revision revision = Revision.get(rev.id)
+        if (rev.format.identifier == "SBML") {
+            addModelIdentifiersAsAnnotation(rev)
+        }
         // update the revision with the potential updates populated in the rev argument
         doUpdateRevision(revision, rev)
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
 
-        putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, true)
+        revision = putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, true)
 
         if (revision.validate()) {
             doUpdateModelMetadata(model, rev)
@@ -947,14 +972,14 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-    * Retrieves information related to a file from the VCS
-    * Passes the @p revision and filename to the vcsService, gets
-    * info related to the specified @p filename, and filters the returned
-    * values based on the revisions available to the user
-    * @param rev The model revision
-    * @param filename The file to be queried
-    * @return A list of VcsFileDetails objects
-    **/
+     * Retrieves information related to a file from the VCS
+     * Passes the @p revision and filename to the vcsService, gets
+     * info related to the specified @p filename, and filters the returned
+     * values based on the revisions available to the user
+     * @param rev The model revision
+     * @param filename The file to be queried
+     * @return A list of VcsFileDetails objects
+     */
     @PreAuthorize("permitAll()")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getFileDetails")
@@ -980,25 +1005,25 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-    * Creates a new Model and stores it in the VCS. Stripped down version suitable
-    * for calling from SubmissionService, where model has already been validated
-    *
-    * Stores the @p modelFile as a new file in the VCS and creates a Model for it.
-    * The Model will have one Revision attached to it. The MetaInformation for this
-    * Model is taken from @p meta. The user who uploads the Model becomes the owner of
-    * this Model. The new Model is not visible to anyone except the owner.
-    * @param repoFiles The list of command objects corresponding to the files
-    * of the model that is to be stored in the VCS.
-    * @param rev Meta Information to be added to the model
-    * @return The new created Model, or null if the model could not be created
-    * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
-    **/
+     * Creates a new Model and stores it in the VCS. Stripped down version suitable
+     * for calling from SubmissionService, where model has already been validated
+     *
+     * Stores the @p modelFile as a new file in the VCS and creates a Model for it.
+     * The Model will have one Revision attached to it. The MetaInformation for this
+     * Model is taken from @p meta. The user who uploads the Model becomes the owner of
+     * this Model. The new Model is not visible to anyone except the owner.
+     * @param repoFiles The list of command objects corresponding to the files
+     * of the model that is to be stored in the VCS.
+     * @param rev Meta Information to be added to the model
+     * @return The new created Model, or null if the model could not be created
+     * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
+     */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadValidatedModel")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    Model uploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
-            RevisionTransportCommand rev) throws ModelException {
+    Model uploadValidatedModel(final List<RFTC> repoFiles,
+            RevisionTC rev, final Map working = null) throws ModelException {
         Model model
         // this tx will use a different session than the current one
         def txDefinition = [propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW]
@@ -1012,10 +1037,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             // turn them into transport commands in order to avoid LazyInitialisationExceptions
             def attachedModel = Model.get(model.id)
             Revision r = attachedModel.revisions.first()
-            RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
-            indexModelRevision(cmd)
-            //convertModelToOtherFormats(cmd)
-            shareRevision2FellowCurators(cmd)
+            doPostPersistRevision(r, working)
             return attachedModel
         }
         model
@@ -1023,8 +1045,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.doUploadValidatedModel")
-    Model doUploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
-            RevisionTransportCommand rev) throws ModelException {
+    Model doUploadValidatedModel(final List<RFTC> repoFiles,
+            RevisionTC rev) throws ModelException {
         logger.debug "About to store the following model: ${rev.name}"
         // TODO: to support anonymous submissions, this method has to be changed
         if (Revision.findByName(rev.name)) {
@@ -1063,10 +1085,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * @return The new created Model, or null if the model could not be created
      * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
      */
+    // TODO: delete the following method and its usages
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsList")
-    public Model uploadModelAsList(final List<RepositoryFileTransportCommand> repoFiles, ModelTransportCommand meta)
+    Model uploadModelAsList(final List<RFTC> repoFiles, ModelTC meta)
             throws ModelException {
         def stopWatch = new Log4JStopWatch("modelService.uploadModelAsList.sanityChecks")
         // TODO: to support anonymous submissions this method has to be changed
@@ -1143,11 +1166,12 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 description: modelFileFormatService.extractDescription(modelFiles, format),
                 comment: meta.comment,
                 uploadDate: new Date())
+        RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
 
-        // keep a list of RFs closeby, as we may need to discard all of them
+        // keep a list of RFs closely, as we may need to discard all of them
         List<RepositoryFile> domainObjects =
             repositoryFileService.convertRFTCToRF(repoFiles, revision)
-        String formatVersion = modelFileFormatService.getFormatVersion(revision)
+        String formatVersion = modelFileFormatService.getFormatVersion(revisionTC)
         revision.format = ModelFormat.findByIdentifierAndFormatVersion(meta.format.identifier, formatVersion)
         assert formatVersion != null && revision.format != null
         try {
@@ -1162,7 +1186,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             errMsg.append("${m.properties} to VCS: ${e.getMessage()}.\n")
             errMsg.append("${model.errors.allErrors.inspect()}\n")
             errMsg.append("${revision.errors.allErrors.inspect()}\n")
-            logger.error(errMsg)
+            logger.error(errMsg.toString())
             stopWatch.stop()
             throw new ModelException(m,
                 "Could not store new Model $m.properties} in VCS".toString(), e)
@@ -1184,11 +1208,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 def msg  = new StringBuffer("New Model ${name} does not validate:\n")
                 msg.append("${model.errors.allErrors.inspect()}\n")
                 msg.append("${revision.errors.allErrors.inspect()}\n")
-                logger.error(msg)
+                logger.error(msg.toString())
                 stopWatch.stop()
-                ModelAdapter adapter = new ModelAdapter(model: model, latest: revision).toCommandObject()
+                ModelAdapter adapter = new ModelAdapter(model: model, latest: revision).toCommandObject() as ModelAdapter
                 msg = "New model does not validate"
-                throw new ModelException(adapter, msg)
+                throw new ModelException(adapter.toCommandObject(), msg)
             }
             model.save(flush: true)
             stopWatch.lap("Finished GORM validation.")
@@ -1205,7 +1229,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             stopWatch.stop()
 
             // broadcast event
-            grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this,new ModelAdapter(model: model).toCommandObject(), modelFiles))
+            def event = new ModelCreatedEvent(this, new ModelAdapter(model: model).toCommandObject(), modelFiles)
+            grailsApplication.mainContext.publishEvent(event)
         } else {
             // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
@@ -1223,7 +1248,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     * The provided @p file will be stored in the VCS as an update to an existing file of the same @p model.
     * A new Revision will be created and appended to the list of Revisions of the @p model.
     * @param model The Model the revision should be added
-    * @param repoFile The RepositoryFileTransportCommand object corresponding to the file that is to be stored in the VCS as a new revision
+    * @param repoFile The RFTC object corresponding to the file that is to be stored in the VCS as a new revision
     * @param format The format of the model file
     * @param comment The commit message for the new revision
     * @return The new added Revision. In case an error occurred while accessing the VCS @c null will be returned.
@@ -1232,7 +1257,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevisionAsFile")
-    Revision addRevisionAsFile(Model model, final RepositoryFileTransportCommand repoFile,
+    Revision addRevisionAsFile(Model model, final RFTC repoFile,
             final ModelFormat format, final String comment) throws ModelException {
         return addRevisionAsList(model, [repoFile], format, comment)
     }
@@ -1251,13 +1276,13 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevisionAsList")
-    public Revision addRevisionAsList(Model model, final List<RepositoryFileTransportCommand> repoFiles,
-            final ModelFormat format, final String comment) throws ModelException {
+    Revision addRevisionAsList(Model model, final List<RFTC> repoFiles,
+                               final ModelFormat format, final String comment) throws ModelException {
         // TODO: the method should be thread safe, add a lock
         if (!model) {
             throw new ModelException(null, "Model may not be null")
         }
-        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject(false)
+        ModelTC mtc = new ModelAdapter(model: model).toCommandObject(false)
         if (model.deleted) {
             throw new ModelException(mtc, "A new Revision cannot be added to a deleted model")
         }
@@ -1313,8 +1338,10 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                         description: modelFileFormatService.extractDescription(modelFiles, format), comment: comment,
                         uploadDate: new Date(), owner: currentUser,
                 minorRevision: false, validated:valid)
+        RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
-        String formatVersion = modelFileFormatService.getFormatVersion(revision)
+        String formatVersion = modelFileFormatService.getFormatVersion(revisionTC)
         revision.format = ModelFormat.findByIdentifierAndFormatVersion(format.identifier, formatVersion)
 
         // save the new model in the database
@@ -1350,9 +1377,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 }
             }
             revision.refresh()
-            grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
-                   new RevisionAdapter(revision: revision, latest: true).toCommandObject(), vcsService.retrieveFiles
-                (revision)))
+            RevisionCE revisionCE = new RevisionCE(this, revisionTC, vcsService.retrieveFiles(revision))
+            grailsApplication.mainContext.publishEvent(revisionCE)
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
@@ -1369,7 +1395,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.canAddRevision")
-    public Boolean canAddRevision(final Model model) {
+    Boolean canAddRevision(final Model model) {
         if (model.deleted) {
             return false
         }
@@ -1398,7 +1424,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         } catch (VcsException e) {
             String message = "Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed."
             logger.error(message, e)
-            ModelTransportCommand model = new ModelAdapter(model: revision.model, latest: revision).toCommandObject()
+            ModelTC model = new ModelAdapter(model: revision.model,
+                latest: revision).toCommandObject()
             throw new ModelException(model, message, e)
         }
         return files
@@ -1413,7 +1440,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     //@PreAuthorize("hasPermission(#revision, read) or hasRole('ROLE_ADMIN')")  Not working. Seems related to: https://bitbucket.org/jummp/jummp/issue/23/spring-security-doesnt-work-as-expected-in
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.retrieveModelFiles")
-    List<RepositoryFileTransportCommand> retrieveModelFiles(final Revision revision) throws ModelException {
+    List<RFTC> retrieveModelFiles(final Revision revision) throws ModelException {
         if (aclUtilService.hasPermission(springSecurityService.authentication, revision, BasePermission.READ)
                 || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             return repositoryFileService.getRepositoryFilesForRevision(revision)
@@ -1431,7 +1458,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.retrieveModelFiles")
-    List<RepositoryFileTransportCommand> retrieveModelFiles(final Model model) throws ModelException {
+    List<RFTC> retrieveModelFiles(final Model model) throws ModelException {
         final Revision revision = getLatestRevision(model, false)
         if (!revision) {
             logger.error("you cant access model ${model}")
@@ -1454,7 +1481,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.grantReadAccess")
-    public void grantReadAccess(Model model, User collaborator) {
+    void grantReadAccess(Model model, User collaborator) {
         final String username = collaborator.username
         // Read access is modeled by adding read access to the model (user will get read access for future revisions)
         // and by adding read access to all revisions the user has access to
@@ -1478,7 +1505,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             model.revisions.each { Revision it ->
                 boolean canRead = aclUtilService.hasPermission(
                         springSecurityService.authentication, it, BasePermission.READ)
-                if ( canRead || isAdmin ) {
+                if (canRead || isAdmin) {
                     aclUtilService.addPermission(it, username, BasePermission.READ)
                 }
             }
@@ -1491,8 +1518,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         sendMessage("seda:model.readAccessGranted", notification)
     }
 
-    private String getPermissionString(int p) {
-        switch(p) {
+    private static String getPermissionString(int p) {
+        switch (p) {
             case BasePermission.READ.getMask(): return "r"
             case BasePermission.WRITE.getMask(): return "w"
         }
@@ -1510,7 +1537,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
    // @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getPermissionsMap")
-    public Collection<PermissionTransportCommand> getPermissionsMap(Model model, boolean authenticated = true) {
+    Collection<PermissionTransportCommand> getPermissionsMap(Model model, boolean authenticated = true) {
         def map = new HashMap<Integer, PermissionTransportCommand>()
         if (!authenticated || aclUtilService.hasPermission(springSecurityService.authentication, model,
                     BasePermission.ADMINISTRATION ) || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
@@ -1526,7 +1553,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     User user = User.findByUsername(principal)
                     if (user) {
                         String userRealName = user.person.userRealName
-                        int userId = user.id
+                        int userId = (int) user.id
                         if (!map.containsKey(userId)) {
                             PermissionTransportCommand ptc = new PermissionTransportCommand(
                                 name: userRealName, id: userId, username: user.username)
@@ -1553,24 +1580,22 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     }
                 }
             }
+        } else {
+            throw new AccessDeniedException("You can't access permissions if you don't have them.")
         }
-        else {
-            throw new AccessDeniedException("You cant access permissions if you dont have them.")
-        }
-        return map.values()
+
+        map.values()
     }
 
     /**
-    * Grants permissions to a @model given a list of @permissions
-    *
-    *
-    * @param model The Model
-    * @param permissions A list of permissions
-    **/
-   // @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
+     * Grants permissions to a @model given a list of @permissions
+     *
+     * @param model A {@link Model} object representing the model in question.
+     * @param permissions A list of wrapper objects {@link PermissionTransportCommand} which encapsulate a user, a model or revision and granted permissions
+     */
     @PostLogging(LoggingEventType.RETRIEVAL)
-    @Profiled(tag="modelService.getPermissionsMap")
-    public void setPermissions(Model model, List<PermissionTransportCommand> permissions) {
+    @Profiled(tag="modelService.setPermissions")
+    void setPermissions(Model model, List<PermissionTransportCommand> permissions) {
         if (aclUtilService.hasPermission(springSecurityService.authentication, model,
                     BasePermission.ADMINISTRATION ) || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             Collection<PermissionTransportCommand> existing = getPermissionsMap(model)
@@ -1592,8 +1617,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     if (!(current.write) && newPerm.write) {
                         grantWriteAccess(model, user)
                     }
-                }
-                else {
+                } else {
                     if (newPerm.read) {
                         grantReadAccess(model, user)
                     }
@@ -1616,17 +1640,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     }
                 }
             }
+        } else {
+            throw new AccessDeniedException("You can't access the model ${model.submissionId} if you don't have required permissions.")
         }
-        else {
-            throw new AccessDeniedException("You cant access permissions if you dont have them.")
-        }
-    }
-
-    private String getUsername() {
-        if (springSecurityService.isLoggedIn()) {
-            return (springSecurityService.currentUser as User).getUsername()
-        }
-        return "anonymous"
     }
 
     /**
@@ -1653,8 +1669,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             }
             model.revisions.each { Revision it ->
                 // may have been granted already through grantReadAccess for instance
-                if (!hasAdminPermission(it, username)) {
-                    aclUtilService.addPermission(it, username, BasePermission.ADMINISTRATION)
+                if (!hasAdminPermission(it, collaborator.username)) {
+                    aclUtilService.addPermission(it, collaborator.username, BasePermission.ADMINISTRATION)
                 }
             }
         }
@@ -1682,7 +1698,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.revokeReadAccess")
-    public boolean revokeReadAccess(Model model, User collaborator) {
+    boolean revokeReadAccess(Model model, User collaborator) {
         final String principal = collaborator.username
         if (principal == springSecurityService.authentication.name) {
             // the user cannot revoke his own rights
@@ -1690,35 +1706,48 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         }
         boolean isCurator = userService.isCurator(collaborator)
         Set<Revision> revisions = model.revisions
-
-        aclUtilService.deletePermission(model, principal, BasePermission.READ)
-        aclUtilService.deletePermission(model, principal, BasePermission.WRITE)
-        if (isCurator) {
-            aclUtilService.deletePermission(model, principal, BasePermission.ADMINISTRATION)
-            revisions.each { Revision r ->
-                aclUtilService.deletePermission(r, principal, BasePermission.ADMINISTRATION)
-                aclUtilService.deletePermission(r, principal, BasePermission.READ)
+        try {
+            boolean check = hasPermission(model, BasePermission.READ as BasePermission)
+            if (check) {
+                aclUtilService.deletePermission(model, principal, BasePermission.READ)
             }
-        } else {
-            boolean adminToModel = hasAdminPermission(model, principal)
-            if (adminToModel) {
+            check = hasPermission(model, BasePermission.WRITE as BasePermission)
+            if (check) {
+                aclUtilService.deletePermission(model, principal, BasePermission.WRITE)
+            }
+            if (isCurator) {
                 aclUtilService.deletePermission(model, principal, BasePermission.ADMINISTRATION)
-            }
-            final boolean isAdmin = SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')
-            for (Revision revision in revisions) {
-                boolean canRead = aclUtilService.hasPermission(
-                        springSecurityService.authentication, revision, BasePermission.READ)
-                if (canRead || isAdmin) {
-                    try {
-                        aclUtilService.deletePermission(revision, principal, BasePermission.READ)
-                    } catch(Exception e) {
-                        logger.error e.message, e
-                        return false
+                revisions.each { Revision r ->
+                    aclUtilService.deletePermission(r, principal, BasePermission.ADMINISTRATION)
+                    aclUtilService.deletePermission(r, principal, BasePermission.READ)
+                }
+            } else {
+                boolean adminToModel = hasAdminPermission(model, principal)
+                if (adminToModel) {
+                    check = hasPermission(model, BasePermission.ADMINISTRATION as BasePermission)
+                    if (check) {
+                        aclUtilService.deletePermission(model, principal, BasePermission.ADMINISTRATION)
+                    }
+                }
+                final boolean isAdmin = SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')
+                for (Revision revision in revisions) {
+                    boolean canRead = hasPermission(revision, BasePermission.READ as BasePermission)
+                    if (canRead || isAdmin) {
+                        try {
+                            aclUtilService.deletePermission(revision, principal, BasePermission.READ)
+                        } catch (Exception e) {
+                            logger.error e.message, e
+                            return false
+                        }
                     }
                 }
             }
+            return true
+        } catch (NotFoundException notFoundException) {
+            logger.error("An error has occurred when trying to revoke non-exist permission... The error details could be found below.")
+            notFoundException.printStackTrace()
         }
-        return true
+        return false
     }
 
     /*
@@ -1755,7 +1784,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 return false
             }
             def sid
-            String currentUsernameOrRole
+            String currentUsernameOrRole = ""
             if (ace.sid instanceof PrincipalSid) {
                 sid = ace.sid as PrincipalSid
                 currentUsernameOrRole = sid.principal
@@ -1766,10 +1795,15 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 sid = null
             }
             boolean value = ace.permission == perm && currentUsernameOrRole == usernameOrRole
-            boolean doesItHasPermission = sid == null ? false : value
-            return doesItHasPermission
+            boolean doesItHavePermission = sid == null ? false : value
+            return doesItHavePermission
         }
     }
+
+    boolean hasPermission(def domainObject, final BasePermission perm) {
+        aclUtilService.hasPermission(springSecurityService.authentication, domainObject, perm)
+    }
+
     /**
     * Revokes write access for @p model from @p collaborator.
     *
@@ -1783,7 +1817,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.revokeWriteAccess")
-    public boolean revokeWriteAccess(Model model, User collaborator) {
+    boolean revokeWriteAccess(Model model, User collaborator) {
         final String principal = collaborator.username
         if (principal == springSecurityService.authentication.name) {
             // the user cannot revoke his own rights
@@ -1804,26 +1838,95 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     }
 
     /**
-    * Transfers the ownership of the @p model to @p collaborator.
-    *
-    * The ownership can only be transferred from a user having the right to grant
-    * read/write access and the @p model is not yet under curation or published.
-    * The @p collaborator has to have read access to future revisions of the model.
-    *
-    * All Model specific rights are revoked from the owner and granted to the @p collaborator.
-    * This includes:
-    * @li Write access to the @p model
-    * @li Read access to future revisions of the @p model
-    * @li Start of curation
-    * @li Grant/Revoke read/write access to the @p model
-    * @param model The Model for which the ownership should be transferred.
-    * @param collaborator The User who becomes the new owner
-    **/
+     * Transfers the ownership of the @p model to @p contributor.
+     *
+     * The ownership can only be transferred from a user having the right to grant
+     * read/write access and the @p model is not yet under curation or published.
+     * The @p contributor has to have read access to future revisions of the model.
+     *
+     * All Model specific rights are revoked from the owner and granted to the @p contributor.
+     * This includes:
+     * @li Write access to the @p model
+     * @li Read access to future revisions of the @p model
+     * @li Start of curation
+     * @li Grant/Revoke read/write access to the @p model
+     * @param model The Model for which the ownership should be transferred.
+     * In the first implementation, we suppose that all revisions are submitted by the same submitter/owner.
+     *
+     * @param contributor The User who becomes the new owner
+     */
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
-    @Profiled(tag="modelService.transferOwnerShip")
-    public void transferOwnerShip(Model model, User collaborator) {
-        // TODO: implement me
+    @Profiled(tag="modelService.transferOwnership")
+    void transferOwnership(Model model, User contributor) {
+        // this doesn't work: aclUtilService.changeOwner(model, contributor.username)
+        Set<Revision> revisions = model.revisions.sort { r1, r2 ->
+            r1.revisionNumber <=> r2.revisionNumber
+        }
+        User currentOwner = revisions.first().owner
+        // step 1: replace the current owner with the contributor
+        for (Revision revision in revisions) {
+            revision.owner = contributor
+            revision.save(flush: true)
+        }
+
+        // step 2: give the new owner full permission to the model and all revisions
+        grantWriteAccess(model, contributor)
+        revisions.each { Revision rev ->
+            aclUtilService.addPermission(rev, contributor.username, BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(rev, contributor.username, BasePermission.READ)
+            aclUtilService.addPermission(rev, contributor.username, BasePermission.WRITE)
+        }
+
+        // step 3: revoke all permissions granted to the former owner
+        revokeReadAccess(model, currentOwner)
+        revokeWriteAccess(model, currentOwner)
+        revisions.each { Revision rev ->
+            aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.ADMINISTRATION)
+            aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.READ)
+            aclUtilService.deletePermission(rev, currentOwner.username, BasePermission.WRITE)
+        }
+
+        // step 4: remapping contribution details for the new contributor on the model
+        boolean succeeded = changeContributionDetails(revisions, contributor)
+        if (succeeded) {
+            logger.info("""Remapping contribution details for ${contributor.username} \
+on ${model.submissionId} completed successfully.""")
+        } else {
+            logger.info("""Errors have occurred when remapping contribution details for \
+${contributor.username} on ${model.submissionId}. Please check the data and complete the task manually.""")
+        }
+    }
+
+    private static boolean changeContributionDetails(final Set<Revision> revisions, final User contributor) {
+        Integer count = 0
+        List<Integer> result = new ArrayList<>()
+        for (Revision revision: revisions) {
+            List<CD> details = CD.findAllByRevision(revision)
+            details.each { CD cd ->
+                try {
+                    Integer r = CD.executeUpdate("""UPDATE ContributionDetails cd \
+SET cd.contributor.id=:newContributorId \
+WHERE cd.contributor.id=:oldContributorId
+AND cd.revision.id=:oldRevisionId AND cd.role.id=:oldRoleId""",
+                        [newContributorId: contributor.id,
+                         oldContributorId: cd.contributor.id,
+                         oldRevisionId   : cd.revision.id,
+                         oldRoleId       : cd.role.id] as Map)
+                    if (1 == r) {
+                        result.add(r)
+                    }
+                } catch (Exception exception) {
+                    logger.error("""An error has occurred when remapping contribution for ${contributor.username} \
+on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
+                    exception.printStackTrace()
+                } finally {
+                    count++
+                }
+            }
+        }
+        // check the result
+        result?.size() == count
     }
 
     /**
@@ -1859,7 +1962,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     **/
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.canShare")
-    public boolean canShare(Model model) {
+    boolean canShare(Model model) {
         if (!model) {
             throw new IllegalArgumentException("Model may not be null")
         }
@@ -1909,12 +2012,88 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         return succeed
     }
 
-    void deleteModelWorkingDirectory(final Model model) throws IOException {
+    @PostLogging(LoggingEventType.DELETION)
+    @Profiled(tag="modelService.undeleteModel")
+    boolean undeleteModel(Model model) {
+        println model?.dump()
+        if (!model) {
+            throw new IllegalArgumentException("Cannot undelete a null model")
+        }
+        /*if (model.deleted) {
+            throw new IllegalArgumentException("The model ${model?.submissionId} has been already deleted")
+        }
+        boolean canDelete = canDelete(model)
+        if (!canDelete) {
+            throw new IllegalStateException("Cannot delete the model ${model.submissionId}")
+        }*/
+        model.deleted = false
+        boolean succeed = model.save(flush: true)
+        if (succeed) {
+            logger.info("${model.submissionId} has been deleted (aka. archived).")
+            ModelDeletedEvent event = new ModelDeletedEvent(this, new ModelAdapter(model: model).toCommandObject())
+            grailsApplication.mainContext.publishEvent(event)
+        }
+        return succeed
+    }
+
+    boolean deleteModelWorkingDirectory(final Model model) throws IOException {
         String workingDirectory = grailsApplication.config.jummp.vcs.workingDirectory
         String modelDirectory = model.vcsIdentifier
         Path absModelDir = Paths.get(workingDirectory, modelDirectory)
         fileSystemService.deleteDirectory(absModelDir)
     }
+
+    /**
+     * Deletes all the audit items of a given model
+     *
+     * @param model {@link Model} object denoting the model in question.
+     *
+     * @return true if the deletion is successful. Otherwise, it returns false.
+     */
+    static boolean deleteModelAudit(final Model model) {
+        if (!model) {
+            logger.error("Cannot delete the audit data of a null model!!!")
+            return false
+        }
+        boolean retVal = false
+        try {
+            String qStr = "delete ModelAudit ma where ma.model.id = :modelId"
+            ModelAudit.executeUpdate(qStr, [modelId: model.id])
+            retVal = ModelAudit.findAllByModel(model)?.toList()?.size() == 0
+        } catch (Exception ex) {
+            retVal = false
+            logger.error("""An error happened when trying to delete all the auditing items
+for the model ${model.submissionId} due to ${ex.message}.""")
+        } finally {
+            ModelAudit.withSession { it.flush() }
+        }
+        retVal
+    }
+
+    /**
+     * Deletes all the contributors linked to the given model
+     *
+     * @param model {@link Model} object indicating the model in question.
+     *
+     * @return boolean if the deletion is successful, otherwise, it returns false.
+     */
+    boolean deleteModelContributors(final Model model) {
+        if (!model) {
+            logger.error("Cannot delete the contributors of the null model!")
+            return false
+        }
+        logger.info("Deleting all connected contributors of the model ${model.submissionId}.")
+        List<Boolean> results = []
+        model.revisions.each { Revision rev ->
+            boolean status = contributorService.deleteConnectedContributors(rev)
+            results.add(status)
+        }
+        // we expect the deletion is successful when the number of true in the result list
+        // should be the same as the number of revisions
+        int count = results.collect { it }?.size()
+        count == model.revisions?.size()
+    }
+
     /*
      * Convenience method that checks whether a model has any publicly-available revision.
      *
@@ -1948,7 +2127,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.restoreModel")
-    public boolean restoreModel(Model model) {
+    boolean restoreModel(Model model) {
         if (!model) {
             throw new IllegalArgumentException("Model may not be null")
         }
@@ -1979,7 +2158,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     @PreAuthorize("hasPermission(#revision, delete) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="modelService.deleteRevision")
-    public boolean deleteRevision(Revision revision) {
+    boolean deleteRevision(Revision revision) {
         if (!revision) {
             throw new IllegalArgumentException("Revision may not be null")
         }
@@ -2010,13 +2189,35 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
 
     /**
      * Tests if the user can publish this revision
-     * Only a Curator or an Administrator are allowed to call this
-     * method.
+     * Only a Curator or an Administrator are allowed to call this method.
      * @param revision The Revision to be published
      */
-    @PostLogging(LoggingEventType.UPDATE)
+    @PostLogging(LoggingEventType.PUBLISH)
     @Profiled(tag="modelService.canPublish")
-    public boolean canPublish(Revision revision) {
+    boolean canPublish(Revision revision) {
+        if (!revision) {
+            return false
+        }
+        if (revision.deleted) {
+            return false
+        }
+        if (revision.model.deleted) {
+            return false
+        }
+        if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN,ROLE_CURATOR")) {
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Tests if the user can unpublish this revision
+     * Only a Curator or an Administrator are allowed to call this method.
+     * @param revision The Revision to be unpublished/unreleased
+     */
+    @PostLogging(LoggingEventType.UNPUBLISH)
+    @Profiled(tag="modelService.canUnpublish")
+    boolean canUnpublish(Revision revision) {
         if (!revision) {
             return false
         }
@@ -2040,7 +2241,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     @PostLogging(LoggingEventType.SUBMIT_FOR_PUBLICATION)
     @Profiled(tag="modelService.canSubmitForPublication")
-    public boolean canSubmitForPublication(Revision revision) {
+    boolean canSubmitForPublication(Revision revision) {
         if (!revision) {
             return false
         }
@@ -2050,7 +2251,11 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         if (revision.model.deleted) {
             return false
         }
-        if (!SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")) {
+        // the condition 1: the currently logged user is neither curator nor reviewer
+        boolean cond1 = SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")
+        // the condition 2: the currently logged user is the model owner
+        boolean cond2 = revision.owner == springSecurityService.currentUser
+        if (!cond1 && cond2) {
             return true
         }
         return false
@@ -2064,7 +2269,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
          */
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.canValidate")
-    public boolean canValidate(Revision revision) {
+    boolean canValidate(Revision revision) {
         if (!revision) {
             return false
         }
@@ -2113,7 +2318,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     Revision updateRevisionCurationState(Revision revision, CurationState state) {
         revision.setCurationState(state)
-        if (CurationState.CURATED == state && isRevisionPublic(revision)) {
+        String perennialId = revision.model.publicationId
+        boolean missingPerennialId = !perennialId || perennialId == ""
+        if (CurationState.CURATED == state && isRevisionPublic(revision) && missingPerennialId) {
             Revision updated = doBeforePublishingCuratedRevision(revision)
             if (null != updated && updated != revision) {
                 // ask Hibernate to not persist the original revision
@@ -2137,7 +2344,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      * @param revision The Revision to be published
      */
     @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
-    @PostLogging(LoggingEventType.UPDATE)
+    @PostLogging(LoggingEventType.PUBLISH)
     @Profiled(tag="modelService.publishModelRevision")
     Revision publishModelRevision(Revision revision) {
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
@@ -2153,63 +2360,73 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
-/*
-
-        //validating publish process
-        if(!revision.validationLevel.equals(ValidationState.APPROVED)){
-            throw new PublishException("You cannot publish this model. Please check the annotations.")
-        }
-
-        Qualifier qualifier = Qualifier.findByUri("http://www.ddmore.org/ontologies/webannotationtool#model-implementation-conforms-to-literature-controlled")
-        def stmtsWithQualifier = revision.annotations*.statement.findAll { it.qualifier == qualifier }
-        def qualifierXrefs = stmtsWithQualifier.collect { Statement s -> s.object }
-
-        boolean originalModel = true
-        if(qualifierXrefs) {
-            ResourceReference resourceReference = qualifierXrefs.first()
-            if (resourceReference.name.toLowerCase().equals("no")) {
-                originalModel = false
-            }
-        }
-
-        PublishInfo pubInfo = new PublishInfo(originalModel)
-        revision.repoFiles.each {
-            String description = null;
-            if (it.mainFile) {
-                description = it.revision.description
-            }else {
-                description = it.description
-            }
-            if (description == null || description.empty) {
-                throw new PublishException("Please provide a description for the file: " + it.path)
-            }
-
-            pubInfo.addToFileSet(it.path, description);
-        }
-
-        if(!pubInfo.validModelAccomodation()){
-            throw new PublishException("Model is not compliant with original publication. Please provide a Model_Accommodations.txt file.")
-        }
-
-        def scenario = publishValidator.validatePublish(pubInfo)
-        if(!scenario) {
-            throw new PublishException("Submission did not match any of the scenarios. Please upload all required files")
-        }
-*/
-
         boolean curatedModel = isCurated(revision)
-        if (MAKE_PUBLICATION_ID && curatedModel) {
+        boolean missingPerennialId = !model.publicationId || model.publicationId == ""
+        if (shouldMakePublicationId() && curatedModel && missingPerennialId) {
             revision = doBeforePublishingCuratedRevision(revision)
         }
         model.firstPublished = new Date()
         markRevisionAsPublic(revision)
         if (!model.save(flush: true)) {
-            ModelTransportCommand cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
+            ModelTC cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
             throw new ModelException(cmd,
-                    "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
+                "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
+        }
+        //ModelPublishedEvent event = new ModelPublishedEvent(new Object(), cmd)
+        //grailsApplication.mainContext.publishEvent(event)
+
+        // publish the revision files to the EBI's public FTP sever for serving our users
+        // TODO: we should support the availability of the FTP settings instead of fixing the domain name
+        if (grailsApplication.isWarDeployed()
+                && grailsApplication.config.grails.serverURL.contains("ebi.ac.uk")) {
+            copyRevisionFilesToFtp(revision)
         }
 
         revision
+    }
+
+    /**
+     * Destroys the model
+     *
+     * @param model {@link Model} object indicating the model in question.
+     *
+     * @return true if the destroy is successful. Otherwise, it returns false.
+     */
+    boolean purgeModel(final Model model) {
+        long tmpId = model.id
+        Model.withTransaction {
+            Model.where {
+                id == model.id
+            }.deleteAll()
+        }
+        Model.withSession { it.flush() }
+        Model.get(tmpId) == null
+    }
+
+    /**
+     * Purges a given revision from the database
+     *
+     * @param revision An {@link Revision} object will be destroyed.
+     *
+     * @return true if the action is successful, otherwise, it returns false.
+     */
+    boolean purgeRevision(final Revision revision) {
+        boolean retVal = false
+        long tempId = revision.id
+        try {
+            def qStr = "delete Revision r where r.id = :revId"
+            retVal = Revision.executeUpdate(qStr, [revId: tempId]) ? false : true
+        } catch (Exception ex) {
+            logger.error("""An error happened when deleting the revision \
+${revision.model.submissionId}, id=${tempId} due to ${ex.message}.""")
+            retVal = false
+        } finally {
+            Revision.withSession {
+                it.flush()
+                retVal = Revision.get(tempId) ? false : true
+            }
+        }
+        retVal
     }
 
     /*
@@ -2226,7 +2443,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      * Returns true if a revision can be read by anonymous users and has state ModelState.PUBLISHED
      * and false otherwise.
      */
-    private boolean isRevisionPublic(Revision revision) {
+    boolean isRevisionPublic(Revision revision) {
         (revision.state == ModelState.PUBLISHED || revision.state == ModelState.RELEASED) &&
             aclUtilService.hasPermission(createAnonymousAuthToken(), revision, BasePermission.READ)
     }
@@ -2240,7 +2457,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      *      https://github.com/grails-plugins/grails-spring-security-core/blob/2.x/src/java/grails/plugin/springsecurity/authentication/GrailsAnonymousAuthenticationToken.java
      *      https://github.com/grails-plugins/grails-spring-security-core/blob/2.x/grails-app/conf/DefaultSecurityConfig.groovy#L145
      */
-    private Authentication createAnonymousAuthToken() {
+    private static Authentication createAnonymousAuthToken() {
         String key ='foo' // same as grailsApplication.config.grails.plugin.springsecurity.anon.key
         new GrailsAnonymousAuthenticationToken(key, null)
     }
@@ -2256,30 +2473,32 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
 
         // TODO move out of here and invoke via e.g. grailsApplication.mainContext.publishEvent()
         String format = revision.format.identifier
-        if ("SBML".equals(format)) {
-            RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
-            def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+        if ("SBML" == format) {
+            RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
             // TODO externalise generation of canonical model URIs?
             String[] idXRefs = [revision.model.submissionId, publicationId].collect { String id ->
-                "http://identifiers.org/biomodels.db/$id".toString()
+                "https://identifiers.org/biomodels.db:$id".toString()
             } as String[]
-            boolean revisionUpdated = sbmlService.addModelIdentifiersAsAnnotation(revisionTC,
-                 idXRefs)
+            boolean revisionUpdated = addModelIdentifiersAsAnnotation(revisionTC, idXRefs)
 
             if (!revisionUpdated) {
                 return revision // nothing else to do
             }
             revisionTC.minorRevision = true
             revisionTC.comment = "Automatically added model identifier $publicationId"
-            Revision toPublish = persistRevision(revisionTC.files, [], revisionTC)
-            RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
+
+            Revision toPublish = doPersistRevision(revisionTC.files, [], revisionTC)
+            RevisionTC toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
             indexModelRevision(toPublishTC)
             shareRevision2FellowCurators(toPublishTC)
             return toPublish
         } else {
             logger.warn("""We are publishing $revision encoded in $format, but won't be able to add \
-the perennial publication identifier to the model file""")
+the perennial publication identifier to the model file.""")
+            RevisionTC toPublishTC = new RevisionAdapter(revision: revision).toCommandObject()
+            indexModelRevision(toPublishTC)
         }
+
         return revision
     }
 
@@ -2293,9 +2512,9 @@ the perennial publication identifier to the model file""")
      * @param revision The Revision to be published
      */
     @PreAuthorize("(hasRole('ROLE_CURATOR') and hasPermission(#revision, admin)) or hasRole('ROLE_ADMIN')")
-    @PostLogging(LoggingEventType.UPDATE)
+    @PostLogging(LoggingEventType.UNPUBLISH)
     @Profiled(tag="modelService.unpublishModelRevision")
-    public void unpublishModelRevision(Revision revision) {
+    void unpublishModelRevision(Revision revision) {
         if (!revision) {
             throw new IllegalArgumentException("Revision may not be null")
         }
@@ -2304,11 +2523,13 @@ the perennial publication identifier to the model file""")
         }
         aclUtilService.deletePermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.deletePermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
-        revision.state=ModelState.UNPUBLISHED
-        revision.model.firstPublished = null
-        revision.model.publicationId = null
-        if (!revision.save(flush:true)) {
-            logger.error("Revision ${revision.id} was not made private: ${revision.errors.allErrors}")
+        revision.state = ModelState.UNPUBLISHED
+        // preserve two following properties for history and tracking because the perennial id was already issued
+        // also, the first published date is also retained to know which date was the model published first
+        // revision.model.firstPublished = null
+        // revision.model.publicationId = null
+        if (!revision.save(flush: true)) {
+            logger.error("Revision ${revision.id} cannot be turned private due to: ${revision.errors.allErrors.toString()}")
         }
     }
 
@@ -2398,23 +2619,6 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
     }
 
     /**
-     * Retrieves the pub med annotations of the @p model.
-     * @param model The model of which the pub med annotation are to be retrieved
-     * @return The retrieved pub med annotations or @c null
-     * @throws JummpException
-     */
-    protected List<String> getPubMedAnnotation(Model model) throws JummpException {
-        if (!model) {
-            return null
-        }
-        Revision revision = getLatestRevision(model, false)
-        if (!revision) {
-            return null
-        }
-        return modelFileFormatService.getPubMedAnnotation(revision)
-    }
-
-    /**
      * Retrieves the main file of the models given in a list of their identifiers
      *
      * This service is currently used to fetch the requested main files to
@@ -2423,13 +2627,12 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
      * The search result always contains downloadable public models, therefore,
      * these chain of methods do not need to check ACLs
      *
-     * @param modelIDs The list of model identities being retrieved
-     * @return either the list of RepositoryFileTransportCommand objects or null
+     * @param mids The list of model identities being retrieved
+     * @return either the list of RFTC objects or null
      *         if there is no model files available
      */
-    Map<String, RepositoryFileTransportCommand> fetchMainFileForModels(String[] modelIDs) {
-        Map<String, RepositoryFileTransportCommand> results = [:]
-        List mids = modelIDs.toList()
+    Map<String, RFTC> fetchMainFileForModels(List<String> mids) {
+        Map<String, RFTC> results = [:]
         String query = """
 SELECT
     r1
@@ -2451,7 +2654,7 @@ WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)"""
-        List revisions = Model.executeQuery(query, [mids: mids])
+        List revisions = Revision.executeQuery(query, [mids: mids])
 
         revisions.each { Revision revision ->
             List<File> files = retrieveFiles(revision)
@@ -2462,7 +2665,7 @@ WHERE
                 return
             }
             String filename = revision.model.publicationId ?: revision.model.submissionId
-            RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
+            RFTC rftc = new RFTC(
                 id: rf.id,
                 path: f.getCanonicalPath(),
                 description: rf.description,
@@ -2476,19 +2679,51 @@ WHERE
 	    return results
     }
 
+    private void addContributors(final Revision revision, final Map working) {
+        final String username = revision.owner.username
+        String roleName = working["contributorRole"] as String
+        List CONTRIBUTOR_ROLES = CR.all.collect { it.name }
+        if (!CONTRIBUTOR_ROLES.contains(roleName)) {
+            logger.debug("""Cannot find the right contributor role for the role name `${roleName}` provided \
+during the submission or update process. Hence, we have added `$username` as a modeller by default.""")
+            roleName = "Modeller"
+        }
+        String msg
+        aclInsertionLock.lock()
+        try {
+            boolean isUpdate = working["isUpdate"] as boolean
+            if (isUpdate) {
+                List<CD> cds = CD.findAllByContributorAndRevision(revision.owner, revision, [locked: true])
+                cds.each { CD cd ->
+                    CD.where {
+                        revision == cd.revision && contributor == cd.contributor
+                    }.deleteAll()
+                }
+            }
+            CD.withTransaction {
+                contributorService.findOrSaveContributionDetails(revision, roleName)
+            }
+        } catch (Exception e) {
+            msg = "Failed to add $username as a(n) ${roleName} for the revision ${revision.id} due to ${e.toString()}."
+            logger.error(msg)
+        } finally {
+            aclInsertionLock.unlock()
+        }
+    }
+
     /**
      * Invoking updateIndex method of search service
      *
      * @param   cmd The representation of revision whereby search service will be updated its indexes
      * @return
      */
-    private indexModelRevision(RevisionTransportCommand cmd) {
+    private indexModelRevision(RevisionTC cmd) {
         // can't inject searchService -- cyclic dependency
         def searchService = grailsApplication.mainContext.searchService
         searchService.updateIndex(cmd)
     }
 
-    private convertModelToOtherFormats(RevisionTransportCommand cmd) {
+    private convertModelToOtherFormats(RevisionTC cmd) {
         logger.info("""\
 Try to connect with Conversion service to export the model ${cmd.model.submissionId} under the other formats""")
         modelConversionService.generateExports(cmd)
@@ -2506,11 +2741,11 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
 
     /**
      * Adds a {@link ModellingApproach} considered as an annotation to a specific revision.
-     * @param revisionTC    a {@link RevisionTransportCommand} object representing the revision.
+     * @param revisionTC    a {@link RevisionTC} object representing the revision.
      * @param approach      a {@link ModellingApproach} object representing the modelling approach.
      * @throws ModelException
      */
-    void addModellingApproachAsAnnotation(RevisionTransportCommand revisionTC, ModellingApproach approach) throws
+    void addModellingApproachAsAnnotation(RevisionTC revisionTC, ModellingApproach approach) throws
             ModelException {
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
         boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
@@ -2520,14 +2755,43 @@ There has been error while adding $approach to the model ${revisionTC.identifier
         }
     }
 
+    boolean addModelIdentifiersAsAnnotation(RevisionTC revisionTC, String... xRefs = null) {
+        def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+        if (!xRefs) {
+            xRefs = ["https://identifiers.org/biomodels.db:${revisionTC.model.submissionId}"] as String[]
+        }
+        sbmlService.addModelIdentifiersAsAnnotation(revisionTC, xRefs)
+    }
+
+    /**
+     * Adds a publication identifier {@link Publication} as an annotation to the SBML file of the given model revision
+     * @param revisionTC   A {@link RevisionTC} instance indicating the model revision
+     * @param pubTC A {@link PublicationTransportCommand} instance indicating the publication details
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void addPublicationAsAnnotation(RevisionTC revisionTC, PublicationTransportCommand pubTC) throws
+        ModelException {
+        if (pubTC) {
+            def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+            boolean result = sbmlService.addPublicationAsAnnotation(revisionTC, pubTC)
+            if (!result) {
+                logger.error("""\
+There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType}) to the model main file of \
+the ${revisionTC.identifier()}. Otherwise, BioModels only supports to add a PubMed or DOI publication as \
+an annotation to SBML document.""")
+            }
+        }
+    }
+
     /**
      * Publishes an event to a specific subscriber. The method checks criteria to publish a
-     * {@link RevisionCreatedEvent} so that the subscriber {@link ShareRevisionToFellowCurators}
+     * {@link RevisionCreatedEvent} so that the subscriber
+     * {@link net.biomodels.jummp.core.subscribers.ShareRevisionToFellowCurators}
      * can detect and share the newly created revision to the fellow curators with the writable permission.
      *
-     * @param command {@link RevisionTransportCommand} object
+     * @param command {@link RevisionTC} object
      */
-    private void shareRevision2FellowCurators(RevisionTransportCommand command) {
+    private void shareRevision2FellowCurators(RevisionTC command) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.shareRevision2FellowCurators")
         Revision revision = Revision.get(command.id)
         // Check authorities
@@ -2539,12 +2803,12 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             logger.debug("Publishing the event to share the revision ${command.identifier()}")
             grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this, command))
         } else {
-            logger.debug("cannot share the model ${command.identifier()} to fellow curators")
+            logger.error("cannot share the model ${command.identifier()} to fellow curators")
         }
         stopWatch.stop()
     }
 
-    private Revision doPostPersistRevision(final Revision revision) {
+    private Revision doPostPersistRevision(final Revision revision, final Map working = null) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doPostPersistRevision")
         if (revision) {
             /*
@@ -2563,12 +2827,24 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
                 revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
 
+            if (!attachedRevision) {
+                logger.debug("${revision.model.submissionId}.${revision.id} cannot be fetched from the database. Please run all post processes for this revision manually.")
+                return null
+            }
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision, latest: true)
-            RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
-            indexModelRevision(cmd)
-            //convertModelToOtherFormats(cmd)
-            shareRevision2FellowCurators(cmd)
-            updateModelCache(attachedRevision)
+            RevisionTC cmd = revisionAdapter.toCommandObject()
+            try {
+                // TODO: catch exceptions of each post-submission processes to report to the submitter and BioModels cura
+                addContributors(attachedRevision, working)
+                indexModelRevision(cmd)
+                //convertModelToOtherFormats(cmd)
+                shareRevision2FellowCurators(cmd)
+                updateModelCache(attachedRevision)
+            } catch (Exception e) {
+                e.printStackTrace()
+                logger.error(e.toString())
+                println(e.toString())
+            }
             return attachedRevision
         }
         stopWatch.stop()
@@ -2599,14 +2875,14 @@ There has been error while adding $approach to the model ${revisionTC.identifier
                 }
             }
         } catch (Exception e) {
-            logger.error(e.getMessage())
+            logger.error(e.getMessage()) // TODO: here?
         } finally {
             aclInsertionLock.unlock()
         }
         stopWatch.stop()
     }
 
-    private void validateModelRevision(final RevisionTransportCommand rev) throws ModelException {
+    private void validateModelRevision(final RevisionTC rev) throws ModelException {
         StopWatch stopWatch = new Log4JStopWatch("modelService.validateModelRevision")
         if (!rev.model) {
             throw new ModelException(null, "Model may not be null")
@@ -2620,10 +2896,11 @@ There has been error while adding $approach to the model ${revisionTC.identifier
         stopWatch.stop()
     }
 
-    private Model doUpdateModelMetadata(final Model model, final RevisionTransportCommand revision) {
+    private Model doUpdateModelMetadata(final Model model, final RevisionTC revision) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateModelMetadata")
         model.modellingApproach = revision.model.modellingApproach
         model.otherInfo = revision.model.otherInfo
+        model.isMetadataSubmission = revision.model.isMetadataSubmission
         PublicationTransportCommand publicationTC = revision.model.publication
         if (!publicationTC && model.publication) {
             // delete db association if corresponding publication was removed in the UI
@@ -2637,7 +2914,8 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             }
         }
         stopWatch.stop()
-        return model
+
+        model
     }
 
     private Revision putFilesUnderVcs(final Model model, final Revision revision,
@@ -2659,24 +2937,25 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             revision.addToRepoFiles(it)
         }
         stopWatch.stop()
-        return revision
+
+        revision
     }
 
     private void discardFailedRevision(final Model model, final Revision revision, final List repoFiles) {
         // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
         StopWatch stopWatch = new Log4JStopWatch("modelService.discardFailedRevision")
         revision.errors.allErrors.each {
-            logger.error(it)
+            logger.error(it.toString())
         }
         revision.discard()
         final def m = new ModelAdapter(model: model, latest: revision).toCommandObject()
         logger.error("""New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier \
 ${model.vcsIdentifier} added to VCS, but not stored in database""")
-        throw new ModelException(m, "Revision stored in VCS, but not in database")
         stopWatch.stop()
+        throw new ModelException(m, "Revision stored in VCS, but not in database")
     }
 
-    private Revision doUpdateRevision(Revision revision, RevisionTransportCommand rev) {
+    private Revision doUpdateRevision(Revision revision, RevisionTC rev) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateRevision")
         final User currentUser = User.findByUsername(springSecurityService.authentication.name)
         final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
@@ -2698,10 +2977,145 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
         // delete the previous repository files associating with the revision
         RepositoryFile.where { revision == revision }.deleteAll()
         stopWatch.stop()
-        return revision
+
+        revision
     }
 
-    private void updateModelCache(final Revision revision) {
+    void updateModelCache(final Revision revision) {
         repositoryFileService.updateModelRevisionCache(revision)
+        // do not copy files in the local development and with a private model
+        if (grailsApplication.isWarDeployed() && revision.state == ModelState.PUBLISHED) {
+            copyRevisionFilesToFtp(revision)
+        }
+    }
+
+    void copyRevisionFilesToFtp(final Revision revision) {
+        String message = repositoryFileService.copyRevisionFilesToFtp(revision)
+        logger.debug("sent a request to HPC to copy the revision files to FTP: $message")
+    }
+
+    /**
+     * Gets all identifiers of the public models from the domain of the individual models
+     * @return a list of string objects as the model identifiers
+     */
+    List<String> getAllModelIdentifiers(final boolean isAutogenerated = false) {
+        if (isAutogenerated) {
+            // all models in the domain of the autogenerated models are publicly accessible.
+            return getAutogeneratedModelIdentifiers()
+        }
+
+        List<String> identifiers
+        String strIdentifiers = redisService.doRedisGet(Redis.REDIS_KEY_ALL_MODEL_IDS)
+        if (strIdentifiers) {
+            logger.debug("Retrieving all model identifiers from Redis cache.")
+            identifiers = strIdentifiers.split(",").toList()
+        } else {
+            logger.debug("Extracting all model identifiers from EBI Search and caching them on the Redis server.")
+            identifiers = extractAndCacheModelIdentifiers()
+
+        }
+        identifiers
+    }
+
+    List<String> getPublicOrPrivateIdentifiers(boolean isPrivate = false) {
+        List<String> identifiers
+        String query = "query=isprivate:false&fields=id,name,isprivate&format=json"
+        if (isPrivate) {
+            query = "query=isprivate:true&fields=id,name,isprivate&format=json"
+        }
+        String BM = "${BioModels.EBI_PROD_WS_REST_BM_URL}?$query"
+        identifiers = extractIdentifiersBasedEbiSearchJson(BM)
+        return identifiers
+    }
+
+    /**
+     * Extracts all model identifiers by fetching all models from EBI Search server.
+     * Then updates the cached identifiers or caches them on Redis Server if they do not exist.
+     * @return a list of string objects as the model identifiers
+     */
+    List<String> extractAndCacheModelIdentifiers(boolean updateCache = true) {
+        List<String> identifiers
+        final String query = "query=*:*&fields=id,name&format=json"
+        String BM = "${BioModels.EBI_PROD_WS_REST_BM_URL}?$query"
+        identifiers = extractIdentifiersBasedEbiSearchJson(BM)
+
+        if (updateCache && !identifiers.isEmpty()) {
+            String strIdentifiers = identifiers.join(",")
+            logger.info("Updating the cached model identifiers on Redis Server")
+            redisService.doRedisSet(Redis.REDIS_KEY_ALL_MODEL_IDS, strIdentifiers)
+        }
+
+        identifiers
+    }
+
+    /**
+     * Gets all identifiers of the public models from the autogenerated model domain
+     * @return a list of string objects as the model identifiers
+     */
+    List<String> getAutogeneratedModelIdentifiers() {
+        final String BM_AUTO = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_autogen"
+        String query = "query=*:*&&fields=id,name&format=json"
+        query = "${BM_AUTO}?$query"
+        return extractIdentifiersBasedEbiSearchJson(query)
+    }
+
+    private static List<String> extractIdentifiersBasedEbiSearchJson(final String query) {
+        List<String> identifiers = new ArrayList<>()
+        String jsonString = JummpHttpService.jsonGetRequest(query)
+        JSONObject json = new JSONObject(jsonString)
+        Integer nbModels = 0
+        if (json.has("hitCount")) {
+            String nbMatches = json.get("hitCount")
+            nbModels = nbMatches.toInteger()
+        }
+        if (nbModels > 0) {
+            Integer fetchSize = 100
+            String searchAllUrl = "$query&size=$fetchSize"
+            Integer times = (Integer) Math.ceil((double) nbModels / fetchSize)
+            Long offset = 0
+            for (int index = 1; index <= times; ++index) {
+                String searchUrl = "$searchAllUrl&start=$offset"
+                jsonString = JummpHttpService.jsonGetRequest(searchUrl)
+                json = new JSONObject(jsonString)
+                List ids = extractAllModelIdentifiers(json)
+                identifiers.addAll(ids)
+                offset = index * fetchSize
+            }
+        }
+        if (!identifiers.isEmpty()) {
+            identifiers.sort()
+        }
+
+        identifiers
+    }
+
+    private static List<String> extractAllModelIdentifiers(JSONObject json) {
+        List<String> results = []
+        if (json.has("entries")) {
+            json.get("entries").each {
+                results.push(it.get("id") as String)
+            }
+        }
+        results
+    }
+
+    @Override
+    void onApplicationEvent(ModelOperationEvent event) {
+        if (event instanceof ModelPublishedEvent) {
+            // Both publish and unpublish actions are using the same event {@link ModelPublishedEvent}
+            // Therefore, we define a source of "username;published|unpublished" when firing up a ModelPublishedEvent
+            // event when a model is published or unpublished in ModelController.
+            String[] parts = event.source.split(";")
+            String whoDid = parts[0]
+            String whichService = parts[1]
+            ModelTC model = event.model
+            final String msg = "${whoDid} has ${whichService} the model revision ${model.submissionId}: ${model.name}."
+            println(msg)
+            logger.info(msg)
+            // email to or notify biomodels-developers@ebi.ac.uk
+
+        } else if (event instanceof ModelDeletedEvent) {
+            logger.info(event.source.dump() + "\t" + event.model.dump())
+        }
     }
 }

@@ -25,6 +25,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <title><g:message code="${titleCode}" default="Terms Of Use" /> | BioModels</title>
 </head>
 <body>
     <g:message code="${messageCode}" />

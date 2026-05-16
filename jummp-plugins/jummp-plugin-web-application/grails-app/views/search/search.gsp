@@ -32,19 +32,19 @@
         <title>Model Search | BioModels</title>
         <meta name="layout" content="${session['branding.style']}/main" />
         <meta name="robots" content="nofollow" />
-         <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
+         <link rel="stylesheet" href="${resource(contextPath: "${serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
          <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
     </head>
     <content tag="facetsearch">
-        <!-- show facets search on the left side bar -->
-        <g:render template="/templates/leftSidebar" />
+        <!-- show facets search on the left sidebar -->
+        <g:render template="/templates/search/leftSidebar" />
     </content>
     <body activetab="search">
         <g:render template="/templates/mainContent" model="['action': 'search']"/>
     </body>
     <content tag="sidebar">
         <!-- show descriptive statistics, GO chart, etc. -->
-        <g:render template="/templates/rightSidebar" model="['action': 'search']"/>
+        <g:render template="/templates/search/rightSidebar" model="['action': 'search']"/>
     </content>
     <content tag="search">
         ${query}

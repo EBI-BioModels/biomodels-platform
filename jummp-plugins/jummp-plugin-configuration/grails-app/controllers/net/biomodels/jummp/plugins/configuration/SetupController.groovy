@@ -38,14 +38,13 @@ import net.biomodels.jummp.core.user.UserCommand
  * The SetupFilters takes care to redirect all requests to the currently required
  * flow and blocks all access to this controller as soon as the application instance
  * is configured.
- * @see net.biomodels.jummp.filters.SetupFilters
+ * @see {@link SetupFilters}
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @date 20130705
  */
 class SetupController {
     def configurationService
-    def springSecurityService
     def userService
 
     def index = {
@@ -68,7 +67,7 @@ class SetupController {
             on("next").to("validateAuthenticationBackend")
             on("back").to("start")
         }
-        
+
         validateAuthenticationBackend {
             action {
                 if (params.authenticationBackend == "database") {
@@ -85,7 +84,7 @@ class SetupController {
             on("ldap").to("ldap")
             on("error").to("authenticationBackend")
         }
-        
+
         ldap {
             on("next") { LdapCommand cmd ->
                 flow.ldap = cmd
@@ -97,22 +96,22 @@ class SetupController {
             }.to("vcs")
             on("back").to("authenticationBackend")
         }
-        
+
         vcs {
             on("next") { VcsCommand cmd ->
                 flow.vcs = cmd
                 if (flow.vcs.hasErrors()) {
                     error()
-                } 
+                }
             }.to("branchOnVcsType")
             on("back").to("decideBackFromVcs")
         }
-        
+
         branchOnVcsType {
-            action { 
+            action {
             	if (flow.vcs.isGit()) {
                     git()
-                } 
+                }
                 else if (flow.vcs.isSvn()) {
                     svn()
                 }
@@ -121,7 +120,7 @@ class SetupController {
             on("git").to("userRegistration")
             on(Exception).to("exception")
         }
-        
+
         svn {
             on("next") { SvnCommand cmd ->
                 flow.svn = cmd
@@ -224,7 +223,7 @@ class SetupController {
             }.to("mail")
             on("back").to("server")
         }
-        
+
         mail {
             on("next") { MailCommand cmd ->
                 flow.mail = cmd
@@ -236,7 +235,7 @@ class SetupController {
             }.to("search")
             on("back").to("trigger")
         }
-        
+
         search {
             on("next") { SearchCommand cmd ->
                 flow.search = cmd
@@ -279,12 +278,12 @@ class SetupController {
                 if (flow.cms.hasErrors()) {
                     return error()
                 } else {
-                    configurationService.storeConfiguration(flow.database, 
-                    										(flow.authenticationBackend == "ldap") ? flow.ldap : null, 
-                    										flow.vcs, flow.svn, flow.firstRun, 
-                    										flow.server, flow.userRegistration, flow.changePassword?:null, 
-                    										flow.remote, flow.trigger, flow.sbml, flow.bives, 
-                    										flow.cms, flow.branding?:null, 
+                    configurationService.storeConfiguration(flow.database,
+                    										(flow.authenticationBackend == "ldap") ? flow.ldap : null,
+                    										flow.vcs, flow.svn, flow.firstRun,
+                    										flow.server, flow.userRegistration, flow.changePassword?:null,
+                    										flow.remote, flow.trigger, flow.sbml, flow.bives,
+                    										flow.cms, flow.branding?:null,
                     										flow.search, flow.mail)
                     return success()
                 }

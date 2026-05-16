@@ -33,24 +33,23 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
-import groovy.json.JsonBuilder
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SortOrder
-import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.security.access.AccessDeniedException
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class SearchController {
+class SearchController extends CommonController {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     /**
      * Dependency Injection of Spring Security Service
@@ -77,7 +76,7 @@ class SearchController {
         redirect action: 'search'
     }
 
-    private boolean integerCheck(def input, boolean minValueCheck=false, int minValue=-1) {
+    private static boolean integerCheck(def input, boolean minValueCheck=false, int minValue=-1) {
         try {
             if (!input) {
                 return false
@@ -87,8 +86,7 @@ class SearchController {
                 return value > minValue
             }
             return true
-        }
-        catch(Exception e) {
+        } catch (Exception ignored) {
             return false
         }
     }
@@ -97,9 +95,14 @@ class SearchController {
         // the statements below only perform an extraction and analyse parameters
         // the sanitization of the parameters was performed earlier in ParameterFilters
         if (params.sort) {
-            def sortVal = params.sort.split("-")
-            params.sortBy = sortVal[0]
-            params.sortDir = sortVal[1]
+            def sortVal = params.sort.tokenize("-") as List
+            if (sortVal?.size() == 2) {
+                params.sortBy = sortVal[0]
+                params.sortDir = sortVal[1]
+            } else {
+                params.sortBy = "relevance"
+                params.sortDir = "desc"
+            }
         } else {
             params.sortBy = "relevance"
             params.sortDir = "desc"
@@ -114,14 +117,14 @@ class SearchController {
     }
 
     private int numResults() {
-        final int MAXRESULTS = 100
-        final int MINRESULTS = 10
-        User user
+        final int MAX_RESULTS = 100
+        final int MIN_RESULTS = 10
+        User user = null
         String username = springSecurityService?.principal?.username
         if (!(username == GrailsAnonymousAuthenticationToken.USERNAME) && !username) {
             user = User.findByUsername(username)
         }
-        Preferences prefs
+        Preferences prefs = null
         if (user) {
             prefs = Preferences.findByUser(user)
         }
@@ -130,11 +133,11 @@ class SearchController {
         }
         if (integerCheck(params.numResults, true, -1)) {
             prefs.numResults = params.int("numResults")
-            if (prefs.numResults > MAXRESULTS ) {
-                prefs.numResults = MAXRESULTS
+            if (prefs.numResults > MAX_RESULTS ) {
+                prefs.numResults = MAX_RESULTS
             }
-            else if (prefs.numResults < MINRESULTS ) {
-                prefs.numResults = MINRESULTS
+            else if (prefs.numResults < MIN_RESULTS ) {
+                prefs.numResults = MIN_RESULTS
             }
             if (user) {
                 prefs.setUser(user)
@@ -142,6 +145,19 @@ class SearchController {
             }
         }
         return prefs.numResults
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def check() {
+        String title = "Checking indexed data | BioModels"
+        Map model = COMMON_PROPERTIES
+        model.putAll([layout: layout, title: title])
+        Map result = searchService.checkIndexedData()
+        if (result.get("listDuplicatedIds")?.size()) {
+            model.put "ids", result.get("listDuplicatedIds")
+        }
+        model.putAll(result)
+        model
     }
 
     /**
@@ -183,19 +199,22 @@ class SearchController {
      */
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def search() {
-        publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE, "MODEL1234")
+        // publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE, "MODEL1234")
+        String query = params.search_block_form.decodeHTML()
+        if (!query) {
+            query = params.query.decodeHTML()
+        }
+        String domain = params.chosenDomain ?: params.domain
         sanitiseParams()
-        if (!params.query) {
-            params.query = ""
-        } else {
-            if (params.query in ["*", "*.*", "*?*", "***"]) {
-                params.query = "*:*"
-                params.flashMessage = "Please use *:* to browse all models."
-            }
+
+        params.query = query
+        if (query in ["*", "*.*", "*?*", "***"]) {
+            params.query = "*:*"
+            params.flashMessage = "Please use *:* to browse all models."
         }
-        if (!params.domain) {
-            params.domain = "biomodels"
-        }
+
+        params.domain = domain ?: "biomodels"
+
         /**
          * Check whether the request isn't re-processed by Load Balancer
          */
@@ -206,6 +225,7 @@ under the format: ${response.format}"""
         Map results = searchCore(params.query as String,
             params.domain as String, params.sortBy as String,
             params.sortDir as String, params.offset as int, params.numResults as int)
+        results.putAll(COMMON_PROPERTIES)
         if (response.format == "html") {
             return results
         }
@@ -214,14 +234,39 @@ under the format: ${response.format}"""
 
     @Secured(['ROLE_ADMIN'])
     def regen() {
-        render(view: "regen")
+        render(view: "regen", model: COMMON_PROPERTIES)
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def indexViaAPI() {
+        Map mapResult = reindex()
+        handleRestApi(mapResult)
     }
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def reindex() {
-        def models = params.models.split(",")
+        /**
+         * The options are ones of the following values
+         * level is either
+         *  full: indexing the entire set of annotations by default because we assume that there isn't a lot of
+         *          annotations
+         *  bare: indexing the model level annotations only.
+         * indexer: 'generic' if we want to index model-level metadata
+         */
+        String level = "full"
+        if (params.containsKey("level")) {
+            level = params.get("level")
+            level = level in ["full", "bare"] ? level : "full"
+        }
+
+        String indexer = ""
+        if (params.containsKey("indexer")) {
+            indexer = params.get("indexer")
+            indexer = indexer ? indexer : ""
+        }
+        List models = processParamsModels()
         Map<String, String> msgMap = [:]
-        models.each { String model ->
+        models.each { def model ->
             String message = ""
             model = model.trim()
             if (model == null) {
@@ -233,17 +278,18 @@ under the format: ${response.format}"""
                 // display the successful message about reindexing the model revision
                 RTC revision = null
                 try {
-                    revision = modelDelegateService.getRevisionFromParams(model)
-                } catch (org.springframework.security.access.AccessDeniedException ade) {
-                    message = "Unable to access the model $model"
+                    revision = modelDelegateService.getRevisionFromParams(model as String)
+                } catch (AccessDeniedException ignored) {
+                    message = "Unable to access the model"
                 }
                 if (revision) {
-                    String modelIdentifier = revision.identifier()
-                    searchService.updateIndex(revision)
-                    message = "Started re-indexing the model $modelIdentifier"
+                    model = revision.identifier()
+                    searchService.updateIndex(revision, ["level": level, "indexer": indexer] as Map)
+                    message = "Started re-indexing the model"
                 }
             }
-            msgMap[model] = message
+            String modelLink = createLink(controller: "model", action: "show", id: model, absolute: true)
+            msgMap[modelLink] = message
         }
         [msgMap: msgMap]
     }
@@ -266,74 +312,96 @@ under the format: ${response.format}"""
             forward action: 'search', params: params
             return // don't continue any further with this.
         }
-        String[] models = params.models?.split(',')
+        List models = processParamsModels()
         if (models?.size() > 100) {
             def params = [query: "*:*",
                           flashMessage: g.message(code: "jummp.search.download.exceededThreshold.warningMessage")]
             forward(action: 'search', params: params)
             return params
         }
-        byte[] data = modelDelegateService.serveModelFilesAsZip(models)
-        if (data) {
-            // the data could be null in a few situations such as the model files are inaccessible
-            response.setContentType("application/zip")
-            String date = new Date().format("yyyyMMdd-HHmm")
-            String filename = "BioModels-search-results_${date}.zip".toString()
-            response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
-            response.outputStream << new ByteArrayInputStream(data)
-        } else {
-            render(view: "download", status: 404)
+        def data = modelDelegateService.serveModelFilesAsZip(models)
+        try {
+            if (data) {
+                // the data could be null in a few situations such as the model files are inaccessible
+                response.setContentType("application/zip")
+                String date = new Date().format("yyyyMMdd-HHmm")
+                String filename = "BioModels-search-results_${date}.zip".toString()
+                response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
+                response.outputStream << data
+                response.outputStream.flush()
+            } else {
+                render(view: "download", status: 404)
+            }
+        } catch (Exception exception) {
+            LOGGER.error("Exception on downloading search result:", exception)
+        } finally {
+            LOGGER.debug("Number of models have been downloaded: ${models.join(", ")}")
+            data?.close()
+            if (response.outputStream){
+                try {
+                    response.outputStream.close()
+                } catch (IOException ioe) {
+                    response.reset()
+                    LOGGER.error("Exception on closing the output stream of the response object:", ioe)
+                }
+            }
         }
     }
 
     private Map searchCore(String query, String domain, String sortBy,
-                           String sortDirection, int offset, int length) {
+                           String sortDirection, int offset = 0, int length = 20) {
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
+        Map<String, Object> results = initSearchResults(query)
+        if (query == "*:*") {
+            Map cached = searchService.retrieveCachedSearchAllResult(domain)
+            if (cached["models"]) {
+                LOGGER.info("Load the search result from the cached: query ${query}, domain ${domain}, offset $offset, length $length")
+                results.putAll([query : query, offset: offset, length: length,
+                        sortBy: sortBy, sortDirection: sortDirection, models: cached["models"],
+                        facets: cached["facets"], facetStats: cached["facetStats"], matches: cached["matches"]
+                ])
+            } else {
+                LOGGER.info("Hit EBI search due to the empty cached: query ${query}, domain ${domain}, offset $offset, length  $length")
+                results.putAll(doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy,
+                        sortDirection))
+            }
+        } else {
+            LOGGER.info("Hit the EBI Search due to searching for query ${query}, offset $offset, length $length")
+            results.putAll(doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy,
+                    sortDirection))
+        }
+        return results
+    }
+
+    private Map doSearch(String query, String domain,
+                         Map<String, Integer> paginationCriteria, Integer offset,
+                         Integer length, SortOrder sortOrder, String sortBy, String sortDirection) {
+        Integer totalCount = 0
         List<MTC> models = []
         List<Facet> facets = []
-        int totalCount
+        String facetStats = ""
         if (query?.trim()) {
             SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
-            ArrayList<MTC> res = response.results
-            totalCount = response.totalCount
-            if (res?.size() > 0) {
-                LOGGER.info("Found(s): ${res.size()} records.")
-                res.each {
-                    models.add(it)
-                }
-            }
-            LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
-            if (respondedFacets?.size() > 0) {
-                LOGGER.info("Found(s): ${respondedFacets.size()} facets.")
-                respondedFacets.each {
-                    facets.add(it.value.facet)
-                }
-            }
-        }
-        JsonBuilder builder = new JsonBuilder(facets)
-
-        if (offset > 0 && offset < models?.size()) {
-            models = models[offset..-1]
+            Map extractedSearchModels = searchService.extractSearchModels(response, domain)
+            totalCount = extractedSearchModels["totalCount"] as Integer
+            models = extractedSearchModels["models"] as List<MTC>
+            facets = extractedSearchModels["facets"] as List<Facet>
+            facetStats = extractedSearchModels["facetStats"]
+            /**
+             * By default, the query was encoded as HTML due to security vulnerability until here.
+             * After using encoded query into search modules, we should decode it into the original
+             * value that helps displaying it in a human readable form. Pay attention to the fact that
+             * the query has been decoded in searchService.searchModels.
+             */
+            query = query.decodeHTML()
         } else {
-            offset = 0
-        }
-        if (models?.size() > length) {
-            models = models[0..length-1]
+            LOGGER.info("Cannot find anything due to the empty query string.")
         }
 
-        /**
-         * By default, the query was encoded as HTML due to security vulnerability until here.
-         * After using encoded query into search modules, we should decode it into the original
-         * value that helps displaying it in a human readable form. Pay attention to the fact that
-         * the query has been decoded in searchService.searchModels.
-         */
-        query = query.decodeHTML()
-        return [models: models, facets: facets, matches: totalCount,
-                offset: paginationCriteria['start'],
-                length: paginationCriteria['length'],
-                sortBy: sortBy, sortDirection: sortDirection,
-                query: query, facetStats: builder.toString()]
+        return [models: models, facets: facets, matches: totalCount, facetStats: facetStats,
+                offset: offset, query: query, length: length,
+                sortBy: sortBy, sortDirection: sortDirection]
     }
 
     private def archiveCore(String sortBy, String sortDirection, int offset, int length) {
@@ -362,7 +430,7 @@ under the format: ${response.format}"""
                 sortDirection: sortDirection, offset: offset, length: length, query: filter]
     }
 
-    private ModelListSorting inferSortedColumn(final String sortBy) {
+    private static ModelListSorting inferSortedColumn(final String sortBy) {
         ModelListSorting sort
         switch (sortBy) {
             case "name":
@@ -387,6 +455,15 @@ under the format: ${response.format}"""
         sort
     }
 
+    private Map<String, Object> initSearchResults(final String query) {
+        Map<String, Object> result = ["imagePath": "/images"]
+        def domain = params.domain ?: "biomodels"
+        result.put("domain", domain)
+        String queryString = query?.replaceAll('([^\\\\])"', '$1\\\\"')
+        result.put("queryString", queryString)
+
+        return result
+    }
     def lastAccessedModels = {
         List data = modelHistoryService.history()
         def dataToRender = []
@@ -394,5 +471,13 @@ under the format: ${response.format}"""
             dataToRender << [id: model.id, name: model.name, submitter: model.submitter]
         }
         render dataToRender as JSON
+    }
+
+    private List<String> processParamsModels() {
+        List models = params.models
+            ?.trim() // remove leading/trailing whitespace from the whole string
+            ?.replaceAll(/\s*,+\s*/, ",") // normalize: strip spaces around commas AND collapse multiple commas into one
+            ?.tokenize(",") ?: []
+        models
     }
 }

@@ -78,7 +78,7 @@ relevant mechanistic models in standard formats."/>
 
 <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour
 for details of how to do this -->
-<style type="text/css">
+<style>
     /* You have the option of setting a maximum width for your page, and making sure everything is centered */
     body {
         margin: 2px 5px auto;
@@ -93,5 +93,10 @@ for details of how to do this -->
 </style>
 <link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="common.css"/>">
 <!-- end CSS-->
+<script src="https://code.jquery.com/jquery-1.11.1.min.js"
+        integrity="sha256-VAvG3sHdS5LqTT+5A/aeq/bZGa/Uj04xKxY8KM/w9EE=" crossorigin="anonymous"></script>
+
+<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"
+        integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw=" crossorigin="anonymous"></script>
 
 <title><g:layoutTitle default="BioModels"/></title>

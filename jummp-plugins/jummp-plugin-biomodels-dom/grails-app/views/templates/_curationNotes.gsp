@@ -4,7 +4,7 @@
              title="Click on the thumbnail to view the result(s)" />
     </g:if>
     <g:else>
-        <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/No-Image-Available.jpg"
+        <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/simulation-result-unavailable.png"
              title="The curation images are not available" />
     </g:else>
 </div>
@@ -14,4 +14,7 @@
     <div style="white-space: pre-line">
     ${curaRec.comment}
     </div>
+    <g:if test="${curaRec.hasCuratorRole && curaRec.internalComment}">
+        <p><strong>Notes: </strong>${curaRec.internalComment}</p>
+    </g:if>
 </div>

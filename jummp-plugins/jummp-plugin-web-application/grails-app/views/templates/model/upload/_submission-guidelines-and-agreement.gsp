@@ -3,6 +3,7 @@
   User: tnguyen
   Date: 07/09/2020
   Time: 21:25
+  Latest updated: 30/01/2024
 --%>
 
 <h2>Submission Guidelines</h2>

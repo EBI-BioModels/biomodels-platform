@@ -1,1 +1,1 @@
-Rendered from: ${java.net.InetAddress.getLocalHost()}
+Rendered from: ${java.net.InetAddress.getLocalHost()}/<jummp:detectCluster/>

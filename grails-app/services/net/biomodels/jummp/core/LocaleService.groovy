@@ -34,13 +34,15 @@
 
 package net.biomodels.jummp.core
 import grails.plugin.localevariant.LocaleVariantResolver
+import org.springframework.beans.factory.InitializingBean
+
 import javax.servlet.http.HttpServletRequest
 
 /*
 @author Raza Ali <raza.ali@ebi.ac.uk>
 */
 
-class LocaleService implements LocaleVariantResolver {
+class LocaleService implements LocaleVariantResolver, InitializingBean {
     static transactional = false
 
     @SuppressWarnings("GrailsStatelessService")
@@ -50,6 +52,10 @@ class LocaleService implements LocaleVariantResolver {
         grailsApplication.config.jummp.branding.deployment
     }
 
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
+    }
 }
 
 

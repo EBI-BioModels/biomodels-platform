@@ -27,8 +27,8 @@ import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifie
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import net.biomodels.jummp.utils.redis.KeyCollection
-import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.utils.redis.PublishClient
+import net.biomodels.jummp.utils.redis.RedisService
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import redis.clients.jedis.Jedis
@@ -46,6 +46,7 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     /* semaphore for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
+    RedisService redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
     PublishClient publishClientService = Holders.grailsApplication.mainContext.getBean("publishClientService") as PublishClient
 
     @SuppressWarnings("GroovyUnusedDeclaration")
@@ -74,13 +75,13 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
                 try {
                     ModelIdentifier identifier = new ModelIdentifier()
                     final String MODEL_ID
-                    Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
+                    redisService.jedisPool.getResource().withCloseable { Jedis jedis ->
                         Transaction t = jedis.multi()
                         String modelIdLastUsedValue = KeyCollection.getLastUsedIdValueKey(type)
                         String modelIdLastUsedCount = KeyCollection.getLastUsedIdCountKey(type)
 
                         jedis.watch(modelIdLastUsedValue, modelIdLastUsedCount)
-                        String lastUsedIdentifier = Operations.doRedisGet(modelIdLastUsedValue)
+                        String lastUsedIdentifier = redisService.doRedisGet(modelIdLastUsedValue)
                         if (!lastUsedIdentifier) {
                             lastUsedIdentifier = getDefaultIdentifier()
                         }
@@ -96,11 +97,11 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
                         log.debug "Map of the identifier partitions: ${iDParts.dump()}"
                         MODEL_ID = identifier.getCurrentId()
                         if (MODEL_ID) {
-                            Operations.doRedisSet(modelIdLastUsedValue, MODEL_ID)
+                            redisService.doRedisSet(modelIdLastUsedValue, MODEL_ID)
                             t.set(modelIdLastUsedValue, MODEL_ID)
                             // the last decorator is considered as the counter
                             String count = iDParts.values().last()
-                            Operations.doRedisSet(modelIdLastUsedCount, count)
+                            redisService.doRedisSet(modelIdLastUsedCount, count)
                         }
                         List<Object> resp = t.exec()
                         if (resp.size() != 2) {

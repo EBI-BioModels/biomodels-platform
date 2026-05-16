@@ -54,6 +54,7 @@ class ParameterSearchResults {
     private static processExternalLinks(def parsedFields) {
         final String sabioRKPrefix = "http://sabiork.h-its.org/newSearch?q="
         final String reactomePrefix = "https://reactome.org/content/query?q="
+        final String openTargetsPrefix = "https://platform.opentargets.org/target"
         List<String> displayLinks = new ArrayList<>()
         if (parsedFields['external_links'] != null && parsedFields['external_links'].size() > 0) {
             String[] links = parsedFields['external_links'].toString().split(fieldSeparator)
@@ -72,13 +73,15 @@ class ParameterSearchResults {
                     finalLink = reactomePrefix + suffixValue
                 } else if (value.contains("sabiork")) {
                     finalLink = sabioRKPrefix + suffixValue
+                } else if (value.contains("opentargets")) {
+                    finalLink = "$openTargetsPrefix/$suffixValue"
+                    value = "OpenTargets:$suffixValue"
                 }
 
                 if (finalLink != "") {
                     displayLinks.add("<a href=\"${finalLink}\" target=\"_blank\">${value}</a>")
                 }
             }
-
         }
         if (displayLinks.size() > 0) {
             parsedFields['external_links_show'] = displayLinks.join(fieldSeparator + " ")

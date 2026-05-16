@@ -32,10 +32,12 @@ package net.biomodels.jummp.security
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
+import net.biomodels.jummp.CommonController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.annotation.Secured
 import org.springframework.security.authentication.AccountExpiredException
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.CredentialsExpiredException
 import org.springframework.security.authentication.DisabledException
 import org.springframework.security.authentication.LockedException
@@ -47,7 +49,8 @@ import org.springframework.security.web.WebAttributes
  * See http://burtbeckwith.github.com/grails-spring-security-core/
  */
 @Secured('permitAll')
-class LoginController {
+class LoginController extends CommonController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class)
     /**
      * Dependency injection for the authenticationTrustResolver.
      */
@@ -58,7 +61,8 @@ class LoginController {
      */
     def springSecurityService
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass())
+    def grailsApplication
+
     /**
      * Default action; redirects to 'defaultTargetUrl' if logged in, /login/auth otherwise.
      */
@@ -77,16 +81,24 @@ class LoginController {
     def auth() {
         def config = SpringSecurityUtils.securityConfig
 
-        if (springSecurityService.isLoggedIn()) {
-            redirect uri: config.successHandler.defaultTargetUrl
+        if (session.enabled2FA) {
+            redirect(controller: "auth", action: "load2fa")
+            return
+        } else if (springSecurityService.isLoggedIn()) {
+            forward uri: config.successHandler.defaultTargetUrl
             return
         }
 
+        String previousURL = request.getHeader("referer")
+        String j_previousURL = request.getHeader("referer")
         String view = 'auth'
         String postUrl = "${request.contextPath}${config.apf.filterProcessesUrl}"
-        render view: view, model: [postUrl: postUrl,
-                                   rememberMeParameter: config.rememberMe.parameter,
-                                   flashMessage: flash.flashMessage?:""]
+        Map mModel = [postUrl: postUrl, previousURL: previousURL,
+            j_previousURL: j_previousURL,
+            rememberMeParameter: config.rememberMe.parameter,
+            flashMessage: flash.flashMessage?:"",
+        ]
+        render view: view, model: mModel
     }
 
     /**
@@ -105,9 +117,9 @@ class LoginController {
      */
     def full() {
         def config = SpringSecurityUtils.securityConfig
+        def postUrl = "${serverURL}${config.apf.filterProcessesUrl}"
         render view: 'auth', params: params,
-            model: [hasCookie: authenticationTrustResolver.isRememberMe(SCH.context?.authentication),
-                    postUrl: "${request.contextPath}${config.apf.filterProcessesUrl}"]
+            model: [hasCookie: authenticationTrustResolver.isRememberMe(SCH.context?.authentication), postUrl: postUrl]
     }
 
     /**
@@ -125,12 +137,14 @@ class LoginController {
                 msg = g.message(code: "springSecurity.errors.login.disabled")
             } else if (exception instanceof LockedException) {
                 msg = g.message(code: "springSecurity.errors.login.locked")
+            } else if (exception instanceof BadCredentialsException) {
+                msg = exception.message
             } else {
                 msg = g.message(code: "springSecurity.errors.login.fail")
             }
         }
-        logger.debug("${msg} --- Login payload: ${params}: ${session}")
-        if (springSecurityService.isAjax(request)) {
+        LOGGER.debug("${msg} --- Login payload: ${params}: ${session}")
+        if (request.getHeader('X-Requested-With') == 'XMLHttpRequest') {
             render([error: msg] as JSON)
         } else {
             flash.flashMessage = msg

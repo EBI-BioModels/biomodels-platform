@@ -1,46 +1,53 @@
 /**
-* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* Spring Security (or a modified version of that library), containing parts
-* covered by the terms of Apache License v2.0, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of Spring Security used as well as
-* that of the covered work.}
-**/
-
-
-
+ * Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * Spring Security (or a modified version of that library), containing parts
+ * covered by the terms of Apache License v2.0, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of Spring Security used as well as
+ * that of the covered work.}
+ **/
 
 
 package net.biomodels.jummp.core
 
 import com.google.common.io.Files
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import grails.plugin.cache.Cacheable
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
+import grails.util.Holders
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
+import net.biomodels.jummp.core.model.ModelAuditTransportCommand as ModelATC
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
@@ -48,13 +55,19 @@ import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.Flag
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import net.biomodels.jummp.utils.WebServiceFetcher
+import org.json.JSONArray
+import org.json.JSONObject
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.access.AccessDeniedException
-import org.springframework.transaction.support.TransactionSynchronizationManager
+import org.springframework.transaction.support.TransactionSynchronizationManager as TSM
 
+import java.lang.reflect.Modifier
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -71,62 +84,64 @@ import java.util.zip.ZipOutputStream
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  */
 @Transactional
-class ModelDelegateService implements IModelService {
-    private static final Log log = LogFactory.getLog(ModelDelegateService.class)
-
+class ModelDelegateService implements IModelService, InitializingBean {
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    def curationNotesService
     def modelService
     def modelFileFormatService
     def qcInfoDelegateService
     def modelFlagService
     def referenceTracker
+    def userService
+    def redisService
 
     @NotTransactional
-    String getPluginForFormat(ModelFormatTransportCommand format) {
+    String getPluginForFormat(MFTC format) {
         return modelFileFormatService.getPluginForFormat(format)
     }
 
-    List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn) {
+        List<ModelTC> models = []
         modelService.getAllModels(offset, count, sortOrder, sortColumn).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(int offset, int count, boolean sortOrder) {
+        List<ModelTC> models = []
         modelService.getAllModels(offset, count, sortOrder).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels(int offset, int count, ModelListSorting sortColumn) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(int offset, int count, ModelListSorting sortColumn) {
+        List<ModelTC> models = []
         modelService.getAllModels(offset, count, sortColumn).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels(int offset, int count) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(int offset, int count) {
+        List<ModelTC> models = []
         modelService.getAllModels(offset, count).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels(ModelListSorting sortColumn) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(ModelListSorting sortColumn) {
+        List<ModelTC> models = []
         modelService.getAllModels(sortColumn).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels() {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels() {
+        List<ModelTC> models = []
         modelService.getAllModels().each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
@@ -139,7 +154,91 @@ class ModelDelegateService implements IModelService {
     }
 
     @NotTransactional
-    long createAuditItem(ModelAuditTransportCommand cmd) {
+    Map<String, List> collectContributors(Map<String, String> contributors) {
+        // TODO: create an Enum for the contribution role names
+        List curators = contributors.collect { it.value }.findAll {
+            String[] parts = it.split(" - ")
+            parts[0] == "Curator"
+        }.collect { it.split(" - ")[1] }
+
+        List modellers = contributors.collect { it.value }.findAll {
+            String[] parts = it.split(" - ")
+            parts[0] == "Modeller"
+        }.collect { it.split(" - ")[1] }
+
+        List others = contributors.collect { it.value }.findAll {
+            String[] parts = it.split(" - ")
+            parts[0] == "Other"
+        }.collect { it.split(" - ")[1] }
+
+        Map<String, List> retRes = [:]
+        retRes.put("modellers", modellers)
+        retRes.put("curators", curators)
+        retRes.put("others", others)
+        retRes
+    }
+
+    @NotTransactional
+    Map<String, List> convertContributors(Map<String, List<CTC>> contributors) {
+        // use TreeMap to sort the keys in a natural order
+        Map<String, List> mapResult = new TreeMap<>()
+
+        for (List<CTC> list : contributors.values()) {
+            for (CTC value: list) {
+                String roleName = value.role.name
+                String contributorName = value.person.userRealName
+                if (mapResult.containsKey(roleName)) {
+                    boolean existed = mapResult.get(roleName).find {
+                        it == contributorName
+                    }
+                    if (!existed) {
+                        mapResult.get(roleName).add(contributorName)
+                    }
+                } else {
+                    mapResult.put(roleName, [contributorName] as List)
+                }
+            }
+        }
+
+        return mapResult
+    }
+
+    @NotTransactional
+    //@Cacheable("detailedContributors")
+    Map<String, Set<ContributorDto>> buildDetailedContributors(Map<String, List<CTC>> contributors) {
+        // use TreeMap to sort the keys in a natural order
+        Map<String, Set<ContributorDto>> mapResult = new TreeMap<>()
+
+        for (List<CTC> values: contributors.values()) {
+            for (CTC value: values) {
+                String roleName = value.role.name
+                roleName = roleName.replaceAll(" ", "")
+                ContributorDto info = new ContributorDto(
+                        name: value.person.userRealName,
+                        email: value.user.email,
+                        affiliation: value.person.institution,
+                        orcid: value.person.orcid,
+                        external: value.external
+                )
+                if (mapResult.containsKey(roleName)) {
+                    boolean existed = mapResult.get(roleName).find {
+                        it.name == info.name && it.email == info.email && it.affiliation == it.affiliation && it.
+                                orcid == info.orcid && it.role == info.role
+                    }
+                    if (!existed) {
+                        mapResult.get(roleName).add(info)
+                    }
+                } else {
+                    mapResult.put(roleName, [info] as Set)
+                }
+            }
+        }
+
+        return mapResult
+    }
+
+    @NotTransactional
+    long createAuditItem(ModelATC cmd) {
         return modelService.createAuditItem(cmd)
     }
 
@@ -153,11 +252,11 @@ class ModelDelegateService implements IModelService {
         return modelService.getFileDetails(Revision.get(revID), filename)
     }
 
-    ModelTransportCommand getModel(String modelId) {
+    ModelTC getModel(String modelId) {
         return new ModelAdapter(model: modelService.getModel(modelId)).toCommandObject()
     }
 
-    RevisionTransportCommand getLatestRevision(String modelId, boolean addToHistory = true) {
+    RevisionTC getLatestRevision(String modelId, boolean addToHistory = true) {
         Model model = modelService.findByPerennialIdentifier(modelId)
         if (!model) {
             throw new AccessDeniedException("No access to any revision of Model ${modelId}")
@@ -170,91 +269,196 @@ class ModelDelegateService implements IModelService {
         }
     }
 
-    List<RevisionTransportCommand> getAllRevisions(String modelId) {
+    RevisionTC getOldestRevision(final String modelId) {
+        if (!modelId) {
+            return null
+        } else {
+            List<RevisionTC> allRevisions = getAllRevisions(modelId)
+            int smallestRevNum = allRevisions*.revisionNumber.min()
+            RevisionTC smallest = allRevisions.find {
+                it.revisionNumber == smallestRevNum
+            }
+            return smallest
+        }
+    }
+
+    RevisionTC getOldestRevision(final RevisionTC revisionTC) {
+        if (!revisionTC) {
+            return null
+        }
+        ModelTC modelTC = revisionTC.model
+        getOldestRevision(modelTC.submissionId)
+    }
+
+    List<RevisionTC> getAllRevisions(String modelId) {
+        Gson gson = new Gson()
+        List<RevisionTC> revisions = []
+        List<String> lstAllRevs = new ArrayList<>()
         def model = modelService.findByPerennialIdentifier(modelId)
+        String strAllRevs = redisService.doRedisHGet(modelId, "allRevisions")
+        if (strAllRevs) {
+            lstAllRevs = strAllRevs.trim().tokenize("|")
+            for (strRev in lstAllRevs) {
+                RevisionTC revTC = gson.fromJson(strRev, RevisionTC)
+                revisions.add(revTC)
+            }
+            return revisions
+        }
         def revs = modelService.getAllRevisions(model)
-        def msg = """Fetching revisions ${revs*.id} for $modelId. Attachment to current session: ${revs*.isAttached()}
-transactionStatus: ${transactionStatus /* injected by org.codehaus.groovy.grails.transaction.transform.TransactionalTransform*/} ;
-session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.applicationContext.sessionFactory)
+        def msg = """Fetching revisions ${revs*.id} for $modelId. \
+Attachment to current session: ${revs*.isAttached()}transactionStatus: ${transactionStatus
+            /* injected by org.codehaus.groovy.grails.transaction.transform.TransactionalTransform*/} ;
+session: ${TSM.getResource(Holders.applicationContext.sessionFactory)
             .session.persistenceContext.entitiesByKey.collect {
             def instance = it.value
-            "{${instance.class.name} ${instance.hasProperty('id') ? instance.id : instance.toString() }}" }.toString()}
+            "{${instance.class.name} ${instance.hasProperty('id') ? instance.id : instance.toString()}}" }.toString()}
 """
-        log.info(msg.toString())
-
-        List<RevisionTransportCommand> revisions = []
+        LOGGER.info(msg.toString())
+        gson = new GsonBuilder()
+//            .excludeFieldsWithModifiers(Modifier.FINAL, Modifier.TRANSIENT, Modifier.STATIC)
+//            .serializeNulls()
+            .excludeFieldsWithoutExposeAnnotation()
+            .create()
         revs.each {
-            revisions << new RevisionAdapter(revision: it, latest: true).toCommandObject()
+            RevisionTC revTC = new RevisionAdapter(revision: it, latest: true).toCommandObject()
+            String s = gson.toJson(revTC)
+            lstAllRevs.add(s)
+            revisions.add(revTC)
+        }
+        if (!lstAllRevs.isEmpty()) {
+            redisService.doRedisHSet(modelId, "all-revisions", lstAllRevs.join("|"))
         }
         return revisions
     }
 
-    RevisionTransportCommand getRevision(String identifier) {
+    RevisionTC getRevision(String identifier) {
         return new RevisionAdapter(revision: modelService.getRevision(identifier)).toCommandObject()
     }
 
-    RevisionTransportCommand getRevision(String modelId, int revisionNumber) {
+    RevisionTC getRevision(String modelId, int revisionNumber) {
         return new RevisionAdapter(revision: modelService.getRevision(
-                    modelService.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
+            modelService.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
     }
 
     PublicationTransportCommand getPublication(String modelId) throws AccessDeniedException,
-                IllegalArgumentException {
+        IllegalArgumentException {
         def publication = modelService.getPublication(
-                               modelService.findByPerennialIdentifier(modelId))
+            modelService.findByPerennialIdentifier(modelId))
         if (publication) {
             return new PublicationAdapter(publication: publication).toCommandObject()
         }
         return null
     }
 
-    ModelTransportCommand uploadModel(List<File> modelFiles, ModelTransportCommand meta) throws
-                ModelException {
-        return new ModelAdapter(model: modelService.uploadModelAsList(modelFiles, meta)).toCommandObject()
+    Map getRevisionsState(final String modelId) {
+        Model model = modelService.getModel(modelId)
+        getRevisionsState(model)
     }
 
-    RevisionTransportCommand addRevision(String modelId, File file,
-                ModelFormatTransportCommand format, String comment) throws ModelException {
+    Map getRevisionsState(final Model model) {
+        // for example: "aaa/2023-09-08T13-04-45-193_MODEL2309080001/"
+        String vcsId = model.vcsIdentifier
+        vcsId = vcsId?.take(3)
+
+        List publishedRevs = new ArrayList()
+        List privateRevs = new ArrayList()
+        for (Revision revision : model.revisions) {
+            if (revision.state == ModelState.PUBLISHED) {
+                publishedRevs.add(revision.revisionNumber)
+            } else if (revision.state == ModelState.UNPUBLISHED) {
+                privateRevs.add(revision.revisionNumber)
+            }
+        }
+        Collections.sort(publishedRevs, Collections.reverseOrder())
+        Collections.sort(privateRevs, Collections.reverseOrder())
+        Map mapReturned = [
+            "vcsId": vcsId, "publishedRevs": publishedRevs, "privateRevs": privateRevs,
+            "submissionId": model.submissionId
+        ]
+        if (model.publicationId) {
+            mapReturned.put("publicationId", model.publicationId)
+        }
+        Revision revision
+        if (publishedRevs) {
+            revision = model.revisions.find { it.revisionNumber == publishedRevs[0] }
+        } else {
+            revision = model.revisions.find { it.revisionNumber == privateRevs[0] }
+        }
+        mapReturned.put("curationStatus", revision.curationState.name())
+        return mapReturned
+    }
+
+    ModelTC uploadModel(List<File> modelFiles, ModelTC meta) throws ModelException {
+        Model model = modelService.uploadModelAsList(modelFiles as List<RFTC>, meta)
+        return new ModelAdapter(model: model).toCommandObject()
+    }
+
+    RevisionTC addRevision(String modelId, File file,
+                           MFTC format, String comment) throws ModelException {
         Model model = modelService.findByPerennialIdentifier(modelId)
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
             format.formatVersion)
-        Revision revision = modelService.addRevisionAsFile(model, file, modelFormat, comment)
+        RFTC transportCommand = new RFTC(path: file.path, filename: file.name, size: file.size(),
+            description: file.name)
+        Revision revision = modelService.addRevisionAsFile(model, transportCommand, modelFormat, comment)
         return new RevisionAdapter(revision: revision).toCommandObject()
     }
 
-    RevisionTransportCommand addRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                                         final List<RepositoryFileTransportCommand> deleteFiles,
-                                         final RevisionTransportCommand rev) throws ModelException {
+    RevisionTC addRevision(final List<RFTC> repoFiles,
+                           final List<RFTC> deleteFiles,
+                           final RevisionTC rev) throws ModelException {
         Revision revision = modelService.addRevision(repoFiles, deleteFiles, rev)
-        RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+        RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
         return revisionTC
     }
 
     @NotTransactional
-    Byte[] serveModelFilesAsZip(Map<String, RepositoryFileTransportCommand> files) {
-        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
-        ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
-        files.each { String modelId, RepositoryFileTransportCommand cmd ->
-            File file = new File(cmd.path)
-            String extension = Files.getFileExtension(file.getName())
-            ZipEntry entry = new ZipEntry("${modelId}.$extension")
-            zipFile.putNextEntry(entry)
-            byte[] fileData = file.getBytes()
-            zipFile.write(fileData, 0, fileData.length)
-            zipFile.closeEntry()
+    InputStream serveModelFilesAsZip(Map<String, RFTC> files) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        ZipOutputStream zipFile = new ZipOutputStream(baos)
+        try {
+            final int BUFFER = 2048
+            files.each { String modelId, RFTC cmd ->
+                File file = new File(cmd.path)
+                FileInputStream fis = new FileInputStream(file)
+                String extension = Files.getFileExtension(file.getName())
+                ZipEntry entry = new ZipEntry("${modelId}.$extension")
+                zipFile.putNextEntry(entry)
+                int length
+                byte[] buffer = new byte[BUFFER]
+                while ((length = fis.read(buffer)) > 0) {
+                    zipFile.write(buffer, 0, length)
+                }
+                zipFile.closeEntry()
+                fis.close()
+            }
+            zipFile.close()
+        } catch (IOException ioe) {
+            LOGGER.error("Exception on creating zip file ${zipFileName}", ioe)
+        } finally {
+            // nothing happens here
         }
-        zipFile.close()
-        byte[] response = byteBuffer.toByteArray()
-        response
+        if (!baos) {
+            return null
+        }
+        return new ByteArrayInputStream(baos.toByteArray())
     }
 
     @NotTransactional
-    Byte[] serveModelFilesAsZip(String[] modelIDs) {
-        Map<String, RepositoryFileTransportCommand> files = modelService.fetchMainFileForModels(modelIDs)
+    InputStream serveModelFilesAsZip(List<String> modelIDs) {
+        Map<String, RFTC> files = modelService.fetchMainFileForModels(modelIDs)
         if (files) {
             return serveModelFilesAsZip(files)
         } else
-        return null
+            return null
+    }
+
+    List<String> getAllModelIdentifiers(final boolean isAutogenerated = false) {
+        modelService.getAllModelIdentifiers(isAutogenerated)
+    }
+
+    List<String> getPublicOrPrivateIdentifiers(final boolean isPrivate = false) {
+        modelService.getPublicOrPrivateIdentifiers(isPrivate)
     }
 
     List<FlagTransportCommand> getFlags(final String modelId) {
@@ -275,6 +479,41 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
+    boolean hasAdminRight(final RevisionTC revisionTC, final boolean hasCuratorRole = false) {
+        /*if (revisionTC.curationState == ModelState.PUBLISHED) {
+            // always
+            return true
+        }*/
+        User currentUser = userService.getCurrentUser()
+        boolean isModelOwner = isOwnedBy(revisionTC, currentUser)
+        boolean isAdmin = userService.isAdmin(currentUser)
+        isModelOwner || hasCuratorRole || isAdmin
+    }
+
+    @NotTransactional
+    boolean canAskReviewerAccount(final RevisionTC revisionTC, final boolean hasCuratorRole) {
+        boolean hasAdminRight = hasAdminRight(revisionTC, hasCuratorRole)
+        Revision revision = Revision.get(revisionTC.id)
+        boolean published = modelService.isRevisionPublic(revision)
+        boolean retVal = !published && hasAdminRight
+        retVal
+    }
+
+    /**
+     * Checks that the given user is the owner or not of the model which revisionTC is among its revisions
+     * @param revisionTC A RevisionTransportCommand object
+     * @param user A user
+     * @return true or false
+     */
+    @NotTransactional
+    boolean isOwnedBy(final RevisionTC revisionTC, final User user) {
+        // TODO: the model owner could be defined as a person among the users working with the model
+        // the original submitter who is the first user submitted the model
+        ModelTC modelTC = revisionTC.model
+        modelTC.submitterUsername == user.username
+    }
+
+    @NotTransactional
     Boolean canAddRevision(String modelId) {
         return modelService.canAddRevision(modelService.findByPerennialIdentifier(modelId))
     }
@@ -290,12 +529,12 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    Boolean canPublish(RevisionTransportCommand revision) {
+    Boolean canPublish(RevisionTC revision) {
         if (revision.state == ModelState.UNPUBLISHED) {
             try {
                 return modelService.canPublish(Revision.get(revision.id))
-            }
-            catch(Exception e) {
+            } catch (Exception e) {
+                LOGGER.error("Cannot check canPublish because of ${e.message}.")
                 return false
             }
         }
@@ -309,7 +548,20 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    Boolean canCertify(RevisionTransportCommand revision) {
+    Boolean canUnpublish(RevisionTC revision) {
+        if (revision.state == ModelState.PUBLISHED) {
+            try {
+                return modelService.canUnpublish(Revision.get(revision.id))
+            } catch (Exception e) {
+                LOGGER.error("Cannot check canUnpublish because of ${e.message}.")
+                return false
+            }
+        }
+        return false
+    }
+
+    @NotTransactional
+    Boolean canCertify(RevisionTC revision) {
         if (revision.qcInfo) return false
         qcInfoDelegateService.canCertify(revision.modelIdentifier())
     }
@@ -321,17 +573,18 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    Boolean canCheckConsistency(RevisionTransportCommand revision) {
+    Boolean canCheckConsistency(RevisionTC revision) {
         Revision actualRevision = Revision.get(revision.id)
         modelService.canCheckConsistency(actualRevision)
     }
 
     @NotTransactional
-    Boolean canSubmitForPublication(RevisionTransportCommand revision) {
+    Boolean canSubmitForPublication(RevisionTC revision) {
         if ((revision.state == ModelState.UNPUBLISHED)) {
             try {
                 return modelService.canSubmitForPublication(Revision.get(revision.id))
             } catch (Exception e) {
+                LOGGER.error("Cannot check canSubmitForPublication because of ${e.message}.")
                 return false
             }
         }
@@ -344,10 +597,9 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         canSubmitForPublication(revision)
     }
 
-    List<RepositoryFileTransportCommand> retrieveModelFiles(RevisionTransportCommand revision)
-            throws ModelException {
+    List<RFTC> retrieveModelFiles(RevisionTC revision) throws ModelException {
         Revision theRevision = Revision.get(revision.id)
-        List<RepositoryFileTransportCommand> files = modelService.retrieveModelFiles(theRevision)
+        List<RFTC> files = modelService.retrieveModelFiles(theRevision)
         if (!files?.isEmpty()) {
             files.each { it.revision = revision }
             /*
@@ -359,33 +611,33 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return files
     }
 
-    List<RepositoryFileTransportCommand> retrieveModelFiles(String modelId) {
+    List<RFTC> retrieveModelFiles(String modelId) {
         return modelService.retrieveModelFiles(modelService.findByPerennialIdentifier(modelId))
     }
 
     void grantReadAccess(String modelId, User collaborator) {
         modelService.grantReadAccess(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     void grantWriteAccess(String modelId, User collaborator) {
         modelService.grantWriteAccess(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     boolean revokeReadAccess(String modelId, User collaborator) {
         return modelService.revokeReadAccess(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     boolean revokeWriteAccess(String modelId, User collaborator) {
         return modelService.revokeWriteAccess(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+            User.get(collaborator.id))
     }
 
     void transferOwnerShip(String modelId, User collaborator) {
-        modelService.transferOwnerShip(modelService.findByPerennialIdentifier(modelId),
-                    User.get(collaborator.id))
+        modelService.transferOwnership(modelService.findByPerennialIdentifier(modelId),
+            User.get(collaborator.id))
     }
 
     boolean deleteModel(String modelId) {
@@ -397,7 +649,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return modelService.restoreModel(modelService.findByPerennialIdentifier(modelId))
     }
 
-    boolean deleteRevision(RevisionTransportCommand revision) {
+    boolean deleteRevision(RevisionTC revision) {
         return modelService.deleteRevision(Revision.get(revision.id))
     }
 
@@ -409,7 +661,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         modelService.setPermissions(modelService.findByPerennialIdentifier(modelId), permissions)
     }
 
-    RevisionTransportCommand getRevisionDetails(RevisionTransportCommand skeleton) {
+    RevisionTC getRevisionDetails(RevisionTC skeleton) {
         assert skeleton.id
         final String REV_ID = skeleton.id
         final Model model = modelService.findByPerennialIdentifier(skeleton.model.submissionId)
@@ -417,24 +669,25 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         if (!revision) {
             throw new IllegalArgumentException("Revision with id $REV_ID does not exist")
         }
-        return new ModelAdapter(model: model, latest: revision).toCommandObject()
+        new RevisionAdapter(revision: revision).toCommandObject()
     }
 
-    RevisionTransportCommand publishModelRevision(RevisionTransportCommand cmd) {
+    RevisionTC publishModelRevision(RevisionTC cmd) {
         Revision revision = Revision.get(cmd.id)
         Revision published = modelService.publishModelRevision(revision)
         new RevisionAdapter(revision: published).toCommandObject()
     }
 
-    void unpublishModelRevision(RevisionTransportCommand revision) {
+    void unpublishModelRevision(RevisionTC revision) {
         modelService.unpublishModelRevision(Revision.get(revision.id))
     }
 
-    void submitModelRevisionForPublication(RevisionTransportCommand revision) {
+    void submitModelRevisionForPublication(RevisionTC revision) {
         modelService.submitModelRevisionForPublication(Revision.get(revision.id))
     }
 
-    ModelTransportCommand findByPerennialIdentifier(String perennialId) {
+    //@Cacheable("findByPerennialIdentifier")
+    ModelTC findByPerennialIdentifier(String perennialId) {
         def model = modelService.findByPerennialIdentifier(perennialId)
         if (model) {
             return new ModelAdapter(model: model).toCommandObject()
@@ -444,22 +697,22 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     /**
      * Update curation status of specific model revision
-     * @param modelId: submissionId of model
-     * @param revisionNumber: revision number
-     * @param curationState: curation status
+     * @param modelId : submissionId of model
+     * @param revisionNumber : revision number
+     * @param curationState : curation status
      */
-    RevisionTransportCommand updateCurationStateRevision(String modelId, int revisionNumber,
-            CurationState curationState) {
+    RevisionTC updateCurationStateRevision(String modelId, int revisionNumber,
+                                           CurationState curationState) {
         Revision revision = modelService.getRevision(
             modelService.findByPerennialIdentifier(modelId), revisionNumber)
         revision = modelService.updateRevisionCurationState(revision, curationState)
         new RevisionAdapter(revision: revision, latest: true).toCommandObject()
     }
 
-    RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {
+    //@Cacheable("getRevisionFromParams")
+    RevisionTC getRevisionFromParams(final String MODEL, String REVISION = null) {
         String sanitisedModelId
         String sanitisedRevisionId
-        final RevisionTransportCommand REV
         final boolean MODEL_ID_HAS_DOT = MODEL.contains('.')
         if (MODEL_ID_HAS_DOT) {
             String[] parts = MODEL.split("\\.")
@@ -468,17 +721,20 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         } else {
             sanitisedModelId = MODEL
         }
-        final boolean PARSE_REVISION_ID = REVISION != null && sanitisedRevisionId == null
-        if (PARSE_REVISION_ID) {
-            // if revision is not an integer, then UrlMappings will error out.
-            final int REVISION_ID = Integer.parseInt(REVISION)
-            REV = getRevision(sanitisedModelId, REVISION_ID)
+        // if the revision id is not embedded/included in the MODEL param
+        final boolean EMBEDDED_REVISION_ID = REVISION != null && sanitisedRevisionId == null
+
+        int REVISION_ID
+        if (EMBEDDED_REVISION_ID) {
+            // if REVISION is not an integer, then UrlMappings will error out.
+            REVISION_ID = Integer.parseInt(REVISION)
         } else if (sanitisedRevisionId) {
-            final int REVISION_ID = Integer.parseInt(sanitisedRevisionId)
-            REV = getRevision(sanitisedModelId, REVISION_ID)
+            REVISION_ID = Integer.parseInt(sanitisedRevisionId)
         } else { // no revision was specified - pull the latest one.
-            REV = getLatestRevision(sanitisedModelId)
+            REVISION_ID = 0
         }
+        // check and reuse the cached version
+        RevisionTC REV = doFetchFromRedisOrDatabase(sanitisedModelId, REVISION_ID)
         return REV
     }
 
@@ -486,7 +742,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     boolean haveMultiplePerennialIdentifierTypes() {
         def publicationIdGenerator = modelService.publicationIdGenerator
         final boolean HAVE_PERENNIAL_PUBLICATION_ID = !(publicationIdGenerator instanceof
-                    NullModelIdentifierGenerator)
+            NullModelIdentifierGenerator)
 
         final Set<String> ID_TYPES = modelService.getPerennialIdentifierTypes()
         final boolean MANY_IDENTIFIERS = HAVE_PERENNIAL_PUBLICATION_ID || ID_TYPES.size() >= 2
@@ -494,7 +750,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     Map<Long, String> findModelsByPerennialId(List<String> identifiers) {
-        Map results = [:]
+        Map<Long, String> results = [:]
         for (String id : identifiers) {
             Model model = modelService.findByPerennialIdentifier(id)
             if (model) {
@@ -504,22 +760,28 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         results
     }
 
+    @Cacheable("getVcsIdentifier")
+    String getVcsIdentifier(final String id) {
+        Model model = modelService.findByPerennialIdentifier(id)
+        model.vcsIdentifier
+    }
+
     int updateHistory(String modelId, String user, String accessType,
                       String formatType, String changesMade, boolean success = false) {
-        ModelTransportCommand model = findByPerennialIdentifier(modelId)
+        ModelTC model = findByPerennialIdentifier(modelId)
         updateHistory(model, user, accessType, formatType, changesMade, success)
     }
 
-    int updateHistory(ModelTransportCommand model, String user, String accessType,
+    int updateHistory(ModelTC model, String user, String accessType,
                       String formatType, String changesMade, boolean success = false) {
-        accessType = accessType.replace("/model/","")
+        accessType = accessType.replace("/model/", "")
         AccessFormat format = AccessFormat.HTML
         try {
             format = AccessFormat.valueOf(formatType.toUpperCase())
-        } catch(Exception ignore) {
+        } catch (Exception ignore) {
 
         }
-        ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
+        ModelATC audit = new ModelATC(
             model: model,
             username: user,
             format: format,
@@ -527,5 +789,167 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             changesMade: changesMade,
             success: success)
         return createAuditItem(audit)
+    }
+
+    @NotTransactional
+    //@Cacheable("sortModelFilesByName")
+    List<RFTC> sortModelFilesByName(final List<RFTC> repoFiles) {
+        List<RFTC> sortedList = repoFiles.sort { it.filename }
+        return sortedList
+    }
+
+    /**
+     * Determines the criteria to display the Curation tab in the model view
+     *
+     * @param revision
+     * @param hasCuratorRole
+     * @param currentUser
+     * @return a boolean value
+     */
+    boolean canSeeCurationTab(RevisionTC revision, boolean hasCuratorRole, def currentUser) {
+        def curationNotes = curationNotesService.fetchCurationNotesForModel(revision.model.id)
+        boolean isPublicModel = revision.state == ModelState.PUBLISHED
+        if (!curationNotes && !currentUser) {
+            // don't show the Curation tab if there hasn't been any curation results and logged in user
+            return false
+        } else if (curationNotes && !currentUser) {
+            // only show the Curation tab if there has been the curation results and the model is public
+            return isPublicModel
+        } else {
+            // otherwise, display it to curators
+            return hasCuratorRole
+        }
+    }
+
+    @NotTransactional
+    JSONArray buildJsonArray(final String deployTarget, final String parentDir, final String modelId,
+                             final Integer revisionNumber, final List<RFTC> files, final String modelExportsDir,
+                             final String modelCacheDir, final String state) {
+        JSONArray array = new JSONArray()
+        for (RFTC it : files) {
+            JSONObject json = new JSONObject()
+            json.put("site", deployTarget)
+            json.put("parentDir", parentDir)
+            json.put("modelExportsDir", modelExportsDir)
+            json.put("modelCacheDir", modelCacheDir)
+            json.put("modelId", modelId)
+            json.put("revisionNumber", revisionNumber)
+            json.put("id", it.id)
+            json.put("filename", it.filename)
+            json.put("path", it.path)
+            json.put("mimeType", it.mimeType)
+            json.put("size", it.size)
+            json.put("mainFile", it.mainFile)
+            json.put("hidden", it.hidden)
+            json.put("description", it.description)
+            json.put("userSubmitted", it.userSubmitted)
+            json.put("showPreview", it.showPreview)
+            json.put("state", state)
+            array.put(json)
+        }
+        /*System.out.println(array.toString())
+        LOGGER.info(array.toString())*/
+        return array
+    }
+
+    @NotTransactional
+    boolean retrieveGalaxyLink(String modelId) {
+        String value = redisService.doRedisHGet(modelId, "galaxyLink")
+        value == "Yes"
+    }
+
+    @NotTransactional
+    String cacheRosetteLink(final String modelId) {
+        Map map = redisService.doRedisHGetAll(modelId)
+        String hasRosetteLink = String.valueOf(checkRosetteLink(modelId))
+        LOGGER.info("Caching rosette link check for $modelId to Redis.")
+        map.put("hasRosetteLink", hasRosetteLink)
+        redisService.doRedisHSet(modelId, map)
+        hasRosetteLink
+    }
+
+    @NotTransactional
+    @Cacheable("rosetteLink")
+    boolean checkRosetteLink(final String modelId) {
+        LOGGER.info("Fetching OmicsDI data to check rosette link for $modelId...")
+        final EP_PREFIX = "https://www.omicsdi.org/ws/dataset/get?database=biomodels&accession="
+        final url = "${EP_PREFIX}$modelId"
+        int status
+        try {
+            status = new WebServiceFetcher(url).getHttpStatus() as int
+        } catch (Exception ex) {
+            LOGGER.error("Cannot connect to fetch the data due to ${ex.message}")
+            status = 500
+        }
+        status == 200
+    }
+
+    @NotTransactional
+    boolean retrieveRosetteLink(final String modelId) {
+        // TODO: check TTL and refresh the cached value
+        boolean value
+        if (redisService.doRedisHGet(modelId, "hasRosetteLink") == null) {
+            // this key doesn't exist on Redis
+            value = cacheRosetteLink(modelId)
+        } else {
+            value = redisService.doRedisHGet(modelId, "hasRosetteLink").toBoolean()
+        }
+        value
+    }
+
+    @NotTransactional
+    boolean retrieveMenelmacarLink(final String modelId) {
+        def value = redisService.doRedisHGet(modelId, "hasMenelmacarLink")
+        value ? true : false
+    }
+
+    @NotTransactional
+    boolean doAddOrRemoveGalaxyLink(String modelId, String value) {
+        LOGGER.info("Adding or removing GALAXY link $modelId -- $value")
+        redisService.doRedisHSet(modelId, ["galaxyLink": value] as Map)
+        redisService.doRedisHGet(modelId, "galaxyLink")
+    }
+
+    boolean shouldDisplayDisclaimer(final RevisionTC revision) {
+        boolean isPublic = revision.state == ModelState.PUBLISHED
+        boolean published = revision.model?.firstPublished != null
+        String manualLabel = PubLP.LinkType.MANUAL_LABEL
+        String linkType = revision.model.publication?.linkProvider?.linkType
+        boolean manualPubEntry = linkType == manualLabel
+        boolean withoutPublication = revision.model?.publication == null
+        boolean retVal = isPublic && published && (manualPubEntry || withoutPublication)
+        retVal
+    }
+
+    /**
+     * Returns the first and last revision of the given model without checking
+     * ACLs as well as permissions. This method will be called by admins or
+     * any privileges. In other words, admins use this method to manage data.
+     * @param model {@link Model} instance
+     * @return a pair of two {@link Revision} instances
+     */
+    Revision[] getFirstAndLastRevision(Model model) {
+        Set<Revision> revisions = model.revisions.sort { Revision r1, Revision r2 ->
+            r1.revisionNumber <=> r2.revisionNumber
+        }
+        Revision firstRevision = revisions.first() as Revision
+        Revision lastRevision = revisions.last() as Revision
+        [firstRevision, lastRevision] as Revision[]
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
+    }
+
+    RevisionTC doFetchFromRedisOrDatabase(final String sanitisedModelId, final int REVISION_ID) {
+        RevisionTC REV
+        // TODO: should we get the cached version? How to cache an object of RevisionTC?
+        if (REVISION_ID) {
+            REV = getRevision(sanitisedModelId, REVISION_ID)
+        } else {
+            REV = getLatestRevision(sanitisedModelId)
+        }
+        return REV
     }
 }

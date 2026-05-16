@@ -25,10 +25,12 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <title><g:message code="${titleCode}" default="How To Cite"/> | BioModels</title>
+
     <script type="text/javascript">
         function toggleDisplayById(theElementId) {
-            var obj = document.getElementById(theElementId)
-            if (obj.className == "") {
+            const obj = document.getElementById(theElementId);
+            if (obj.className === "") {
                 obj.className = "hidden";
             } else {
                 obj.className = "";
@@ -41,18 +43,20 @@
 
 <p>
   Several papers about BioModels and related efforts have been published. Please see below for how to cite: <a href="#biom
-odels" title="How to cite BioModels">BioModels</a> | <a href="#path2models" title="How to cite Path2Models">Path2
-Models</a> | <a href="#associated_services" title="How to cite BioModels' associated services">Associated services</a> | <a href="#
-others" title="Other publications related to BioModels">Others</a>.
+odels" title="How to cite BioModels">BioModels</a> |
+    <a href="#reproducibility" title="How to cite Reproducibility">Reproducibility</a> |
+    <a href="#biomodels-parameters" title="How to cite BioModels Parameters">BioModels Parameters</a> |
+    <a href="#path2models" title="How to cite Path2Models">Path2Models</a> |
+    <a href="#associated_services" title="How to cite BioModels' associated services">Associated services</a> |
+    <a href="#others" title="Other publications related to BioModels">Others</a>.
 </p>
 <p>
-  For a more complete list, please refer to <a href="http://scholar.google.co.uk/citations?user=sxPul0AAAAAJ" title="BioModels rela
+  For a more complete list, please refer to <a href="https://scholar.google.co.uk/citations?user=sxPul0AAAAAJ" title="BioModels rela
 ted publications on Google Scholar">our Google Scholar profile</a>.
 </p>
 
 
 <h3 id="biomodels">BioModels</h3>
-
 <dl>
     <dt>Rahuman S Malik-Sheriff, Mihai Glont, Tung V N Nguyen, Krishna Tiwari, Matthew G Roberts, Ashley Xavier,
     Manh T Vu, Jinghao Men, Matthieu Maire, Sarubini Kananathan, Emma L Fairbanks, Johannes P Meyer,
@@ -65,7 +69,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
             title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
     [<a href="javascript:toggleDisplayById('bib_Rahuman2020');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <img src="${bmStaticAssetsURL}/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_Rahuman2020" class="hidden">
         @article{BioModels2020,
         author = {Malik-Sheriff, Rahuman S and Glont, Mihai and Nguyen, Tung V N and Tiwari, Krishna and Roberts, Matthew G and Xavier, Ashley and Vu, Manh T and Men, Jinghao and Maire, Matthieu and Kananathan, Sarubini and Fairbanks, Emma L and Meyer, Johannes P and Arankalle, Chinmay and Varusai, Thawfeek M and Knight-Schrijver, Vincent and Li, Lu and Dueñas-Roca, Corina and Dass, Gaurhari and Keating, Sarah M and Park, Young M and Buso, Nicola and Rodriguez, Nicolas and Hucka, Michael and Hermjakob, Henning},
@@ -100,7 +104,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
             title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
     [<a href="javascript:toggleDisplayById('bib_Glont2018');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <img src="${bmStaticAssetsURL}/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_Glont2018" class="hidden">
             @ARTICLE{BioModels2018a,
             author  = {Glont, Mihai and Nguyen, Tung V N and Graesslin, Martin and Hälke, Robert and Ali, Raza and
@@ -121,6 +125,40 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
     </dd>
 </dl>
 
+<h3 id="reproducibility">Reproducibility</h3>
+<dl>
+    <dt>
+        Krishna Tiwari, Sarubini Kananathan, Matthew G Roberts, Johannes P Meyer, Mohammad Umer Sharif Shohan,
+        Ashley Xavier, Matthieu Maire, Ahmad Zyoud, Jinghao Men, Szeyi Ng, Tung V N Nguyen, Mihai Glont,
+        Henning Hermjakob, Rahuman S Malik‐Sheriff
+    </dt>
+    <dd style="margin-left:0;">
+        <div class="pubtitle">Reproducibility in systems biology modelling</div>
+        <div class="pubjournal"><em>Molecular Systems Biology</em> 2021</div>
+        [<a href="https://www.embopress.org/doi/full/10.15252/msb.20209982"
+            title="Publication on Molecular Systems Biology">Molecular Systems Biology</a>]
+    [<a href="javascript:toggleDisplayById('bib_Tiwari2021');"
+        title="Display/hide the BibTeX entry for this publication">
+        <img src="${bmStaticAssetsURL}/icons/plus.gif" alt="+ icon" style="padding-right: 5px;"
+        />BibTeX entry</a>]
+        <pre id="bib_Tiwari2021" class="hidden">
+        @article{https://doi.org/10.15252/msb.20209982,
+            author = {Tiwari, Krishna and Kananathan, Sarubini and Roberts, Matthew G and Meyer, Johannes P and Sharif Shohan, Mohammad Umer and Xavier, Ashley and Maire, Matthieu and Zyoud, Ahmad and Men, Jinghao and Ng, Szeyi and Nguyen, Tung V N and Glont, Mihai and Hermjakob, Henning and Malik-Sheriff, Rahuman S},
+            title = {Reproducibility in systems biology modelling},
+            journal = {Molecular Systems Biology},
+            volume = {17},
+            number = {2},
+            pages = {e9982},
+            doi = {https://doi.org/10.15252/msb.20209982},
+            url = {https://www.embopress.org/doi/abs/10.15252/msb.20209982},
+            eprint = {https://www.embopress.org/doi/pdf/10.15252/msb.20209982},
+            abstract = {Reproducibility of scientific results is a key element of science and credibility. The lack of reproducibility across many scientific fields has emerged as an important concern. In this piece, we assess mathematical model reproducibility and propose a scorecard for improving reproducibility in this field.},
+            year = {2021}
+        }
+        </pre>
+    </dd>
+</dl>
+
 <h3 id="biomodels-parameters">BioModels Parameters</h3>
 <dl>
     <dt>
@@ -133,7 +171,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
             title="Publication on Bioinformatics">Bioinformatics</a>]
     [<a href="javascript:toggleDisplayById('bib_Glont2020');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <img src="${bmStaticAssetsURL}/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_Glont2020" class="hidden">
         @article{10.1093/bioinformatics/btaa560,
         author = {Glont, Mihai and Arankalle, Chinmay and Tiwari, Krishna and Nguyen, Tung V N and Hermjakob, Henning and Malik Sheriff, Rahuman S},
@@ -153,7 +191,6 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
 </dl>
 
 <h3 id="others">Other publications</h3>
-
 <dl>
     <dt>
         Vijayalakshmi Chelliah, Nick Juty, Ishan Ajmera, Raza Ali, Marine Dumousseau,
@@ -169,7 +206,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
             title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
     [<a href="javascript:toggleDisplayById('bib_Chelliah2015');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <img src="${bmStaticAssetsURL}/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_Chelliah2015" class="hidden">
             @ARTICLE{BioModels2015a,
             author  = {Chelliah, Vijayalakshmi and Juty, Nick and Ajmera, Ishan and Ali, Raza and Dumousseau, Marine and Glont, Mihai
@@ -197,7 +234,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
         CPT: Pharmacometrics &amp; Systems Pharmacology</a>]
     [<a href="javascript:toggleDisplayById('bib_ALVillas2017');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon"
+        <img src="${bmStaticAssetsURL}/icons/plus.gif" alt="+ icon"
              style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_ALVillas2017" class="hidden">
             @ARTICLE{BioModels2017a,
@@ -228,7 +265,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
             title="Publication on CPT:PSP (Open Access)">CPT: Pharmacometrics &amp; Systems Pharmacology</a>]
     [<a href="javascript:toggleDisplayById('bib_Juty2015');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
+        <img src="${bmStaticAssetsURL}/icons/plus.gif"
              alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_Juty2015" class="hidden">
             @ARTICLE{BioModels2015b,
@@ -258,7 +295,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
         title="Publication on Nucleic Acids Research">Nucleic Acids Res</a>]
     [<a href="javascript:toggleDisplayById('bib_lenovere2006');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
+        <img src="${bmStaticAssetsURL}/icons/plus.gif"
              alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_lenovere2006" class="hidden">
             @ARTICLE{BioModels2006,
@@ -291,7 +328,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
         title="Publication on Springer (Open Access)">Springer</a>]
     [<a href="javascript:toggleDisplayById('bib_Chelliah2013');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
+        <img src="${bmStaticAssetsURL}/icons/plus.gif"
              alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 
         <pre id="bib_Chelliah2013" class="hidden">
@@ -323,7 +360,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
         title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
     [<a href="javascript:toggleDisplayById('bib_Li2010b');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
+        <img src="${bmStaticAssetsURL}/icons/plus.gif"
              alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_Li2010b" class="hidden">
             @ARTICLE{BioModels2010,
@@ -361,7 +398,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
       [<a href="javascript:toggleDisplayById('bib_Buchel2013');"
           title="Display/hide the BibTeX entry for this publication">
-          <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
+          <img src="${bmStaticAssetsURL}/icons/plus.gif"
                alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Buchel2013" class="hidden">
 @ARTICLE{BioModels2010,
@@ -396,7 +433,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
       [<a href="javascript:toggleDisplayById('bib_Wimalaratne2014');"
           title="Display/hide the BibTeX entry for this publication">
-          <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
+          <img src="${bmStaticAssetsURL}/icons/plus.gif"
                alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Wimalaratne2014" class="hidden">
 @ARTICLE{Wimalaratne2014,
@@ -428,7 +465,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
         title="Publication on Briefings in Bioinformatics (Open Access)">Brief Bioinform</a>]
     [<a href="javascript:toggleDisplayById('bib_Li2010a');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
+        <img src="${bmStaticAssetsURL}/icons/plus.gif"
              alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
         <pre id="bib_Li2010a" class="hidden">
             @ARTICLE{BioModelsWebServices2010,

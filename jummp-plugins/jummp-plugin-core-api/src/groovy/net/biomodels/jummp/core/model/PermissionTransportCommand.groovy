@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -32,10 +32,14 @@ package net.biomodels.jummp.core.model
  *
  * @author raza ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tnguyen@ebi.ac.uk>
  */
 class PermissionTransportCommand {
+    // the user full name or user real name
     String name
+    // the user name
     String username
+    // the user id
     int id
     boolean read = false
     boolean write = false

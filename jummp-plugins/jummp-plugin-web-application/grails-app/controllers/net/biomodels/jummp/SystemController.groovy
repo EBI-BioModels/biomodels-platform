@@ -1,0 +1,103 @@
+/**
+ * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ */
+
+package net.biomodels.jummp
+
+import grails.plugin.springsecurity.annotation.Secured
+import grails.plugins.rest.client.RestBuilder
+import net.biomodels.jummp.scms.CmsContent
+import net.biomodels.jummp.utils.WebServiceFetcher
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+/**
+ * This controller will interact with clients to query the system's basic information.
+ *
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ */
+@Secured(["ROLE_ADMIN"])
+class SystemController extends CommonController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SystemController.class)
+    def grailsApplication
+    def dataSource
+
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def index() {
+
+    }
+
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def info() {
+        Map argsMap = [:]
+        render(view: "info", model: argsMap)
+    }
+
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def health() {
+        String healthCheckLink = createLink(controller: "healthCheck", action: "status", absolute: true)
+        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
+        def response = rest.get(healthCheckLink) {
+            accept("application/json")
+            contentType("application/json;charset=UTF-8")
+        }
+        [statusCode: response.responseEntity.statusCode, headers: response.responseEntity.headers]
+    }
+
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def checkDownUpLoadServer() {
+        String serverURL = grailsApplication.config.jummp.model.download.server
+        String serviceURL = "${serverURL}/about"
+
+        render hitService(serviceURL)
+    }
+
+    //@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def checkFileServiceServer() {
+        String serverURL = grailsApplication.config.jummp.model.fileservice.server
+        String serviceURL = "${serverURL}/hello"
+
+        render hitService(serviceURL)
+    }
+
+    /**
+     * Loads the announcement of the read-only mode if it is available.
+     *
+     * @return
+     */
+    @Secured(['ROLE_ADMIN', 'ROLE_USER'])
+    def readonly() {
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'read-only-mode'], [max: 1])
+        String context = newsItem[0]?.content
+        [context: context]
+    }
+
+
+    private static boolean hitService(final String serviceURL) {
+        int status
+        try {
+            status = new WebServiceFetcher(serviceURL).getHttpStatus() as int
+        } catch (Exception ex) {
+            LOGGER.error("Cannot connect to fetch the data due to ${ex.message}")
+            status = 500
+        }
+        status == 200
+    }
+}

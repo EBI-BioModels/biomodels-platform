@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core.model
 
+import grails.validation.Validateable
 import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
@@ -45,7 +46,7 @@ import org.apache.commons.logging.LogFactory
  *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
-@grails.validation.Validateable
+@Validateable
 class PublicationTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
     /**
@@ -177,11 +178,15 @@ class PublicationTransportCommand implements Serializable {
              * TODO: capture the fullName, then assign it to the pubAlias property when we create an instance of
              * PublicationPerson from PersonTransportCommand in PublicationService
              */
-            String userRealName = authorXml.fullName[0].text()
+            String firstName = authorXml.firstName[0].text()
+            String lastName = authorXml.lastName[0].text()
+            String userRealName = "$firstName $lastName"
             author.userRealName = userRealName
             log.debug("Author: ${author?.userRealName}")
-            String affiliation = authorXml.affiliation[0].text()
-            author.institution = affiliation
+            String affiliation = authorXml.authorAffiliationDetailsList.authorAffiliation.affiliation
+            if (affiliation) {
+                author.institution = affiliation
+            }
             this.authors.add(author)
         }
     }
@@ -214,6 +219,11 @@ class PublicationTransportCommand implements Serializable {
             setFieldIfItExists("issue", result.journalInfo.issue, false)
             setFieldIfItExists("journal", result.journalInfo.journal.title, false)
         }
+    }
+
+    boolean isEmpty() {
+        // Both two primary required fields are empty
+        title == null && journal == null
     }
 
     private void setFieldIfItExists(String fieldName, def xmlField, boolean castToInt) {

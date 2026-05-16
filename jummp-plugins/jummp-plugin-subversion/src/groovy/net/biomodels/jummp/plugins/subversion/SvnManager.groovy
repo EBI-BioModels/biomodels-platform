@@ -65,7 +65,7 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-public class SvnManager implements VcsManager {
+class SvnManager implements VcsManager {
     // TODO: we need some way of authentication
     private static final ReentrantLock lock = new ReentrantLock()
     private static final AtomicInteger uid = new AtomicInteger(0)
@@ -89,7 +89,7 @@ public class SvnManager implements VcsManager {
     private File exchangeDirectory
 
     private SvnManager() {
-        setupLibrary()
+        //setupLibrary()
     }
 
     /**
@@ -282,11 +282,23 @@ public class SvnManager implements VcsManager {
         throw new UnsupportedOperationException("This is a stub.")
     }
 
+    @Override
+    String updateModel(File modelDirectory, List<File> files, List<File> deleted,
+                       String commitMessage, boolean isAmend) throws VcsException {
+        return null
+    }
+
+    @Override
+    String updateModel(File modelDirectory, List<File> files, List<File> deleted,
+                       boolean isAmend) throws VcsException {
+        return null
+    }
+
     String updateModel(File d, List files, String msg) {
         throw new UnsupportedOperationException("This is a stub.")
     }
 
-    List getRevisions(File d) {
+    Map getRevisions(File d) {
         throw new UnsupportedOperationException("This is a stub.")
     }
 
@@ -311,6 +323,11 @@ public class SvnManager implements VcsManager {
     }
 
     @Override
+    List<VcsFileDetails> getFileDetails(File modelDirectory, String path) {
+        return null
+    }
+
+    @Override
     void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
         throw new UnsupportedOperationException("Not implemented yet")
     }
@@ -322,15 +339,15 @@ public class SvnManager implements VcsManager {
         /*
          * For using over http:// and https://
          */
-        DAVRepositoryFactory.setup()
+        // DAVRepositoryFactory.setup()
         /*
          * For using over svn:// and svn+xxx://
          */
-        SVNRepositoryFactoryImpl.setup()
+        // SVNRepositoryFactoryImpl.setup()
         /*
          * For using over file:///
          */
-        FSRepositoryFactory.setup()
+        // FSRepositoryFactory.setup()
         log.debug("SVNKit setup complete.")
     }
 }

@@ -38,6 +38,8 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
         <div class="small-12 medium-12 large-12 columns">
             <h1>Update Redis Server</h1>
             <ul>
+                <li><a href="${hpLatestAnnouncements}">
+                    Refresh the latest announcements</a></li>
                 <li><a href="${hpStatisticsDataForFeatures}">
                     Refresh the statistics data for the feature widgets</a></li>
                 <li><a href="${hpStatisticsDataForCharts}">
@@ -55,6 +57,16 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
                 <li><a href="${hpDataNewsWidget}">Refresh News</a></li>
                 <li><a href="${latestMomEntry}">Refresh the latest Model Of The Month Entry</a></li>
             </ul>
+        </div>
+    </div>
+    <div class="row">
+        <div class="columns small-12 medium-12 large-12">
+            <a class="button" href="${createLink(uri: '/administration/dashboard')}">
+                Admin Dashboard
+            </a>
+            <a class="button" href="${createLink(controller: "curator", action: "dashboard")}">
+                Curator Dashboard
+            </a>
         </div>
     </div>
 </body>

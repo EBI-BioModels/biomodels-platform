@@ -7,6 +7,12 @@ $(document)
         $loading.hide();
     });
 $(document).ready(function () {
+    // this is the same as the procedure above
+    /*$('#loading').bind("ajaxStart", function() {
+        $(this).show();
+    }).bind("ajaxStop", function() {
+        $(this).hide();
+    });*/
     let current_fs, next_fs, previous_fs; //fieldsets
     let opacity;
     let current = 1;
@@ -14,40 +20,50 @@ $(document).ready(function () {
     steps = 5;
     setProgressBar(current, steps);
     $(".next").click(function () {
-        validateData(current);
-        let step;
-        current_fs = $(this).parent();
-        next_fs = current_fs.next();
-        if (currentValidation) {
-            // Add Class Active
-            $("#progressbar li").eq(current++).addClass("active");
+        const navSys = $(this);
+        validateData(current).done(function (r) {
+            let step;
+            current_fs = navSys.parent();
+            next_fs = current_fs.next();
+            if (currentValidation) {
+                // Add Class Active
+                $("#progressbar li").eq(current++).addClass("active");
 
-            // show the next fieldset
-            next_fs.show();
-            // hide the current fieldset with style
-            current_fs.animate({opacity: 0}, {
-                step: function (now) {
-                    // for making fieldset appear animation
-                    opacity = 1 - now;
+                // show the next fieldset
+                next_fs.show();
+                // hide the current fieldset with style
+                current_fs.animate({opacity: 0}, {
+                    step: function (now) {
+                        // for making fieldset appear animation
+                        opacity = 1 - now;
 
-                    current_fs.css({
-                        'display': 'none',
-                        'position': 'relative'
-                    });
-                    next_fs.css({'opacity': opacity});
-                },
-                duration: 500
-            });
-            setProgressBar(current, steps);
-            step = current - 1;
-            clearErrorMessages();
-            updateSubFormAtStep(current);
-        } else {
-            showErrorMessages();
-            step = current;
-        }
-        // tick or cross the previous or current step if the validation is valid or invalid respectively
-        setCheckList(step, currentValidation);
+                        current_fs.css({
+                            'display': 'none',
+                            'position': 'relative'
+                        });
+                        next_fs.css({'opacity': opacity});
+                    },
+                    duration: 500
+                });
+                setProgressBar(current, steps);
+                step = current - 1;
+                clearErrorMessages();
+                updateSubFormAtStep(current);
+            } else {
+                showErrorMessages();
+                step = current;
+            }
+            // tick or cross the previous or current step if the validation is valid or invalid respectively
+            setCheckList(step, currentValidation);
+            if (step === 3) {
+                // set the check icon for the displaying summary step
+                validateData(4).done(function(response) {
+                    setCheckList(4, currentValidation);
+                });
+            }
+        }).then(function (r) {
+            console.log("Validated and displayed completely.");
+        });
     });
 
     $(".previous").click(function () {
@@ -105,6 +121,10 @@ $(document).ready(function () {
         $('.flashNotificationDiv').html("").hide();
     }
 
+    /**
+     * This function will be called before approaching to the step
+     * @param step
+     */
     function updateSubFormAtStep(step) {
         switch (step) {
             case 1:
@@ -114,6 +134,8 @@ $(document).ready(function () {
                 updateModelInfoForm();
                 break;
             case 3:
+                // defined in the step 3
+                guessPublicationAndFillForm();
                 break;
             case 4:
                 // defined in the step 4
@@ -128,23 +150,31 @@ $(document).ready(function () {
         }
     }
 
+    /**
+     * This function will be called once being on this step and moving to the next step. That's why its name is
+     * validateData after updating data on the form.
+     * @param step
+     * @returns {*}
+     */
     function validateData(step) {
+        let func;
         switch (step) {
             case 1:
-                validateFileUpload();
+                func = validateFileUpload();
                 break;
             case 2:
-                validateModelInfo();
+                func = validateModelInfo();
                 break;
             case 3:
-                validatePublicationInfo();
+                func = validatePublicationInfo();
                 break;
             case 4:
-                submitData();
+                func = submitData();
                 break;
             default:
                 break;
         }
+        return func;
     }
 });
 

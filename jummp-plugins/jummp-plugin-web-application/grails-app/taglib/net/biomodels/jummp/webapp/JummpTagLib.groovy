@@ -25,11 +25,12 @@
 package net.biomodels.jummp.webapp
 
 import com.google.common.base.CaseFormat
+import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.qcinfo.FlagLevel
 
-import javax.xml.transform.stream.StreamSource
 import javax.xml.transform.stream.StreamResult
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+import javax.xml.transform.stream.StreamSource
 
 class JummpTagLib {
     static namespace = "jummp"
@@ -81,7 +82,7 @@ class JummpTagLib {
         if (!attrs.main) {
             out << renderRowInMainFileTable()
         } else attrs.main.eachWithIndex { m, index ->
-            RepositoryFileTransportCommand command = m as RepositoryFileTransportCommand
+            RFTC command = m as RFTC
             String name = new File(command.path).name
             String description = command.description
             out << render(plugin: "jummp-plugin-web-application",
@@ -107,7 +108,7 @@ class JummpTagLib {
         if (attrs.additionals) {
             int counter = 0
             attrs.additionals.each { f ->
-                RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
+                RFTC command = f as RFTC
                 String name = new File(command.path).name
                 String description = command.description ?: ""
                 out << render(plugin: "jummp-plugin-web-application",
@@ -392,6 +393,19 @@ class JummpTagLib {
        out << render(template: "/templates/annotationsTableRow", model: [annotations: attrs.annotations])
    }
 
+    def renderContributors = { attrs ->
+        Map<String, List<CTC>> contributors = attrs.contributors as Map
+        if (contributors) {
+            for (List list: contributors.values()) {
+                list.each { def cont ->
+                    out << render(template: "/contributor/showContributor", model: [cont: cont])
+                }
+            }
+        } else {
+            out << render(template: "/contributor/showNoContributor")
+        }
+    }
+
     def renderCertificationForm = { attrs ->
         def result = new StringBuilder()
         if (isDDMoReDeployment()) {
@@ -499,5 +513,12 @@ class JummpTagLib {
             }
         }
         out << result.toString()
+    }
+
+    def detectCluster = { attrs ->
+        String serverURL = grailsApplication.config.grails.serverURL
+        URI uri = new URI(serverURL)
+        String domain = uri.getHost()
+        out << domain
     }
 }

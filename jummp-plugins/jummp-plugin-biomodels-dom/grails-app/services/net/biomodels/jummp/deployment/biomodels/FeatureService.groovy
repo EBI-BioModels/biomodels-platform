@@ -21,31 +21,111 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
-import org.weceem.content.WcmContent
+import grails.util.Holders
+import net.biomodels.jummp.scms.CmsContent
+import net.biomodels.jummp.utils.redis.RedisService
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
+/**
+ * @short Service responsible for creating and managing feature pages.
+ *
+ * <p>This service class is used for creating and managing some special pages using the simple CMS.</p>
+ *
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ */
 @Transactional
 class FeatureService {
+    private final Logger LOGGER = LoggerFactory.getLogger(FeatureService.class)
+
+    RedisService redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
+    def groovyPageRenderer
+
+    String getContentForBioModelsTerms() {
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'biomodels-terms'], [max: 1])
+        newsItem[0]?.content
+    }
 
     /**
      * Retrieves the content of the COVID-19 page under Browse menu
      *
-     * <p>Temporarily, we store the content of this page as a News item. Using WcmContent domain class, it can be
+     * <p>Temporarily, we store the content of this page as a News item. Using CmsContent domain class, it can be
      * retrieved by running the query. That News item has been set status Reviewed and had to keep the aliasuri as
      * covid-19 to make sure the related service still working.
      *
      * @return A String representing the content of the page
      */
     String getCovid19PageContent() {
-        def newsQuery = """from WcmContent where aliasURI = :aliasuri and status.code = :code \
-order by createdOn desc"""
-        def newsItem = WcmContent.executeQuery(newsQuery, [aliasuri: 'covid-19', code: 200], [max: 1])
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'covid-19'], [max: 1])
         newsItem[0]?.content
     }
 
-    String getLoadContentForReproducibilityPage() {
-        def newsQuery = """from WcmContent where aliasURI = :aliasuri and status.code = :code \
+    String getContentForReproducibilityPage() {
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri \
 order by createdOn desc"""
-        def newsItem = WcmContent.executeQuery(newsQuery, [aliasuri: 'reproducibility', code: 200], [max: 1])
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'reproducibility'], [max: 1])
         newsItem[0]?.content
+    }
+
+    String getContentForFROGPage() {
+        def newsQuery = """from CmsContent where aliasURI = :aliasuri \
+order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'fbc'], [max: 1])
+        newsItem[0]?.content
+    }
+
+    List getContentForModelOfTheYear2022CompetitionPage() {
+        def newsQuery = """FROM CmsContent where aliasURI = :aliasuri \
+order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2022-competition'], [max: 1])
+        [newsItem[0]?.id, newsItem[0]?.content]
+    }
+
+    List getContentForModelOfTheYear2023CompetitionPage() {
+        def newsQuery = """FROM CmsContent where aliasURI = :aliasuri \
+order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2023-competition'], [max: 1])
+        [newsItem[0]?.id, newsItem[0]?.content]
+    }
+
+    List getContentForModelOfTheYear2024CompetitionPage() {
+        def newsQuery = """FROM CmsContent where aliasURI = :aliasuri \
+order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2024-competition'], [max: 1])
+        [newsItem[0]?.id, newsItem[0]?.content]
+    }
+
+    List getContentForModelOfTheYear2025CompetitionPage() {
+        def newsQuery = """FROM CmsContent where aliasURI = :aliasuri \
+order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2025-competition'], [max: 1])
+        [newsItem[0]?.id, newsItem[0]?.content]
+    }
+
+    String getSvgAgedBrain() {
+        final String SVG_AGED_BRAIN = "svg-aged-brain"
+        // load the SVG content from Redis cache
+        String svgAgedBrain = redisService.doRedisGet(SVG_AGED_BRAIN)
+        if (!svgAgedBrain) {
+            println("Rendering the AgedBrain page directly")
+            LOGGER.debug("Rendering the AgedBrain page directly")
+            svgAgedBrain = groovyPageRenderer.render(template: "/templates/svgAgedBrain",
+                plugin: "jummp-plugin-biomodels-dom")
+            // cache the svgAgedBrain to Redis server
+            if (svgAgedBrain) {
+                println("Caching the AgedBrain page on Redis cache")
+                LOGGER.debug("Caching the AgedBrain page on Redis cache")
+                redisService.doRedisSet(SVG_AGED_BRAIN, svgAgedBrain)
+            } else {
+                svgAgedBrain = "There has been an error when trying to load the Model space in neurodegeneration - model landscape map."
+            }
+        } else {
+            println("Retrieving the AgedBrain page from Redis cache")
+            LOGGER.debug("Retrieving the AgedBrain page from Redis cache")
+        }
+
+        svgAgedBrain
     }
 }

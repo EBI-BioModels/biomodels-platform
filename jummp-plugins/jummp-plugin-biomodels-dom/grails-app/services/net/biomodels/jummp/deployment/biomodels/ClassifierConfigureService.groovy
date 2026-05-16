@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-20204 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -33,16 +33,16 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.core.type.TypeReference
+import net.biomodels.jummp.core.util.RestUtils
+import org.json.JSONObject
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
-import net.biomodels.jummp.core.util.RestUtils
 import org.springframework.http.MediaType
-import org.springframework.util.LinkedMultiValueMap
-import org.springframework.util.MultiValueMap
 import org.springframework.web.util.UriComponentsBuilder
-
 
 /**
  * @short: Service responsible for classifier configure
@@ -50,12 +50,10 @@ import org.springframework.web.util.UriComponentsBuilder
  * @author: Vu Tu <tvu@ebi.ac.uk>
  */
 class ClassifierConfigureService implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClassifierConfigureService.class)
 
     static transactional = false
 
-    /**
-     * Dependency Injection of GrailsApplication
-     */
     def grailsApplication
 
     /**
@@ -69,8 +67,17 @@ class ClassifierConfigureService implements InitializingBean {
      */
     static final int RETRY_CLASSIFY_TIMES = 3
 
+    private HttpEntity requestEntity
+
     void afterPropertiesSet() throws Exception {
+        // http headers
+        HttpHeaders headers = new HttpHeaders()
+        // set `Content-Type` and `Accept` headers
+        headers.setContentType(MediaType.APPLICATION_JSON)
+        requestEntity = new HttpEntity(headers)
+
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
+        LOGGER.info("Finished the bean initialisation")
     }
 
     /**
@@ -82,24 +89,23 @@ class ClassifierConfigureService implements InitializingBean {
      * @param hiddenLayers: List of layers and number neurons in each layer
      */
     void createDLModel(String name, int totalEpoch, int valPerEpoch, int batchSize, List<Integer> hiddenLayers) {
-        HttpHeaders headers = new HttpHeaders()
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED)
-
-        MultiValueMap<String, String> map= new LinkedMultiValueMap<String, String>()
-        map.add("workspace", name)
-        map.add("total_epoch", Integer.toString(totalEpoch))
-        map.add("val_per_epoch", Integer.toString(valPerEpoch))
-        map.add("batch_size", Integer.toString(batchSize))
-        if (hiddenLayers.size() > 0) {
-            map.add("hidden_layer", hiddenLayers.join(","))
+        String output = ""
+        JSONObject jsonObject = new JSONObject()
+        try {
+            jsonObject.put("workspace", name)
+            jsonObject.put("total_epoch", Integer.toString(totalEpoch))
+            jsonObject.put("val_per_epoch", Integer.toString(valPerEpoch))
+            jsonObject.put("batch_size", Integer.toString(batchSize))
+            if (hiddenLayers.size() > 0) {
+                jsonObject.put("hidden_layer", hiddenLayers.join(","))
+            }
+            output = RestUtils.sendPost("$classificationEndpoint/train", jsonObject)
+        } catch (Exception e) {
+            LOGGER.error("An error occurred when creating a Deep Learning model with these params: ${jsonObject}")
+            e.printStackTrace()
+        } finally {
+            LOGGER.info("The output of creating a new trained model: $output")
         }
-
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map, headers)
-
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
-        uriComponentsBuilder.path("/train")
-        URI uri = uriComponentsBuilder.build().toUri()
-        RestUtils.exchange(uri, HttpMethod.POST, new TypeReference<String>() {}, request, 1)
     }
 
     /**
@@ -123,7 +129,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.path("/workspace")
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI uri = uriComponentsBuilder.build().toUri()
-        RestUtils.exchange(uri, HttpMethod.DELETE, new TypeReference<String>() {}, null, 1)
+        RestUtils.exchange(uri, HttpMethod.DELETE, new TypeReference<String>() {}, requestEntity, 1)
     }
 
     /**
@@ -135,7 +141,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.path("/workspace")
         URI request = uriComponentsBuilder.build().toUri()
         List<Map<String, String>> workspaces = RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
         for (Map<String, String> workspace : workspaces) {
             List<Map<String, String>> status = getDLModelTrainStatus(workspace.get("name"))
             workspace.putAll(status.last())
@@ -156,9 +162,9 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
         Map<String, String> modelDetails = RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<HashMap<String, String>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<HashMap<String, String>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
         DLModelCommand dlModelCommand = new DLModelCommand()
-        dlModelCommand.setDlname(modelName)
+        dlModelCommand.setDlName(modelName)
         dlModelCommand.setBatchSize(Integer.parseInt(modelDetails['batch_size']))
         dlModelCommand.setTotalEpoch(Integer.parseInt(modelDetails['total_epoch']))
         dlModelCommand.setValPerEpoch(Integer.parseInt(modelDetails['val_per_epoch']))
@@ -178,7 +184,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
     }
 
     /**
@@ -192,7 +198,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
     }
 
     /**
@@ -206,7 +212,7 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("model_id", submissionId)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
     }
 
     /**
@@ -220,6 +226,6 @@ class ClassifierConfigureService implements InitializingBean {
         uriComponentsBuilder.queryParam("keyword", keyword)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+            new TypeReference<List<HashMap<String, String>>>(){}, requestEntity, RETRY_CLASSIFY_TIMES)
     }
 }

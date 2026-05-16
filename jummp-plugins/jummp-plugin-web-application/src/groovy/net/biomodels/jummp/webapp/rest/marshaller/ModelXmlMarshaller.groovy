@@ -21,7 +21,7 @@
 package net.biomodels.jummp.webapp.rest.marshaller
 
 import grails.converters.XML
-import net.biomodels.jummp.webapp.rest.model.show.Model
+import net.biomodels.jummp.webapp.rest.model.Model
 import org.codehaus.groovy.grails.web.converters.marshaller.ObjectMarshaller
 
 /**

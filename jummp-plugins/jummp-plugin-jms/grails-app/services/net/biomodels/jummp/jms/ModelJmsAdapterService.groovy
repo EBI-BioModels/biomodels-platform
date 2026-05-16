@@ -28,27 +28,13 @@
 * that of the covered work.}
 **/
 
-
-
-
-
-package net.biomodels.jummp.jms
-
-import grails.plugin.jms.Queue
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.ModelListSorting
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.plugins.security.User
-import org.apache.commons.io.FileUtils
-import org.springframework.security.access.AccessDeniedException
 import net.biomodels.jummp.core.IModelService
+import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.ast.JmsAdapter
 import net.biomodels.jummp.webapp.ast.JmsQueueMethod
-import java.util.List
-import java.util.LinkedList
-
+import org.apache.commons.io.FileUtils
+import org.springframework.security.access.AccessDeniedException
 /**
  * @short Wrapper class around the ModelService exposed to JMS.
  *

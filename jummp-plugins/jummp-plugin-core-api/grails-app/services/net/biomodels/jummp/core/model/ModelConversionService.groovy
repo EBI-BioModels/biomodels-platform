@@ -69,6 +69,7 @@ class ModelConversionService implements IModelConversionService, GrailsConfigura
     void setConfiguration(ConfigObject co) {
         CONVERSION_SERVICE_URL = co.jummp.model.converter.url
         EXPORT_FOLDER = co.jummp.model.exportFolder
+        log.info("Finished the bean initialisation")
     }
 
     /**

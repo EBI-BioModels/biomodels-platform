@@ -23,6 +23,10 @@
 
 
 package net.biomodels.jummp.core
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 /**
  * @short Class written as a spring-bean singleton to hold modelfileformatservice config data
  *
@@ -33,6 +37,7 @@ package net.biomodels.jummp.core
  * @date 9/09/2013
  */
 class ModelFileFormatConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelFileFormatConfig.class)
     /**
      * The registered services to handle ModelFormats
      */
@@ -52,8 +57,11 @@ class ModelFileFormatConfig {
     }
 
     static void status() {
-        println("${new Date().format("YYYY-MM-dd HH:mm:ss")} MODEL FILE FORMAT CONFIG STATUS:")
-        println("SERVICES: ${services.inspect()}")
-        println("CONTROLLERS: ${controllers.inspect()}")
+        String msgLog = "MODEL FILE FORMAT CONFIG STATUS:"
+        println("""${new Date().format("yyyy-MM-dd HH:mm:ss")} $msgLog ${services.size()} \
+services and ${controllers.size()} controllers are available.""")
+        msgLog += "\nSERVICES: ${services.inspect()}"
+        msgLog += "\nCONTROLLERS: ${controllers.inspect()}"
+        LOGGER.debug(msgLog)
     }
 }

@@ -34,14 +34,14 @@
 
 package net.biomodels.jummp.plugins.omex
 
-import com.hp.hpl.jena.rdf.model.Model
-import com.hp.hpl.jena.rdf.model.Resource
-import com.hp.hpl.jena.vocabulary.DCTerms
+import org.apache.jena.rdf.model.Model
+import org.apache.jena.rdf.model.Resource
+import org.apache.jena.vocabulary.DCTerms
 import de.unirostock.sems.cbext.Formatizer
+import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -49,8 +49,10 @@ import org.apache.tika.metadata.Metadata
 import org.mbine.co.archive.ArtifactInfo
 import org.mbine.co.archive.CombineArchiveFactory
 import org.mbine.co.archive.ICombineArchive
+import org.mbine.co.archive.ManifestManager
 import org.mbine.co.archive.MetadataManager
 import org.perf4j.aop.Profiled
+import org.springframework.beans.factory.InitializingBean
 
 import java.nio.file.*
 
@@ -60,12 +62,12 @@ import java.nio.file.*
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class OmexService extends FileFormatServiceAdapter {
+class OmexService extends FileFormatServiceAdapter implements InitializingBean {
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
 
     @Profiled(tag="omexService.validate")
-    public boolean validate(final List<File> model, final List<String> errors) {
+    boolean validate(final List<File> model, final List<String> errors) {
         //TODO delegate the validation to libCombineArchive API
         return areFilesThisFormat(model)
     }
@@ -103,7 +105,7 @@ class OmexService extends FileFormatServiceAdapter {
      * @see net.biomodels.jummp.core.model.FileFormatService#areFilesThisFormat(List files)
      */
     @Profiled(tag="omexService.areFilesThisFormat")
-    public boolean areFilesThisFormat(final List<File> files) {
+    boolean areFilesThisFormat(final List<File> files) {
         if (!files) {
             return false
         }
@@ -141,7 +143,7 @@ class OmexService extends FileFormatServiceAdapter {
         String properType = sherlock.detect(new BufferedInputStream(
                         new FileInputStream(f)), new Metadata()).toString()
 
-        boolean correctMIME = "application/zip".equals(properType)
+        boolean correctMIME = "application/zip" == properType
         if (!correctMIME) {
             if (IS_INFO_ENABLED) {
                 log.info "Not treating ${f.name} as COMBINE archive because of incorrect content type. ${properType}"
@@ -156,7 +158,7 @@ class OmexService extends FileFormatServiceAdapter {
             return false
         }
         FileSystem fs
-        boolean containsManifest
+        boolean containsManifest = false
         try {
             fs = FileSystems.newFileSystem(path, null)
             final String MANIFEST_LOCATION =  "manifest.xml"
@@ -167,13 +169,13 @@ class OmexService extends FileFormatServiceAdapter {
             fs?.close()
         }
 
-            if (IS_INFO_ENABLED) {
-                StringBuilder msg = new StringBuilder("File ")
-                msg.append(f.name).append(" is")
-                msg.append(containsManifest ? "" : " not").append(" a COMBINE archive.")
-                msg.append(containsManifest ?: " The manifest file is missing.")
-                log.info(msg.toString())
-            }
+        if (IS_INFO_ENABLED) {
+            StringBuilder msg = new StringBuilder("File ")
+            msg.append(f.name).append(" is")
+            msg.append(containsManifest ? "" : " not").append(" a COMBINE archive.")
+            msg.append(containsManifest ?: " The manifest file is missing.")
+            log.debug(msg.toString())
+        }
         return containsManifest
     }
 
@@ -185,34 +187,45 @@ class OmexService extends FileFormatServiceAdapter {
      * associated with an individual model given by the model submission identifier
      * @argument a list of RepositoryFileTransportCommand objects
      * @argument a (perennial) submission identifier
+     * @argument a boolean flag saying the file will be suffixed timestamp or not
+     *
      * @return a string indicates the absolute path of the combine archive file
      */
-    String createCombineArchive(List<RFTC> files, String modelId) {
-        String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
+    String createCombineArchive(List<RFTC> files, String modelId, Integer revisionId, boolean addTimeStamp = true) {
+        if (files?.empty || !modelId) {
+            return ""
+        }
+        String namePrefix = modelId + "." + revisionId.toString()
+        String nameSuffix = ".omex"
+        if (addTimeStamp) {
+            String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
+            nameSuffix = "-" + dateTimeString + nameSuffix
+        }
         String TEMP_PATH = System.getProperty("java.io.tmpdir")
-        String absoluteOmexFileName = Paths.get(TEMP_PATH,
-                "$modelId-${dateTimeString}.omex").toString()
+        String omexFileName = "$namePrefix$nameSuffix"
+        String absoluteOmexFileName = Paths.get(TEMP_PATH, omexFileName).toString()
         ICombineArchive arch
         CombineArchiveFactory fact = new CombineArchiveFactory()
         arch = fact.openArchive(absoluteOmexFileName, true)
 
-        files.each {RFTC rftc ->
+        files.each { RFTC rftc ->
             File file = new File(rftc.path)
             String fileName = file.getName()
             Path path = Paths.get(rftc.path)
             URI uri = Formatizer.guessFormat(file)
-            String mimeType = uri.toString()
-            ArtifactInfo artifactInfo = arch.createArtifact(fileName, mimeType)
-            OutputStream writer = arch.writeArtifact(artifactInfo)
-            Files.copy(path, writer)
-            writer.close()
+            String format = uri?.toString()
+            boolean master = rftc.mainFile
+            ArtifactInfo artifactInfo = arch.createArtifact(fileName, format, path, master, true)
+            if (!artifactInfo) {
+                log.error("Could not create artefact for file ${file.absolutePath}")
+            }
         }
 
         // customise the metadata.rdf
-        String licenceValue = "http://creativecommons.org/publicdomain/zero/1.0/"
+        String licenceValue = "https://creativecommons.org/publicdomain/zero/1.0/"
         String timeStamp = new Date().format("E LLL dd HH:mm:ss z yyyy")
         String provenanceValue = """\
-This model was downloaded from BioModels (http://www.ebi.ac.uk/biomodels/) on ${timeStamp}"""
+This model was downloaded from BioModels (${BioModels.BM_ROOT_URL}/) on ${timeStamp}"""
         MetadataManager mdm = arch.getMetadata()
         mdm.load()
         Model model = mdm.RDFModel
@@ -221,7 +234,17 @@ This model was downloaded from BioModels (http://www.ebi.ac.uk/biomodels/) on ${
         resource.addProperty(DCTerms.provenance, provenanceValue)
         resource.addProperty(DCTerms.license, licenceValue)
         mdm.save()
+
+        ManifestManager mfm = arch.getManifest()
+        mfm.sortByLocation()
+        mfm.save()
+
         arch.close()
         return absoluteOmexFileName
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

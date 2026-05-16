@@ -59,7 +59,7 @@ class HealthCheck {
             User.withSession { Session session ->
                 session.createSQLQuery(validationQuery)
                     .setCacheMode(CacheMode.IGNORE)
-                    .setTimeout(3)
+                    .setTimeout(30)
                     .setReadOnly(true)
                     .uniqueResult()
             }
@@ -76,7 +76,7 @@ class HealthCheck {
         String key = asName(type)
         String value = asName(status)
         map[key] = value
-        map
+        map as Map<String, String>
     }
 
     String toString() {

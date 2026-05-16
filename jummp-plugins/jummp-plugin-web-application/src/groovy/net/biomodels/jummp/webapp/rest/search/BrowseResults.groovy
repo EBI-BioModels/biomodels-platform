@@ -23,7 +23,7 @@ package net.biomodels.jummp.webapp.rest.search
 class BrowseResults extends Results {
     int modelsAvailable
 
-    public BrowseResults(def browseResults) {
+    BrowseResults(def browseResults) {
         super(browseResults)
         modelsAvailable = browseResults.modelsAvailable
     }

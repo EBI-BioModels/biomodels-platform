@@ -1,3 +1,4 @@
+<%@ page import="net.biomodels.jummp.core.constants.BioModels" %>
 <h3 class="big-message-on-last-step"><strong>Model Created!</strong></h3>
 <h4>Your model has been deposited successfully!</h4>
 <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/check-mark-success-submission.png"
@@ -9,5 +10,5 @@
     Thank you for submitting your model.
 </p>
 <p>Your model is private. To make it publicly available asap, please follow up
-    <a href="https://www.ebi.ac.uk/biomodels/faq#access-after-submission"
+    <a href="${BioModels.BM_ROOT_URL}/faq#access-after-submission"
        title="Access more information about publishing your submission">the instruction</a>.</p>

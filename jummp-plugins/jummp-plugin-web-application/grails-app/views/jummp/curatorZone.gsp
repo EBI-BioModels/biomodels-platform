@@ -9,7 +9,7 @@
 <html>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <title><g:message code="${titleCode}" default="Curator's Zone | BioModels"/></title>
+    <title><g:message code="${titleCode}" default="Curator's Zone"/> | BioModels</title>
 </head>
 
 <body>
@@ -20,4 +20,7 @@
         href="https://drive.google.com/file/d/1JqjcH0T0UTWMuBj-scIMwsyt2z38A0vp/view?usp=sharing">
         https://drive.google.com/file/d/1JqjcH0T0UTWMuBj-scIMwsyt2z38A0vp/view</a></p>
 </body>
+<content tag="curator-zone">
+    selected
+</content>
 </html>

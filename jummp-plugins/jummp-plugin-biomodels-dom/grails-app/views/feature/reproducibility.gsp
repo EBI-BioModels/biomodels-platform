@@ -14,6 +14,14 @@
 </head>
 
 <body>
-${content}
+<g:if test="${content}">
+    ${content}
+</g:if>
+<g:else>
+    <h1>Under construction. Please come back later or contact us. Thanks!</h1>
+</g:else>
 </body>
 </html>
+<content tag="reproducibility">
+    selected
+</content>

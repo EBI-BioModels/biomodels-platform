@@ -41,6 +41,9 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.access.prepost.PreAuthorize
 
 /**
@@ -56,7 +59,7 @@ import org.springframework.security.access.prepost.PreAuthorize
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-class VcsService implements GrailsConfigurationAware {
+class VcsService implements GrailsConfigurationAware, InitializingBean {
     @SuppressWarnings('GrailsStatelessService')
     VcsManager vcsManager
     @SuppressWarnings('GrailsStatelessService')
@@ -64,6 +67,7 @@ class VcsService implements GrailsConfigurationAware {
     def fileSystemService
     String modelContainerRoot
 
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     /**
      * Checks whether the Version Control System is configured properly
      * @return @c true if the vcs system is configured properly, @c false otherwise
@@ -86,7 +90,7 @@ class VcsService implements GrailsConfigurationAware {
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @Profiled(tag = "vcsService.updateModel")
     String updateModel(final Model model, final List<File> files,
-                       final List<File> deleted, final String commitMessage,
+                       final List<File> deleted, String commitMessage,
                        final boolean isAmend = false) throws VcsException {
         if (!isValid()) {
             throw new VcsException("Version Control System is not valid")
@@ -96,11 +100,10 @@ class VcsService implements GrailsConfigurationAware {
                     File.separator).append(model.vcsIdentifier).toString()
         final File MODEL_FOLDER = new File(modelFolderPath)
         if (commitMessage == null || commitMessage.isEmpty()) {
-            String cmtMsg = "Updated at ${new Date().toGMTString()}"
-            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, cmtMsg , isAmend)
-        } else {
-            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage, isAmend)
+            Date date = new Date()
+            commitMessage = "Updated at ${date.format('yyyy-MM-dd HH:mm:ss z')}".toString()
         }
+        return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage, isAmend)
     }
 
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
@@ -177,7 +180,30 @@ class VcsService implements GrailsConfigurationAware {
         files
     }
 
-    public List<VcsFileDetails> getFileDetails(final Revision revision, String path)
+    /**
+     * Fix the inconsistency between the physical VCS commits hashes and the VCS values saved in the database.
+     * The correct values should be matched with the ones in the model directory controlled by VCS.
+     * @param model A {@link Model} object
+     * @return A {@link List} of full commit hashes ordered by the last commit as the first (e.g., zero order) item
+     * to the initial one as the biggest order in the list.
+     */
+    Map fixVcsIds(Model model) {
+        Map returned = new HashMap()
+        final File MODEL_FOLDER = new File(modelContainerRoot, model.vcsIdentifier)
+        Map commitHashes = vcsManager.getRevisions(MODEL_FOLDER)
+        if (model.revisions.size() != commitHashes.size()) {
+            String msg = "The number of commits and revisions aren't identical. Cannot fix VCS commits for the model ${model.submissionId}."
+            returned["success"] = false
+            returned["message"] = msg
+            log.debug(msg)
+        } else {
+            returned = updateVcsIds(model, commitHashes)
+        }
+
+        returned
+    }
+
+    List<VcsFileDetails> getFileDetails(final Revision revision, String path)
                 throws VcsException {
         if (!isValid()) {
             throw new VcsException("Version Control System is not valid")
@@ -188,6 +214,38 @@ class VcsService implements GrailsConfigurationAware {
 
     @Override
     void setConfiguration(ConfigObject co) {
+        LOGGER.debug("Model Container Root: $modelContainerRoot")
         modelContainerRoot = fileSystemService.root.canonicalPath
+    }
+
+    private Map updateVcsIds(Model model, Map hashes) {
+        // sort the revisions descending their ids because the hashes are linear by time
+        Set<Revision> revisions = model.revisions.sort { r1, r2 ->
+            r2.id <=> r1.id
+        }
+
+        int index = 0
+        hashes.each { hash, value ->
+            revisions[index].vcsId = hash
+            revisions[index].uploadDate = value["date"] as Date
+            revisions[index].comment = value["message"]
+            index++
+        }
+        boolean success
+        String msg
+        if (model.save(flush: true)) {
+            success = true
+            msg = "Saved the commit fixes for the revisions of model ${model.submissionId}."
+        } else {
+            success = false
+            msg = "There have been errors when trying to save the commit updates for the revisions of model ${model.submissionId}."
+        }
+
+        ["success": success, "message": msg] as Map
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

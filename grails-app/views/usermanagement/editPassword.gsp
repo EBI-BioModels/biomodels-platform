@@ -20,34 +20,99 @@
 
 
 
-<%@ page contentType="text/html;charset=UTF-8" %>
 <html>
-    <head>
-        <title>${title}</title>
-        <meta name="layout" content="${session['branding.style']}/main" />
-     </head>
-    <body>
-        <div class="row">
-            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <h3>Change your password</h3>
-                <g:form action="updatePassword" useToken="true">
-                    <div class="row column edit-password-form">
-                        <label class="required"><g:message code="user.administration.updatePassword.oldPassword"/></label>
-                        <g:passwordField name="oldPassword"/>
-
-                        <label class="required"><g:message code="user.administration.updatePassword.newPassword"/></label>
-                        <g:passwordField name="newPassword"/>
-
-                        <label class="required"><g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
-                        <g:passwordField name="newPasswordRpt"/>
-                        <p class="buttons">
-                            <input type="submit" class="button" value="${g.message(code: 'user.administration.updatePassword.submit')}"/>
-                        </p>
-                    </div>
-                </g:form>
-            </div>
+<head>
+    <title>${title}</title>
+    <g:render template="/usermanagement/head"/>
+</head>
+<body>
+    <div class="row">
+        <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
+            <h3>Change your password</h3>
+            <g:form action="updatePassword" useToken="true" onsubmit="return validateForm()">
+                <div class="row column edit-password-form">
+                    <label class="required" for="oldPassword">
+                        <g:message code="user.administration.updatePassword.oldPassword"/></label>
+                    <g:passwordField id="oldPassword" name="oldPassword" required="required"
+                                     placeholder="Current password"/>
+                    <p class="help-text" id="old-password-help" style="color: red !important;"></p>
+                    <label class="required" for="newPassword">
+                        <g:message code="user.administration.updatePassword.newPassword"/></label>
+                    <g:passwordField id="newPassword" name="newPassword" required="required"
+                                     placeholder="New password"/>
+                    <span id="toggle-password"
+                          class="fa fa-fw fa-eye field-icon toggle-password"></span>
+                    <div class="help-text" id="new-password-help" style="color: red !important;"></div>
+                    <label class="required" for="newPasswordRpt">
+                        <g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
+                    <g:passwordField id="newPasswordRpt" name="newPasswordRpt" required="required"
+                                     placeholder="Re-enter new password"/>
+                    <p class="help-text" id="new-password-rpt-help" style="color: red !important;"></p>
+                    <p class="buttons">
+                        <input type="submit" class="button"
+                               value="${g.message(code: 'user.administration.updatePassword.submit')}"/>
+                    </p>
+                </div>
+            </g:form>
         </div>
-   </body>
+    </div>
+    <g:render template="/usermanagement/common-scripts"/>
+    <g:javascript>
+        const helpText = $('.help-text');
+        const oldPassword = $('#oldPassword');
+        const newPassword = $('#newPassword');
+        const newPasswordRpt = $('#newPasswordRpt');
+        const newPasswordHelp = $("#new-password-help");
+        const oldPasswordHelp = $("#old-password-help");
+        const newPasswordRptHelp = $("#new-password-rpt-help");
+
+        $(document).ready(function(){
+            doShowOrHideAllHelp(false);
+        });
+
+        function doShowOrHideAllHelp(flag) {
+            flag ? helpText.show()  : helpText.hide();
+        }
+
+        oldPassword.on("change blur keyup keydown keypress", function() {
+            validateOldPassword(oldPassword, oldPasswordHelp);
+        });
+
+        newPassword.on("change blur keyup keydown keypress", function() {
+            validateNewPassword(newPassword, newPasswordHelp, false);
+        });
+
+        newPasswordRpt.on("change blur keyup keydown keypress", function() {
+            validateNewPasswordRpt(newPassword, newPasswordRpt, newPasswordRptHelp);
+        });
+
+        function validateOldPassword(oldPassword, oldPasswordHelp) {
+            const oldPasswordVal = oldPassword.val();
+            let retVal;
+            if (oldPasswordVal.length === 0) {
+                oldPasswordHelp.show();
+                oldPasswordHelp.text("Please enter your current password!");
+                retVal = false;
+            } else {
+                oldPasswordHelp.hide();
+                retVal = true;
+            }
+            return retVal;
+        }
+
+        function validateForm() {
+            console.log("Validating the form of changing password...");
+            const oldPassCheck = validateOldPassword(oldPassword, oldPasswordHelp);
+            const newPassCheck = validateNewPassword(newPassword, newPasswordHelp, true);
+            const newPasswordRptCheck = validateNewPasswordRpt(newPassword, newPasswordRpt, newPasswordRptHelp);
+            const retVal = oldPassCheck && newPassCheck && newPasswordRptCheck;
+            console.log(retVal);
+            return retVal;
+        }
+
+    </g:javascript>
+    <g:render template="/usermanagement/foot"/>
+</body>
 </html>
 <content tag="title">
     <g:message code="user.administration.updatePassword.heading"/>

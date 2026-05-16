@@ -37,7 +37,7 @@
                 </td>
             </tr>
             <tr class="prop">
-                <td class="name"><label for="registration">Users curators by default:</label></td>
+                <td class="name"><label for="curator">Users curators by default:</label></td>
                 <td class="value ${hasErrors(bean: userRegistration, field: 'curator', 'errors')}">
                     <input type="checkbox" name="curator" id="curator" ${!userRegistration || userRegistration.curator ? 'checked="checked"' : ''} title="Users curators by default?"/>
                 </td>
@@ -87,7 +87,7 @@
                 </td>
             </tr>
             <tr class="prop">
-                <td class="name"><label for="body">Reset Body:</label></td>
+                <td class="name"><label for="resetBody">Reset Body:</label></td>
                 <td class="value ${hasErrors(bean: userRegistration, field: 'resetBody', 'errors')}">
                     <textarea id="resetBody" rows="20" cols="40" name="resetBody">
                         ${userRegistration?.resetBody ?: 'Example Text: Password reset body'}

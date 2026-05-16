@@ -1,5 +1,3 @@
-<div class="homepage_info_box"><h3>Recently published</h3></div>
-<div class="widget-body-text" style="text-align: left">
 <ul style="list-style-type: none; list-style-position: inside; padding: 0; margin-left: 0">
     <g:each in="${models}" var="model">
         <li style="text-indent: -1.5em; padding-left: 1.5em">
@@ -25,4 +23,3 @@
         </li>
     </g:each>
 </ul>
-</div>

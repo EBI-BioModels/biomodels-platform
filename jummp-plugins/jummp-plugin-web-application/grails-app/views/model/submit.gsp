@@ -19,18 +19,23 @@
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css/font-awesome-4.7.0/css', file: 'font-awesome.css')}"/>
     <g:javascript src="helpers.js" contextPath=""/>
-    <g:javascript src="toastr.min.js" contextPath=""/>
-    <link rel="stylesheet"
-          href="${resource(contextPath: serverURL, dir: 'css', file: 'toastr.min.css')}"/>
+    <g:render template="/templates/head" plugin="jummp-plugin-web-application" />
     <g:javascript>
+        var submitterInfo = "${submitterInfo}";
+        var submissionFolder = "${submissionFolder}";
         var currentValidation = false;
-        var errorMessages = new Array();
+        var errorMessages = [];
         var modelInfo = ${modelInfo};
         var modelFile;
         var additionalFiles;
+        var publication = {};
         var authorMap = { authors: [] };
-        var authorList;
+        var authorList = [];
         if (${publication != null}) {
+            publication = {
+                "link": "${publication?.link}",
+                "linkType": "${publication?.linkProvider?.linkType}"
+            };
             authorMap = {
                 "authors":
                     ${publication?.authors.collect {
@@ -48,14 +53,29 @@
             authorList = authorMap["authors"];
         }
         var existingFiles = ${existingFiles};
-        var publication;
         var isUpdate = ${isUpdate};
         var isAmend = false;
         var revisionComments = "";
         var modelId = "${modelId}";
         var revisionId = "${RevisionID}";
         var revisionNumber = "${RevisionNumber}";
-        var changesMade = [];
+        var changesMade = new Set();
+
+        var latestModelName = "${latestModelName}";
+        var latestModelDescription = `${latestModelDescription}`;
+        var latestModelFormat = "${latestModelFormat}"; // the format was defined in the previous update
+        var detectedModelFormat; // the format is selected by the submitter
+        var latestModelFormatNameAndVersion = "${latestModelFormatNameAndVersion}";
+        var latestReadmeSubmission = "${latestReadmeSubmission}";
+
+        var latestModellingApproach = "${latestModellingApproach}";
+        var latestOtherInfo = "${latestOtherInfo}";
+        var latestContributorRole = "${previousContributorRole}";
+        var pubURI = "";
+        var guessedPublicationNamespace = "";
+        var guessedPublicationCollectionLabel = "";
+        var guessedPublicationAccession = "";
+        var isMetadataSubmission = "${isMetadataSubmission}";
 
         toastr.options = {
             // How long the toast will display without user interaction
@@ -67,7 +87,20 @@
 </head>
 
 <body>
-<form id="msform" useToken="true" class="${submissionSessionId}">
+<g:if test="${files?.size() == 0 && isUpdate}">
+    <h2 style="color: darkred">There have been errors when trying to update your model. Please refresh the page.
+    If the issue persists, please contact us for further support.</h2>
+</g:if>
+<g:else>
+<div class="row">
+    <div class="columns small-12 large-12">
+        <div class="text-center">
+            <img src="${serverURL}/images/biomodels/loading.gif" id="loading" title="working..." alt="Please wait..."
+                 style="display: none" />
+        </div>
+    </div>
+</div>
+<form id="msform" useToken="true" class="${submissionFolder}">
     <!-- progressbar -->
     <ul id="progressbar">
         <li class="active" id="upload-file"><strong>Model Files</strong></li>
@@ -127,6 +160,26 @@
 </form>
 <g:javascript src="biomodels/submission.js" contextPath="" />
 <g:javascript src="biomodels/uploader-1.0.2/jquery.dm-uploader.min.js" contextPath="" />
+<script type="text/javascript">
+    toastr.options = {
+        "closeButton": false,
+        "debug": false,
+        "newestOnTop": false,
+        "progressBar": false,
+        "positionClass": "toast-top-right",
+        "preventDuplicates": false,
+        "onclick": null,
+        "showDuration": "600",
+        "hideDuration": "1000",
+        "timeOut": "10000",
+        "extendedTimeOut": "1000",
+        "showEasing": "swing",
+        "hideEasing": "linear",
+        "showMethod": "fadeIn",
+        "hideMethod": "fadeOut"
+    }
+</script>
+</g:else>
 
 </body>
 <content tag="contexthelp">
@@ -138,3 +191,6 @@
     </g:else>
 </content>
 </html>
+<content tag="submit">
+    selected
+</content>

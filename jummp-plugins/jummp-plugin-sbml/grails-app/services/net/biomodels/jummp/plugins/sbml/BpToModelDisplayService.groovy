@@ -13,11 +13,11 @@ class BpToModelDisplayService {
     static transactional = false
 
     @CompileStatic
-    Map getComponentsFromBP(String modelId) {
+    Map getComponentsFromBP(String modelId) throws IOException {
         ParameterSearchCommand command = new ParameterSearchCommand()
         command.query = modelId
         ParameterSearchService parameterSearchService = new ParameterSearchService()
-        ParameterSearchResults results = parameterSearchService.getJSONData(command)
+        ParameterSearchResults results = parameterSearchService.getJSONData(command, modelId)
         if (null == results) {
             throw new RuntimeException("No records to display")
         }

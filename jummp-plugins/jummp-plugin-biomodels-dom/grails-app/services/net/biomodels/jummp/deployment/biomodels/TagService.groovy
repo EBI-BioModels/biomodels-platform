@@ -23,8 +23,9 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.transaction.Transactional
 import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Service for handling CRUD operations on tags/labels being used in BioModels
@@ -32,8 +33,9 @@ import org.apache.commons.logging.LogFactory
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional
-class TagService {
-    private static final Log log = LogFactory.getLog(TagService.class)
+class TagService implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TagService.class)
+    def springSecurityService
 
     List<TagTransportCommand> getAll() {
         List<Tag> tags = Tag.getAll()
@@ -54,14 +56,26 @@ class TagService {
         result
     }
 
-    Tag create(String name, String description, User userCreated) {
-        Tag tagObj = Tag.findOrCreateByNameAndUserCreated(name, userCreated)
+    Tag create(String name, String description, User userCreated = null) {
+        Tag tagObj = Tag.findOrCreateByName(name)
         if (!tagObj.id) {
             tagObj.dateCreated = new Date()
             tagObj.dateModified = new Date()
         }
+        if (!userCreated) {
+            userCreated = springSecurityService.currentUser
+        }
         tagObj.description = description
+        tagObj.userCreated = userCreated
         Tag returned = tagObj.save(flush: true)
+        if (returned) {
+            LOGGER.debug("""\
+Tag ${returned.name} (${returned.description}) has been created or updated successfully \
+by ${returned.userCreated.username}.""")
+        } else {
+            LOGGER.error("""\
+An error occurred when creating or updating the tag $name ($description) by ${userCreated.username}.""")
+        }
         returned
     }
 
@@ -82,13 +96,18 @@ class TagService {
         tag.userCreated = User.findByUsername(command.userCreated)
         Tag saved = tag.save(flush: true)
         if (saved) {
-            log.debug("""\
-The tag (${tag.name}) was updated successfully""")
+            LOGGER.debug("""\
+The tag (${tag.name}) was created or updated successfully""")
         } else {
-            log.error("""\
-There have been errors while persisting the tag (${tag.name}) into the database 
+            LOGGER.error("""\
+There have been errors while persisting the tag (${tag.name}) into the database
 because of ${tag.errors.allErrors.inspect()}""")
         }
         saved
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

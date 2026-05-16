@@ -1,30 +1,41 @@
 <div id="journalsChart" class="div-center-content"></div>
 <g:javascript>
-    var dataset = {
-        'children': ${journals}
+/* global diameter */
+{
+    // Show top 40 journals; aggregate the remainder into a single "Others" bubble
+    const allJournals = ${journals};
+    allJournals.sort(function(a, b) { return b.value - a.value; });
+    const topJournals = allJournals.slice(0, 40);
+    const rest = allJournals.slice(40);
+    if (rest.length > 0) {
+        const othersCount = rest.reduce(function(sum, d) { return sum + d.value; }, 0);
+        topJournals.push({ name: 'Others (' + rest.length + ')', value: othersCount });
+    }
+    const dataset = {
+        'children': topJournals
     };
 
-    var color = d3
+    const color = d3
         .scaleOrdinal(d3.schemeCategory20c);
 
-    var bubble = d3
+    const bubble = d3
         .pack()
         .size([diameter, diameter])
         .padding(1.5);
 
-    var svg = d3
+    const svg = d3
         .select('#journalsChart')
         .append('svg')
         .attr('viewBox','0 0 ' + (diameter) + ' ' + diameter);
 
-    var root = d3
+    const root = d3
         .hierarchy(dataset)
         .sum(function(d) { return d.value; })
         .sort(function(a, b) { return b.value - a.value; });
 
     bubble(root);
 
-    var node = svg
+    let node = svg
         .selectAll('.node')
         .data(root.children)
         .enter()
@@ -50,18 +61,19 @@
         .text(function(d) { return d.data.name.substring(0, d.r / 3); })
         .style("fill", "#ffffff")
         .style("font-size", function(d) {
-            //return d.r/5;
+            // return d.r/5;
             return Math.min(2 * d.r, (2 * d.r - 8) / this.getComputedTextLength() * 14) + "px";
         });
-
+    const $itemOnFocus = $('#item-on-focus');
     node
         .on("mouseover", function(d) {
-                $('#item-on-focus').html(d.data.name + ": " + d.data.value + " models");
-                $('#item-on-focus').css("color", "#000000");
+                $itemOnFocus.html(d.data.name + ": " + d.data.value + " models");
+                $itemOnFocus.css("color", "#000000");
             });
     node
-        .on("mouseout", function(d) {
-            $('#item-on-focus').css("color", "#e2e1e1");
+        .on("mouseout", function() {
+            $itemOnFocus.css("color", "#e2e1e1");
         });
+}
 </g:javascript>
 

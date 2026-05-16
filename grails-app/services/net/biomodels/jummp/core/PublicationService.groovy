@@ -28,22 +28,23 @@ import grails.converters.JSON
 import grails.transaction.Transactional
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
-import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
-import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
-import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.validation.ObjectError
+
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -67,11 +68,10 @@ class PublicationService implements IPublicationService, InitializingBean {
     def doiService
     def pubMedService
     def messageSource
-    PubDataFetchStrategy fetchStrategy
 
     @Override
     void afterPropertiesSet() throws Exception {
-
+        log.info("Finished the bean initialisation")
     }
 
     List<PubTC> getAll() {
@@ -88,7 +88,7 @@ class PublicationService implements IPublicationService, InitializingBean {
         PubTC retrieved = new PubTC()
         PLP publicationLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", provider)
-        }
+        } as PLP
         retrieved.link = pubLink
         retrieved.linkProvider = new PLPA(linkProvider:
                 publicationLinkProvider).toCommandObject()
@@ -100,37 +100,95 @@ class PublicationService implements IPublicationService, InitializingBean {
         PubTC pubTC = null
         PLP.LinkType type = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
 
-        if (type == PLP.LinkType.PUBMED) {
-            pubTC = pubMedService.fetchPublicationData(link)
-            log.debug("The publication details fetched from EuropePMC look ${pubTC?.dump()}")
-        } else if (type == PLP.LinkType.DOI) {
-            pubTC = doiService.fetchPublicationData(link)
-            log.debug("The publication details fetched from https://doi.org look ${pubTC?.dump()}")
+        if (type == PLP.LinkType.PUBMED || type == PLP.LinkType.DOI) {
+            pubTC = pubMedService.fetchPublicationData(link, type)
+            log.debug("The publication details of ${link} fetched from EuropePMC look ${pubTC?.dump()}")
+            if (type == PLP.LinkType.DOI && pubTC?.isEmpty()) {
+                // fallback to DoiService if the entry hasn't indexed in PubMed centre yet
+                try {
+                    pubTC = doiService.fetchPublicationData(link)
+                    log.debug("The publication details of ${link} fetched from https://doi.org look ${pubTC?.dump()}")
+                } catch (JummpException je) {
+                    log.error("""An errors occurred when fetching the publication metadata of \
+${linkTypeAsString}:${link} due to ${je.message}""")
+                }
+            }
         }
         pubTC
+    }
+
+    PubTC findPublicationOfModel(final String modelId) {
+        String queryStr = "from Model as m where m.publicationId = :modelId or m.submissionId = :modelId"
+        List result = Model.executeQuery(queryStr, [modelId: modelId])
+        Publication publication = result ? result.first()?.publication : null
+        if (!publication) { return null }
+        new PublicationAdapter(publication: publication).toCommandObject()
     }
 
     boolean verifyLink(String linkTypeAsString, String link) {
         def linkProvider = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
         PLP pubLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", linkProvider)
-        }
+        } as PLP
         if (!pubLinkProvider) {
             return false
         }
         if (PLP.LinkType.MANUAL_ENTRY == pubLinkProvider.linkType) {
             return true
         }
-        Pattern p = Pattern.compile(pubLinkProvider.pattern);
-        Matcher m = p.matcher(link);
+        Pattern p = Pattern.compile(pubLinkProvider.pattern)
+        Matcher m = p.matcher(link)
         return m.matches()
+    }
+
+    Map doVerifyPubLinkAndFetchData(String pubLinkProvider, String pubLink) {
+        PubTC cmd = new PubTC()
+        String message
+        String status
+        boolean comesFromDB = false
+        if (pubLinkProvider == "NoPub" && pubLink) {
+            message = "Please select a publication link type."
+            status = "Failed"
+        } else {
+            if (!verifyLink(pubLinkProvider, pubLink)) {
+                message = "The link is not a valid ${pubLinkProvider}"
+                status = "Failed"
+            } else {
+                message = "The publication details have been fetched successfully."
+                status = "OK"
+                cmd = createPTCWithMinimalInformation(pubLinkProvider, pubLink, [])
+                Map m = loadOrFetchOrCreatePublication(cmd, pubLinkProvider)
+                PDEC ctx = m["pubCtx"] as PDEC
+                if (m["message"]) { message += "<br/>" + m["message"] }
+                // reassign cmd to a newly refreshed one
+                cmd = ctx?.publication
+                if (!cmd) {
+                    status = "Unavailable"
+                    message = "No record found. Please do check and try again."
+                } else if (!cmd?.synopsis || !cmd?.affiliation || !cmd?.title) {
+                    // for DOI fetched from DOI service or for PubMed entry not having any values for these fields
+                    status = "Warning"
+                    String t = cmd.linkProvider.linkType
+                    String pubHref = "https://doi.org/${pubLink}"
+                    if (t == PLP.LinkType.PUBMED.getLabel()) {
+                        pubHref = "https://identifiers.org/pubmed:${pubLink}"
+                    }
+                    message = """The publication details are the best which our system can automatically
+fetch from <a href="${pubHref}" target="_blank">${pubHref}</a>. Currently they are
+missing a title, an affiliation and/or an abstract. Please verify the form and fill in the empty fields manually."""
+                }
+
+                comesFromDB = ctx?.comesFromDatabase
+            }
+        }
+        ["message": message, "status": status, "publication": cmd, "comesFromDB": comesFromDB]
     }
 
     PLPTC inferPublicationLinkProvider(final String linkTypeAsString) {
         PLP.LinkType linkProvider = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
         PLP pubLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", linkProvider)
-        }
+        } as PLP
         PLPTC transportCommand = new PLPA(linkProvider: pubLinkProvider).toCommandObject()
         return transportCommand
     }
@@ -138,10 +196,11 @@ class PublicationService implements IPublicationService, InitializingBean {
     PDEC getPublicationExtractionContext(PubTC cmd) throws JummpException {
         Publication publication = findByPublicationTransportCommand(cmd)
         PDEC ctx = new  PDEC()
-        PubTC pubTC = null
+        PubTC pubTC
         if (publication) {
             // if existing in database
             pubTC = new PublicationAdapter(publication: publication).toCommandObject()
+            ctx.publication = pubTC
             ctx.comesFromDatabase = true
         } else {
             // if not in database
@@ -231,7 +290,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
      * @return  An updated publication transport command
      */
     PubTC assembleAuthors(PubTC cmd, def authorsAsJson) throws InvalidPublicationAuthorsException {
-        List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
+        List<PersonTC> validatedAuthors
         validatedAuthors = parseAuthorsJSON(authorsAsJson)
         cmd.authors = validatedAuthors
         if (!cmd.validate()) {
@@ -260,8 +319,8 @@ There has been errors when assembling authors $authors into the publication '${p
             linkTypeProvider = pubDetails.linkProvider
         }
         tempPTC.linkProvider = inferPublicationLinkProvider(linkTypeProvider)
-        String message = ""
-        String status = ""
+        String message
+        String status
         List errors = new ArrayList()
         try  {
             assembleAuthors(tempPTC, pubDetails.authors)
@@ -291,7 +350,34 @@ There has been errors when assembling authors $authors into the publication '${p
         new PublicationAdapter(publication: publication).toCommandObject()
     }
 
-    private PubTC bindJSONData(PubTC pubTC, def jsonData) {
+    private Map loadOrFetchOrCreatePublication(PubTC pubTC, String pubLinkProvider) {
+        String message = null
+        PDEC publicationContext = null
+        try {
+            publicationContext = getPublicationExtractionContext(pubTC)
+            if (publicationContext.publication) {
+                if (publicationContext.comesFromDatabase) {
+                    String code = "publication.editor.duplicateEntry.message"
+                    String pubLink = pubTC.link
+                    message = messageSource.getMessage(code, [pubLink] as Object[], Locale.default)
+                    log.debug(message)
+                }
+            } else {
+                PubTC retrieved
+                retrieved = createPTCWithMinimalInformation(pubLinkProvider, pubTC.link, [])
+                publicationContext.publication = retrieved
+                publicationContext.comesFromDatabase = false
+            }
+        } catch (Exception e) {
+            message = e.message
+            log.error(message, e)
+        } finally {
+            log.info("Finished loading and creating a publication holder for...")
+        }
+        return [message: message, pubCtx: publicationContext]
+    }
+
+    private static PubTC bindJSONData(PubTC pubTC, def jsonData) {
         pubTC.link = jsonData.link
         pubTC.title = jsonData.title
         pubTC.journal = jsonData.journal
@@ -306,6 +392,19 @@ There has been errors when assembling authors $authors into the publication '${p
     }
 
     private void reconcile(Publication publication, List<PersonTC> tobeAdded) {
+        // get rid of duplications if they exist. Filtering duplications is often processed at the client-side.
+        // However, duplications could be bypassed for whatever reason. We handle such duplications here just in case.
+        List noDupList = tobeAdded
+        tobeAdded = []
+        noDupList.eachWithIndex { PersonTC entry, int i ->
+            def personAdded = tobeAdded.find { PersonTC person ->
+                person.userRealName.trim() == entry.userRealName.trim() && person.orcid?.trim() == entry.orcid?.trim() && person.institution?.trim() == entry.institution?.trim()
+            }
+            if (!personAdded) {
+                tobeAdded.add(entry)
+            }
+        }
+
         List<PublicationPerson> existing = getPersons(publication)
         existing.eachWithIndex { PublicationPerson author, int index ->
             // find the authors will be remove out of the publication authors
@@ -334,7 +433,6 @@ There has been errors when assembling authors $authors into the publication '${p
                     return newAuthor.userRealName == oldAuthor.person.userRealName &&
                         newAuthor.institution == oldAuthor.person.institution
                 }
-                return false
             }
             if (!existingAuthor) {
                 Person newlyCreatedPubAuthor
@@ -370,6 +468,7 @@ There has been errors when assembling authors $authors into the publication '${p
             } else {
                 // If the position of authors have been updated
                 if (existingAuthor.position != index ||
+                    existingAuthor.person.institution != newAuthor.institution ||
                     existingAuthor.pubAlias != newAuthor.userRealName) {
                     String query = """update PublicationPerson pp
 set pp.position = :newPosition, pp.pubAlias = :newPubAlias
@@ -397,7 +496,7 @@ where pp.publication = :publication and pp.person = :person and pp.position = :o
         }
     }
 
-    private List<PersonTC> parseAuthorsJSON(def jsonData) {
+    private static List<PersonTC> parseAuthorsJSON(def jsonData) {
         List<PersonTC> validatedAuthors = new LinkedList<>()
         def authorList
         if (jsonData instanceof String) {
@@ -446,7 +545,7 @@ where pp.publication = :publication and pp.person = :person and pp.position = :o
                 linkProvider {
                     eq("linkType", linkType)
                 }
-            }
+            } as Publication
         }
         publication
     }

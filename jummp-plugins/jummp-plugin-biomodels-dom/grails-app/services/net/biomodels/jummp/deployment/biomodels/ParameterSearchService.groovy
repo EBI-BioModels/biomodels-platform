@@ -1,21 +1,21 @@
 package net.biomodels.jummp.deployment.biomodels
 
-
 import grails.converters.JSON
 import grails.plugin.cache.Cacheable
 import groovy.transform.CompileStatic
 import groovyx.gpars.GParsPool
-import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
-import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
-import org.grails.async.factory.gpars.LoggingPoolFactory
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand as ParamSC
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults as ParamSR
+import net.biomodels.jummp.model.Model
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ParameterSearchService {
     static transactional = false
     def static configurationService
+    def static redisService
 
-    static final Log log = LogFactory.getLog(ParameterSearchService.class)
+    static final Logger LOGGER = LoggerFactory.getLogger(ParameterSearchService.class)
     static List<String> columnNames = ["entity", "entity_id", "initial concentration/amount", "reaction with entity labels", "reaction with entity ids",
                                         "reactants", "products", "modifiers",
                                        "model", "organism", "publication",
@@ -31,22 +31,35 @@ class ParameterSearchService {
         return data
     }
 
-    ParameterSearchResults getJSONData(ParameterSearchCommand command) {
-        String searchResults = getData(command, "JSON")
-        return ParameterSearchResults.fromJson(JSON.parse(searchResults))
+    ParamSR getJSONData(ParamSC command, String modelId = null) {
+        String searchResults = ""
+        if (modelId) {
+            searchResults = redisService.doRedisHGet("BP", modelId)
+            LOGGER.debug("Retrieving parameters for ${modelId} from Redis cache.")
+            println("Retrieving parameters for ${modelId} from Redis cache.")
+        }
+        if (!searchResults)  {
+            // fall back to the live search on EBI Search Server
+            LOGGER.debug("Falling back EBI Search Server to fetch parameters for the query: ${command}")
+            println("Falling back EBI Search Server to fetch parameters for the query: ${command}")
+            searchResults = getData(command, "JSON")
+            // cache the search results on Redis
+            doCacheSearchResultsOnRedis(searchResults, modelId)
+        }
+        if (!searchResults) { return null }
+        return ParamSR.fromJson(JSON.parse(searchResults))
     }
 
-    String getCSVData(ParameterSearchCommand command) {
+    String getCSVData(ParamSC command) {
         return getData(command, "CSV")
     }
 
     @CompileStatic
     @Cacheable(value = "csvRecords", key = "#command.query.concat(#command.is_curated)")
-    String exportData(ParameterSearchCommand command) {
+    String exportData(ParamSC command) {
         int MAX_RECORDS = 100
-        LoggingPoolFactory
-        String csvRecords = null
-        ParameterSearchResults parameterSearchResults = getJSONData(command)
+        String csvRecords
+        ParamSR parameterSearchResults = getJSONData(command)
         command.size = MAX_RECORDS
         int recordsTotal = parameterSearchResults.recordsTotal
 
@@ -57,25 +70,25 @@ class ParameterSearchService {
         }
 
         if(!csvRecords.isEmpty()) {
-            csvRecords = "\"" + columnNames.join("\",\"") + "\"\n" +csvRecords;
+            csvRecords = "\"" + columnNames.join("\",\"") + "\"\n" +csvRecords
         }
 
         return csvRecords
     }
 
-    String assembleSearchResultsUsingGPars(ParameterSearchCommand command, int total, int MAX_RECORDS) {
-        final int batchCount = Math.floor(total / MAX_RECORDS)
+    String assembleSearchResultsUsingGPars(ParamSC command, int total, int MAX_RECORDS) {
+        final int batchCount = (int) Math.floor(total / MAX_RECORDS)
         def searchResults = null
         GParsPool.withPool(100) {
             searchResults = (0..batchCount).collectParallel { int page ->
                 String query = command.query
-                def thisCmd = new ParameterSearchCommand(query: query, start: page * MAX_RECORDS,
+                def thisCmd = new ParamSC(query: query, start: page * MAX_RECORDS,
                     size: MAX_RECORDS, is_curated: command.is_curated)
                 String result = ""
                 try {
                     result = removeHeader(getCSVData(thisCmd))
                 } catch (Throwable t) {
-                    log.error("Could not retrieve batch $page of $batchCount for query $query", t)
+                    LOGGER.error("Could not retrieve batch $page of $batchCount for query $query", t)
                 }
 
                 return result
@@ -85,50 +98,106 @@ class ParameterSearchService {
         return searchResults?.join("")
     }
 
+    void updateRedisCache() throws SocketTimeoutException {
+        // Notes: BP uses the public identifiers
+        String query = """SELECT M.publicationId FROM Model AS M \
+WHERE M.deleted = :deleted \
+ AND M.firstPublished IS NOT NULL \
+ AND M.publicationId IS NOT NULL \
+ AND M.publicationId != '' \
+ ORDER BY M.publicationId ASC"""
+        List listOfModels = Model.executeQuery(query, [deleted: false])
+        final int POOL_SIZE = 8
+        GParsPool.withPool(POOL_SIZE) {
+            listOfModels.eachParallel { String modelId ->
+                updateRedisCache(modelId)
+            }
+        }
+    }
+
+    void updateRedisCache(final String modelId) {
+        ParamSC cmd = new ParamSC(size: 10, start: 0, sort: 'model:ascending')
+        cmd.query = modelId
+        String searchResults = getData(cmd, "JSON")
+        doCacheSearchResultsOnRedis(searchResults, modelId)
+    }
+
     private static String removeHeader(String csvData) {
         if (null == csvData) return null
         int indexOfNewLineChar = csvData.indexOf("\n")
         return csvData.substring(indexOfNewLineChar + 1)
     }
 
-    private static String getData(ParameterSearchCommand command, String format) {
+    private static String getData(ParamSC command, String format) {
         if (!command) {
-            throw new IllegalArgumentException("Couldn't read the request parameters");
+            throw new IllegalArgumentException("Couldn't read the request parameters")
         }
         def url = command.getSearchUrl(format)
         HttpURLConnection conn
         Proxy proxy = configurationService.verifyHttpProxy()
+        String result = null
         try {
             if (proxy) {
                 conn = (HttpURLConnection) url.openConnection(proxy)
-                log.debug("via HTTP PROXY: ${proxy.dump()}")
             } else {
                 conn = (HttpURLConnection) url.openConnection()
-                log.debug("No HTTP PROXY")
             }
-            conn.setConnectTimeout(1000)
-            conn.setReadTimeout(1000)
+            /**
+             * https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
+             * https://stackoverflow.com/a/6830053/865603
+             * https://www.baeldung.com/java-socket-connection-read-timeout
+             *
+             * The server often accepts the client connection, especially inter-connected services. So, we
+             * don't need to pump up the specific time for the connection timeout property. Instead of
+             * increasing the connection time out, it is recommended to increase the time for the read time out.
+             *
+             * From the client side, the "read timed out" error happens if the server is taking longer to
+             * respond and send information. This could be due to a slow internet connection, or the host
+             * could be offline. From the server side, it happens when the server takes a long time to
+             * read data compared to the preset timeout.
+             */
+            conn.setConnectTimeout(15000)
+            conn.setReadTimeout(30000)
             conn.connect()
             if (conn.responseCode < 400) {
                 try {
                     String records = conn.getInputStream().text
-                    return replaceFieldNames(records).replaceAll("\\\\","")
+                    result = replaceFieldNames(records).replaceAll("\\\\","")
                 } catch (IOException e) {
-                    log.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of the error ${e
-                        .message}""")
-                    return null
+                    LOGGER.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of \
+the error ${e.message}""")
+                } finally {
+                    return result
                 }
             } else {
-                log.error("""Couldn't fetch data from the resource ${url.dump()} because of the error caused by ${conn
-                    .getErrorStream()
-                    .inspect()}""")
+                LOGGER.error("""Couldn't fetch data from the resource ${url.dump()} because of the error \
+caused by ${conn.getErrorStream().inspect()}""")
                 return null
             }
-        } catch (SocketException se) {
-            log.error("Error while retrieving records from EBI Search ${se.getMessage()}, command - ${command}", se)
-        } catch (IllegalArgumentException ile) {
-            log.error("The proxy setting cannot be null")
+        } catch (SocketTimeoutException ste) {
+            String msg = """Error while trying to connect to EBI Search Server to retrieve BioModels Parameters \
+due to "${ste.getMessage()}" with the query info wrapped in the command: ${command}""".toString()
+            LOGGER.error(msg, ste)
+        } catch (IllegalArgumentException iae) {
+            LOGGER.error("The proxy setting cannot be null or ${iae.getMessage()}")
+        } finally {
+            conn.getInputStream().close()
+            return result
         }
-        return null
+    }
+
+    private static void doCacheSearchResultsOnRedis(String searchResults, String modelId) {
+        if (searchResults && modelId) {
+            Map cachedBP = redisService.doRedisHGetAll("BP")
+            cachedBP.put(modelId, searchResults)
+            redisService.doRedisHSet("BP", cachedBP)
+            LOGGER.debug("Caching the parameters for ${modelId} on Redis cache.")
+            println("Caching the parameters for ${modelId} on Redis cache.")
+        }
+    }
+
+    boolean existsPS(final String perennialId) {
+        def r = redisService.doRedisHGet("BP", perennialId)
+        r != null
     }
 }

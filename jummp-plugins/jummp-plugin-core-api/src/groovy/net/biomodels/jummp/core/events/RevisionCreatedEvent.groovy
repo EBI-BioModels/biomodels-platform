@@ -24,7 +24,7 @@
 
 package net.biomodels.jummp.core.events
 
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 
 /**
  * @short Event triggered when a new Model Revision is uploaded.
@@ -42,13 +42,13 @@ class RevisionCreatedEvent extends ModelOperationEvent {
     /**
      * The newly create Revision
      */
-    final RevisionTransportCommand revision
+    final RTC revision
     /**
      * The actual files which were uploaded.
      */
     final List<File> files
 
-    RevisionCreatedEvent(Object source, final RevisionTransportCommand revision, final List<File> files = null) {
+    RevisionCreatedEvent(Object source, final RTC revision, final List<File> files = null) {
         super(source)
         this.revision = revision
         this.files = files

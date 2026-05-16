@@ -128,6 +128,7 @@ class FileSystemService implements IFileSystemService, InitializingBean {
         else {
             log.error("Root for FileSystemService was not configured!")
         }
+        log.info("Finished the bean initialisation")
     }
 
     /**
@@ -166,11 +167,12 @@ particularly for network file systems."""
     }
 
     @Override
-    void deleteDirectory(Path path) {
+    boolean deleteDirectory(Path path) {
         boolean succeed = path.deleteDir()
         if (!succeed) {
             log.error("Cannot delete the directory ${path.getName()}")
         }
+        succeed
     }
     /**
      * Updates the model container name.
@@ -321,7 +323,7 @@ particularly for network file systems."""
      * Locates the folder where all models should reside based on user's settings.
      */
     private File findRoot() {
-        String rootLocation
+        String rootLocation = ""
         VcsCommand vcsCommand = configurationService.loadVcsConfiguration()
         if (vcsCommand.isGit()) {
             rootLocation = vcsCommand.workingDirectory

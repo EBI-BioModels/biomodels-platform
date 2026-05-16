@@ -1,38 +1,35 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* JSBML, groovy, Apache Commons, JDOM, XStream, Spring Framework, Perf4j, Grails,
-* SBFC Converter (or a modified version of that library), containing parts
-* covered by the terms of GNU GPL v2.0, BSD license, Apache License v2.0,
-* JDOM license, GNU LGPL v2.1, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of JSBML, groovy, Apache Commons,
-* JDOM, XStream, Spring Framework, Perf4j, Grails, SBFC Converter used as well as
-* that of the covered work.}
-**/
-
-
-
+ * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * JSBML, groovy, Apache Commons, JDOM, XStream, Spring Framework, Perf4j, Grails,
+ * SBFC Converter (or a modified version of that library), containing parts
+ * covered by the terms of GNU GPL v2.0, BSD license, Apache License v2.0,
+ * JDOM license, GNU LGPL v2.1, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of JSBML, groovy, Apache Commons,
+ * JDOM, XStream, Spring Framework, Perf4j, Grails, SBFC Converter used as well as
+ * that of the covered work.}
+ **/
 
 
 package net.biomodels.jummp.plugins.sbml
@@ -42,13 +39,14 @@ import grails.util.Environment
 import net.biomodels.jummp.core.ISbmlService
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.model.FileFormatServiceAdapter
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RepoFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
+import net.biomodels.jummp.model.ModellingApproach as MA
+import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.apache.commons.io.FileUtils
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.codecs.URLCodec
+import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
@@ -59,12 +57,16 @@ import org.jdom.xpath.XPath
 import org.perf4j.aop.Profiled
 import org.sbml.jsbml.*
 import org.sbml.jsbml.CVTerm.Qualifier
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import java.util.regex.Pattern
+import java.util.Collections
+import java.util.Optional
 
 //import org.sbfc.converter.models.BioPaxModel
 //import org.sbfc.converter.models.OctaveModel
@@ -75,16 +77,17 @@ import java.util.regex.Pattern
 
 /**
  * Service class for handling Model files in the SBML format.
- * @author  Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
- * @author  Raza Ali <raza.ali@ebi.ac.uk>
- * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
- * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
+ * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class SbmlService extends FileFormatServiceAdapter implements ISbmlService, InitializingBean {
     static transactional = true
     def bpToModelDisplayService
-    private static final Log log = LogFactory.getLog(this)
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    def parameterSearchService
+    private static final Logger LOGGER = LoggerFactory.getLogger(this)
+    private static final boolean IS_INFO_ENABLED = LOGGER.isInfoEnabled()
     /**
      * Dependency Injection of MiriamService
      */
@@ -108,8 +111,24 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
 
     // TODO: move initialization into afterPropertiesSet and make it configuration dependent
     @SuppressWarnings("GrailsStatelessService")
-    /** keys are {@link net.biomodels.jummp.core.model.RevisionTransportCommand#getId()}s*/
+    /** keys are {@link RevisionTC}s */
     SbmlCache cache = new SbmlCache(100)
+    /**
+     * LRU cache keyed by canonical file path, used by getFileAsValidatedSBMLDocument.
+     * Stores Optional.of(doc) for valid files and Optional.empty() for known failures,
+     * so that even consistently-invalid files skip re-parsing and re-validation on
+     * subsequent calls.
+     */
+    @SuppressWarnings("GrailsStatelessService")
+    private final Map<String, Optional<SBMLDocument>> fileDocumentCache =
+        Collections.synchronizedMap(
+            new LinkedHashMap<String, Optional<SBMLDocument>>(100, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, Optional<SBMLDocument>> eldest) {
+                    return size() > 100
+                }
+            }
+        )
 
     void afterPropertiesSet() {
         if (Environment.current == Environment.PRODUCTION) {
@@ -120,16 +139,17 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             // FIXME: fails the startup of Tomcat server
             //sbml2BioPaxConverter()
         }
+        LOGGER.info("Finished the bean initialisation")
     }
 
-    void checkConsistency(RevisionTransportCommand revision, final List<String> errors) {
-        RepositoryFileTransportCommand mainFileTC = revision.files.find {
+    void checkConsistency(RevisionTC revision, final List<String> errors) {
+        RepoFTC mainFileTC = revision.files.find {
             it.mainFile
         }
         if (!mainFileTC) {
             String modelSubmissionId = revision.model.submissionId
             String error = "SBMLModel with the identifier ${modelSubmissionId} has no a main file"
-            log.debug(error)
+            LOGGER.debug(error)
             errors.add(error)
         } else {
             File sbmlFile = new File(mainFileTC.path)
@@ -138,73 +158,119 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
     }
 
     @Override
-    boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
-            throws ModelException {
-        Qualifier qualifier = Qualifier.BQM_IS
+    boolean addModelIdentifiersAsAnnotation(RevisionTC revision, String... identifiers)
+        throws ModelException {
+        Qualifier bqmIs = Qualifier.BQM_IS
         String accessionPattern = "biomodels.db[/:](BIOMD|MODEL)[0-9]{10}"
-        addAnnotations2Model(revision, qualifier, accessionPattern, identifiers)
+        addAnnotations2Model(TypeAnno.MODEL_IDENTIFIER, revision, bqmIs, accessionPattern, identifiers)
     }
 
     @Override
-    boolean addModellingApproachAsAnnotation(RevisionTransportCommand revision,
-            ModellingApproach approach) throws ModelException {
-        final CVTerm.Qualifier bqbHasProperty = CVTerm.Qualifier.BQB_HAS_PROPERTY
-        String[] identifiers = ["http://identifiers.org/mamo/${approach?.accession}"] as String[]
-        String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
-        addAnnotations2Model(revision, bqbHasProperty, accessionPattern, identifiers)
+    boolean addModellingApproachAsAnnotation(RevisionTC revision, MA approach) throws ModelException {
+        final Qualifier bqbHasProperty = Qualifier.BQB_HAS_PROPERTY
+        // As of writing this comment, the resource property is an URI-based value.
+        String[] identifiers = [approach.resource] as String[]
+        String accessionPattern = ""
+        addAnnotations2Model(TypeAnno.MODELLING_APPROACH, revision, bqbHasProperty, accessionPattern, identifiers)
     }
 
-    private boolean addAnnotationsIfNeeded(RevisionTransportCommand revision,
-                                           SBMLDocument document,
-                                           Qualifier qualifier,
-                                           String accessionPattern,
-                                           String... identifiers) throws ModelException {
+    @Override
+    boolean addPublicationAsAnnotation(RevisionTC revision, PubTC publication) throws ModelException {
+        final Qualifier bqmIsDescribedBy = Qualifier.BQM_IS_DESCRIBED_BY
+        String pubmedPattern = "^\\d+\$"
+        String doiPattern = "^(doi\\:)?10\\.\\d+/.*\$"
+        String accessionPattern
+        String namespace
+        if (publication.linkProvider.linkType == PubLP.LinkType.PUBMED_LABEL) {
+            accessionPattern = pubmedPattern
+            namespace = "pubmed"
+        } else if (publication.linkProvider.linkType == PubLP.LinkType.DOI_LABEL) {
+            accessionPattern = doiPattern
+            namespace = "doi"
+        } else {
+            LOGGER.debug("BioModels only supports to add an annotation to SBML file for PubMed and DOI.")
+            return false
+        }
+        String[] identifiers = ["https://identifiers.org/$namespace:$publication.link"] as String[]
+        addAnnotations2Model(TypeAnno.PUBLICATION, revision, bqmIsDescribedBy, accessionPattern, identifiers)
+    }
+
+    private static boolean addAnnotationsIfNeeded(TypeAnno typeAnno,
+                                                  RevisionTC revision,
+                                                  SBMLDocument document,
+                                                  Qualifier qualifier,
+                                                  String accessionPattern,
+                                                  String... identifiers) throws ModelException {
         String rID = Objects.requireNonNull(revision).identifier()
         Model model = Objects.requireNonNull(document).model
 
-        // resources with this pattern should be removed
-        def targetAccessionPattern = Pattern.compile(accessionPattern)
-
-        List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
-
-        if (cVTerms.isEmpty()) {
-            def cvTerm = new CVTerm(qualifier, identifiers)
-            if (!model.addCVTerm(cvTerm)) {
-                throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
-            }
-            return true
+        List<String> tobeAdded = filterIdentifiersToBeAdded(document, model, qualifier, accessionPattern, identifiers)
+        if (tobeAdded?.isEmpty()) {
+            LOGGER.info("{} resource references already exist in the model revision {}.", identifiers, revision.identifier())
+            return false
+        } else {
+            identifiers = tobeAdded.toArray()
         }
 
-        // find the set of resources that should be kept
-        def filteredAnnotations = cVTerms.collect { CVTerm t ->
-            t.getResources().findAll { String xref ->
-                if (!targetAccessionPattern.matcher(xref).find()) {
-                    return true
+        boolean retVal
+        switch (typeAnno) {
+            case TypeAnno.MODEL_IDENTIFIER:
+                retVal = doAddAnnotations(typeAnno, model, revision, rID, qualifier, accessionPattern, identifiers)
+                break
+            case TypeAnno.MODELLING_APPROACH:
+                MA ma = revision.model.modellingApproach
+                if (ma?.accession?.toLowerCase() != "other") {
+                    retVal = doAddAnnotations(typeAnno, model, revision, rID, qualifier, accessionPattern, identifiers)
+                } else {
+                    // remove the former modelling approach if we are in the update process
+                    retVal = doRemoveAnnotation(model, revision, qualifier, rID)
                 }
-                return false
-            }
-        }.flatten() as List<String>
-
-        for (CVTerm t: cVTerms) {
-            if (!model.removeCVTerm(t)) {
-                throw new ModelException(revision.model, "Could not remove CVTerm $t for revision $rID")
-            }
+                break
+            case TypeAnno.PUBLICATION:
+                retVal = doAddAnnotations(typeAnno, model, revision, rID, qualifier, accessionPattern, identifiers)
+                break
         }
 
-        List<String> idList = Arrays.asList(identifiers)
-        filteredAnnotations.addAll(idList)
-        String[] replacementAnnotations = filteredAnnotations as String[]
-        def replacementCVTerm = new CVTerm(qualifier, replacementAnnotations)
-
-        boolean haveAddedNewQualifier = model.addCVTerm(replacementCVTerm)
-        if (!haveAddedNewQualifier) {
-            throw new ModelException(revision.model, "Could not insert qualifier for resources ${identifiers} to revision $rID")
-        }
-        true
+        return retVal
     }
-    private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
-        // TODO: we should insert the parsed model into the cache
-        String errorMsg = ""
+
+    private static List<String> filterIdentifiersToBeAdded(SBMLDocument document, Model model, Qualifier qualifier,
+                                                           String accessionPattern, String... identifiers) {
+        List<String> listIdentifiers = Arrays.asList(identifiers)
+        // we sure that identifiers are based on identifiers.org syntax ether old or compact form
+        List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+        List<String> listResources = new ArrayList<>()
+        cVTerms.each { CVTerm term ->
+            listResources.addAll(term.resources)
+        }
+        Map<String, Set<String>> data = [:]
+        listResources.each {
+            String dt = ResourceHelper.getDataTypeFromUri(it)
+            String accession = ResourceHelper.getAccessionFromUri(it)
+            if (data.containsKey(dt)) {
+                data.get(dt).add(accession)
+            } else {
+                data.put(dt, [accession] as Set)
+            }
+        }
+        List<String> tobeAdded = new ArrayList()
+        listIdentifiers.each {
+            String dt = ResourceHelper.getDataTypeFromUri(it)
+            String accession = ResourceHelper.getAccessionFromUri(it)
+            if (!data.containsKey(dt) || !data.get(dt)?.contains(accession)) {
+                tobeAdded.add(it)
+            }
+        }
+        tobeAdded
+    }
+
+    private SBMLDocument getFileAsValidatedSBMLDocument(final File model, List<String> errors) {
+        String cacheKey = "${model.canonicalPath}:${model.lastModified()}"
+        Optional<SBMLDocument> cached = fileDocumentCache.get(cacheKey)
+        if (cached != null) {
+            return cached.orElse(null)
+        }
+        String errorMsg
         SBMLDocument doc
         SBMLReader reader = new SBMLReader()
         try {
@@ -212,14 +278,14 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         } catch (XMLStreamException | NullPointerException e) {
             e.printStackTrace()
             errorMsg = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
-            log.error(errorMsg)
+            LOGGER.error(errorMsg)
             errors.add(errorMsg)
             return null
         }
         if (doc == null) {
             // although the API documentation states that an Exception is thrown for incorrect files, it seems that null is returned
             errorMsg = "SBMLDocument is not valid for file ${model.name}"
-            log.error(errorMsg)
+            LOGGER.error(errorMsg)
             errors.add(errorMsg)
             return null
         }
@@ -227,38 +293,54 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         // we only check consistency as long as the model file size is less than the maximum upload file limit
         // TODO: externalise this value by defined the property,
         //  e.g. grailsApplication.config.jummp.plugins.sbml.validation.maxFileSize
-        final long MAX_SIZE = 10*1024*1024 // 10MB
+        final long MAX_SIZE = 10 * 1024 * 1024 // 10MB
         long actualSize = model.length()
         if (0 >= actualSize || actualSize > MAX_SIZE) {
             errorMsg = """Your file exceeds the maximum upload size limit that our system currently supports. \
 The consistency check for your model is being ignored."""
             errors.add(errorMsg)
-            log.debug(errorMsg)
+            LOGGER.debug(errorMsg)
+            fileDocumentCache.put(cacheKey, Optional.of(doc))
             return doc
         }
-        try {
-            final int CONSISTENCY_ERRORS = doc.checkConsistency()
-            if (CONSISTENCY_ERRORS == -1) {
-                errorMsg ="Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}"
-                errors.add(errorMsg)
-                return null
-            } else if (CONSISTENCY_ERRORS > 0) {
-                // search for an error
-                for (SBMLError error in doc.getListOfErrors().validationErrors) {
-                    if (error.isFatal() || error.isInternal() || error.isSystem() || error.isXML() || error.isError()) {
-                        errorMsg = error.getMessage()
-                        log.debug(errorMsg)
-                        errors.add(errorMsg)
+
+        if (grailsApplication.config.jummp.plugins.sbml.validation) {
+            try {
+                int CONSISTENCY_ERRORS = doc.checkConsistency() // by default, this method calls the online validator
+                if (CONSISTENCY_ERRORS == -1) { // -1 means the online validator is unreachable
+                    errorMsg = """An internal error happening while trying to reach the SBML online validator \
+to validate the file ${doc.inspect()}\t${doc.properties}. \
+The system has tried to call the fallback to the SBML offline validator..."""
+                    println(errorMsg)
+                    LOGGER.error(errorMsg)
+                    try {
+                        CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
+                    } catch (Exception exception) {
+                        LOGGER.error(exception.message)
+                        errors.add(exception.message)
                         doc = null
-                        break
                     }
                 }
+                if (CONSISTENCY_ERRORS > 0) {
+                    // search for an error
+                    for (SBMLError error in doc.getListOfErrors().validationErrors) {
+                        if (error.isFatal() || error.isInternal() || error.isSystem() || error.isXML() || error.isError()) {
+                            errorMsg = error.getMessage()
+                            println(errorMsg)
+                            LOGGER.debug(errorMsg)
+                            errors.add(errorMsg)
+                            doc = null
+                            break
+                        }
+                    }
+                }
+            } catch (ConversionException e) {
+                LOGGER.error(e.getMessage(), e)
+                doc = null
             }
-            return doc
-        } catch (ConversionException e) {
-            log.error(e.getMessage(), e)
-            return null
         }
+        fileDocumentCache.put(cacheKey, Optional.ofNullable(doc))
+        return doc
     }
 
     /**
@@ -298,11 +380,11 @@ The consistency check for your model is being ignored."""
                     }
                 }
                 areAllSbml &= foundSbmlDeclarationLine
-            } catch(IOException ex) {
+            } catch (IOException ex) {
                 def msg = new StringBuffer("""\
 Could not check if SBML files ${files.inspect()} are valid or not.""")
                 msg.append(" Encountered $ex while reading line $currentLine of file ${files[iFiles]}")
-                log.error(msg.toString())
+                LOGGER.error(msg.toString())
                 return false
             } finally {
                 reader?.close()
@@ -312,25 +394,25 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
         return areAllSbml
     }
 
-    private SBMLDocument getDocumentFromFiles(final List<File> model, final List<String> errors  = []){
+    private SBMLDocument getDocumentFromFiles(final List<File> model, List<String> errors = []) {
         SBMLDocument retval = null
         model.each {
             try {
-                SBMLDocument doc  = getFileAsValidatedSBMLDocument(it, errors)
+                SBMLDocument doc = getFileAsValidatedSBMLDocument(it, errors)
                 if (doc) {
                     retval = doc
                 }
-            } catch(Exception e) {
-                log.error(e.message, e)
+            } catch (Exception e) {
+                LOGGER.error(e.message, e)
             }
         }
         return retval
     }
 
-    @Profiled(tag="SbmlService.validate")
-    boolean validate(final List<File> model, final List<String> errors) {
+    @Profiled(tag = "SbmlService.validate")
+    boolean validate(final List<File> model, List<String> errors) {
         if (!grailsApplication.config.jummp.plugins.sbml.validation) {
-            log.info("Validation for ${model.inspect()} skipped due to configuration option")
+            LOGGER.info("Validation for ${model.inspect()} skipped due to configuration option")
             return true
         }
         if (getDocumentFromFiles(model, errors)) {
@@ -346,9 +428,9 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
      * @param model A list of files in SBML format
      * @return the name of the model or an empty string if no file is supplied.
      */
-    @Profiled(tag="SbmlService.extractName")
+    @Profiled(tag = "SbmlService.extractName")
     String extractName(List<File> model) {
-        model = model.findAll{it && it.exists() && it.canRead()}
+        model = model.findAll { it && it.exists() && it.canRead() }
         if (!model) {
             return ""
         }
@@ -360,17 +442,26 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
      * {@inheritDoc}
      */
     @Override
-    @Profiled(tag="sbmlService.updateName")
-    boolean updateName(RevisionTransportCommand revision, final String name) {
+    @Profiled(tag = "sbmlService.updateName")
+    boolean updateName(RevisionTC revision, final String name) {
         if (revision && name.trim()) {
             // update the name of the revision
             revision.name = name.trim()
 
             // update the name of SBML model file of the revision
             SBMLDocument sbmlDocument = getFromCache(revision)
+            if (!sbmlDocument) {
+                File file = fetchMainFileFromRevision(revision)
+                sbmlDocument = new SBMLReader().readSBML(file)
+                if (!sbmlDocument) {
+                    LOGGER.error("""Cannot update the model name for the main model file of the revision: ${revision.dump()} \
+because the SBML document cannot find from the cache.""")
+                    return false
+                }
+            }
             Model sbmlModel = sbmlDocument.getModel()
             if (!sbmlModel) {
-                log.error("Cannot update the model name for the main model file of the revision: ${revision.dump()}")
+                LOGGER.error("Cannot update the model name for the main model file of the revision: ${revision.dump()}")
                 return false
             }
             sbmlModel.setName(name)
@@ -379,14 +470,14 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
             sbmlWriter.writeSBML(sbmlDocument, sbmlFile)
             return true
         } else {
-            log.warn("""\
+            LOGGER.warn("""\
 Revision ${revision.id} of the model ${revision.model.submissionId} is null or
 the user has attempted to update an blank value for the name attribute.""")
             return false
         }
     }
 
-    def extractComponentsFromBP(String modelId) {
+    Map extractComponentsFromBP(String modelId) throws IOException {
         return bpToModelDisplayService.getComponentsFromBP(modelId)
     }
     /**
@@ -396,33 +487,36 @@ the user has attempted to update an blank value for the name attribute.""")
      * @param model A list of files in SBML format
      * @return the description of the model or an empty string if no file is supplied.
      */
-    @Profiled(tag="SbmlService.extractDescription")
+    @Profiled(tag = "SbmlService.extractDescription")
     String extractDescription(final List<File> model) {
         if (!model) {
-            def errMsg = new StringBuffer("Cannot extract the description from undefined file ${model.properties}")
-            log.warn errMsg.toString()
+            String errMsg = "Cannot extract the description from undefined file ${model.properties}"
+            LOGGER.warn(errMsg)
             return ""
         }
         def description = new StringBuffer()
-        def nsList = ["http://www.sbml.org/sbml/level2/version5",
-                      "http://www.sbml.org/sbml/level2/version4",
-                      "http://www.sbml.org/sbml/level2/version3",
-                      "http://www.sbml.org/sbml/level2/version2",
-                      "http://www.sbml.org/sbml/level2",
-                      "http://www.sbml.org/sbml/level1"
+        def nsList = [
+            "http://www.sbml.org/sbml/level3/version2",
+            "http://www.sbml.org/sbml/level3/version1",
+            "http://www.sbml.org/sbml/level2/version5",
+            "http://www.sbml.org/sbml/level2/version4",
+            "http://www.sbml.org/sbml/level2/version3",
+            "http://www.sbml.org/sbml/level2/version2",
+            "http://www.sbml.org/sbml/level2",
+            "http://www.sbml.org/sbml/level1"
         ]
         try {
             // find the namespace without loading the file
             def builder = new SAXBuilder()
             Document doc = builder.build(model.first())
 
-            for (String namespace: nsList) {
+            for (String namespace : nsList) {
                 Namespace ns = Namespace.getNamespace("ns", namespace)
                 XPath xpath = XPath.newInstance("/ns:sbml/ns:model/ns:notes")
                 xpath.addNamespace(ns)
                 List<Element> noteElements = xpath.selectNodes(doc)
-                if (! noteElements.isEmpty()) {
-                    for (Element elt: noteElements) {
+                if (!noteElements.isEmpty()) {
+                    for (Element elt : (noteElements as List<Element>)) {
                         // required step as 'notes' contains further XML tags
                         XMLOutputter xmlOut = new XMLOutputter()
                         description.append(xmlOut.outputString(elt))
@@ -432,14 +526,12 @@ the user has attempted to update an blank value for the name attribute.""")
                 }
             }
         } catch (JDOMException e) {
-            def errMsg = new StringBuffer("Exception encountered while extracting description from ${model.inspect()}")
-            errMsg.append(": ${e.message}")
-            log.error(errMsg.toString(), e)
+            String errMsg = "Exception encountered while extracting description from ${model.inspect()}: ${e.message}"
+            LOGGER.error(errMsg, e)
             return ""
         } catch (IOException e) {
-            def errMsg = new StringBuffer("IOException encountered while extracting description from ${model.inspect()}")
-            errMsg.append(": ${e.message}")
-            log.error(errMsg.toString(), e)
+            String errMsg = "IOException encountered while extracting description from ${model.inspect()}: ${e.message}"
+            LOGGER.error(errMsg, e)
             return ""
         }
         return description.toString()
@@ -449,8 +541,8 @@ the user has attempted to update an blank value for the name attribute.""")
      * {@inheritDoc}
      */
     @Override
-    @Profiled(tag="sbmlService.updateDescription")
-    boolean updateDescription(RevisionTransportCommand revision, final String DESC) {
+    @Profiled(tag = "sbmlService.updateDescription")
+    boolean updateDescription(RevisionTC revision, final String DESC) {
         if (revision && DESC.trim()) {
             // update the description of SBML model file of the revision
             revision.description = DESC.trim()
@@ -467,42 +559,42 @@ the user has attempted to update an blank value for the name attribute.""")
         return false
     }
 
-    @Profiled(tag="SbmlService.getMetaId")
-    String getMetaId(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getMetaId")
+    String getMetaId(RevisionTC revision) {
         return getFromCache(revision)?.model?.metaId
     }
 
-    @Profiled(tag="SbmlService.getVersion")
-    long getVersion(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getVersion")
+    long getVersion(RevisionTC revision) {
         return fetchModelAttributeFromRevision(revision, "version")
     }
 
-    @Profiled(tag="SbmlService.getLevel")
-    long getLevel(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getLevel")
+    long getLevel(RevisionTC revision) {
         return fetchModelAttributeFromRevision(revision, "level")
     }
 
-    @Profiled(tag="SbmlService.getFormatVersion")
-    String getFormatVersion(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getFormatVersion")
+    String getFormatVersion(RevisionTC revision) {
         final long LEVEL = getLevel(revision)
         final long VERSION = getVersion(revision)
         return "L${LEVEL}V${VERSION}"
     }
 
-    @Profiled(tag="SbmlService.getNotes")
-    String getNotes(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getNotes")
+    String getNotes(RevisionTC revision) {
         String notesString = getFromCache(revision)?.model?.notesString ?: ""
         return notesString
     }
 
-    @Profiled(tag="SbmlService.getAnnotations")
-    List<Map> getAnnotations(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getAnnotations")
+    List<Map> getAnnotations(RevisionTC revision) {
         Model model = getFromCache(revision).model
         return convertCVTerms(model.annotation)
     }
 
-    @Profiled(tag="SbmlService.getParameters")
-    List<Map> getParameters(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getParameters")
+    List<Map> getParameters(RevisionTC revision) {
         Model model = getFromCache(revision).model
         ListOf<Parameter> parameters = model.getListOfParameters()
         List<Map> list = []
@@ -512,12 +604,12 @@ the user has attempted to update an blank value for the name attribute.""")
         return list
     }
 
-    @Profiled(tag="SbmlService.getParameter")
-    Map getParameter(RevisionTransportCommand revision, String id) {
+    @Profiled(tag = "SbmlService.getParameter")
+    Map getParameter(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         QuantityWithUnit param = model.getParameter(id)
         if (!param) {
-            param = (QuantityWithUnit)model.findLocalParameters(id).find { it.id == id }
+            param = (QuantityWithUnit) model.findLocalParameters(id).find { it.id == id }
         }
         if (!param) {
             return [:]
@@ -528,8 +620,8 @@ the user has attempted to update an blank value for the name attribute.""")
         return map
     }
 
-    @Profiled(tag="SbmlService.getLocalParameters")
-    List<Map> getLocalParameters(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getLocalParameters")
+    List<Map> getLocalParameters(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> reactions = []
         model.listOfReactions.each { reaction ->
@@ -543,8 +635,8 @@ the user has attempted to update an blank value for the name attribute.""")
         return reactions
     }
 
-    @Profiled(tag="SbmlService.getReactions")
-    List<Map> getReactions(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getReactions")
+    List<Map> getReactions(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> reactions = []
         model.listOfReactions.each { reaction ->
@@ -553,8 +645,8 @@ the user has attempted to update an blank value for the name attribute.""")
         return reactions
     }
 
-    @Profiled(tag="SbmlService.getReaction")
-    Map getReaction(RevisionTransportCommand revision, String id) {
+    @Profiled(tag = "SbmlService.getReaction")
+    Map getReaction(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Reaction reaction = model.getReaction(id)
         if (!reaction) {
@@ -567,8 +659,8 @@ the user has attempted to update an blank value for the name attribute.""")
         return reactionMap
     }
 
-    @Profiled(tag="SbmlService.getEvents")
-    List<Map> getEvents(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getEvents")
+    List<Map> getEvents(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> events = []
         model.listOfEvents.each { event ->
@@ -577,8 +669,8 @@ the user has attempted to update an blank value for the name attribute.""")
         return events
     }
 
-    @Profiled(tag="SbmlService.getEvent")
-    Map getEvent(RevisionTransportCommand revision, String id) {
+    @Profiled(tag = "SbmlService.getEvent")
+    Map getEvent(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Event event = model.getEvent(id)
         Map eventMap = eventToMap(event)
@@ -590,8 +682,8 @@ the user has attempted to update an blank value for the name attribute.""")
         return eventMap
     }
 
-    @Profiled(tag="SbmlService.getRules")
-    List<Map> getRules(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getRules")
+    List<Map> getRules(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> rules = []
         model.listOfRules.each { rule ->
@@ -600,8 +692,8 @@ the user has attempted to update an blank value for the name attribute.""")
         return rules
     }
 
-    @Profiled(tag="SbmlService.getRule")
-    Map getRule(RevisionTransportCommand revision, String variable) {
+    @Profiled(tag = "SbmlService.getRule")
+    Map getRule(RevisionTC revision, String variable) {
         Model model = getFromCache(revision).model
         ExplicitRule rule = model.getRuleByVariable(variable)
         if (!rule) {
@@ -613,7 +705,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return ruleMap
     }
 
-    List<Map> getFunctionDefinitions(RevisionTransportCommand revision) {
+    List<Map> getFunctionDefinitions(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> functions = []
         model.listOfFunctionDefinitions.each { function ->
@@ -622,7 +714,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return functions
     }
 
-    Map getFunctionDefinition(RevisionTransportCommand revision, String id) {
+    Map getFunctionDefinition(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         FunctionDefinition function = model.getFunctionDefinition(id)
         if (!function) {
@@ -635,21 +727,21 @@ the user has attempted to update an blank value for the name attribute.""")
         return functionMap
     }
 
-    @Profiled(tag="SbmlService.getCompartments")
-    List<Map> getCompartments(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getCompartments")
+    List<Map> getCompartments(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> compartments = []
         model.listOfCompartments.each { compartment ->
-             compartments << compartmentToMap(compartment)
+            compartments << compartmentToMap(compartment)
         }
         return compartments
     }
 
-    @Profiled(tag="SbmlService.getCompartment")
-    Map getCompartment(RevisionTransportCommand revision, String id) {
+    @Profiled(tag = "SbmlService.getCompartment")
+    Map getCompartment(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Compartment compartment = model.getCompartment(id)
-        if(!compartment) {
+        if (!compartment) {
             return [:]
         }
         Map compartmentMap = compartmentToMap(compartment)
@@ -658,8 +750,8 @@ the user has attempted to update an blank value for the name attribute.""")
         return compartmentMap
     }
 
-    @Profiled(tag="SbmlService.getAllSpecies")
-    List<Map> getAllSpecies(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getAllSpecies")
+    List<Map> getAllSpecies(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> allSpecies = []
         model.listOfSpecies.each { species ->
@@ -668,7 +760,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return allSpecies
     }
 
-    @Profiled(tag="SbmlService.getAllCompartmentSpecies")
+    @Profiled(tag = "SbmlService.getAllCompartmentSpecies")
     private List<Map> getAllCompartmentSpecies(Compartment compartment) {
         Model model = compartment.model
         List<Map> allSpecies = []
@@ -680,21 +772,21 @@ the user has attempted to update an blank value for the name attribute.""")
         return allSpecies
     }
 
-     @Profiled(tag="SbmlService.getSpecies")
-     Map getSpecies(RevisionTransportCommand revision, String id) {
-         Model model =getFromCache(revision).model
-         Species species = model.getSpecies(id)
-         if(!species) {
-             return [:]
-         }
-         Map speciesMap = speciesToMap(species)
-         speciesMap.put("annotation", convertCVTerms(species.annotation))
-         speciesMap.put("notes", species.notesString)
-         return speciesMap
-     }
+    @Profiled(tag = "SbmlService.getSpecies")
+    Map getSpecies(RevisionTC revision, String id) {
+        Model model = getFromCache(revision).model
+        Species species = model.getSpecies(id)
+        if (!species) {
+            return [:]
+        }
+        Map speciesMap = speciesToMap(species)
+        speciesMap.put("annotation", convertCVTerms(species.annotation))
+        speciesMap.put("notes", species.notesString)
+        return speciesMap
+    }
 
-    @Profiled(tag="SbmlService.generateSvg")
-    byte[] generateSvg(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.generateSvg")
+    byte[] generateSvg(RevisionTC revision) {
         File dotFile = File.createTempFile("jummp", "dot")
         PrintWriter writer = new PrintWriter(dotFile)
         sbml2dotConverter().dotExport(getFromCache(revision), writer)
@@ -711,24 +803,24 @@ the user has attempted to update an blank value for the name attribute.""")
         return bytes
     }
 
-    @Profiled(tag="SbmlService.generateOctave")
-    String generateOctave(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.generateOctave")
+    String generateOctave(RevisionTC revision) {
 //        SBMLModel sbmlModel = resolveSbmlModel(revision)
 //        OctaveModel octaveModel = sbml2OctaveConverter().octaveExport(sbmlModel)
 //        return octaveModel.modelToString()
         return ""
     }
 
-    @Profiled(tag="SbmlService.generateBioPax")
-    String generateBioPax(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.generateBioPax")
+    String generateBioPax(RevisionTC revision) {
 //        SBMLModel sbmlModel = resolveSbmlModel(revision)
 //        BioPaxModel bioPaxModel = sbml2BioPaxConverter().biopaxexport(sbmlModel)
 //        return bioPaxModel.modelToString()
         return ""
     }
 
-    @Profiled(tag="SbmlService.getAllAnnotationURNs")
-    List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
+    @Profiled(tag = "SbmlService.getAllAnnotationURNs")
+    List<String> getAllAnnotationURNs(RevisionTC revision) {
         SBMLDocument document = getFromCache(revision)
         List<String> urns = []
         List<SBase> sbases = []
@@ -753,20 +845,63 @@ the user has attempted to update an blank value for the name attribute.""")
         return urns
     }
 
-    @Profiled(tag="SbmlService.getPubMedAnnotation")
-    List<List<String>> getPubMedAnnotation(RevisionTransportCommand revision) {
-        Model model = getFromCache(revision)?.model
-        Annotation annotation = model?.annotation
-        if(!annotation) {
-            return null
-        }
-        List<CVTerm> filters = annotation.filterCVTerms(CVTerm.Qualifier.BQM_IS_DESCRIBED_BY)
-        List<List<String>> pubMedAnnotation = []
+    @Profiled(tag = "SbmlService.getPubMedAnnotation")
+    List<String> getPubMedAnnotation(RevisionTC revision) {
+        List<CVTerm> filters = getIsDescribedByAnnotations(revision)
+        List<String> pubMedAnnotation = []
         filters.each { filter ->
             CVTerm cvTerm = new CVTerm(filter)
-            pubMedAnnotation.add(cvTerm.filterResources("pubmed"))
+            pubMedAnnotation.addAll(cvTerm.filterResources("pubmed"))
         }
         return pubMedAnnotation
+    }
+
+    @Profiled(tag = "SbmlService.getContentsOfSpecificTabs")
+    Map<String, String> getContentsOfSpecificTabs(RevisionTC rev) {
+        final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+        String componentsStr = ""
+        // ignore PDGSM and Path2Models models
+        if (!PERENNIAL_ID.startsWith("BMID")
+            && !PERENNIAL_ID.startsWith("MODEL170711")
+            && parameterSearchService.existsPS(PERENNIAL_ID)) {
+            try {
+                Map components = extractComponentsFromBP(PERENNIAL_ID)
+                ApplicationTagLib appTagLib = new ApplicationTagLib()
+                componentsStr = appTagLib.render(template: "/templates/psComponents",
+                    model: [components: components, perennialId: PERENNIAL_ID], plugin: "jummp-plugin-sbml")
+            } catch (RuntimeException re) {
+                LOGGER.error("Error while extracting components from BP for $PERENNIAL_ID", re)
+            }
+        }
+        ["Components": componentsStr] as Map<String, String>
+    }
+
+    @Profiled(tag = "SbmlService.getNamesOfSpecificTabs")
+    List<String> getNamesOfSpecificTabs(RevisionTC revision) {
+        ["Components"]
+    }
+
+    @Profiled(tag = "SbmlService.getPublicationAnnotations")
+    List<String> getPublicationAnnotations(RevisionTC revision) {
+        List<String> annotations = []
+        List<CVTerm> filters = getIsDescribedByAnnotations(revision)
+        filters.each { filter ->
+            CVTerm cvTerm = new CVTerm(filter)
+            annotations.addAll(cvTerm.filterResources("pubmed", "PubMed", "doi", "DOI"))
+        }
+        return annotations
+    }
+
+    private List<CVTerm> getIsDescribedByAnnotations(RevisionTC revision) {
+        Model model = getFromCache(revision)?.model
+        Annotation annotation = model?.annotation
+        if (!annotation) {
+            return null
+        }
+        List<CVTerm> bqbiolIsDescribedByTerms = annotation.filterCVTerms(Qualifier.BQB_IS_DESCRIBED_BY)
+        List<CVTerm> bqmodelIsDescribedByTerms = annotation.filterCVTerms(Qualifier.BQM_IS_DESCRIBED_BY)
+        List<CVTerm> filters = bqbiolIsDescribedByTerms + bqmodelIsDescribedByTerms
+        return filters
     }
 
     /**
@@ -776,33 +911,37 @@ the user has attempted to update an blank value for the name attribute.""")
      * @param revision The revision for which the SBMLDocument needs to be retrieved
      * @return The parsed SBMLDocument
      */
-    private SBMLDocument getFromCache(RevisionTransportCommand revision) throws XMLStreamException {
+    private SBMLDocument getFromCache(RevisionTC revision) throws XMLStreamException {
         SBMLDocument document = cache.get(revision.id)
         if (document) {
             return document
         }
-        //SBMLDocument document=null;
+        // SBMLDocument document=null;
         // we do not have a document, so retrieve first the file
-        //List<RepositoryFileTransportCommand> files = grailsApplication.mainContext.getBean("modelDelegateService").retrieveModelFiles(revision)
-        List<RepositoryFileTransportCommand> files = revision.files
+        // List<RepoFTC> files = grailsApplication.mainContext.getBean("modelDelegateService").retrieveModelFiles(revision)
+        document = getSBMLFileFromRevision(revision)
+
+        return document
+    }
+
+    private SBMLDocument getSBMLFileFromRevision(RevisionTC revision) throws XMLStreamException {
+        List<RepoFTC> files = revision.files
         files = files.findAll { it.mainFile }
+        SBMLDocument document
 
         files.each {
-            def bis
             try {
-                File file=new File(it.path)
-                byte[] fileBytes = file.getBytes()
-                bis = new ByteArrayInputStream(fileBytes)
+                File file = new File(it.path)
                 def reader = new SBMLReader()
                 document = reader.readSBML(file)
                 if (document) {
-                  cache.put(revision.id, document)
-                  //break
+                    cache.put(revision.id, document)
+                    //break
                 }
-            } catch(Exception ignore) {
-                ignore.printStackTrace();
+            } catch (Exception ignore) {
+                ignore.printStackTrace()
             } finally {
-                bis?.close()
+                LOGGER.info("Finished getting SBML file {} from the revision {}.", document?.locationURI, revision.toString())
             }
         }
         return document
@@ -810,13 +949,13 @@ the user has attempted to update an blank value for the name attribute.""")
 
     private Map parameterToMap(QuantityWithUnit parameter) {
         return [
-                id: parameter.id,
-                name: parameter.name,
-                metaId: parameter.metaId,
-                constant: (parameter instanceof Parameter) ? parameter.constant : true,
-                value: parameter.isSetValue() ? parameter.value : null,
-                sbo: sboName(parameter),
-                unit: parameter.units
+            id      : parameter.id,
+            name    : parameter.name,
+            metaId  : parameter.metaId,
+            constant: (parameter instanceof Parameter) ? parameter.constant : true,
+            value   : parameter.isSetValue() ? parameter.value : null,
+            sbo     : sboName(parameter),
+            unit    : parameter.units
         ]
     }
 
@@ -824,14 +963,14 @@ the user has attempted to update an blank value for the name attribute.""")
         List<Map> list = []
         annotation.listOfCVTerms.each { cvTerm ->
             list << [
-                    qualifier: cvTerm.biologicalQualifier ? cvTerm.biologicalQualifierType.toString() : (cvTerm.modelQualifier ? cvTerm.modelQualifierType.toString() : ""),
-                    biologicalQualifier: cvTerm.biologicalQualifier,
-                    modelQualifier: cvTerm.modelQualifier,
-                    resources: cvTerm.resources.collect {
-                        Map data = miriamService.miriamData(it)
-                        data.put("urn", it)
-                        data
-                    }
+                qualifier          : cvTerm.biologicalQualifier ? cvTerm.biologicalQualifierType.toString() : (cvTerm.modelQualifier ? cvTerm.modelQualifierType.toString() : ""),
+                biologicalQualifier: cvTerm.biologicalQualifier,
+                modelQualifier     : cvTerm.modelQualifier,
+                resources          : cvTerm.resources.collect {
+                    Map data = miriamService.miriamData(it)
+                    data.put("urn", it)
+                    data
+                }
             ]
         }
         return list
@@ -851,33 +990,33 @@ the user has attempted to update an blank value for the name attribute.""")
 
     private Map speciesReferenceToMap(SpeciesReference reference) {
         return [
-                species: reference.species,
-                speciesName: reference.model.getSpecies(reference.species).name,
-                constant: reference.constant,
-                stoichiometry: reference.stoichiometry
+            species      : reference.species,
+            speciesName  : reference.model.getSpecies(reference.species).name,
+            constant     : reference.constant,
+            stoichiometry: reference.stoichiometry
         ]
     }
 
     private Map reactionToMap(Reaction reaction) {
 
         return [
-                id: reaction.id,
-                metaId: reaction.metaId,
-                name: reaction.name,
-                reversible: reaction.reversible,
-                sbo: sboName(reaction),
-                reactants: convertSpeciesReferences(reaction.listOfReactants),
-                products: convertSpeciesReferences(reaction.listOfProducts),
-                modifiers: convertSpeciesReferences(reaction.listOfModifiers)
+            id        : reaction.id,
+            metaId    : reaction.metaId,
+            name      : reaction.name,
+            reversible: reaction.reversible,
+            sbo       : sboName(reaction),
+            reactants : convertSpeciesReferences(reaction.listOfReactants),
+            products  : convertSpeciesReferences(reaction.listOfProducts),
+            modifiers : convertSpeciesReferences(reaction.listOfModifiers)
         ]
     }
 
     private Map eventToMap(Event event) {
         return [
-                id: event.id,
-                metaId: event.metaId,
-                name: event.name,
-                assignments: eventAssignmentsToList(event.listOfEventAssignments)
+            id         : event.id,
+            metaId     : event.metaId,
+            name       : event.name,
+            assignments: eventAssignmentsToList(event.listOfEventAssignments)
         ]
     }
 
@@ -886,11 +1025,11 @@ the user has attempted to update an blank value for the name attribute.""")
         assignments.each { assignment ->
             Symbol symbol = assignment.model.findSymbol(assignment.variable)
             eventAssignments << [
-                    meataId: assignment.metaId,
-                    math: assignment.mathMLString,
-                    variableId: assignment.variable,
-                    variableName: symbol ? symbol.name : "",
-                    variableType: symbol ? symbol.elementName : ""
+                meataId     : assignment.metaId,
+                math        : assignment.mathMLString,
+                variableId  : assignment.variable,
+                variableName: symbol ? symbol.name : "",
+                variableType: symbol ? symbol.elementName : ""
             ]
         }
         return eventAssignments
@@ -911,34 +1050,34 @@ the user has attempted to update an blank value for the name attribute.""")
         }
 
         return [
-                metaId: rule.metaId,
-                math: rule.getMathMLString(),
-                variableId : symbol ? symbol.id : null,
-                variableName: symbol ? symbol.name : null,
-                variableType: symbol ? symbol.elementName : null,
-                type: type
+            metaId      : rule.metaId,
+            math        : rule.getMathMLString(),
+            variableId  : symbol ? symbol.id : null,
+            variableName: symbol ? symbol.name : null,
+            variableType: symbol ? symbol.elementName : null,
+            type        : type
         ]
     }
 
     private Map functionDefinitionToMap(FunctionDefinition function) {
         return [
-                id: function.id,
-                name: function.name,
-                metaId: function.metaId,
-                math: function.mathMLString
+            id    : function.id,
+            name  : function.name,
+            metaId: function.metaId,
+            math  : function.mathMLString
         ]
     }
 
     private Map compartmentToMap(Compartment compartment) {
         return [
-                metaId: compartment.metaId,
-                id: compartment.id,
-                name: compartment.name,
-                size: compartment.size,
-                spatialDimensions: compartment.getSpatialDimensions(),
-                units: compartment.units,
-                sbo: sboName(compartment),
-                allSpecies: getAllCompartmentSpecies(compartment)
+            metaId           : compartment.metaId,
+            id               : compartment.id,
+            name             : compartment.name,
+            size             : compartment.size,
+            spatialDimensions: compartment.getSpatialDimensions(),
+            units            : compartment.units,
+            sbo              : sboName(compartment),
+            allSpecies       : getAllCompartmentSpecies(compartment)
         ]
     }
 
@@ -956,13 +1095,13 @@ the user has attempted to update an blank value for the name attribute.""")
             initialConcentration = null
         }
         return [
-                metaid: species.metaId,
-                id: species.id,
-                compartment: species.compartment,
-                initialAmount: initialAmount,
-                initialConcentration: initialConcentration,
-                substanceUnits: species.substanceUnits,
-                sbo: sboName(species)
+            metaid              : species.metaId,
+            id                  : species.id,
+            compartment         : species.compartment,
+            initialAmount       : initialAmount,
+            initialConcentration: initialConcentration,
+            substanceUnits      : species.substanceUnits,
+            sbo                 : sboName(species)
         ]
     }
 
@@ -1003,7 +1142,7 @@ the user has attempted to update an blank value for the name attribute.""")
 //        return biopaxConverter
 //    }
 
-    private long fetchModelAttributeFromRevision(RevisionTransportCommand revision, String attributeName) {
+    private long fetchModelAttributeFromRevision(RevisionTC revision, String attributeName) {
         File mainFile = fetchMainFileFromRevision(revision)
         if (!mainFile) {
             //we have already logged this error, just return
@@ -1013,17 +1152,17 @@ the user has attempted to update an blank value for the name attribute.""")
         return longFromString(attributeValue, attributeName, mainFile)
     }
 
-    private File fetchMainFileFromRevision(RevisionTransportCommand revision) {
-        final String mainFileLocation = revision?.files?.find {it.mainFile}?.path
+    private static File fetchMainFileFromRevision(RevisionTC revision) {
+        final String mainFileLocation = revision?.files?.find { it.mainFile }?.path
         if (!mainFileLocation) {
-            log.error "The main file of revision ${revision.properties} is undefined."
+            LOGGER.error "The main file of revision ${revision.properties} is undefined."
             return null
         }
         File mainFile = new File(mainFileLocation)
         if (!mainFile || !mainFile.canRead()) {
             def errMsg = new StringBuilder("None of the files ").append(revision?.files?.inspect()).
-                        append(" of revision ").append(revision.properties).append("is a main file.")
-            log.error errMsg.toString()
+                append(" of revision ").append(revision.properties).append("is a main file.")
+            LOGGER.error errMsg.toString()
             return null
         }
         return mainFile
@@ -1038,8 +1177,8 @@ the user has attempted to update an blank value for the name attribute.""")
         }
         if (IS_INFO_ENABLED) {
             def info = new StringBuilder("Extracting attribute ").append(attributeName).
-                        append(" of element ").append(elementName).append(" from ").append(model.properties)
-            log.info(info.toString())
+                append(" of element ").append(elementName).append(" from ").append(model.properties)
+            LOGGER.info(info.toString())
         }
         String theResult
         def fileReader = new FileReader(model)
@@ -1063,9 +1202,9 @@ the user has attempted to update an blank value for the name attribute.""")
             }
         } catch (XMLStreamException e) {
             def errorMsg = new StringBuilder("Error while extracting property ").append(elementName).
-                        append(".").append(attributeName).append(" from ").append(model.properties)
+                append(".").append(attributeName).append(" from ").append(model.properties)
             errorMsg.append(". The offending file caused ${e.message}.\n")
-            log.error (errorMsg.toString(), e)
+            LOGGER.error(errorMsg.toString(), e)
         } finally {
             xmlReader?.close()
             fileReader?.close()
@@ -1074,7 +1213,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     private String processXmlElement(XMLStreamReader reader, String element, String attribute) {
-        if (element.equals(reader.getLocalName())) {
+        if (element == reader.getLocalName()) {
             return reader.getAttributeValue(null, attribute)
         }
         return null
@@ -1093,8 +1232,8 @@ the user has attempted to update an blank value for the name attribute.""")
             level = value as long
         } catch (NumberFormatException e) {
             def errMsg = new StringBuilder("Error extracting model attribute from ").append(mainFile.properties).
-                        append(". ").append(name). append(" ").append(value).append(" is not a number.")
-            log.error errMsg.toString(), e
+                append(". ").append(name).append(" ").append(value).append(" is not a number.")
+            LOGGER.error errMsg.toString(), e
         } finally {
             return level
         }
@@ -1102,10 +1241,10 @@ the user has attempted to update an blank value for the name attribute.""")
 
     /**
      * Resolves the SBMLModel from the given @p revision.
-     * @param revision The RevisionTransportCommand from which to extract the SBMLModel.
+     * @param revision The RevisionTC from which to extract the SBMLModel.
      * @return The SBMLModel to be found or an empty array if the model could not be found.
      */
-//    private SBMLModel resolveSbmlModel(RevisionTransportCommand revision) {
+//    private SBMLModel resolveSbmlModel(RevisionTC revision) {
 //        try {
 //        Model model = getFromCache(revision).model
 //        SBMLWriter sbmlWriter = new SBMLWriter()
@@ -1125,40 +1264,43 @@ the user has attempted to update an blank value for the name attribute.""")
      * @return A String representation of the new model encoded in SBML.
      */
     String triggerSubmodelGeneration(
-            RevisionTransportCommand revision, String subModelId, String metaId,
-            List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds,
-            List<String> ruleIds, List<String> eventIds) {
+        RevisionTC revision, String subModelId, String metaId,
+        List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds,
+        List<String> ruleIds, List<String> eventIds) {
         Model model = getFromCache(revision).model
         return new SubmodelGenerator().generateSubModel(
-                model, subModelId, metaId, compartmentIds, speciesIds, reactionIds, ruleIds, eventIds)
+            model, subModelId, metaId, compartmentIds, speciesIds, reactionIds, ruleIds, eventIds)
     }
 
-    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTC rev) {
         return true
     }
 
     @Override
-    ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
+    MA getModellingApproach(final RevisionTC revision) {
         SBMLDocument document = getFromCache(revision)
         def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
         guessModellingApproachFromSBMLDocument(document, rID)
     }
 
-    ModellingApproach guessModellingApproach(final File modelFile) {
+    MA guessModellingApproach(final File modelFile) {
         List<String> errors = new ArrayList<>()
         SBMLDocument document = getFileAsValidatedSBMLDocument(modelFile, errors)
+        if (!document) {
+            return MA.findByName("other")
+        }
         String rID = modelFile.name
         guessModellingApproachFromSBMLDocument(document, rID)
     }
 
-    private ModellingApproach guessModellingApproachFromSBMLDocument(final SBMLDocument document, final String rID) {
+    private MA guessModellingApproachFromSBMLDocument(final SBMLDocument document, final String rID) {
         if (null == document) {
-            log.error("Cannot extract modelling approach from $rID as we could not parse its main files")
+            LOGGER.error("Cannot extract modelling approach from $rID as we could not parse its main files")
             return null
         } else {
             Model model = document.model
             Annotation annotation = model?.annotation
-            if(!annotation) {
+            if (!annotation) {
                 return null
             }
             List<CVTerm> filters = annotation.filterCVTerms(Qualifier.BQB_HAS_PROPERTY)
@@ -1171,21 +1313,21 @@ the user has attempted to update an blank value for the name attribute.""")
                 }
             }
             if (mamoTerms.isEmpty()) {
-                log.info("No modelling approach MAMO terms found in $rID")
+                LOGGER.info("No modelling approach MAMO terms found in $rID")
                 return null
             }
             def first = mamoTerms.find { it != null && !it?.isEmpty() }
             if (!first) {
-                log.warn("Expected to have MAMO terms. Bug in JSBML filterCVTerms")
+                LOGGER.warn("Expected to have MAMO terms. Bug in JSBML filterCVTerms")
                 return null
             }
             String[] parts = first.split("/mamo/")
             if (!parts[0] || parts.length != 2) {
-                log.warn("Revision $rID has invalid modelling approach '$first'")
+                LOGGER.warn("Revision $rID has invalid modelling approach '$first'")
                 return null
             }
-            ModellingApproach approach = ModellingApproach.findByResourceOrAccession(first, parts[1])
-            log.info("Revision $rID declares modelling approach ${approach?.name}")
+            MA approach = MA.findByResourceOrAccession(first, parts[1])
+            LOGGER.info("Revision $rID declares modelling approach ${approach?.name}")
             return approach
         }
     }
@@ -1195,44 +1337,222 @@ the user has attempted to update an blank value for the name attribute.""")
      * This utility is used to add annotations in a batch mode. The requirement is that these annotations
      * have to go with the identical biological qualifier.
      *
-     * @param revision  The Revision instance denoting the given model
+     * @param typeAnno The {@link TypeAnno} denoting the type of annotations
+     * @param revision The Revision instance denoting the given model
      * @param qualifier The Qualifier instance denoting the biological qualifier
-     * @param identifiers   The list of identifiers.org based URLs denoting the input annotations
+     * @param identifiers The list of identifiers.org based URLs denoting the input annotations
      * @return a boolean value indicating whether the service finished successfully or failed.
      */
-    private boolean addAnnotations2Model(RevisionTransportCommand revision,
+    private boolean addAnnotations2Model(TypeAnno typeAnno,
+                                         RevisionTC revision,
                                          Qualifier qualifier,
-                                         String accessionPattern,
+                                         String accessionPattern = "",
                                          String... identifiers) {
-        boolean validRevision = revision && "SBML".equals(revision.format.identifier)
+        boolean validRevision = revision && "SBML" == revision.format.identifier
         boolean validIdentifiers = null != identifiers && 0 != identifiers.length
         if (!validIdentifiers || !validRevision) {
-            String msg = """A revision whose main files are encoded in SBML and at least one model \
-identifier are required"""
+            String msg = """The revision ${revision?.id} has some errors or the annotation identifers are invalid."""
             throw new IllegalArgumentException(msg)
         }
-        SBMLDocument document = getFromCache(revision)
-        def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
-        if (null == document) {
-            log.error("Cannot add $identifiers to $rID as we could not parse its main files")
+        SBMLDocument document = getSBMLFileFromRevision(revision)
+        String rID = revision.identifier() ? "the revision ${revision.identifier()}" : "the provisional revision in the new submission"
+        if (!document) {
+            LOGGER.error("Cannot add $identifiers to the main files of $rID as we could not parse its main files")
             return false
         }
 
-        boolean needsUpdating = addAnnotationsIfNeeded(revision, document, qualifier, accessionPattern, identifiers)
+        boolean needsUpdating = addAnnotationsIfNeeded(typeAnno, revision, document, qualifier, accessionPattern, identifiers)
         if (!needsUpdating) {
+            LOGGER.info("No need to add {} to the main SBML file {} of the model {}.", identifiers, document.name, revision.identifier())
             return false
         }
-        File sbmlFile = fetchMainFileFromRevision(revision)
-        SBMLWriter sbmlWriter = new SBMLWriter()
-        try {
-            sbmlWriter.writeSBML(document, sbmlFile)
+
+        writeModelMainFile(document, revision, rID, identifiers)
+    }
+
+    private static boolean doAddAnnotations(TypeAnno typeAnno,
+                                            Model model,
+                                            RevisionTC revision,
+                                            String rID,
+                                            Qualifier qualifier,
+                                            String accessionPattern,
+                                            String... identifiers) {
+        // resources with this pattern should be removed
+        Pattern targetAccessionPattern = Pattern.compile(accessionPattern)
+
+        List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+        // there is no CVTerm associated with the qualifier. So add all without checking
+        if (cVTerms.isEmpty()) {
+            def cvTerm = new CVTerm(qualifier, identifiers)
+            if (!model.addCVTerm(cvTerm)) {
+                throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
+            }
             return true
-        } catch (SBMLException | IOException | XMLStreamException e) {
-            def fn = sbmlFile.name
-            def msg = """Failed to add model annotations $identifiers to file $fn of revision $rID \
-due to an issue with JSBML"""
-            log.error "$msg: $e"
+        }
+
+        // find the set of resources that should be kept
+        List filteredAnnotations = cVTerms.collect { CVTerm t ->
+            t.getResources().findAll { String xref ->
+                if (typeAnno == TypeAnno.MODELLING_APPROACH) {
+                    // As of writing this statement, we support a single modelling approach.
+                    // So we ensure that the first element is the actual value. Also, this commit
+                    // has implemented the way of initialising the identifiers by using URIs directly.
+                    // Therefore, we have to compare xref with these URIs instead of using the accession pattern.
+                    xref != identifiers.first() as String
+                } else {
+                    if (!targetAccessionPattern.matcher(xref).find() || typeAnno == TypeAnno.MODEL_IDENTIFIER) {
+                        return true
+                    }
+                }
+                return false
+            }
+        }.flatten() as List<String>
+
+        for (CVTerm t : cVTerms) {
+            if (!model.removeCVTerm(t)) {
+                throw new ModelException(revision.model, "Could not remove CVTerm $t for revision $rID")
+            }
+        }
+
+        // add the filtered ones to be retained and newly updated terms
+        List<String> idList = Arrays.asList(identifiers)
+        filteredAnnotations.addAll(idList)
+        String[] replacementAnnotations = filteredAnnotations as String[]
+        def replacementCVTerm = new CVTerm(qualifier, replacementAnnotations)
+        boolean haveAddedNewQualifier = model.addCVTerm(replacementCVTerm)
+        if (!haveAddedNewQualifier) {
+            String msg = "Could not insert qualifier for resources ${identifiers} to revision $rID"
             throw new ModelException(revision.model, msg)
         }
+        true
+    }
+
+    private static boolean doRemoveAnnotation(Model model, RevisionTC revision, Qualifier qualifier, String rID) {
+        long mId = revision.model.id
+        if (mId) {
+            MA oldMA = net.biomodels.jummp.model.Model.get(mId).modellingApproach
+            if (!oldMA) {
+                return true
+            }
+            List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+            List lstTermsToBeRemoved = cVTerms.collect { CVTerm t ->
+                t.getResources().findAll { String resource ->
+                    resource == oldMA.resource
+                }
+            }.flatten() as List<String>
+            String[] terms = lstTermsToBeRemoved as String[]
+            if (terms) {
+                CVTerm cvTerm = new CVTerm(qualifier, terms)
+                if (!model.removeCVTerm(cvTerm)) {
+                    throw new ModelException(revision.model, "Could not remove CVTerm $cvTerm for revision $rID")
+                }
+            }
+        }
+        return true
+    }
+
+    private boolean writeModelMainFile(SBMLDocument document, RevisionTC revision, String rID, String... identifiers) {
+        File sbmlFile = fetchMainFileFromRevision(revision)
+        SBMLWriter sbmlWriter = new SBMLWriter()
+        boolean result = false
+        try {
+            sbmlWriter.writeSBML(document, sbmlFile)
+            result = true
+        } catch (SBMLException | IOException | XMLStreamException e) {
+            def fn = sbmlFile.name
+            def msg = """Failed to add model annotations $identifiers to file $fn of $rID \
+due to an issue with JSBML"""
+            LOGGER.error "$msg: $e"
+            throw new ModelException(revision.model, msg)
+        } finally {
+            return result
+        }
+    }
+
+    enum TypeAnno {
+        MODEL_IDENTIFIER, MODELLING_APPROACH, PUBLICATION
+    }
+}
+
+class ResourceHelper {
+    private static final Logger LOGGER = LoggerFactory.getLogger(this)
+    private static final String DELIMITER = "/"
+
+    static String getDataTypeFromUri(String uri) {
+        String rest = getDataTypeAndAccession(uri)
+        if (rest.startsWith("doi:") || rest.startsWith("doi/")) {
+            return "doi"
+        }
+        int baseUriIdx = rest.indexOf(DELIMITER);
+        if (-1 == baseUriIdx) {
+            LOGGER.debug("{} looks like the compact form of identifiers.org", uri);
+            if (rest.startsWith("mamo:MAMO_")) {
+                return "mamo"
+            } else if (rest.startsWith("doi:")) {
+                return "doi"
+            } else if (rest.contains(":")) {
+                return rest.substring(0, rest.indexOf(":")).toLowerCase()
+            } else {
+                return "unknown"
+            }
+        } else {
+            int accessionIdx = rest.indexOf(DELIMITER)
+            return rest.substring(0, accessionIdx)
+        }
+    }
+
+    static String getAccessionFromUri(String uri) {
+        String rest = getDataTypeAndAccession(uri)
+
+        String accession = ""
+        if (rest.startsWith("doi:") || rest.startsWith("doi/")) {
+            accession = rest.substring(4)
+            return accession
+        }
+        int idx = rest.indexOf(DELIMITER)
+        if (idx <= 0) {
+            LOGGER.debug("{} looks like the compact form of identifiers.org", uri)
+            if (rest.startsWith("mamo:MAMO_")) {
+                accession = rest.substring(5)
+                return accession
+            } else if (rest.startsWith("doi:")) {
+                accession = rest.substring(4)
+                return accession
+            }
+            try {
+                accession = rest.substring(rest.indexOf(":") + 1)
+            } catch (Exception exception) {
+                LOGGER.error("An error occurred when getting the accession from the URI {}. See the cause below {}.",
+                    uri, exception.getCause().toString())
+            }
+        } else {
+            LOGGER.debug("{} looks like the old form of identifiers.org.", uri)
+            idx = rest.indexOf(DELIMITER)
+            if (idx == -1) {
+                LOGGER.error("Cannot find the accession for {}.", uri)
+                return null
+            }
+            accession = rest.substring(idx + 1)
+        }
+        return accession
+    }
+
+    static String getDataTypeAndAccession(String uri) {
+        if (uri == null || uri.isEmpty()) {
+            LOGGER.error("The URI given is null or empty.")
+            return ""
+        }
+        String result
+        if (uri.startsWith("http://") || uri.startsWith("https://")) {
+            LOGGER.info("{} is an URL.", uri)
+            result = uri.substring(uri.indexOf("://identifiers.org/") + "://identifiers.org/".length())
+        } else if (uri.startsWith("urn:miriam:")) {
+            LOGGER.info("{} is an URN.", uri)
+            result = uri.substring(uri.indexOf("urn:miriam:") + "urn:miriam:".length())
+        } else {
+            LOGGER.debug("The indexer doesn't support annotations like {}.", uri)
+            result = ""
+        }
+        return result
     }
 }

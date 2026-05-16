@@ -149,7 +149,7 @@ class ClassifierConfigureController {
             }
             try {
                 classifierConfigureService.createDLModel(
-                    cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
+                    cmd.dlName, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
                 LOGGER.error("An exception occurred when creating a new deep learning model, {}", e)
@@ -162,7 +162,7 @@ class ClassifierConfigureController {
 
     def delete = {
         String modelName = params.get("model_name")
-        LOGGER.info("Deleting DL model {}", modelName)
+        LOGGER.info("Deleting the Deep Learning model: {}", modelName)
         response.status = 200
         try {
             classifierConfigureService.deleteDLModel(modelName)
@@ -179,7 +179,7 @@ class ClassifierConfigureController {
             render([message: message(code: "modelclassifier.cache.rebuild.message")] as JSON)
         } else {
             String modelName = params.get("activated")
-            LOGGER.info("Switching DL model {}", modelName)
+            LOGGER.info("Switching to the Deep Learning model: {}", modelName)
             try {
                 classifierConfigureService.switchDLModel(modelName)
                 render([message: 'Operation success'] as JSON)
@@ -232,16 +232,16 @@ class ClassifierConfigureController {
 
     def retrainDLModel = { DLModelCommand cmd ->
         if (!cmd.hasErrors()) {
-            LOGGER.info("Retrain DL model {}", cmd)
+            LOGGER.info("Retraining the DL model: {}", cmd)
             List<Integer> hiddenLayers = new ArrayList<>()
             String hiddenLayerRequest = cmd.hiddenLayer
             if (hiddenLayerRequest != "Auto") {
                 hiddenLayers = hiddenLayerRequest.split(",").collect{Integer.parseInt(it)}
             }
             try {
-                classifierConfigureService.deleteDLModel(cmd.dlname)
+                classifierConfigureService.deleteDLModel(cmd.dlName)
                 classifierConfigureService.createDLModel(
-                    cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
+                    cmd.dlName, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
                 LOGGER.error("An exception occurred when creating a new deep learning model, {}", e)

@@ -23,19 +23,20 @@ package net.biomodels.jummp.annotation
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
-import net.biomodels.jummp.core.model.AnnotationValidationContext
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.AnnotationValidationContext as AVC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.annotation.*
-import net.biomodels.jummp.core.model.ValidationState
-import org.apache.jena.riot.RDFFormat
-import eu.ddmore.metadata.service.*
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+//import net.biomodels.jummp.core.model.ValidationState
+//import org.apache.jena.riot.RDFFormat
+//import eu.ddmore.metadata.service.*
 
 @Secured(["isAuthenticated()"])
 class AnnotationController {
 
-    def metadataInputSource
     def modelDelegateService
     def metadataDelegateService
+    def metadataInputSource
 
     /*def edit() {
         if (!params.id) {
@@ -110,7 +111,7 @@ class AnnotationController {
         }
 
         String modelId = params.revision
-        List<StatementTransportCommand> stmts = createStatementList()
+        List<STC> stmts = createStatementList()
 
         boolean result = metadataDelegateService.saveMetadata(modelId, stmts)
         if (result) {
@@ -120,7 +121,7 @@ class AnnotationController {
         }
     }
 
-    def validate(){
+    /*def validate(){
         if (!params.revision) {
             def response = [
                 status: '400',
@@ -130,35 +131,37 @@ class AnnotationController {
             return
         }
 
-        List<StatementTransportCommand> stmts = createStatementList();
+        List<STC> stmts = createStatementList();
 
         if(stmts.isEmpty())
             render([status: '400', message: 'Annotation fields are empty. Please annotate the model before validating.'] as JSON)
 
-        RevisionTransportCommand rev = null
-        AnnotationValidationContext avc = null
+        RTC rev = null
+        AVC avc = null
         try {
-            rev = modelDelegateService.getRevision(params.revision)
+            rev = modelDelegateService.getRevision(params.revision as String)
             avc = metadataDelegateService.validateModelRevision(rev, stmts)
-        }catch(ValidationException e){
-            render([status: '400', message: 'Annotations could not be checked.' , errorReport:e.getMessage()] as JSON)
+        } catch (ValidationException e){
+            render([status: '400', message: 'Annotations could not be checked.' , errorReport: e.getMessage()] as JSON)
         }
         //rev = modelDelegateService.getRevision(params.revision) // force refresh from db
-        if(avc.validationLevel.equals(ValidationState.APPROVED))
-            render([status: '200', message: rev.getValidationLevelMessage(avc.validationLevel)] as JSON)
-        else if(avc.validationLevel.equals(ValidationState.CONDITIONALLY_APPROVED))
-            render([status: '400', message: rev.getValidationLevelMessage(avc.validationLevel), errorReport:avc.validationReport] as JSON)
+        if(avc.validationLevel == ValidationState.APPROVED)
+            render([status: '200', message: RTC.getValidationLevelMessage(avc.validationLevel)] as JSON)
+        else if(avc.validationLevel == ValidationState.CONDITIONALLY_APPROVED)
+            render([status: '400',
+                    message: RTC.getValidationLevelMessage(avc.validationLevel),
+                    errorReport:avc.validationReport] as JSON)
         else
             render ([status: '500', message: "Unable to validate the annotations you provided."] as JSON)
 
-    }
+    }*/
 
-    private List<StatementTransportCommand> createStatementList(){
+    private List<STC> createStatementList(){
         def ap = params.annotations
         def anno = new JSON().parse(ap)
         def theSubject = anno.subjects.theSubject
 
-        List<StatementTransportCommand> stmts = []
+        List<STC> stmts = []
         String modelId = params.revision
         theSubject.predicates.each {
             String p = it.predicate
@@ -168,15 +171,14 @@ class AnnotationController {
             if (!(objects instanceof List)) {
                 objects = [objects]
             }
-            objects.each { String o ->
+            objects.each { def o ->
                 def object
-                if (o.startsWith("http:")) {
+                if (o.toString().startsWith("http:")) {
                     object = new ResourceReferenceTransportCommand(uri: o)
                 } else {
                     object = new ResourceReferenceTransportCommand(name: o)
                 }
-                def stmt = new StatementTransportCommand(subject: modelId, predicate: predicate,
-                    object: object)
+                def stmt = new STC(subject: modelId, predicate: predicate, object: object)
                 stmts.add(stmt)
             }
         }

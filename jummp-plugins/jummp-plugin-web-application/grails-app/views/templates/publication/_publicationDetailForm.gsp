@@ -1,17 +1,9 @@
+
+<div class="row">
+    <div id="comesFromDB" style="display: none">${comesFromDB}</div>
+    <div id="status" style="display: none">${status}</div>
+    <div id="message" style="display: none">${message}</div>
 <div class="small-6 medium-6 columns">
-    <g:if test="${controller == "publication" && operation in ["add", "edit"]}">
-        <div class="row">
-            <div class="small-12 medium-4 large-4 columns">
-                <label for="PubLinkProvider" class="required">Source</label>
-                <g:select name="PubLinkProvider" id="linkProvider"
-                          from="${linkSourceTypes}"
-                          value="${publication?.linkProvider?.linkType}"
-                          noSelection="['':'- No publication available -']"/>
-            </div>
-            <div class="small-12 medium-8 large-8 columns">
-                <label for="link" class="required">Link</label>
-                <g:textField class="input25" name="link" value="${publication?.link}"/></div></div>
-    </g:if>
     <label class="required" for="title">
         <g:message code="submission.publication.title"/>
     </label>
@@ -134,4 +126,5 @@ https://orcid.org/0000-0001-8479-0262, therefore this profile's ORCID ID is 0000
             </li>
         </ul>
     </div>
+</div>
 </div>

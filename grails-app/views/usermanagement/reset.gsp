@@ -31,9 +31,10 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Reset Password</title>
+        <title>Reset Password | BioModels</title>
+        <g:render template="/usermanagement/head"/>
         <style>
-        	.verysecure {
+        	.very-secure {
         		visibility:hidden;
         	}
         </style>
@@ -42,26 +43,64 @@
         <div class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
             <h3 class="text-center">Reset your password</h3>
-            <g:form name="resetForm" action="newPassword" class="log-in-form" useToken="true">
+            <g:form name="resetForm" action="newPassword" class="log-in-form" useToken="true"
+                    onsubmit="return validateForm()">
                 <label for="username">
                     <span class="required"><g:message code="user.signup.ui.username"/></span>
-                    <g:textField name="username"/>
+                    <g:textField name="username" value="${username}" readonly="true" autocomplete="username" />
                 </label>
                 <label for="newPassword">
                     <span class="required"><g:message code="user.administration.updatePassword.newPassword"/></span>
-                    <g:passwordField name="newPassword"/>
+                    <g:passwordField name="newPassword" id="newPassword" autocomplete="new-password"
+                                     placeholder="Enter a new password"/>
+                    <span id="toggle-password"
+                          class="fa fa-fw fa-eye field-icon toggle-password"></span>
                 </label>
+                <div class="help-text" id="new-password-help" style="color: red !important;"></div>
+
                 <label for="newPasswordRpt">
                     <span class="required"><g:message code="user.administration.updatePassword.newPasswordRpt"/></span>
-                    <g:passwordField name="newPasswordRpt"/>
+                    <g:passwordField name="newPasswordRpt" id="newPasswordRpt" autocomplete="new-password-repeat"
+                                     placeholder="Re-enter the new password"/>
                 </label>
+                <p class="help-text" id="new-password-rpt-help" style="color: red !important;"></p>
                 <div class="buttons">
                     <input type="submit" class="button" value="Reset Password"/>
                 </div>
-                <input class="verysecure" name="hashCode" value="${hashCode}"/>
+                <label>
+                    <input class="verysecure" name="hashCode" value="${hashCode}"/>
+                </label>
             </g:form>
             </div>
         </div>
+
+ <g:render template="/usermanagement/common-scripts"/>
+
+<g:javascript>
+    const helpText = $('.help-text');
+    const newPassword = $('#newPassword');
+    const newPasswordHelp = $("#new-password-help");
+    const newPasswordRpt = $('#newPasswordRpt');
+    const newPasswordRptHelp = $("#new-password-rpt-help");
+
+    newPassword.on("change blur keyup keydown keypress", function() {
+        validateNewPassword(newPassword, newPasswordHelp, false);
+    });
+
+    newPasswordRpt.on("change blur keyup keydown keypress", function() {
+        validateNewPasswordRpt(newPassword, newPasswordRpt, newPasswordRptHelp);
+    });
+
+    function validateForm() {
+        console.log("Validating the form of changing password...");
+        const newPassCheck = validateNewPassword(newPassword, newPasswordHelp, true);
+        const newPasswordRptCheck = validateNewPasswordRpt(newPassword, newPasswordRpt, newPasswordRptHelp);
+        const retVal = newPassCheck && newPasswordRptCheck;
+        console.log(retVal);
+        return retVal;
+    }
+</g:javascript>
+ <g:render template="/usermanagement/foot"/>
      </body>
 </html>
 <content tag="title">

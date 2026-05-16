@@ -16,6 +16,7 @@ table.center {
 }
 .tableLabels {
     float: right;
+    text-align: right;
 }
 
 .label-floating-left {
@@ -249,6 +250,10 @@ div#local-masthead {
     padding: 8px;
     font-style: italic;
     font-size: 90%;
+}
+
+.errors {
+    color: red;
 }
 
 .additionalLinks {

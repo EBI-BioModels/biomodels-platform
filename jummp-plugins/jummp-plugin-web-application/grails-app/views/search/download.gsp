@@ -12,5 +12,5 @@
     <meta name="robots" content="nofollow" />
 </head>
 <body>
-    <g:render template="/templates/searchNotFound" />
+    <g:render template="/templates/search/searchNotFound" />
 </body>

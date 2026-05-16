@@ -28,6 +28,8 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.converters.JSON
 import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.CommonController
+import net.biomodels.jummp.statistic.RecentlyAccessedModel
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class HomePageController extends CommonController {
@@ -41,6 +43,7 @@ class HomePageController extends CommonController {
     }
 
     def index() {
+        String hpLatestAnnouncements = createLink(action: "updateLatestAnnouncements")
         String hpStatisticsDataForFeatures = createLink(controller: "homePage", action: "updateStatisticsDataForFeatures")
         String hpStatisticsDataForCharts = createLink(controller: "homePage", action: "updateStatisticsDataForCharts")
         String hpStatisticsModellingApproaches = createLink(controller: "homePage", action: "updateStatisticsModellingApproaches")
@@ -52,6 +55,7 @@ class HomePageController extends CommonController {
         String latestMomEntry = createLink(controller: "homePage", action: "updateMoMEntryOnRedisCache")
         String title = "Admin Board to update data on Home Page | BioModels"
         Map links = ["layout": layout, "title": title]
+        links.put("hpLatestAnnouncements", hpLatestAnnouncements)
         links.put("hpStatisticsDataForFeatures", hpStatisticsDataForFeatures)
         links.put("hpStatisticsDataForCharts", hpStatisticsDataForCharts)
         links.put("hpStatisticsModellingApproaches", hpStatisticsModellingApproaches)
@@ -64,6 +68,13 @@ class HomePageController extends CommonController {
         links
     }
 
+    def updateLatestAnnouncements() {
+        decorationService.updateLatestAnnouncementsOnRedis()
+        String title = "${PRE_TITLE} the latest announcements | BioModels"
+        String message = "Updated the latest announcements successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
+    }
+
     /**
      * Updates statistical figures of the widgets in Features section of the home page
      */
@@ -74,22 +85,21 @@ class HomePageController extends CommonController {
         render(view: "report", model: [message: message, title: title, layout: layout])
     }
     /**
-     * Updates the list of recently accessed models on Redis Cache
+     * Triggers a background refresh of the recently accessed models Redis cache and
+     * returns immediately to avoid CloudFront origin timeout.
      */
     def updateRecentlyAccessedModels() {
-        decorationService.refreshRecentlyAccessedModelsRedisCache()
-        Map<String, String> models = decorationService.doRedisHGetAll("hp-recently-accessed-models")
+        decorationService.refreshRecentlyAccessedModelsCacheAsync()
         String title = "${PRE_TITLE} recently accessed models | BioModels"
-        render(view: "update-recently-accessed-models",
-            model: [models: models, title: title, layout: layout])
+        String message = "Cache refresh started in the background. The widget will update within a few minutes."
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
 
     /**
      * Updates the list of recently published models on Redis Cache
      */
     def updateRecentlyPublishedModels() {
-        decorationService.refreshRecentlyPublishedModelsRedisCache()
-        Map<String, String> models = decorationService.doRedisHGetAll("hp-recently-published-models")
+        Map<String, String> models = decorationService.refreshRecentlyPublishedModelsRedisCache()
         String title = "${PRE_TITLE} recently published models | BioModels"
         render(view: "update-recently-published-models",
             model: [models: models, title: title, layout: layout])

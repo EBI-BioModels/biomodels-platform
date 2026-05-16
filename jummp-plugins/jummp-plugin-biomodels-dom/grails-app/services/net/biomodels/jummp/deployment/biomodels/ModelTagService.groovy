@@ -21,22 +21,29 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
-import net.biomodels.jummp.core.model.ModelTransportCommand
+import groovyx.gpars.GParsPool
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelTag
 import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
+import org.springframework.transaction.TransactionDefinition
 
 /**
- * Service for handling associations between models and labels
+ * Service for handling the associations between models and labels/tags
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional
-class ModelTagService {
-    private static final Log log = LogFactory.getLog(ModelTagService.class)
+class ModelTagService implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelTagService.class)
+
+    private static final int POOL_SIZE = 8
+
+    def springSecurityService
 
     List<String> getTagsByModelId(String modelId) {
         Model model = Model.findBySubmissionId(modelId)
@@ -46,6 +53,44 @@ class ModelTagService {
         result.sort()
     }
 
+    /**
+     * Performs the insertion or update a list of models and associated tags in the batch mode. The task
+     * will be run in parallel.
+     *
+     * @param modelsAndTags A map of model identifiers and their associated tags
+     * The data pattern must be:
+     *  MODEL1907050005 -> Immuno-oncology
+     *  MODEL1907230002 -> Immuno-oncology
+     *  MODEL1907160002 -> Immuno-oncology;Oncology
+     * If a model goes with multiple tags, these tags must be separate by semicolons without any spaces
+     * @param user A user who will perform the batch update
+     */
+    void batchInsertOrUpdate(Map<String, String> modelsAndTags, User user = null) {
+        if (!user) {
+            user = springSecurityService.currentUser
+        }
+
+        if (modelsAndTags) {
+            GParsPool.withPool(POOL_SIZE) {
+                modelsAndTags.eachParallel { String modelId, String v ->
+                    ModelTag.withTransaction {
+                        LOGGER.debug("Tagging the labels $v to the model $modelId")
+                        Set<String> tags2Added = v.split(";") as Set
+                        saveOrUpdate(tags2Added, modelId, user)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Saves or updates tags to a given model from a {@link ModelTagTransportCommand} object.
+     * In practice, the system will automatically create a new tag if it does not exist.
+     *
+     * @param command a {@link ModelTagTransportCommand} object
+     * @param user a {@link User} object
+     * @return  a map of the status code and message
+     */
     Map saveOrUpdate(ModelTagTransportCommand command, User user) {
         String message = ""
         int statusCode = 0
@@ -62,53 +107,23 @@ class ModelTagService {
             if (records?.size() == command.tags?.size()) {
                 statusCode = 200
                 if (records?.isEmpty()) {
-                    message = "The model has no longer been tagged any label"
+                    message = "The model has no longer been associated any tag."
                 } else {
                     String chainOfTags = command.tags.collect { it.name }.join(', ')
-                    message = "Labels [${chainOfTags}] have been applied successfully to the model"
+                    message = "The tags [${chainOfTags}] have been applied successfully to the model."
                 }
             } else {
                 statusCode = 400
                 message = """\
-There have been errors while trying to update choosen labels for the model '${command.modelId}'"""
+There have been errors while trying to update choosen tags for the model ${command.modelId}."""
             }
         } else {
             /**
-             * This case means uses are trying to click Save button on the model having not been associated
-             * any tags yet
+             * This case means users are trying to click the Save button on the model having not been associated
+             * any tags yet.
              */
             statusCode = 422
-            message = "Cannot save nothing for labels to the model"
-        }
-        Map result = [:]
-        result["status"] = statusCode
-        result["message"] = message
-        result
-    }
-
-    Map update(Set<String> updatedTags, String modelId, User user) {
-        String message = ""
-        int statusCode = 0
-        Model model = Model.findBySubmissionId(modelId)
-        Set<ModelTag> modelTags = findAllByModel(model)
-        if (modelTags?.size() > 0 || updatedTags?.size() > 0) {
-            Set records = updateModelTag(updatedTags, model, user)
-            if (records?.size() == updatedTags?.size()) {
-                statusCode = 200
-                if (records?.isEmpty()) {
-                    message = "The model has no longer been tagged any label"
-                } else {
-                    message = "Labels [${updatedTags.join(', ')}] have been applied successfully to the model"
-                }
-            } else {
-                statusCode = 400
-                message = """\
-There have been errors while trying to update choosen labels for the model '${modelId}'"""
-            }
-        } else {
-            statusCode = 422
-            message = """\
-Cannot save nothing for labels to the model"""
+            message = "Cannot save no tag to this model. Please enter at least a tag from the box."
         }
         Map result = [:]
         result["status"] = statusCode
@@ -117,11 +132,72 @@ Cannot save nothing for labels to the model"""
     }
 
     /**
+     * Saves or updates tags to a given model from the list of tags and the model identifier by a specific user.
+     * The system will automatically create a new tag if it does not exist in BioModels by the time of running the service.
+     *
+     * @param updatedTags   A list of strings as the tags
+     * @param modelId A string denoting the model identifier
+     * @param user A {@link User} object who is interacting the service
+     * @return  A Map of status code and message
+     */
+    Map saveOrUpdate(Set<String> updatedTags, String modelId, User user = null) {
+        String message = ""
+        int statusCode = 0
+        if (!user) {
+            user = springSecurityService.currentUser
+        }
+        Model model = Model.findBySubmissionId(modelId)
+        Set<ModelTag> modelTags = findAllByModel(model)
+        if (modelTags?.size() > 0 || updatedTags?.size() > 0) {
+            Set records = doSaveOrUpdate(updatedTags, model, user)
+            if (records?.size() == updatedTags?.size()) {
+                statusCode = 200
+                if (records?.isEmpty()) {
+                    message = "The model has no longer been gone with any tag."
+                } else {
+                    message = "The tags [${updatedTags.join(', ')}] have been applied successfully to the model $modelId."
+                }
+            } else {
+                statusCode = 400
+                message = """\
+There have been errors while trying to update choosen tags (${updatedTags.join(', ')}) for the model ${modelId}."""
+            }
+        } else {
+            statusCode = 422
+            message = """\
+Cannot save nothing for tags to the model."""
+        }
+        Map result = [:]
+        result["status"] = statusCode
+        result["message"] = message
+        result
+    }
+
+    Map remove(Set<String> tags, String modelId, User user) {
+        String message = ""
+        int statusCode = 0
+        Model model = Model.findBySubmissionId(modelId)
+        if (!model) {
+            message = "Requested model $modelId doesn't exist."
+            statusCode = -1
+        } else if (tags?.isEmpty()) {
+            message = "None of tags is removed."
+        } else {
+            Set<ModelTag> tagsRemoved = new HashSet<>()
+            String query = "from ModelTag as mt where mt.model = :model and mt.tag.name in :tags"
+            tagsRemoved = ModelTag.executeQuery(query, [model: model, tags: tags]).toSet()
+            removeModelTag(tagsRemoved, user)
+        }
+        Map result = [message: message, statusCode: statusCode]
+        result
+    }
+
+    /**
      * This method looks for all tags assigned to a given model
-     * @param model ModelTransportCommand object
+     * @param model ModelTC object
      * @return a set of TagTransportCommand objects
      */
-    Set<TagTransportCommand> findTagsByModel(ModelTransportCommand model) {
+    Set<TagTransportCommand> findTagsByModel(ModelTC model) {
         String query = "from ModelTag as mt where mt.model.submissionId=? order by mt.tag.name"
         List<ModelTag> result = ModelTag.findAll(query, [model.submissionId])
         List<TagTransportCommand> tagCmdList = result.collect {
@@ -133,40 +209,38 @@ Cannot save nothing for labels to the model"""
         tagSet
     }
 
-    private Set<ModelTag> updateModelTag(Set<String> updatedTags, Model model, User user) {
+    private void removeModelTag(Set<ModelTag> modelTags, User user) {
+        modelTags.each { mt ->
+            String queryString = "delete ModelTag mt where mt.model = :model and mt.tag = :tag"
+            ModelTag.executeUpdate(queryString, [model: mt.model, tag: mt.tag])
+            LOGGER.info("Removed the '${mt.tag.name}' tag from the model ${mt.model.submissionId} by ${user.username}")
+        }
+    }
+
+    private Set<ModelTag> doSaveOrUpdate(Set<String> updatedTags, Model model, User user) {
         Set existing = findAllByModel(model)
         Set<ModelTag> result = new HashSet<ModelTag>()
         if (existing?.isEmpty()) {
-            log.info("""\
-None of these tags (i.e. ${updatedTags.join(", ")}) have been assigned to the model ${model.submissionId} yet, 
-so we will persist all the tags into database""")
+            LOGGER.info("""\
+These tags (i.e. ${updatedTags.join(", ")}) haven't presented in BioModels. \
+Therefore, they are going to be persisted into BioModels and assigned to the model ${model.submissionId}.""")
             result = insertFromTags(model, user, updatedTags)
         } else {
-            log.info("Try to merge/reconcile the existing and updated ones")
+            LOGGER.info("Try to merge/reconcile the existing and updated ones.")
             Set preserved = existing.findAll {
                 it.tag.name in updatedTags && it.model.submissionId == model.submissionId
             }
-            log.debug("Preserved Tags: ${preserved?.collect { it.tag.name }?.join(', ')}")
+            LOGGER.debug("Preserved Tags: ${preserved?.collect { it.tag.name }?.join(', ')}")
             Set removed = existing - preserved
-            log.debug("Removed Tags: ${removed.collect { it.tag.name }?.join(', ')}")
+            LOGGER.debug("Removed Tags: ${removed.collect { it.tag.name }?.join(', ')}")
             Set preservedTags = preserved.collect { it.tag.name }
             Set insertedTags = updatedTags - preservedTags
-            log.debug("Inserted Tags: ${insertedTags.join(', ')}")
+            LOGGER.debug("Inserted Tags: ${insertedTags.join(', ')}")
             result.addAll(preserved)
             Set newlyInserted = reconcile(model, user, removed, insertedTags)
             result.addAll(newlyInserted)
         }
         result
-    }
-
-    private Set<ModelTag> reconcile(Model model, User user, Set<ModelTag> removed, Set<String> insertedTags) {
-        // basically we will delete the removed tags and insert the new ones
-        ModelTag.deleteAll(removed)
-        if (insertedTags?.isEmpty()) {
-            return [] as Set
-        }
-        Set newlyInserted = insertFromTags(model, user, insertedTags)
-        newlyInserted
     }
 
     private Set doSaveOrUpdate(Model model, Set modelTags, ModelTagTransportCommand command, User user) {
@@ -202,28 +276,56 @@ so we will persist all the tags into database""")
 
     private Set<ModelTag> insertFromTags(Model model, User user, Set<String> insertedTags) {
         Set<ModelTag> result = new HashSet<ModelTag>()
+
         insertedTags.each { String name ->
             Tag tagObj = Tag.findOrCreateWhere(name: name)
             if (!tagObj.id) {
+                tagObj.description = "Collection of the models relevant to $name"
                 tagObj.userCreated = user
                 tagObj.dateCreated = new Date()
                 tagObj.dateModified = new Date()
-                tagObj.save(flush: true)
+                tagObj = doSave(tagObj)
             }
             ModelTag modelTag = ModelTag.findOrCreateByTagAndModel(tagObj, model)
             if (modelTag.save(flush: true)) {
                 result.add(modelTag)
             } else {
                 println modelTag.errors.allErrors.inspect().toString()
-                log.error("""\
-There have been errors while trying to persist tag: '${name}' for the model '${model.submissionId}'""")
+                LOGGER.error("""\
+There have been errors while trying to persist tag: '${name}' for the model '${model.submissionId}'.""")
             }
         }
         result
     }
 
+    private Set<ModelTag> reconcile(Model model, User user, Set<ModelTag> removed, Set<String> insertedTags) {
+        // basically we will delete the removed tags and insert the new ones
+        ModelTag.deleteAll(removed)
+        if (insertedTags?.isEmpty()) {
+            return [] as Set
+        }
+        Set newlyInserted = insertFromTags(model, user, insertedTags)
+        newlyInserted
+    }
+
     private Set<ModelTag> findAllByModel(Model model) {
         List<ModelTag> records = ModelTag.findAllByModel(model)
         records?.toSet()
+    }
+
+    private Tag doSave(Tag tagObj) {
+        def txDef = [
+            // this tx will use a different session than the current one
+            propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW
+        ]
+        Tag.withTransaction(txDef) {
+            tagObj.save(flush: true)
+        }
+        tagObj
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        LOGGER.info("Finished the bean initialisation")
     }
 }

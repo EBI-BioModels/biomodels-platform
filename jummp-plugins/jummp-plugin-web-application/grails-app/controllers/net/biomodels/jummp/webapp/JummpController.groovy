@@ -26,110 +26,133 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import groovy.xml.MarkupBuilder
+import net.biomodels.jummp.CommonController
+import net.biomodels.jummp.core.constants.BioModels
+import net.biomodels.jummp.utils.redis.KeyCollection as KC
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-@Secured(["IS_AUTHENTICATED_FULLY"])
-class JummpController {
+@Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+class JummpController extends CommonController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JummpController.class)
     def springSecurityService
+    def decorationService
     def userService
-    def grailsApplication
     def teamService
     def feedbackService
     def messageSource
+    def reviewerAccountService
+    def modelService
+    def redisService
 
     final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
                                            'autoCompleteUser', 'teamLookup']
-    String theme
 
     //def beforeInterceptor = [action: this.&detectTheme, except: AUDIT_EXCEPTIONS]
 
-    private void detectTheme() {
-        theme = grailsApplication.config.jummp.branding.style
-        if (!theme)
-            theme = 'default'
-    }
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def support() {
-        detectTheme()
-        [messageCode: "jummp.support.${theme}.message",
-         titleCode: "jummp.support.${theme}.title"]
+        Map model = COMMON_PROPERTIES
+        model.putAll([
+            "messageCode": "jummp.support.${theme}.message",
+            "titleCode": "jummp.support.${theme}.title"
+        ])
+        model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def faq() {
-        detectTheme()
+        Map model = COMMON_PROPERTIES
         String titlePage = messageSource.getMessage("jummp.faq.${theme}.title", null, Locale.ENGLISH)
         titlePage += " | BioModels"
-        String manualUrl = grailsApplication.config.jummp.context.help.root
-        String serverUrl = grailsApplication.config.grails.serverURL
-        render(view: "faq",
-            model: [
-                titleCode: "jummp.faq.${theme}.title",
-                titlePage: titlePage,
-                manualUrl: manualUrl, serverUrl: serverUrl])
+        model.putAll(["titleCode": "jummp.faq.${theme}.title", titlePage: titlePage])
+        model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def courses() {
-        detectTheme()
-        render(view: "courses", model: [titleCode: "jummp.courses.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.putAll(["titleCode": "jummp.courses.${theme}.title"])
+        model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def aboutus() {
-        detectTheme()
-        [messageCode: "jummp.aboutus.${theme}.message",
-         titleCode: "jummp.aboutus.${theme}.title"]
+        Map model = COMMON_PROPERTIES
+        model.putAll([messageCode: "jummp.aboutus.${theme}.message",
+                      titleCode: "jummp.aboutus.${theme}.title"])
+        model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def contactus() {
-        detectTheme()
-        [messageCode: "jummp.contactus.${theme}.message",
-         titleCode: "jummp.contactus.${theme}.title"]
+        Map model = COMMON_PROPERTIES
+        model.putAll([messageCode: "jummp.contactus.${theme}.message",
+                      titleCode: "jummp.contactus.${theme}.title"])
+        model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def termsOfUse() {
-        detectTheme()
-        [messageCode: "jummp.termsOfUse.${theme}.message",
-         titleCode: "jummp.termsOfUse.${theme}.title"]
+        Map model = COMMON_PROPERTIES
+        model.putAll([messageCode: "jummp.termsOfUse.${theme}.message",
+                      titleCode: "jummp.termsOfUse.${theme}.title"])
+        model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def privacyPolicy() {
+        String url = "${COMMON_PROPERTIES["bmStaticAssetsURL"]}/info/privacy-notice-nov-2022.pdf"
+        URI uri = new URL(url).toURI()
+        render (
+            file: new URL(url).openStream(), // file could be stream
+            // file: new File(uri.getHost() + "/" + uri.getPath()), // to download file
+            fileName: "privacy-notice-nov-2022.pdf",
+            contentType: "application/pdf"
+        )
+    }
+
     def howToCiteBioModelsDatabase() {
-        detectTheme()
-        render(view: "howToCite", model: [titleCode: "jummp.howToCite.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.howToCite.${theme}.title")
+        render(view: "howToCite", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def acknowledgements() {
-        detectTheme()
-        render(view: "acknowledgements", model: [titleCode: "jummp.acknowledgements.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.acknowledgements.${theme}.title")
+        render(view: "acknowledgements", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def fetchNews() {
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.news.${theme}.title")
+        model.put("newsEntries", decorationService.fetchAllNewsArticles())
+        render(view: "news", model: model)
+    }
+
     def jobs() {
-        detectTheme()
-        render(view: "jobs", model: [titleCode: "jummp.jobs.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.jobs.${theme}.title")
+        model
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def curators() {
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.curators.${theme}.title")
+        render(view: "list-curators", model: model)
+    }
+
     def curatorZone() {
-        detectTheme()
-        render(view: "curatorZone", model: [titleCode: "jummp.curatorZone.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.curatorZone.${theme}.title")
+        render(view: "curatorZone", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def developerZone() {
-        detectTheme()
-        render(view: "developerZone", model: [titleCode: "jummp.developerZone.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.developerZone.${theme}.title")
+        render(view: "developerZone", model: model)
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def feedback() {
         if (params.star) {
             byte star = params.byte("star")
-            String email = params.email
+            String email = params.email.decodeHTML()
             String comment = params.comment
             if (star < 1 && star > 5) {
                 render([status: '500', message: "Please rate between 1 and 5 stars."] as JSON)
@@ -152,6 +175,15 @@ class JummpController {
         } else {
             println "This operation does not support."
         }
+    }
+
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def createReviewerAccount() {
+        String modelId = params.get("id").decodeHTML()
+        String message = reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
+        Map retMap = [modelId: modelId, message: message, serverURL: serverURL]
+        retMap.putAll(COMMON_PROPERTIES)
+        render(view: "createReviewerAccount", model: retMap)
     }
 
     def lookupUser = {
@@ -184,5 +216,192 @@ class JummpController {
     		render (users as JSON)
     	}
     	render "No team specified"
+    }
+
+    /**
+     * A Sitemap controller that automatically generates sitemap.xml for a grails based website.
+     *
+     */
+    def sitemap() {
+        StringWriter writer = new StringWriter()
+        MarkupBuilder mkb = new MarkupBuilder(writer)
+        mkb.mkp.xmlDeclaration(version: "1.0", encoding: "UTF-8")
+        mkb.urlset(xmlns: "https://www.sitemaps.org/schemas/sitemap/0.9",
+            'xmlns:xsi': "http://www.w3.org/2001/XMLSchema-instance",
+            'xsi:schemaLocation': "https://www.sitemaps.org/schemas/sitemap/0.9 https:///www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd") {
+            addAllUrlsOfModels(mkb)
+            addAllUrlsOfMainMenu(mkb)
+            addAllUrlsOfModelOfTheMonth(mkb)
+            addOtherUrls(mkb)
+        }
+        render(text: writer.toString(),contentType: "text/xml", encoding: "UTF-8")
+    }
+
+    @Secured(['ROLE_ADMIN'])
+    def switchLookAndFeelForModelDisplay() {
+        String newLook = request.getJSON()["newLook"]
+        String value = newLook == "true" ? "false" : "true"
+        LOGGER.info("newLook: $newLook to $value")
+        redisService.doRedisSet(KC.DEBUGGING_MODE, value)
+        render(["message": "Switched the interface"] as JSON)
+    }
+
+    private void addAllUrlsOfModels(MarkupBuilder mkb) {
+        List<String> allPublicModelIds = modelService.getAllModelIdentifiers()
+        List<String> allAutogeneratedModelIds = modelService.getAutogeneratedModelIdentifiers()
+        allPublicModelIds.addAll(allAutogeneratedModelIds)
+        for (String modelId : allPublicModelIds) {
+            mkb.url {
+                loc("${BioModels.BM_ROOT_URL}/$modelId")
+                changefreq('daily')
+                priority(0.8)
+            }
+        }
+    }
+
+    private void addAllUrlsOfMainMenu(MarkupBuilder mkb) {
+        // Browse menu
+        mkb.url {
+            loc("${BioModels.BM_PROD_SEARCH_URL_PREFIX}?query=*%3A*")
+            changefreq('daily')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/parameterSearch/index?query=*%3A*&start=0&size=10&sort=model%3Aascending&is_curated=true")
+            changefreq('daily')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/covid-19")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/path2models")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/goChart/index")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/agedbrain")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/pdgsmm/index")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/reproducibility")
+            changefreq('yearly')
+            priority(0.8)
+        }
+
+        // Submit menu
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/model/submission-guidelines-and-agreement")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/model/submit")
+            changefreq('yearly')
+            priority(0.8)
+        }
+
+        // Curation menu
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/curation/fbc")
+            changefreq('yearly')
+            priority(0.8)
+        }
+
+        // Help menu
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/faq")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/user-guide/manual.html")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/curation-docs")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/dev")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/courses")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/tools/converters/")
+            changefreq('yearly')
+            priority(0.8)
+        }
+
+        // About us menu
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/termsofuse")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/citation")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/content/news")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/acknowledgements")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/jobs")
+            changefreq('yearly')
+            priority(0.8)
+        }
+
+        // Contact us menu
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/contact")
+            changefreq('yearly')
+            priority(0.8)
+        }
+    }
+
+    private void addAllUrlsOfModelOfTheMonth(MarkupBuilder mkb) {
+        // the Url of the index page of the Model of the month
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/content/model-of-the-month?all=yes")
+            changefreq('yearly')
+            priority(0.8)
+        }
+    }
+
+    private void addOtherUrls(MarkupBuilder mkb) {
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/competition/model-of-the-year-2023")
+            changefreq('yearly')
+            priority(0.8)
+        }
     }
 }

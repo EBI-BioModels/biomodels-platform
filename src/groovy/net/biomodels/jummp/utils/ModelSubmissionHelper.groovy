@@ -13,8 +13,8 @@ class ModelSubmissionHelper {
     static ApplicationContext ctx
     private CamelContext camelContext
 
-    static RepositoryFileTransportCommand createRepoFile(final File file, final boolean isMainFile, final String
-        description) {
+    static RepositoryFileTransportCommand createRepoFile(final File file, final boolean isMainFile,
+                                                         final String description) {
         new RepositoryFileTransportCommand(path: file.absolutePath, mainFile: isMainFile,
             userSubmitted: true, hidden: false, description: description)
     }

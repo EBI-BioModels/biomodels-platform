@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2025 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,24 +20,32 @@
 
 package net.biomodels.jummp.core
 
-import eu.ddmore.metadata.service.ValidationException
+import com.google.gson.Gson
+//import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
 import net.biomodels.jummp.annotation.SectionContainer
 import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
-import net.biomodels.jummp.core.annotation.*
+import net.biomodels.jummp.core.annotation.ElementAnnotationCategory as EAC
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
+import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.annotation.StatementCategory
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.model.AnnotationValidationContext
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
-import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand as CNTC
+import net.biomodels.jummp.deployment.biomodels.TagTransportCommand as TagTC
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * Simple delegate for metadataService.
@@ -51,7 +59,7 @@ import org.perf4j.aop.Profiled
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class MetadataDelegateService implements IMetadataService {
+class MetadataDelegateService implements IMetadataService, InitializingBean {
     private final Log log = LogFactory.getLog(getClass())
     private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     static transactional = false
@@ -62,24 +70,17 @@ class MetadataDelegateService implements IMetadataService {
          "MAMO_0000030": "Logical model",
          "MAMO_0000046": "Ordinary differential equation model"]
 
-    /**
-     * Dependency injection for the metadata service.
-     */
-    MetadataService metadataService
-    /**
-     * Dependency injection for the curation notes service.
-     */
+    def metadataService
     def curationNotesService
-
     def modelTagService
+    def redisService
     /**
      * {@inheritDoc}
      */
     @Profiled(tag = "metadataDelegateService.findAllResourceReferencesForQualifier")
-    List<ResourceReferenceTransportCommand> findAllResourceReferencesForQualifier(
-            RevisionTransportCommand revision, String qualifier) {
+    List<RRTC> findAllResourceReferencesForQualifier(RevisionTC revision, String qualifier) {
         List<ResourceReference> references = metadataService.
-                findAllResourceReferencesForQualifier(revision.id, qualifier)
+            findAllResourceReferencesForQualifier(revision.id, qualifier)
         wrapResourceReferences(references)
     }
 
@@ -87,10 +88,9 @@ class MetadataDelegateService implements IMetadataService {
      * {@inheritDoc}
      */
     @Profiled(tag = "metadataDelegateService.findAllResourceReferencesForSubject")
-    List<ResourceReferenceTransportCommand> findAllResourceReferencesForSubject(
-            RevisionTransportCommand revision, String subject) {
+    List<RRTC> findAllResourceReferencesForSubject(RevisionTC revision, String subject) {
         List<ResourceReference> references = metadataService.
-                findAllResourceReferencesForSubject(revision.id, subject)
+            findAllResourceReferencesForSubject(revision.id, subject)
         wrapResourceReferences(references)
     }
 
@@ -98,10 +98,8 @@ class MetadataDelegateService implements IMetadataService {
      * {@inheritDoc}
      */
     @Profiled(tag = "metadataDelegateService.findAllStatementsForQualifier")
-    List<StatementTransportCommand> findAllStatementsForQualifier(RevisionTransportCommand
-            revision, String qualifier) {
-        List<Statement> statements = metadataService.findAllStatementsForQualifier(
-                revision.id, qualifier)
+    List<STC> findAllStatementsForQualifier(RevisionTC revision, String qualifier) {
+        List<Statement> statements = metadataService.findAllStatementsForQualifier(revision.id, qualifier)
         wrapStatements(statements)
     }
 
@@ -109,15 +107,13 @@ class MetadataDelegateService implements IMetadataService {
      * {@inheritDoc}
      */
     @Profiled(tag = "metadataDelegateService.findAllStatementsForSubject")
-    List<StatementTransportCommand> findAllStatementsForSubject(RevisionTransportCommand
-            revision, String subject) {
-        List<Statement> statements = metadataService.findAllStatementsForSubject(
-                revision.id, subject)
+    List<STC> findAllStatementsForSubject(RevisionTC revision, String subject) {
+        List<Statement> statements = metadataService.findAllStatementsForSubject(revision.id, subject)
         wrapStatements(statements)
     }
 
     @Profiled(tag = "metadataDelegateService.wrapResourceReferences")
-    private List<ResourceReferenceTransportCommand> wrapResourceReferences(
+    private List<RRTC> wrapResourceReferences(
             List<ResourceReference> references) {
         use(ResourceReferenceCategory) {
             return references.collect { ResourceReference r ->
@@ -127,7 +123,7 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Profiled(tag = "metadataDelegateService.wrapStatements")
-    private List<StatementTransportCommand> wrapStatements(List<Statement> statements) {
+    private List<STC> wrapStatements(List<Statement> statements) {
         use(StatementCategory) {
             return statements.collect { Statement s ->
                 s.toCommandObject()
@@ -136,7 +132,7 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Profiled(tag = "metadataDelegateService.saveMetadata")
-    boolean saveMetadata(String model, List<StatementTransportCommand> statements) {
+    boolean saveMetadata(String model, List<STC> statements) {
         metadataService.saveMetadata(model, statements)
     }
 
@@ -159,26 +155,103 @@ class MetadataDelegateService implements IMetadataService {
         }
     }
 
-    @Profiled(tag = "metadataDelegateService.validateModelRevision")
-    AnnotationValidationContext validateModelRevision(RevisionTransportCommand revision, List<StatementTransportCommand> statements) {
+    /*@Profiled(tag = "metadataDelegateService.validateModelRevision")
+    AnnotationValidationContext validateModelRevision(RevisionTC revision, List<STC> statements) {
         try {
             return metadataService.validateModelRevision(Revision.get(revision.id), statements)
         }catch(ValidationException e){
             throw e
         }
-    }
+    }*/
 
     @Profiled(tag = "metadataDelegateService.getMetadataNamespaces")
     List<String> getMetadataNamespaces() {
         metadataService.getMetadataNamespaces()
     }
 
-    List<ElementAnnotationTransportCommand> fetchAnnotations(RevisionTransportCommand rev) {
-        List<ElementAnnotationTransportCommand> annotations = null
-        use(ElementAnnotationCategory) {
+    /**
+     * Caches annotations and organism of a given model revision on Redis server
+     * @param revisionTC
+     * @return the list of statements
+     */
+    Map<String, String> cacheAnnotationsAndOrganismOnRedis(final RevisionTC revisionTC) {
+        Map<String, String> mapResult = stringifyAnnotations(revisionTC)
+        String strOfAnnotations = mapResult.get("annotations")
+        redisService.doRedisHSet(revisionTC.model.submissionId, "annotations", strOfAnnotations)
+        if (revisionTC.model.publicationId) {
+            redisService.doRedisHSet(revisionTC.model.publicationId, "annotations", strOfAnnotations)
+        }
+        if (mapResult.containsKey("organism")) {
+            String organism = mapResult.get("organism")
+            redisService.doRedisHSet(revisionTC.model.submissionId, "organism", organism)
+            if (revisionTC.model.publicationId) {
+                redisService.doRedisHSet(revisionTC.model.publicationId, "organism", organism)
+            }
+        }
+
+        return mapResult
+    }
+
+    /**
+     * Converts the list of {@link EATC} objects to a map of strings. It is used for REST API calls and caches.
+     * @param revisionTC a {@link RevisionTC} object
+     * @return a map
+     */
+    Map<String, String> stringifyAnnotations(final RevisionTC revisionTC) {
+        List<EATC> annotations = fetchAnnotations(revisionTC)
+        List statements = annotations*.statement
+        statements = statements.unique { it.object.uri }
+        String hasTaxon = ""
+        String strOfAnnotations = ""
+        Map mapResult = new HashMap()
+        statements.each {
+            if (it.predicate.accession == "hasTaxon" && it.object.datatype ==
+                    "taxonomy") {
+                hasTaxon = "${it.object.accession}|${it.object.name}|${it.object.uri}"
+            }
+            strOfAnnotations += """${it.predicate.accession}\t${it.object.datatype} \t${it.object.accession}\t${it.
+                    object.uri}\t${it.object.name}|"""
+        }
+
+        // remove the last pile - vertical line
+        if (strOfAnnotations) {
+            strOfAnnotations = strOfAnnotations.substring(0, strOfAnnotations.length() - 1)
+        }
+        mapResult.put("annotations", strOfAnnotations)
+        if (hasTaxon) {
+            mapResult.put("organism", hasTaxon)
+        }
+        return mapResult
+    }
+
+    /**
+     * Gets the annotations and organism from Redis Cache Server
+     * @param modelId
+     * @return
+     */
+    Map<String, String> getAnnotationsAndOrganismFromRedis(final String modelId) {
+        Map<String, String> mapResult = new HashMap<>()
+        String organism = redisService.doRedisHGet(modelId, "organism")
+        if (organism) {
+            mapResult.put("organism", organism)
+        }
+        String strOfAnnotations = redisService.doRedisHGet(modelId, "annotations")
+        if (strOfAnnotations) {
+            mapResult.put("annotations", strOfAnnotations)
+        }
+        return mapResult
+    }
+
+    List<EATC> fetchAnnotations(final RevisionTC revisionTC) {
+        fetchAnnotations(revisionTC.id)
+    }
+
+    List<EATC> fetchAnnotations(final Long revId) {
+        List<EATC> annotations = null
+        use(EAC) {
             List<RevisionAnnotation>  revisionAnnotations = null
             def values = RevisionAnnotation.where {
-                revision.id == rev.id
+                revision.id == revId
             }
             revisionAnnotations = values.list()
             annotations = revisionAnnotations.collect {RevisionAnnotation ra ->
@@ -188,13 +261,16 @@ class MetadataDelegateService implements IMetadataService {
         annotations
     }
 
-    Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
-        RevisionTransportCommand rev) {
-        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+    Map<QualifierTC, List<RRTC>> fetchGenericAnnotations(RevisionTC rev) {
+        List<STC> statements = getModelLevelAnnotations(rev)
+        fetchGenericAnnotations(statements)
+    }
+
+    Map<QualifierTC, List<RRTC>> fetchGenericAnnotations(final List<STC> statements) {
         Map result = [:]
-        statements.each { StatementTransportCommand s ->
-            final QualifierTransportCommand qualifier = s.predicate
-            final ResourceReferenceTransportCommand xref = s.object
+        statements.each { STC s ->
+            final QualifierTC qualifier = s.predicate
+            final RRTC xref = s.object
             // ignore the biomodels custom annotation denoting curation status
             // because it is already shown at the curation status line
             boolean isCurationStatus = qualifier.type == "biomodelsCustomAnnotation" &&
@@ -209,10 +285,10 @@ class MetadataDelegateService implements IMetadataService {
                 }
             }
         }
-        result
+        result as Map<QualifierTC, List<RRTC>>
     }
 
-    CurationNotesTransportCommand fetchCurationNotes(RevisionTransportCommand rev) {
+    CNTC fetchCurationNotes(RevisionTC rev) {
         curationNotesService.fetchCurationNotesForModel(rev.model.id)
     }
 
@@ -222,26 +298,50 @@ class MetadataDelegateService implements IMetadataService {
      * This relies on BioModels' workflow of assigning a publication identifier for
      * curated models.
      *
-     * @param rev the {@link RevisionTransportCommand} to check
+     * @param rev the {@link RevisionTC} to check
      * @return the String 'curated' iff the model has been curated, or 'non-curated' otherwise.
      */
-    String fetchCurationStatus(RevisionTransportCommand rev) {
+    String fetchCurationStatus(RevisionTC rev) {
         rev.model.publicationId ? "curated" : "non-curated"
     }
 
-    Map<String, String> fetchModellingApproaches(RevisionTransportCommand rev) {
-        ModellingApproach modellingApproach =  rev.model.modellingApproach
+    /**
+     * Fetches all modelling approaches of a specific revision
+     * @param rev {@link RevisionTC}
+     * @return a map containing the accession associated with the name and resource (i.e., URI)
+     */
+    Map<String, String[]> fetchModellingApproaches(RevisionTC rev) {
+        String strMAs = redisService.doRedisHGet(rev.model.submissionId, "modelling-approaches")
         Map result = [:]
-        if (modellingApproach) {
-            result.put(modellingApproach.accession, modellingApproach.name)
+        List<String> approaches = new ArrayList<>()
+        if (strMAs?.trim()) {
+            approaches = strMAs.trim().tokenize("|")
+            approaches.each { String approach ->
+                List tokens = approach.tokenize(";")
+                result.put(tokens[0], [tokens[1], tokens[2]])
+            }
+        } else {
+            ModellingApproach approach = rev.model.modellingApproach
+            if (approach) {
+                result.put(approach.accession, [approach.name, approach.resource] as String[])
+                approaches.add([approach.accession, approach.name, approach.resource].join(";"))
+            }
+            if (!result.isEmpty()) {
+                String s = approaches.join("|")
+                redisService.doRedisHSet(rev.model.submissionId, "modelling-approaches", s)
+            }
         }
         return result
     }
 
-    List<String> fetchOriginalModels(RevisionTransportCommand rev) {
-        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+    List<String> fetchOriginalModels(RevisionTC rev) {
+        List<STC> statements = getModelLevelAnnotations(rev)
+        fetchOriginalModels(statements)
+    }
+
+    List<String> fetchOriginalModels(List<STC> statements) {
         List<String> result = []
-        statements.each { StatementTransportCommand s ->
+        statements.each { STC s ->
             if (s.predicate.accession == "source") {
                 result << s.object.uri
             }
@@ -264,20 +364,63 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Override
-    ModellingApproach getModellingApproach(ModelTransportCommand model) {
+    ModellingApproach getModellingApproach(ModelTC model) {
         return model.modellingApproach
     }
 
-    Set<TagTransportCommand> findTagsByModel(ModelTransportCommand model) {
+    Set<TagTC> findTagsByModel(ModelTC model) {
         modelTagService.findTagsByModel(model)
     }
 
-
-    List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {
-        getModelLevelAnnotations(rev?.id)
+    List<String> listModelTags(ModelTC model) {
+        String strCachedTags = redisService.doRedisHGet(model.submissionId, "tags")
+        List<String> tags
+        if (strCachedTags) {
+            tags = strCachedTags?.trim()?.tokenize("|")
+        } else {
+            tags = modelTagService.getTagsByModelId(model.submissionId)
+            if (tags) {
+                redisService.doRedisHSet(model.submissionId, "tags", tags.join("|"))
+            } else {
+                // create a key named 'tags' with a space as its value to make sure that
+                // it won't need a database check for models having no tags
+                redisService.doRedisHSet(model.submissionId, "tags", " ")
+            }
+        }
+        tags
     }
 
-    List<StatementTransportCommand> getModelLevelAnnotations(long revisionId) {
+    List<STC> getModelLevelAnnotations(RevisionTC rev) {
+        String key = "model-level-annotations-${rev.revisionNumber}"
+        Gson gson = new Gson()
+        String strMLAs = redisService.doRedisHGet(rev.model.submissionId, key)
+        List<String> strStatements = new ArrayList<>()
+        List<STC> statements = new ArrayList<>()
+        if (strMLAs?.trim()) {
+            strStatements = strMLAs.trim().tokenize("|")
+            for (String stmt in strStatements) {
+                STC objStmt = gson.fromJson(stmt, STC.class)
+                statements.add(objStmt)
+            }
+        } else {
+            try {
+                statements = getModelLevelAnnotations(rev?.id)
+            } catch (Exception ex) {
+                log.error("""Cannot get the model level annotations of the model revision ${rev.identifier()}\
+due to ${ex.message}.""")
+                return null
+            }
+            String s
+            for (STC stmt in statements) {
+                s = gson.toJson(stmt)
+                strStatements.add(s)
+            }
+            redisService.doRedisHSet(rev.model.submissionId, key, strStatements.join("|"))
+        }
+        statements
+    }
+
+    List<STC> getModelLevelAnnotations(long revisionId) {
         // By default, fetching generic annotations means to grab model-level annotations
         // The specific levels of annotations should be invoked within another methods
         if (!revisionId) {
@@ -290,15 +433,20 @@ class MetadataDelegateService implements IMetadataService {
         List<ElementAnnotation> annotationList = revisionAnnotations.collect { RevisionAnnotation ra ->
             ra.elementAnnotation
         }
-        List<ElementAnnotationTransportCommand> annotations = new ArrayList<>()
+        List<EATC> annotations = new ArrayList<>()
         annotationList.collect { ElementAnnotation ea ->
-            use(ElementAnnotationCategory) {
+            use(EAC) {
                 annotations.add(ea.toCommandObject())
             }
         }
-        List<StatementTransportCommand> statements = annotations.collect {
+        List<STC> statements = annotations.collect {
             it.statement
         }
         statements
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

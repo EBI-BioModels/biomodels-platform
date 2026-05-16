@@ -29,23 +29,21 @@
 
 <%
     def styleName = grailsApplication.config.jummp.branding.style
+    response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate")
+    response.setHeader("Pragma", "no-cache")
+    response.setDateHeader("Expires", 0)
 %>
 
 <!doctype html>
 <html>
     <head>
         <meta name="layout" content="${styleName}/main"/>
-%{--        <script src="https://d3js.org/d3.v3.min.js"></script>--}%
         <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
-%{--        <g:javascript src="d3.v3.js"/>--}%
-%{--Error: CSORB--}%
-%{--        <script src="https://cdnjs.com/libraries/Chart.js"></script>--}%
-%{--        <g:javascript src="Chart.min.js"/>--}%
     </head>
     <body>
         <g:render template="/templates/biomodels/homepage" />
     </body>
 </html>
 <content tag="title">
-	JummpBioModels Database
+	BioModels repository
 </content>

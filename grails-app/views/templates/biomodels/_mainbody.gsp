@@ -27,65 +27,65 @@
 
 
 
-    <%
-        def sidebarContent = g.pageProperty(name: 'page.sidebar')
-        if (sidebarContent) {
-            sidebarContent = sidebarContent.trim()
-        }
-        def facetSearchContent = g.pageProperty(name: 'page.facetsearch')
-        if (facetSearchContent) {
-            facetSearchContent = facetSearchContent.stripMargin()
-        } else {
-            facetSearchContent = ""
-        }
-    %>
+<%
+    def sidebarContent = g.pageProperty(name: 'page.sidebar')
+    if (sidebarContent) {
+        sidebarContent = sidebarContent.trim()
+    }
+    def facetSearchContent = g.pageProperty(name: 'page.facetsearch')
+    if (facetSearchContent) {
+        facetSearchContent = facetSearchContent.stripMargin()
+    } else {
+        facetSearchContent = ""
+    }
+%>
 
-    <div id="content" role="main" class="row">
-        <div data-sticky-container class="sticky-container">
-            <div>
-                <g:if test="${facetSearchContent}">
-                    <div class="medium-2 large-2 columns show-for-medium hide-for-small-only">
-                        ${raw(facetSearchContent)}
-                    </div>
-                    <g:if test="${sidebarContent}">
-                        <div class="small-12 medium-8 large-8 columns">
-                            <g:render template="/templates/notification/showNotificationDiv"/>
-                            <g:pageProperty name="page.main-content" />
-                            <g:layoutBody/>
-                        </div>
-                        <div class="medium-2 large-2 columns sidebar sticky-container
-                        show-for-medium hide-for-small-only" data-sticky-container>
-                            ${raw(sidebarContent)}
-                        </div>
-                    </g:if>
-                    <g:else>
-                        <div class="small-12 medium-10 large-10 columns">
-                            <g:render template="/templates/notification/showNotificationDiv"/>
-                            <g:pageProperty name="page.main-content" />
-                            <g:layoutBody/>
-                        </div>
-                    </g:else>
-                </g:if>
-                <g:else>
-                    <!-- Facets search is unavailable -->
-                    <g:if test="${sidebarContent}">
-                        <div class="small-12 medium-8 large-9 columns">
-                            <g:render template="/templates/notification/showNotificationDiv"/>
-                            <g:pageProperty name="page.main-content" />
-                            <g:layoutBody/>
-                        </div>
-                        <div class="small-12 medium-4 large-3 columns sticky-container" data-sticky-container>
-                            ${raw(sidebarContent)}
-                        </div>
-                    </g:if>
-                    <g:else>
-                        <div id="main-content" class="small-12 medium-12 large-12 columns">
-                            <g:render template="/templates/notification/showNotificationDiv"/>
-                            <g:pageProperty name="page.main-content" />
-                            <g:layoutBody/>
-                        </div>
-                    </g:else>
-                </g:else>
+<div id="content" role="main" class="row">
+    <div data-sticky-container class="sticky-container">
+        <g:if test="${facetSearchContent}">
+            <div class="medium-2 large-2 columns show-for-medium hide-for-small-only">
+                ${raw(facetSearchContent)}
             </div>
-        </div>
+            <g:if test="${sidebarContent}">
+                <div class="small-12 medium-8 large-8 columns">
+                    <g:render template="/templates/notification/showNotificationDiv"/>
+                    <g:pageProperty name="page.main-content"/>
+                    <g:layoutBody/>
+                </div>
+
+                <div class="medium-2 large-2 columns sidebar sticky-container
+                        show-for-medium hide-for-small-only" data-sticky-container>
+                    ${raw(sidebarContent)}
+                </div>
+            </g:if>
+            <g:else>
+                <div class="small-12 medium-10 large-10 columns">
+                    <g:render template="/templates/notification/showNotificationDiv"/>
+                    <g:pageProperty name="page.main-content"/>
+                    <g:layoutBody/>
+                </div>
+            </g:else>
+        </g:if>
+        <g:else>
+            <!-- Facets search is unavailable -->
+            <g:if test="${sidebarContent}">
+                <div class="small-12 medium-8 large-9 columns">
+                    <g:render template="/templates/notification/showNotificationDiv"/>
+                    <g:pageProperty name="page.main-content"/>
+                    <g:layoutBody/>
+                </div>
+
+                <div class="small-12 medium-4 large-3 columns sticky-container" data-sticky-container>
+                    ${raw(sidebarContent)}
+                </div>
+            </g:if>
+            <g:else>
+                <div id="main-content" class="small-12 medium-12 large-12 columns">
+                    <g:render template="/templates/notification/showNotificationDiv"/>
+                    <g:pageProperty name="page.main-content"/>
+                    <g:layoutBody/>
+                </div>
+            </g:else>
+        </g:else>
     </div>
+</div>

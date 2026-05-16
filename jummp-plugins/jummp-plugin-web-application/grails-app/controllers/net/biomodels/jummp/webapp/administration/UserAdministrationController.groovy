@@ -34,13 +34,18 @@
 
 package net.biomodels.jummp.webapp.administration
 
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import grails.converters.JSON
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.core.user.RoleNotFoundException
+import net.biomodels.jummp.utils.CommandErrorFormatter as CEF
 import net.biomodels.jummp.webapp.RegistrationCommand
 import net.biomodels.jummp.webapp.EditUserCommand
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * @short Controller for user management.
@@ -52,20 +57,19 @@ import net.biomodels.jummp.webapp.EditUserCommand
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
 @Secured('ROLE_ADMIN')
-class UserAdministrationController {
+class UserAdministrationController extends CommonController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserAdministrationController.class)
+
     /**
      * Dependency Injection of RemoteUserService
      */
     def userService
-    /**
-     * Dependency Injection of SpringSecurityService
-     */
-    def springSecurityService
 
     /**
      * Default action showing the DataTable markup
      */
-    def index = {
+    def index() {
+        COMMON_PROPERTIES
     }
 
     /**
@@ -89,7 +93,9 @@ class UserAdministrationController {
 
         List users = userService.getAllUsers(start, length)
         users.each { user ->
-            dataToRender.aaData << [user.id, user.username, user.person.userRealName, user.email, user.person.institution, user.person.orcid, user.enabled, user.accountExpired, user.accountLocked, user.passwordExpired]
+            dataToRender.aaData << [user.id, user.username, user.person.userRealName, user.email,
+                                    user.person.institution, user.person.orcid, user.enabled,
+                                    user.accountExpired, user.accountLocked, user.passwordExpired]
         }
         render dataToRender as JSON
     }
@@ -99,8 +105,8 @@ class UserAdministrationController {
      */
     def enable = {
         try {
-            def data = [success: userService.enableUser(params.id as Long,
-                Boolean.parseBoolean(params.value))]
+            boolean result = userService.enableUser(params.id as Long, params.getBoolean("value"))
+            Map data = [success: result]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -113,8 +119,7 @@ class UserAdministrationController {
      */
     def lockAccount = {
         try {
-            def data = [success: userService.lockAccount(params.id as Long,
-                Boolean.parseBoolean(params.value))]
+            def data = [success: userService.lockAccount(params.id as Long, params.getBoolean("value"))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -128,7 +133,7 @@ class UserAdministrationController {
     def expireAccount = {
         try {
             def data = [success: userService.expireAccount(params.id as Long,
-                Boolean.parseBoolean(params.value))]
+                Boolean.parseBoolean(params.value as String))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -142,9 +147,10 @@ class UserAdministrationController {
     def expirePassword = {
         try {
             def data = [success: userService.expirePassword(params.id as Long,
-                Boolean.parseBoolean(params.value))]
+                Boolean.parseBoolean(params.value as String))]
             render data as JSON
         } catch (UserNotFoundException e) {
+            LOGGER.error(e.message)
             def data = [error: true, message: e.message]
             render data as JSON
         }
@@ -153,14 +159,18 @@ class UserAdministrationController {
     /**
      * Action to edit an user
      */
-    def show = {
+    def show() {
         /*if (!springSecurityService.isAjax(request)) {
             render(template: "/templates/page", model: [link: g.createLink(action: "show", id: params.id), callback: "loadAdminUserCallback"])
             return
         }*/
-        [user: userService.getUser(params.id as Long),
-         roles: userService.getAllRoles(),
-         userRoles: userService.getRolesForUser(params.id as Long)]
+        Map data = [
+            user: userService.getUser(params.id as Long),
+            roles: userService.getAllRoles(),
+            userRoles: userService.getRolesForUser(params.id as Long)
+        ] as Map
+        data.putAll(COMMON_PROPERTIES)
+        return data
     }
 
     /**
@@ -174,9 +184,9 @@ class UserAdministrationController {
             try {
                 userService.addRoleToUser(cmd.userId, cmd.id)
                 data.put("success", "true")
-            } catch (UserNotFoundException e) {
+            } catch (UserNotFoundException ignored) {
                 data.put("error", g.message(code: "user.administration.userRole.error.userNotFound"))
-            } catch (RoleNotFoundException e) {
+            } catch (RoleNotFoundException ignored) {
                 data.put("error", g.message(code: "user.administration.userRole.error.roleNotFound"))
             }
         }
@@ -194,9 +204,9 @@ class UserAdministrationController {
             try {
                 userService.removeRoleFromUser(cmd.userId, cmd.id)
                 data.put("success", "true")
-            } catch (UserNotFoundException e) {
+            } catch (UserNotFoundException ignored) {
                 data.put("error", g.message(code: "user.administration.userRole.error.userNotFound"))
-            } catch (RoleNotFoundException e) {
+            } catch (RoleNotFoundException ignored) {
                 data.put("error", g.message(code: "user.administration.userRole.error.roleNotFound"))
             }
         }
@@ -206,7 +216,10 @@ class UserAdministrationController {
     /**
      * Action to render the view to register a new user as admin
      */
-    def register = {
+    def register() {
+        Map model = COMMON_PROPERTIES
+        model.put("title", "${g.message(code: "user.administration.ui.heading.register")} | BioModels")
+        model
     }
 
     /**
@@ -237,7 +250,11 @@ class UserAdministrationController {
      */
     def editUser = { EditUserCommand cmd ->
         Map data = [:]
+        cmd = cmd.sanitise()
+        cmd.validate()
         if (cmd.hasErrors()) {
+            String errMsg = CEF.summarise(cmd.errors)
+            LOGGER.error("EditUserCommand validation failed — ${errMsg}")
             data.put("error", true)
             data.put("username", resolveErrorMessage(cmd, "username", "Username"))
             data.put("userRealName", resolveErrorMessage(cmd, "userRealName", "Name"))
@@ -284,6 +301,20 @@ class UserAdministrationController {
             }
         }
         return null
+    }
+
+    def about() {
+        Map map = ["description": "This is user administration."]
+        withFormat {
+            json { render map as JSON }
+            xml { render map as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
+    }
+
+    def list(Integer max) {
+        params.max = Math.min(max ?: 10, 100)
+        respond User.list(params), [formats:['xml', 'json']]
     }
 }
 

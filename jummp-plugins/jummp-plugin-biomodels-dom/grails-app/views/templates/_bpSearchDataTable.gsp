@@ -34,35 +34,10 @@
         const DOWNLOADING_LABEL = "Downloading now...";
         const DOWNLOAD_LABEL = "Download";
         const DEFAULT_QUERY = "*:*";
-        var isDirectionBack = false;
-        var columnConfig = [
-            {
-                data: 'fields.entity_show',
-                orderable: false,
-                render: function (entity, type, row) {
-                    return formatEntity(entity, row);
-                }
-            },
-            {
-                data: 'fields.reaction_show',
-                orderable: false,
-                render: function (data, type, row) {
-                    return formatReaction(data, row);
-                }
-            },
-            {
-                // this has been renamed to More Information
-                // TODO: make this field name consistent with More information
-                data: 'fields.external_links_show',
-                orderable: false,
-                render: function (data, type, row) {
-                    return formatExternalLinks(data, type, row);
-                }
-            }
-        ];
+        let isDirectionBack = false;
 
         // Global state variable
-        var pageState = {
+        const pageState = {
             rootURL: "${createLink(action: 'index')}",
             command: ${command as JSON},
             dataTable: {},
@@ -114,7 +89,7 @@
             return result;
         }
 
-        function formatEntity(entityHTML, row) {
+        function formatEntity(row) {
             let result = '';
             let entityRow = '';
             const entity = row.fields.entity_id;
@@ -359,8 +334,8 @@
         // Function to update table as per the state
         function updateTable(table) {
             $('.dataTables_filter input').val(pageState.dataTable.query);
-            var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
-            var size = pageState.dataTable.size;
+            const page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
+            const size = pageState.dataTable.size;
             table.page.len(size);
             $('#searchButton').trigger("click");
             table.page(page).draw('page');
@@ -448,11 +423,11 @@
         }
 
         // Ajax configuration
-        ajaxConfig = {
+        const ajaxConfig = {
             "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
             "dataSrc": function (data) {
                 addActionButtons();
-                var downloadButton = $("#downloadButton");
+                const downloadButton = $("#downloadButton");
                 if (data.entries.length === 0) {
                     downloadButton.prop("disabled", true);
                 } else {
@@ -472,31 +447,55 @@
 
         $.fn.dataTable.ext.errMode = 'throw';
 
-        // Table configuration
-        var table = $('#table_id').DataTable(
+        const columnConfig = [
             {
-                initComplete: function () {
-                    updateTable(table);
-                },
-                columns: columnConfig,
-                "processing": false,
-                "serverSide": true,
-                "infoCallback": infoCallback,
-                "ajax": ajaxConfig,
+                data: 'fields.entity_show',
+                orderable: false,
+                render: function (entity, type, row) {
+                    return formatEntity(row);
+                }
+            },
+            {
+                data: 'fields.reaction_show',
+                orderable: false,
+                render: function (data, type, row) {
+                    return formatReaction(data, row);
+                }
+            },
+            {
+                // this has been renamed to More Information
+                // TODO: make this field name consistent with More information
+                data: 'fields.external_links_show',
+                orderable: false,
+                render: function (data, type, row) {
+                    return formatExternalLinks(data, type, row);
+                }
+            }
+        ];
+        // Table configuration
+        const table = $('#table_id').DataTable({
+            initComplete: function () {
+                updateTable(table);
+            },
+            columns: columnConfig,
+            "processing": false,
+            "serverSide": true,
+            "infoCallback": infoCallback,
+            "ajax": ajaxConfig,
 
-                language: {
+            language: {
+                paginate: {
+                    previous: '<',
+                    next: '>'
+                },
+                aria: {
                     paginate: {
-                        previous: '<',
-                        next: '>'
-                    },
-                    aria: {
-                        paginate: {
-                            previous: 'Previous',
-                            next: 'Next'
-                        }
+                        previous: 'Previous',
+                        next: 'Next'
                     }
                 }
-            });
+            }
+        });
 
         // Function to prepare sort parameters
         function prepareSortParams(dataTableArg, sort) {
@@ -530,12 +529,12 @@
 
         // Preprocess custom params before calling EbiSearch WS
         function preProcessEbiSearchParams(dataTableArg) {
-            var data = {};
-            var query, start, size, sort, is_curated;
+            let data = {};
+            let query, start, size, sort, is_curated;
 
             if (pageState.isInitialState()) {
                 // populate data object from pageState.command
-                var command = pageState.command;
+                let command = pageState.command;
                 query = command.query;
                 start = Number(command.start);
                 size = Number(command.size);

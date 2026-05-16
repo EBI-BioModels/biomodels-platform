@@ -58,149 +58,187 @@
 </div>
 
 <script type="text/javascript">
-    var formats = ["text", "txt", "xml", "pdf", "jpg", "jpeg", "gif", "png",
-        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx"];
+    const formats = ["text", "txt", "xml", "pdf", "jpg", "jpeg", "gif", "png",
+        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "cc3d", "zip", "onnx", "owl", "vcml", "cps", "sedml"];
     $('[id^="previewButton"]').on('click', function (e) {
         e.preventDefault();
-        var filename = $(this).attr("data-file-name");
-        var mimeType = $(this).attr("data-file-mime-type");
-        var downloadLink = $(this).attr("data-download-link");
-        var showPreview = $(this).attr("data-preview");
-        $.ajax({
-            url: downloadLink + "&preview=" + showPreview + "&inline=true",
-            dataType: "text",
-            success: function(data) {
-                $('#boxTitle').html(filename);
-                if (mimeType != null) {
-                    var fileExtention = "";
-                    var imageType = false;
-                    var pdfType = false;
-                    var mdlType = false;
-                    var xmlType = false;
-                    var csvType = false;
-                    // var msDocument = false;
-                    var content = [];
-                    for (var index in formats) {
-                        var format = formats[index];
-                        if (mimeType.indexOf(format) != -1) {
-                            if (format === "jpg" || format === "jpeg" || format === "gif" ||
-                                format === "png" || format === "bmp" || format === "svg") {
-                                imageType = true;
-                            } else if (format === "txt" || format === "text" || format === "xml") {
-                                if (filename.indexOf('.mdl') !== -1) {
-                                    mdlType = true;
-                                    fileExtention = "mdl";
-                                }
-                                if (filename.indexOf('.xml') !== -1) {
-                                    xmlType = true;
-                                    fileExtention = "Xml";
-                                }
-                                if (filename.indexOf('.csv') !== -1) {
-                                    csvType = true;
-                                }
-                            } else if (format === "pdf") {
-                                pdfType = true;
-                            } /* don't support Microsoft Document for now
+        const filename = $(this).attr("data-file-name");
+        const mimeType = $(this).attr("data-file-mime-type");
+        const downloadLink = $(this).attr("data-download-link");
+        const previewLink = $(this).attr("data-preview-link");
+        const showPreview = $(this).attr("data-preview").toLowerCase() === "true";
+        const isBigFile = $(this).attr("data-is-big-file") === "true";
+        if (showPreview) {
+            $.ajax({
+                url: previewLink + "&preview=" + showPreview + "&inline=true",
+                dataType: "text",
+                success: function (data) {
+                    $('#boxTitle').html(filename);
+                    if (mimeType != null) {
+                        let fileExtension = "";
+                        let imageType = false;
+                        let pdfType = false;
+                        let mdlType = false;
+                        let xmlType = false;
+                        let csvType = false;
+                        let onnxType = false;
+                        // var msDocument = false;
+                        const content = [];
+                        for (let index in formats) {
+                            let format = formats[index];
+                            if (mimeType.indexOf(format) !== -1) {
+                                if (format === "jpg" || format === "jpeg" || format === "gif" ||
+                                    format === "png" || format === "bmp" || format === "svg") {
+                                    imageType = true;
+                                } else if (format === "txt" || format === "text" ||
+                                    format === "xml" || format === "cc3d" ||
+                                    format === "onnx" || format === "vcml" || format === "owl" ||
+                                    format === "cps" || format === "sedml") {
+                                    if (filename.indexOf('.mdl') !== -1) {
+                                        mdlType = true;
+                                        fileExtension = "mdl";
+                                    }
+                                    if (filename.indexOf('.xml') !== -1 ||
+                                        filename.indexOf('.cc3d') !== -1 ||
+                                        filename.indexOf('.vcml') !== -1 ||
+                                        filename.indexOf(".owl") !== -1 ||
+                                        filename.indexOf(".cps") !== -1 ||
+                                        filename.indexOf(".sedml") !== -1) {
+                                        xmlType = true;
+                                        fileExtension = "xml";
+                                    }
+                                    if (filename.indexOf('.csv') !== -1) {
+                                        csvType = true;
+                                    }
+                                    if (filename.lastIndexOf('.onnx') !== -1) {
+                                        onnxType = true;
+                                    }
+                                } else if (format === "pdf") {
+                                    pdfType = true;
+                                } /* don't support Microsoft Document for now
                             else if (format === "doc" || format === "docx"
                                 || format === "xls" || format === "xlsx"
                                 || format === "ppt" || format === "pptx") {
                                 msDocument = true;
                             }*/
-                            content.push("<div id='notificationgoeshere' class='pad-left pad-bottom' style='font-size: 18px'></div>");
-                            content.push("<div id='filegoeshere' class='pad-right pad-bottom");
-                            if (!mdlType && !xmlType) {
-                                content.push(" pad-left");
-                            }
-                            content.push("'></div>");
-                        }
-                    }
-                    // create a place holder where the content is put down
-                    $('#previewContentContainer').html(content.join(""));
-                    if (mdlType || xmlType) {
-                        var brush;
-                        if (fileExtention == "mdl") {
-                            brush = new SyntaxHighlighter.brushes.mdl();
-                        } else {
-                            brush = new SyntaxHighlighter.brushes.Xml();
-                        }
-                        brush.init({ toolbar: false });
-                        var html = brush.getHtml(data);
-                        $('#filegoeshere').html(html);
-                        $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
-                        addPreviewNotification(showPreview, downloadLink);
-                        //$(".syntaxhighlighter").css({'max-height': (screen.height * 0.45)+'px'});
-                    } else if (imageType) {
-                        var img = $("<img style='width: 100%;' />").attr('src', downloadLink+"&inline=true")
-                            .load(function() {
-                                if (!this.complete
-                                    || typeof this.naturalWidth === "undefined"
-                                    || this.naturalWidth === 0) {
-                                    $('#filegoeshere').text("Image could not be loaded")
-                                } else {
-                                    $('#filegoeshere').append(img);
+                                content.push("<div id='notificationgoeshere' class='pad-left pad-bottom' style='font-size: 18px'></div>");
+                                content.push("<div id='filegoeshere' class='pad-right pad-bottom");
+                                if (!mdlType && !xmlType) {
+                                    content.push(" pad-left");
                                 }
+                                content.push("'></div>");
+                            }
+                        }
+                        // create a placeholder where the content is put down
+                        $('#previewContentContainer').html(content.join(""));
+                        if (data === "BIG_FILE") {
+                            addPreviewNotification(showPreview, downloadLink, true);
+                        } else if (onnxType) {
+                            addPreviewNotification(showPreview, downloadLink, false)
+                        } else if (mdlType || xmlType) {
+                            let brush;
+                            if (fileExtension === "mdl") {
+                                brush = new SyntaxHighlighter.brushes.mdl();
+                            } else {
+                                brush = new SyntaxHighlighter.brushes.Xml();
+                            }
+                            brush.init({toolbar: false});
+                            const html = brush.getHtml(data);
+                            $('#filegoeshere').html(html);
+                            $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
+                            addPreviewNotification(showPreview, downloadLink, isBigFile);
+                            //$(".syntaxhighlighter").css({'max-height': (screen.height * 0.45)+'px'});
+                        } else if (imageType) {
+                            const img = $("<img style='width: 100%;' />").attr('src', previewLink + "&inline=true")
+                                .load(function () {
+                                    if (!this.complete
+                                        || typeof this.naturalWidth === "undefined"
+                                        || this.naturalWidth === 0) {
+                                        $('#filegoeshere').text("Image could not be loaded")
+                                    } else {
+                                        $('#filegoeshere').append(img);
+                                    }
+                                });
+                            $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
+                            addPreviewNotification(showPreview, downloadLink, isBigFile);
+                        } else if (pdfType) {
+                            const h = $('#previewContentContainer').height() * 0.98;
+                            let cont = [];
+                            cont.push("<iframe width='100%' height='" + h + "px' src='");
+                            cont.push(previewLink + "&inline=true' />");
+                            const frame = $(cont.join(""));
+                            $('#filegoeshere').append(frame);
+                            $('#previewContentContainer').removeClass("forCode").addClass("forPdf");
+                            addPreviewNotification(showPreview, downloadLink, isBigFile);
+                        } else if (filename.indexOf('.csv') === -1 && (mimeType.indexOf("txt") !== -1 || mimeType.indexOf("text") !== -1)) {
+                            data = data.replace(/(\r\n|\n|\r)/gm, '<br/>');
+                            $("#filegoeshere").html(data);
+                            $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
+                            addPreviewNotification(showPreview, downloadLink, isBigFile);
+                        } else if (csvType) {
+                            const plottingData = getCSVData(data);
+                            const handsontable = $("<div id='handsontable' class='hot handsontable htRowHeaders htColumnHeaders'></div>");
+                            $('#filegoeshere').append(handsontable);
+                            $('#handsontable').handsontable({
+                                data: plottingData,
+                                stretchH: 'all',
+                                readOnly: true,
+                                colHeaders: true, filters: true, columnSorting: true
                             });
-                        $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
-                        addPreviewNotification(showPreview, downloadLink);
-                    } else if (pdfType) {
-                        var h = $('#previewContentContainer').height()*0.98;
-                        var cont = [];
-                        cont.push("<iframe width='100%' height='" + h + "px' src='");
-                        cont.push(downloadLink+"&inline=true' />");
-                        var frame = $(cont.join(""));
-                        $('#filegoeshere').append(frame);
-                        $('#previewContentContainer').removeClass("forCode").addClass("forPdf");
-                        addPreviewNotification(showPreview, downloadLink);
-                    } else if (filename.indexOf('.csv') === -1 && (mimeType.indexOf("txt") !== -1 || mimeType.indexOf("text") !== -1)) {
-                        data = data.replace(/(\r\n|\n|\r)/gm, '<br/>');
-                        $("#filegoeshere").html(data);
-                        $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
-                        addPreviewNotification(showPreview, downloadLink);
-                    } else if (csvType) {
-                        var plottingData = getCSVData(data);
-                        var handsontable = $("<div id='handsontable' class='hot handsontable htRowHeaders htColumnHeaders'></div>");
-                        $('#filegoeshere').append(handsontable);
-                        $('#handsontable').handsontable({
-                            data: plottingData,
-                            stretchH: 'all',
-                            readOnly: true,
-                            colHeaders: true, filters: true, columnSorting: true
-                        });
-                        $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
-                        addPreviewNotification(showPreview, downloadLink);
-                    } else {
-                        $("#notificationgoeshere").show();
-                        var message = "<h3>Files of this type cannot be displayed here. Please <a href='";
-                        message += downloadLink;
-                        message += "'>download</a> the file to your device to view it.</h3>"
-                        $("#notificationgoeshere").html(message);
+                            $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
+                            addPreviewNotification(showPreview, downloadLink, isBigFile);
+                        } else {
+                            $("#notificationgoeshere").show();
+                            let message = "<h3>Files of this type cannot be displayed here. Please <a href='";
+                            message += downloadLink;
+                            message += "'>download</a> the file to your device to view it.</h3>"
+                            $("#notificationgoeshere").html(message);
+                        }
                     }
+                },
+                error: function (jqXHR, errorThrown) {
+                    $("#notificationgoeshere").show();
+                    $("#notificationgoeshere").html("Error: ", jqXHR.responseText + " " + errorThrown + JSON.stringify(jqXHR));
                 }
-            }, 
-            error: function (jqXHR, errorThrown) {
-                $("#notificationgoeshere").show();
-                $("#notificationgoeshere").html("Error: ", jqXHR.responseText + " " + errorThrown + JSON.stringify(jqXHR));
-            }
-        });
+            });
+        } else {
+            console.log("This file " + filename + " does not support inline preview.");
+            $('#boxTitle').html(filename);
+            let content = [];
+            content.push("<div id='notificationgoeshere' class='pad-left pad-bottom' style='font-size: 18px'></div>");
+            content.push("<div id='filegoeshere' class='pad-right pad-bottom");
+            content.push("'></div>");
+            $('#previewContentContainer').html(content.join(""));
+            addPreviewNotification(showPreview, downloadLink, isBigFile);
+        }
     });
 
-    function addPreviewNotification(showNotification, downloadLink) {
-        if (showNotification === "true") {
-            $("#notificationgoeshere").html("As this is a large file, only a part of it is loaded below. " +
-                "<a id='loadFileCompletely' href='" + downloadLink + "'>Click here</a> " +
-                "to download the file to your device. Please be warned that this may be slow.");
-        }
-        else {
+    function addPreviewNotification(showNotification, downloadLink, bigFile = false) {
+        if (showNotification) {
+            if (bigFile) {
+                $("#notificationgoeshere").html("<h4 style='color: darkorange'>The file is too large to preview it now. " +
+                    "Please contact us if you're having trouble downloading it.</h4>");
+            } else {
+                $("#notificationgoeshere").html("<h4 style='color: darkorange'>Only a part of the file is loaded below. " +
+                    "<a id='loadFileCompletely' href='" + downloadLink + "'>Click here</a> " +
+                    "to download the file to your device.</h4");
+            }
+            $("#notificationgoeshere").show();
+        } else if (bigFile) {
+            $("#notificationgoeshere").html("<h4 style='color: darkorange'>The file is too large to preview it now. " +
+                "Please contact us if you're having trouble downloading it.</h4>");
+            $("#notificationgoeshere").show();
+        } else {
             $("#notificationgoeshere").hide();
         }
     }
 
     function getCSVData(data) {
-        var lines = data.match(/[^\r\n]+/g);
-        var data = [];
-        for (var id = 0; id < lines.length; id++) {
-            var line = lines[id];
-            var fields = line.split(",");
+        const lines = data.match(/[^\r\n]+/g);
+        data = [];
+        for (let id = 0; id < lines.length; id++) {
+            const line = lines[id];
+            const fields = line.split(",");
             data.push(fields);
         }
         return data;

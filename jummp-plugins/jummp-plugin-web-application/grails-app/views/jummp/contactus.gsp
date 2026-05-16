@@ -24,6 +24,7 @@
 
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <title><g:message code="${titleCode}" default="Contact Us"/> | BioModels</title>
 </head>
 <body>
 	<g:message code="${messageCode}" />

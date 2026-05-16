@@ -1,7 +1,10 @@
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css"/>
 <style>
 #files {
     overflow-y: scroll !important;
     min-height: 320px;
+    margin: 0; /* reset this property against ebi-global */
 }
 @media (min-width: 768px) {
     #files {
@@ -27,6 +30,22 @@
     /*overflow-y: scroll; */
     /*height: 279px*/
 }
+
+.media {
+    margin: 5px;
+    padding: 5px;
+    list-style-type: none;
+    background-color: #d8d8e6;
+}
+.media > hr {
+    margin: 0;
+}
+
+.btn-remove-file {
+    cursor: pointer;
+    font-size: x-large;
+    color: red;
+}
 </style>
 <div class="row">
     <div class="columns small-12 medium-10 large-10">
@@ -43,10 +62,10 @@
         <!-- Our markup, the important part here! -->
         <div id="drag-and-drop-zone" class="dm-uploader">
             <div class="padding-3 margin-3">
-                <h3 class="text-muted" style="margin-top: 3rem!important; margin-bottom: 3rem!important;">Drag
+                <h3 class="text-muted" style="margin-top: 1rem!important; margin-bottom: 1rem!important;">Drag
             &amp; drop files here</h3></div>
 
-            <div class="padding-3 margin-3 btn button" style="margin-bottom: 3rem!important; display: block; width:
+            <div class="padding-3 margin-3 btn button" style="margin-bottom: 1rem!important; display: block; width:
             100%">
                 <span>Open the file Browser</span>
                 <input type="file" title='Click to add Files' class="btn btn-primary" name="modelFiles[]" multiple
@@ -66,7 +85,7 @@
                 radio box</span></h3>
             </div>
             <div class="card-section">
-                <ul class="list-unstyled" id="files" style="margin-right: 1.25rem">
+                <ul class="list-unstyled" id="files">
                 <g:if test="${files}">
                     <jummp:renderExistingFiles files="${files}" />
                 </g:if>
@@ -81,7 +100,7 @@
         <li class="media">
             <div class="media-body mb-1">
                 <div class="row">
-                    <div class="columns small-12 medium-5 large-5">
+                    <div class="columns small-12 medium-4 large-4">
                         <p class="mb-2">
                             <strong class="file-name">%%filename%%</strong> - Size: <strong
                         class="file-size">%%filesize%%</strong>, Status: <span
@@ -92,25 +111,30 @@
                         <div class="progress mb-2">
                             <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"
                                  role="progressbar"
-                                 style="width: 0%"
+                                 style="width: 0"
                                  aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
                     </div>
-                    <div class="columns small-12 medium-6 large-6">
+                    <div class="columns small-12 medium-5 large-5">
                         <label>File Description
                             <input type="text" name="fileDescription" class="file-description"
                                    placeholder="Describe this file. For example: What is this file used for?">
                         </label>
                     </div>
+                    <div class="columns small-12 medium-2 large-2">
+                        <div class="pretty p-switch p-fill">
+                            <input type="radio" name="isModelFile" class="is-model-file">
+                            <div class="state p-success">
+                                <label style="line-height: 0; margin-left: 5px">Main model file</label>
+                            </div>
+                        </div>
+                    </div>
                     <div class="columns small-12 medium-1 large-1">
-                        <label>Main model file
-                            <input type="radio" name="isModelFile" class="is-model-file"></label>
+                        <i class="icon icon-common icon-times btn-remove-file" data-file-name="%{filename}%"></i>
                     </div>
                 </div>
             </div>
-            <button type="button" name="removeFile" class="button btn-remove-file">Remove</button>
-            <hr class="mt-1 mb-1" style="color: lightgrey; max-width: 100%"/>
         </li>
         </script>
     </div>
@@ -120,6 +144,8 @@
     src="${resource(contextPath: serverURL, dir: '/js/biomodels/uploader-1.0.2', file: 'biomodels-ui.js')}">
 </script>
 <script type="text/javascript">
+    const duplicateFilesMsg = "The file names in your submission should not be identical. " +
+        "Please double-check the recently uploaded files having the name: ";
     $(function () {
         /*
          * For the sake keeping the code clean and the examples simple this file
@@ -132,12 +158,14 @@
             /**
              * We have no max size limit. Notes: the default is 0 meaning no size limit.
              * If we want to use this customisable property, please externalise its value in Config.groovy
-             * and refer it here.
+             * and refer it here. See more options and callbacks in README.md at
+             * https://github.com/danielm/uploader/blob/master/README.md#options
              */
             // maxFileSize: 12000000, // 12 Megs
             extraData: {
                 "submissionFolder": "${submissionFolder}"
             },
+            multiple: true,
             onDragEnter: function () {
                 // Happens when dragging something over the DnD area
                 this.addClass('active');
@@ -151,8 +179,10 @@
                 ui_add_log('Penguin initialized :)', 'info');
             },
             onComplete: function () {
-                // All files in the queue are processed (success or error)
+                checkIdenticalFileNames();
+
                 ui_add_log('All pending transfers finished');
+                console.log("Uploaded successfully");
             },
             onNewFile: function (id, file) {
                 // When a new file is added using the file selector or the DnD area
@@ -195,33 +225,106 @@
         });
     });
 
-    function validateFileUpload() {
-        errorMessages = [];
-        currentValidation = false;
-        let nbModelFiles = 0;
+    function retrieveUploadedFiles() {
+        // All files in the queue are processed (success or error)
+        return $('.file-name').map(function () {
+            return this.innerHTML;
+        }).get();
+    }
+
+    function buildUploadedFilesMap() {
         const allMediaElements = $('.media');
-        const ids = allMediaElements.map(function () {
+        return allMediaElements.map(function () {
             let filename = $(this).find("strong.file-name").html();
             let description = $(this).find("input.file-description").val();
             let isModelFile = $(this).find("input.is-model-file")[0].checked;
             let originalFilesize = $(this).find("a.original-file-size").text();
-            return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile,
-                            originalFilesize: originalFilesize };
+            return {
+                id: $(this).prop("id"), filename: filename, description: description, isModelFile: isModelFile,
+                originalFilesize: originalFilesize
+            };
         }).get();
-        $.ajax({
+    }
+
+    // check acceptable characters for the file names
+    function checkAcceptableCharactersForFileNames() {
+        let uploadedFiles = retrieveUploadedFiles();
+        let messages = [];
+        uploadedFiles.forEach((filename) => {
+            let isValid = checkAcceptableCharactersForFileName(filename);
+            if (!isValid) {
+                let msg = "Please make sure the file name \'" + filename +
+                    "\' only containing alphanumeric characters, hyphens and underscores. " +
+                    "It should be followed by a proper file extension.";
+                messages.push(msg);
+            }
+        });
+        return messages;
+    }
+
+    function checkIdenticalFileNames() {
+        let uploadedFiles = retrieveUploadedFiles();
+        let uploadedFilesMap = {};
+        uploadedFiles.forEach(function(x) {
+            uploadedFilesMap[x] = (uploadedFilesMap[x] || 0) + 1;
+        });
+        let messages = [];
+        let msg = "";
+        $.each(uploadedFilesMap, (filename, count) => {
+            if (count > 1) {
+                msg = duplicateFilesMsg + filename +".";
+                messages.push(msg);
+            }
+        });
+        return messages;
+    }
+
+    function validateFileUpload() {
+        errorMessages = [];
+        currentValidation = false;
+        const ids = buildUploadedFilesMap();
+        let messages = checkIdenticalFileNames();
+        let acceptableFileNames = checkAcceptableCharactersForFileNames();
+        messages.push(...acceptableFileNames);
+        handleErrorMessages(messages);
+        let msg = "";
+        if (!currentValidation) {
+            return $.ajax({
+                type: "POST",
+                url: "${createLink(controller: "submission", action: "renderFileUploadFailures")}",
+                success: function() {
+                    msg = "Failed to upload your files.";
+                    showNotification(msg);
+                    console.log(msg);
+                },
+                error: function() {
+                    msg = "There have been internal errors when trying to upload your files.";
+                    console.log(msg);
+                    showNotification(msg);
+                    toastr.error(msg);
+                }
+            });
+        }
+
+        return $.ajax({
             type: "POST",
             url: "${createLink(controller: "submission", action: "processUploadFiles")}",
             data: {
-                submissionSessionId: "${submissionSessionId}",
+                submissionSessionId: "${submissionFolder}",
                 submissionFolder: "${submissionFolder}",
                 uploadingFiles: JSON.stringify(ids),
                 files: JSON.stringify(existingFiles),
-                isUpdate: isUpdate
+                isUpdate: isUpdate,
+                changesMade: [...changesMade]
             },
-            async: false,
+            async: true,
             dataType: "JSON",
+            beforeSend: function() {
+                console.log("Validating files and extracting some information if it is available...");
+            },
             success: function(response) {
-                changesMade = response.changesMade;
+                console.log("Updating objects and variables tighten to the form...");
+                changesMade = response["changesMade"];
                 let data = response["filesMap"];
                 let msg = "";
                 if (data.length) {
@@ -232,9 +335,10 @@
                     }
                     const hasOneModelFile = data.filter(e => e.isModelFile).length === 1;
                     let modelFileWithNoErrors = true;
+                    let allFileNamesValid = true;
                     if (!hasOneModelFile) {
                         msg =
-                            "Please verify the Main Model file radio box. A submission must have at least only one main model file.";
+                            "Please verify the Main Model file radio box. A submission must have at least one main model file.";
                         errorMessages.push(msg);
                     } else {
                         modelFile = data.filter(e => e.isModelFile)[0];
@@ -242,6 +346,13 @@
                             modelFileWithNoErrors = false;
                         } else {
                             // model file
+
+                            // populate the publication namespace and accession guessed when trying to detect model format
+                            publication = modelFile["detectedModelFormat"]["pubURI"];
+                            guessedPublicationNamespace = modelFile["detectedModelFormat"]["namespace"];
+                            guessedPublicationCollectionLabel = modelFile["detectedModelFormat"]["collectionLabel"];
+                            guessedPublicationAccession = modelFile["detectedModelFormat"]["accession"]
+
                             modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 && modelFile["validSyntax"]
                             consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
                             if (!modelFile["validSyntax"]) {
@@ -250,19 +361,31 @@
                                 toastr.clear();
                                 toastr.warning(modelFile["validateSyntaxErrors"])
                             }
+                            // check the model file name for the invalid characters
+                            let hasError = consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
+                            let isModelMainFileNameValid = !hasError;
+
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
+                            let areAdditionalFileNamesValid = true;
                             if (additionalFiles.length > 0) {
-                                // there is no file having errors
-                                modelFileWithNoErrors = additionalFiles.filter(f => f["validateFileErrors"].length
-                                    > 0).length === 0;
+                                // no file having errors
+                                modelFileWithNoErrors = additionalFiles.filter(f =>
+                                    f["validateFileErrors"].length > 0).length === 0;
                                 $.each(additionalFiles, function (i, f) {
                                     consolidateErrorMessages(f["filename"], f["validateFileErrors"]);
+                                    // check each additional file name for the invalid characters
+                                    let hasError = consolidateErrorMessages(f["filename"], f["validateFileName"]);
+                                    if (hasError) { areAdditionalFileNamesValid = false; }
                                 });
                             }
+                            // update the validation of all file names
+                            allFileNamesValid = isModelMainFileNameValid && areAdditionalFileNamesValid;
+                            // model info
+                            modelInfo = modelFile["detectedModelInfo"];
                         }
                     }
-                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors;
+                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors && allFileNamesValid;
                 } else {
                     currentValidation = false;
                     errorMessages.push("A submission must have at least only one main model file.")
@@ -270,8 +393,9 @@
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 let msg = JSON.parse(JSON.stringify(errorThrown));
-                console.log("inside error " + msg);
-                console.log(textStatus);
+                msg = "Error: " + msg;
+                console.log(msg);
+                toastr.error(msg);
                 $('.flashNotificationDiv').html(msg).show();
             }
         });
@@ -279,14 +403,33 @@
 
     $('#files').on("click", '.btn-remove-file', function () {
        let parent = $(this).parent();
+       let grandparent = parent.parent();
+       grandparent = grandparent.parent();
+       parent = grandparent.parent();
        parent.remove();
     });
 
+    function handleErrorMessages(messages) {
+        if (messages.length) {
+            console.log(messages);
+            showFlashMessages(messages);
+            toastr.clear();
+            toastr.error(messages);
+            currentValidation = false;
+        } else {
+            hideFlashMessages();
+            currentValidation = true;
+        }
+    }
+
     function consolidateErrorMessages(filename, messages) {
+        if (typeof messages === "undefined") { return false; }
         if (messages.length > 0) {
             $.each(messages, function (id, msg) {
                 errorMessages.push(filename + ": " + msg);
             });
+            return true;
         }
+        return false;
     }
 </script>

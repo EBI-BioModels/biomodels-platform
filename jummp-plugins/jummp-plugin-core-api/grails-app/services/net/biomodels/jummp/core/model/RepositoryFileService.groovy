@@ -19,14 +19,13 @@
  */
 
 
-
-
-
 package net.biomodels.jummp.core.model
 
+import grails.plugins.rest.client.RestBuilder
 import grails.transaction.Transactional
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.RepositoryFile
@@ -38,6 +37,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
@@ -45,16 +45,20 @@ import java.nio.file.StandardCopyOption
  * This class enables to handle services for manipulating repository files such as updating repository files,
  * retrieving these files from the file system, etc.
  *
- * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
- * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class RepositoryFileService implements GrailsConfigurationAware {
     static scope = "prototype"
     private static final Logger logger = LoggerFactory.getLogger(RepositoryFileService.class)
+    def configurationService
     def modelService
     def vcsService
     def grailsApplication
+
     private String modelCacheDir
+
+    private String srvFtpDataMover
 
     /**
      * Populate the model cache directory
@@ -66,6 +70,10 @@ class RepositoryFileService implements GrailsConfigurationAware {
             String message = "The configuration file is missing the property of jummp.model.cache.dir"
             logger.debug(message)
         }
+
+        // the hostname of the server running FTP Data Mover service
+        srvFtpDataMover = co.jummp.revision.ftpdatamover.srv
+        logger.info("Finished the bean initialisation")
     }
 
     /**
@@ -86,13 +94,21 @@ class RepositoryFileService implements GrailsConfigurationAware {
         modelCacheDir = location
     }
 
+    String getSrvFtpDataMover() {
+        return srvFtpDataMover
+    }
+
+    void setSrvFtpDataMover(String srvFtpDataMover) {
+        this.srvFtpDataMover = srvFtpDataMover
+    }
+
     /**
      * This method aims at updating the description of a given repository file.
      *
-     * @param repoFileId    The identifier of the repository file
-     * @param revisionId    The identifier of the revision which the repository file is gone with
-     * @param path          The string represents the place where the repository file is hosting
-     * @param description   The text denotes the description of the repository file
+     * @param repoFileId The identifier of the repository file
+     * @param revisionId The identifier of the revision which the repository file is gone with
+     * @param path The string represents the place where the repository file is hosting
+     * @param description The text denotes the description of the repository file
      * @return value        A logical value indicates whether the process is success or failed
      */
     @Transactional
@@ -117,17 +133,17 @@ $description --- of the repository file $path""")
     /**
      * This method aims at converting a list of the physical files to the responding repository file objects
      *
-     * @param   files   The list of physical files
-     * @return  a list  The list of repository file objects
+     * @param files The list of physical files
+     * @return a list  The list of repository file objects
      */
-    static List<RepositoryFileTransportCommand> asRFTCList(List<File> files) {
-        List<RepositoryFileTransportCommand> results = new LinkedList<>()
+    static List<RFTC> asRFTCList(List<File> files) {
+        List<RFTC> results = new LinkedList<>()
         // work out MIME type
         def sherlock = new DefaultDetector()
         files.each { File file ->
             def is = new BufferedInputStream(new FileInputStream(file))
             String mimeType = sherlock.detect(is, new Metadata()).toString()
-            RepositoryFileTransportCommand command = new RepositoryFileTransportCommand(
+            RFTC command = new RFTC(
                 path: file.name,
                 description: file.name,
                 mimeType: mimeType
@@ -147,8 +163,8 @@ $description --- of the repository file $path""")
             files = vcsService.retrieveFiles(revision)
             // log the result
             String modelId = "${revision.model.submissionId}.${revision.revisionNumber}"
-            String message = """Retrieving the revision ${modelId} from the local model cache directory failed. \
-The revision has been checked out from VCS instead."""
+            String message = """Retrieving the revision ${modelId} from the local model cache directory failed due to
+ ${e.message}. The revision has been checked out from VCS instead."""
             logger.debug(message)
             if (files?.size()) {
                 // update the cache directory of this revision
@@ -178,7 +194,7 @@ The revision has been checked out from VCS instead."""
             if (!revisionDirectory.exists()) {
                 throw new FileNotFoundException()
             } else {
-                returnedFiles = revisionDirectory.listFiles().toList()
+                returnedFiles = hideSomeFileTypes(revisionDirectory, 'indexData.json')
             }
             if (returnedFiles?.isEmpty()) {
                 String message = """The cache directory of this model ${modelId} revision ${revisionNumber} is empty. \
@@ -187,7 +203,7 @@ The revision has been checked out from VCS instead."""
             }
         } catch (FileNotFoundException me) {
             String message = """The files associated with this model ${modelId}, \
-revision ${revisionNumber} hasn't been cached yet"""
+revision ${revisionNumber} hasn't been cached yet due to ${me.message}."""
             throwModelException(modelId, message)
         }
         return returnedFiles
@@ -212,7 +228,8 @@ revision ${revisionNumber} hasn't been cached yet"""
         boolean result = false
         try {
             List<File> files = vcsService.retrieveFiles(revision)
-            for (File it: files) {
+            files = hideSomeFileTypes(files, 'indexData.json')
+            for (File it : files) {
                 String fileName = it.getName()
                 logger.debug("File ${fileName} is being copied")
                 Files.copy(it.toPath(),
@@ -230,16 +247,16 @@ $modelId, revision $revNum: ${e.message}""")
         return result
     }
 
-    List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final Revision revision) {
-        List<RepositoryFileTransportCommand> repFiles = new LinkedList<RepositoryFileTransportCommand>()
+    List<RFTC> getRepositoryFilesForRevision(final Revision revision) {
+        List<RFTC> repFiles = new LinkedList<RFTC>()
         List<File> files = retrieveFiles(revision)
         revision.repoFiles.each { rf ->
             File tmpFile = files.find { it.getName() == (new File(rf.path)).getName() }
             if (tmpFile != null) {
                 long size = tmpFile.length()
                 long configPreviewSize = grailsApplication.config.jummp.web.file.preview
-                boolean showPreview = size > configPreviewSize ? true : false
-                RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
+                boolean showPreview = size < configPreviewSize
+                RFTC rftc = new RFTC(
                     id: rf.id,
                     path: tmpFile.absolutePath,
                     filename: rf.path,
@@ -256,7 +273,20 @@ $modelId, revision $revNum: ${e.message}""")
         return repFiles
     }
 
-    List<File> getFilesFromRF(List<RepositoryFileTransportCommand> files) {
+    /**
+     * Gets the directory path of the location where the revision's files are cached.
+     *
+     * @param revision a {@link Revision} object indicating the revision in question.
+     *
+     * @return a {@link Path} object showing the path of the cached directory if the location is available.
+     * Otherwise, it returns null.
+     */
+    Path getCachedDirForRevision(final Revision revision) {
+        Path defaultPath = Paths.get(modelCacheDir, revision.model.submissionId, revision.revisionNumber as String)
+        return defaultPath.toFile().exists() ? defaultPath : null
+    }
+
+    List<File> getFilesFromRF(List<RFTC> files) {
         List<File> modelFiles = []
         if (files) {
             for (rf in files) {
@@ -279,12 +309,12 @@ $modelId, revision $revNum: ${e.message}""")
      *      there is at least one empty file, or
      *      there are no main files.
      *
-     * @param repoFileCmds  a list of RepositoryFileTransportCommand objects to validate and convert into
+     * @param repoFileCmds a list of RepositoryFileTransportCommand objects to validate and convert into
      *                      domain objects.
-     * @param revision      a Revision object
+     * @param revision a Revision object
      * @return a list of RepositoryFile domain objects
      */
-    List<RepositoryFile> convertRFTCToRF(List<RepositoryFileTransportCommand> repoFileCmds,
+    List<RepositoryFile> convertRFTCToRF(List<RFTC> repoFileCmds,
                                          Revision revision) {
         List<RepositoryFile> results = []
         boolean foundValidMainFile = false
@@ -331,7 +361,7 @@ $modelId, revision $revNum: ${e.message}""")
             if (!domain.validate()) {
                 def msg = new StringBuffer("Invalid file ${rf.properties} uploaded for model ${m.properties}.")
                 msg.append("The file failed due to ${domain.errors.allErrors.inspect()}")
-                logger.error(msg)
+                logger.error(msg.toString())
                 msg = """Your submission appears to contain invalid file ${fileName}. Please review it and try again."""
                 throw new ModelException(m, msg)
             } else {
@@ -345,6 +375,112 @@ for revision ${revision.dump()} without main file"""
             throw new ModelException(m, "Missing main file for the new model revision ${revision.name}")
         }
         results
+    }
+
+    String copyRevisionFilesToFtp(final Revision revision) {
+        Proxy proxy = configurationService.verifyHttpProxy()
+        RestBuilder rest
+        if (proxy) {
+            rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
+        } else {
+            rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
+        }
+
+        String SRV_URL = getSrvFtpDataMover()
+        String vcsId = revision.model.vcsIdentifier
+        String parentFolderName = vcsId.take(3)
+        String submissionId = revision.model.submissionId
+        int revisionNumber = revision.revisionNumber
+        String site = "prod"
+        String serverURL = grailsApplication.config.grails.serverURL as String
+        if (serverURL.contains("wwwdev")) {
+            site = "dev"
+        }
+        String queryURL = "${SRV_URL}/model/publish/${site}/${parentFolderName}/${submissionId}/${revisionNumber}"
+        def response = rest.get(queryURL) {
+            accept("application/json")
+            contentType("application/json;charset=UTF-8")
+        }
+        logger.debug(response?.text)
+        response?.text
+    }
+
+    /**
+     * Purges the folder where the model files are cached
+     *
+     * @param model a {@link Model} object holding all the files of the model
+     *
+     * @return true if the deletion is successfully completed. Otherwise, it returns false.
+     */
+    boolean purgeCachedDirOfModel(final Model model) {
+        Path defaultPath = Paths.get(modelCacheDir, model.submissionId)
+        logger.info("Deleting the cached dir of the model ${model.submissionId}.")
+        if (defaultPath) {
+            return defaultPath.deleteDir()
+        } else {
+            logger.debug("The cached dir of the model ${model.submissionId} doesn't exist!")
+            return true
+        }
+    }
+
+    /**
+     * Purges the folder where the model revision files are cached
+     *
+     * @param revision a {@link Revision} object holding the files
+     *
+     * @return true if the deletion is successfully completed. Otherwise, it returns false.
+     */
+    boolean purgeCachedDirOfRevision(final Revision revision) {
+        logger.info("Deleting the cached dir of the revision ${revision.model.submissionId}.${revision.revisionNumber}.")
+        Path path = getCachedDirForRevision(revision)
+        boolean retVal = path ? path.deleteDir() : false
+        return retVal
+    }
+    /**
+     * Purges all the {@link RepositoryFile} objects linked to the given {@link Revision} object.
+     * This is an irreversible action.
+     *
+     * @param rev an {@link Revision} object
+     * @return  a boolean value telling the deletion is success or failed
+     */
+    static boolean purgeRepositoryFiles(final Revision rev) {
+        List<RepositoryFile> repoFiles = RepositoryFile.findAllByRevision(rev)
+        boolean retVal = true
+        try {
+            repoFiles.each {
+                def queryStr = "delete RepositoryFile rf where rf.id = :rfId and rf.revision.id = :revisionId"
+                RepositoryFile.executeUpdate(queryStr, [rfId: it.id, revisionId: rev.id])
+            }
+            retVal = RepositoryFile.findAllByRevision(rev) ? false : true
+        } catch (Exception ex) {
+            retVal = false
+            logger.error("""An error happened when purging all working files of the model \
+${rev.model.submissionId}.${rev.revisionNumber} due to ${ex.message}.""")
+        } finally {
+            RepositoryFile.withSession {
+                it.flush()
+            }
+        }
+        retVal
+    }
+
+    /**
+     * Purges the working directory of a given model. This is an undone action.
+     *
+     * @param model {@link Model} object indicating the model in question.
+     *
+     * @return true if the action is successful, otherwise it returns false.
+     */
+    boolean purgeWorkingRepositoryFiles(final Model model) {
+        boolean retVal
+        try {
+            retVal = modelService.deleteModelWorkingDirectory(model)
+        } catch (Exception ex) {
+            retVal = false
+            logger.error("""An error happened when purging all working files of the model \
+${model.submissionId} due to ${ex.message}.""")
+        }
+        retVal
     }
 
     private void doUpdateModelRevisionCacheDirectory(final Revision revision) {
@@ -372,5 +508,21 @@ the model ${modelId} revision ${revision.revisionNumber}"""
         ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
         logger.error(message)
         throw new ModelException(modelTC, message)
+    }
+
+    private static List<File> hideSomeFileTypes(final File revisionDirectory, String filenameToBeFiltered /*String fileExtension*/) {
+        List<File> returnedFiles = revisionDirectory.listFiles().toList()
+        returnedFiles = hideSomeFileTypes(returnedFiles, filenameToBeFiltered)
+        return returnedFiles
+    }
+
+    private static List<File> hideSomeFileTypes(final List<File> listOfFiles, String filenameToBeFiltered /*String fileExtension*/) {
+        List<File> returnedFiles = listOfFiles.findAll {
+            String filename = it?.name
+            //String extension = filename?.substring(filename?.lastIndexOf(".") + 1)
+            //extension != fileExtension
+            filenameToBeFiltered != filename
+        }
+        return returnedFiles
     }
 }

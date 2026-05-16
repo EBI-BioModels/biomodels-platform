@@ -31,24 +31,33 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Login</title>
+        <title>Login | BioModels</title>
+        <g:render template="/usermanagement/head"/>
     </head>
     <body>
         <g:render template="/templates/initRegistration"
                   plugin="jummp-plugin-web-application" />
         <div id="login" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
+                <form action="${postUrl}" method="post" id="loginForm" class="cssform" autocomplete="on">
                     <div class="row column log-in-form">
                         <h3 class="text-center">Log in to your account</h3>
                         <label><g:message code="login.form.label"/>
                             <input type='text' name='j_username' id='username' placeholder="Username">
                         </label>
                         <label><g:message code="login.form.password"/>
-                            <input type='password' name='j_password' id='password' placeholder="Password"/>
+                            <input type='password' name='j_password' id='password' placeholder="Password" autocomplete="on"/>
+                            <span id="toggle-password"
+                                  class="fa fa-fw fa-eye field-icon toggle-password"></span>
                         </label>
-                        %{--<input id="show-password" type="checkbox"><label for="show-password">Show password</label>--}%
-                        <p><button type="submit" class="button expanded">Log In</button></p>
+                        <label for='j_previousURL'>
+                            <input type='text' name='j_previousURL' id='j_previousURL'  value="${j_previousURL}"
+                                   style="display: none"/></label>
+                        <label for="j_deviceInfo">
+                            <input type='text' name='j_deviceInfo' id='j_deviceInfo' value=""
+                                   style="display: none"/>
+                        </label>
+                        <p><button type="button" class="button expanded" id="btnLogIn">Log In</button></p>
                         <p class="text-center">
                             <a href="${grailsApplication.config.grails.serverURL}/forgotpassword">Forgot your password?</a></p>
                         <g:if test="${grailsApplication.config.jummp.security.anonymousRegistration}">
@@ -60,26 +69,56 @@
 
             </div>
         </div>
+
+        <g:render template="/usermanagement/common-scripts"/>
+
         <script type='text/javascript'>
-            // TODO: move out of HTML page
-            $("#loginForm input").focus(function() {
+            const referrer = document.referrer;
+            const loginInput = $("#loginForm input");
+            const loginForm = $("#loginForm");
+            const loginUsername = $("#username");
+            const loginPassword = $("#password");
+            loginInput.focus(function() {
                 if ($(this).data("reset") === undefined) {
                 $(this).val("");
                 $(this).data("reset", true);
                 }
             });
-            $("#loginForm input").keyup(function(event) {
-            // magic value 13 is enter
-            if (event.which == 13) {
-                $("#loginForm").submit();
+            loginInput.on("keyup", function(event) {
+                // magic value 13 is entered
+                if (event.which === 13) {
+                    loginForm.submit();
+                    checkCompromisedPasswordOnServerSide(loginUsername.val(), loginPassword.val());
                 }
             });
-            $("#login div.loginButton button").click(function() {
-                $("#loginForm").submit();
+            const loginSubmit = $("#btnLogIn");
+            loginSubmit.on("click", function() {
+                const deviceInfo = $("#j_deviceInfo");
+                $(deviceInfo).val(localStorage.getItem(loginUsername.val()));
+                loginForm.submit();
+                checkCompromisedPasswordOnServerSide(loginUsername.val(), loginPassword.val());
+            });
+            $(document).ready(function() {
+                if (referrer.indexOf("biomodels/MODEL") > 0) {
+                    const previousURL = $("#j_previousURL");
+                    previousURL.val(referrer);
+                }
+            });
+            loginPassword.on("focus", function() {
+                clearNotification();
+                hideNow();
+            });
+            loginPassword.on("blur", function() {
+                // the function below was defined in the common-script.gsp template
+                verifyCompromisedPassword($(this).val());
             });
         </script>
+    <g:render template="/usermanagement/foot"/>
     </body>
 </html>
+<content tag="login">
+    selected
+</content>
 <content tag="title">
     Login
 </content>

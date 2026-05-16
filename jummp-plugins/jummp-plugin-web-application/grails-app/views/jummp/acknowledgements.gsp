@@ -25,9 +25,19 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <title><g:message code="${titleCode}" default="Acknowledgements" /> | BioModels</title>
     <style type="text/css">
         .underline {
             border-bottom: 1px solid grey;
+        }
+
+        .sponsors-logo {
+            text-align: center;
+            padding-top: 8px;
+        }
+
+        .sponsors-logo a {
+            border-bottom: none;
         }
     </style>
 </head>
@@ -37,9 +47,9 @@
 
 BioModels is developed by the <a href="https://www.ebi.ac.uk/about/people/henning-hermjakob" title="Molecular Networks team">Molecular Networks team</a> (<a href="//www.ebi.ac.uk/" title="European Bioinformatics Institute">EMBL-EBI</a>, UK) and the <a href="http://www.sbml.org/" title="Systems Biology Markup Language (SBML)" class="external">SBML Team</a> (<a href="//www.caltech.edu/" title="California Institute of Technology">Caltech</a>, USA).
 
-<div style="text-align:center; padding-top: 8px;">
-  <a href="//www.ebi.ac.uk/" title="EMBL - European Bioinformatics Institute (EBI)"><img border="0" title="EMBL-EBI" alt="EMBL-EBI logo" src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/EMBL_EBI_logo-small.png" style="vertical-align:middle;" /></a>
-  <a href="http://sbml.org/" title="SBML" style="padding-left:60px;"><img border="0" title="SBML" alt="SBML logo" src="//www.ebi.ac.uk/biomodels-static/icons/SBML.png" style="vertical-align:middle;" /></a>
+<div class="sponsors-logo">
+  <a href="//www.ebi.ac.uk/" title="EMBL - European Bioinformatics Institute (EBI)"><img border="0" title="EMBL-EBI" alt="EMBL-EBI logo" src="${bmStaticAssetsURL}/images/EMBL_EBI_logo-small.png" style="vertical-align:middle;" /></a>
+  <a href="http://sbml.org/" title="SBML" style="padding-left:60px;"><img border="0" title="SBML" alt="SBML logo" src="${bmStaticAssetsURL}/icons/SBML.png" style="vertical-align:middle;" /></a>
 </div>
 
 
@@ -52,25 +62,25 @@ the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)"
     (<a href="http://transqst.org/" title="This project has received funding from the Innovative Medicines Initiative 2 Joint Undertaking under grant agreement No 116030. This Joint Undertaking receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.">TransQST, 116030</a>).
 </p>
 
-<div style="text-align:center; padding-top: 8px;">
+<div class="sponsors-logo">
   <a href="//www.embl.org/"
      title="European Molecular Biology Laboratory (EMBL)">
-      <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/embl_logo.png"
+      <img src="${bmStaticAssetsURL}/images/embl_logo.png"
            title="European Molecular Biology Laboratory (EMBL)"
            alt="EMBL logo" style="vertical-align: middle;" /></a>
   <a href="//www.bbsrc.ac.uk/"
      title="Biotechnology and Biological Sciences Research Council (BBSRC)">
-      <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/bbsrc_logo.png"
+      <img src="${bmStaticAssetsURL}/images/bbsrc_logo.png"
            title="Biotechnology and Biological Sciences Research Council (BBSRC)"
            alt="BBSRC logo" style="padding-left:60px; vertical-align: middle;" /></a>
   <a href="//www.imi.europa.eu/"
      title="Innovative Medicines Initiative (IMI)">
-      <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/IMI_logo-small.png"
+      <img src="${bmStaticAssetsURL}/images/IMI_logo-small.png"
            title="Innovative Medicines Initiative (IMI)"
            alt="IMI logo" style="padding-left:60px; vertical-align: middle;" /></a>
   <a href="//cordis.europa.eu/fp7/"
      title="Seventh Framework Programme (FP7)">
-      <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/FP7_logo-small.png"
+      <img src="${bmStaticAssetsURL}/images/FP7_logo-small.png"
            title="Seventh Framework Programme (FP7)"
            alt="FP7 logo" style="padding-left:60px; vertical-align: middle;" /></a>
 </div>
@@ -90,42 +100,44 @@ the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)"
 </p>
 -->
 
-<div style="text-align:center; padding-top: 8px;">
+<div class="sponsors-logo">
   <a href="http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/zentren/zentrum-fuer-bioinformatik-tuebingen.html"
      title="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen">
       <img border="0"
            title="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen"
            alt="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen logo"
-           src="//www.ebi.ac.uk/biomodels-static/icons/ZBIT_logo.png"
+           src="${bmStaticAssetsURL}/icons/ZBIT_logo.png"
            style="vertical-align:middle;" /></a>
   <a href="http://www.dkfz.de/"
      title="DKFZ"
      style="padding-left:20px;">
       <img border="0"
            title="German Cancer Research Center (DKFZ)"
-           alt="DKFZ logo" src="//www.ebi.ac.uk/biomodels-static/icons/dkfz_logo.png"
+           alt="DKFZ logo" src="${bmStaticAssetsURL}/icons/dkfz_logo.png"
            style="vertical-align:middle;" /></a>
   <a href="http://jjj.biochem.sun.ac.za/"
      title="JWS online"
      style="padding-left:20px;">
       <img title="JWS Online"
            alt="JWS online logo"
-           src="//www.ebi.ac.uk/biomodels-static/icons/JWS.png"
+           src="${bmStaticAssetsURL}/icons/JWS.png"
            style="vertical-align: middle; border: 0" /></a>
-  <!--<a href="http://www.manchester.ac.uk/" title="University of Manchester" style="padding-left:20px;"><img border="0" title="University of Manchester" alt="University of Manchester logo" src="//www.ebi.ac.uk/biomodels/icons/Manchester-University_logo.png" style="vertical-align:middle;" /></a>-->
+  <!--<a href="http://www.manchester.ac.uk/" title="University of Manchester" style="padding-left:20px;">
+  <img border="0" title="University of Manchester" alt="University of Manchester logo"
+  src="//www.ebi.ac.uk/biomodels/icons/Manchester-University_logo.png" style="vertical-align:middle;" /></a>-->
   <a href="http://www.mcisb.org/"
      title="MCISB"
      style="padding-left:20px;">
         <img title="Manchester Centre for Integrative Systems Biology (MCISB)"
              alt="MCISB logo"
-             src="//www.ebi.ac.uk/biomodels-static/icons/MCISB_logo.png"
+             src="${bmStaticAssetsURL}/icons/MCISB_logo.png"
              style="vertical-align: middle; border: 0" /></a>
   <a href="//sems.uni-rostock.de/"
      title="Simulation Experiment Management for Systems Biology, Systems Biology and Bioinformatics, University of Rostock"
      style="padding-left:20px;">
       <img border="0" title="Simulation Experiment Management for Systems Biology"
            alt="SEMS logo"
-           src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/SEMS_logo.png"
+           src="${bmStaticAssetsURL}/images/SEMS_logo.png"
            style="vertical-align:middle;" /></a>
 </div>
 
@@ -175,9 +187,15 @@ the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)"
   <li>Jacky L. Snoep, Chair, University of Stellenbosch, SA</li>
 </ul>
 
+<h3 class="underline">Development Software</h3>
+<div class="sponsors-logo">
+    <a href="https://www.yourkit.com/"
+       title="Java and .NET profilers. Continuous performance monitoring." target="_blank">
+        <img src="https://www.yourkit.com/images/yklogo.png" alt="YourKit logo" style="vertical-align:middle;"/>
+    </a>
+</div>
 
-<br />
-
+<br/>
 </body>
 <content tag="acknowledgements">
     selected

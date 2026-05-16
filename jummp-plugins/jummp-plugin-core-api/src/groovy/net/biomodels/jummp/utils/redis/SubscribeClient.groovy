@@ -21,6 +21,7 @@
 
 package net.biomodels.jummp.utils.redis
 
+import grails.util.Holders
 import net.biomodels.jummp.core.subscribers.ModelIdGenerationListener
 import net.biomodels.jummp.core.subscribers.ModelViewSubscriber
 import org.slf4j.Logger
@@ -43,6 +44,8 @@ class SubscribeClient {
     private String channel
     JedisPubSub listener = new ModelViewSubscriber()
 
+    def redisService = Holders.grailsApplication.mainContext.getBean("redisService")
+
     ExecutorService executor
     Future future = null
 
@@ -58,20 +61,20 @@ class SubscribeClient {
         LOGGER.debug(">>> SUBSCRIBE > Channel: $channel")
         // When the recipient is listening for subscribed messages, the process is blocked until the quit message is
         // received (passively) or the subscription is canceled actively
-        Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
+        redisService.jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.subscribe(listener, channel)
         }
     }
 
     void unsubscribe(final String channel) {
         LOGGER.debug(">>> UNSUBSCRIBE > Channel: $channel")
-        Operations.jedisPool.getResource().withCloseable {
+        redisService.jedisPool.getResource().withCloseable {
             listener.unsubscribe(channel)
         }
     }
 
     synchronized void init() {
-        executor = Executors.newFixedThreadPool(2)
+        /*executor = Executors.newFixedThreadPool(2)
         if (!executor.isTerminated()) {
             LOGGER.debug("Start background thread for getting responses from backend through Redis")
             executor = Executors.newFixedThreadPool(2)
@@ -81,7 +84,7 @@ class SubscribeClient {
                 KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE))
         } else {
             LOGGER.debug("Cannot start threading subscribers to poll Redis responses")
-        }
+        }*/
     }
 
     synchronized void destroy() {
@@ -111,7 +114,7 @@ class SubscribeClient {
         void run() {
             Jedis jedis = null
             try {
-                Operations.jedisPool.getResource().withCloseable { Jedis jedis1 ->
+                redisService.jedisPool.getResource().withCloseable { Jedis jedis1 ->
                     jedis = jedis1
                     LOGGER.debug("Subscribing to the channel $channel")
                     jedis.subscribe(listener, channel)

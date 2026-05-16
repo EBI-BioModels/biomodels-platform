@@ -25,14 +25,13 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.ModelDetails
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * @short: The controller responsible for retriving GoChart
+ * @short: The controller responsible for retrieving GoChart
  *
  * @author: Vu Tu <tvu@ebi.ac.uk>
  */
@@ -57,7 +56,8 @@ class GoChartController {
             List<ModelDetails> models = data.collect {
                 new ModelDetails(it[0] as Model, it[1] as String, it[2] as Date)
             }
-            ['classifiedModels': modelClassifierService.classify(models)]
+            def classifiedModels = modelClassifierService.classify(models)
+            ["classifiedModels": classifiedModels]
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e)
             forward(controller: "errors", action: "error500", plugin: "jummp-plugin-web-application")

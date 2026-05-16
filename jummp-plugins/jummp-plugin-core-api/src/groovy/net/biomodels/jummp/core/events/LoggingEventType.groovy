@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2024 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -33,10 +33,12 @@ package net.biomodels.jummp.core.events
  * @see PostLoggingAdvice
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
-public enum LoggingEventType {
+enum LoggingEventType {
     RETRIEVAL, ///< Data is retrieved either from database or VCS
     CREATION, ///< New Data is created (e.g. new Model uploaded)
     DELETION, ///< Existing Data is deleted or marked as deleted
     UPDATE, ///< Existing Data is changed/updated
-    SUBMIT_FOR_PUBLICATION ///< Existing Data is submitted for publication
+    SUBMIT_FOR_PUBLICATION, ///< Existing Data is submitted for publication
+    PUBLISH, ///< Model revision is published
+    UNPUBLISH, ///< Model revision is unpublished
 }

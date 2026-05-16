@@ -56,7 +56,7 @@ import net.biomodels.jummp.core.user.UserCodeExpiredException
  *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
-public interface IUserService {
+interface IUserService {
     /**
      * Changes the password of the currently logged in user.
      * This method resets the password expired field of the user.
@@ -104,6 +104,13 @@ public interface IUserService {
      * @return false if the user is not logged in or if they don't have ROLE_CURATOR. true otherwise
      */
     boolean isLoggedInUserACurator()
+
+    /**
+     * Checks that the current user is an admin or not.
+     *
+     * @return true if the current user has ROLE_ADMIN, false otherwise
+     */
+    boolean isLoggedInUserAAdmin()
     /**
      * Retrieves list of users.
      * This method is only for administrative purpose. It does not sanitize the
@@ -114,6 +121,19 @@ public interface IUserService {
      * @return List of Users ordered by Id
      */
     List<User> getAllUsers(Integer offset, Integer count)
+
+    /**
+     * Retrieves all users based on the given role
+     * @param role {@link Role} instance denoting the role
+     * @return {@link List} of {@link User} objects having the given role
+     */
+    List<User> getAllUsersByRole(Role role, Integer offset, Integer count)
+
+    List<User> getAllUsersByRole(String authority, Integer offset, Integer count)
+
+    Integer countUsersByRole(Role role)
+
+    Integer countUsersByRole(String authority)
     /**
      * Enables/Disables the user identified by @p userId
      * @param userId The unique id of the user

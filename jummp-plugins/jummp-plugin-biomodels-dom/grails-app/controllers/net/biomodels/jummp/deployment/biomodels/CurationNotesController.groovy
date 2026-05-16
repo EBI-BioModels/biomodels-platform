@@ -22,13 +22,16 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand as CNTC
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 
+import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 
 /**
@@ -38,7 +41,7 @@ import java.text.SimpleDateFormat
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@Secured(['ROLE_CURATOR'])
+@Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class CurationNotesController {
     def curationNotesService
 
@@ -70,12 +73,18 @@ class CurationNotesController {
                           dateAdded: dateAdded,
                           lastModified: lastModified,
                           updated: updated]
-        CurationNotesTransportCommand command = new CurationNotesTransportCommand(bindingMap)
+        CNTC command = new CNTC(bindingMap)
         if (params?.cnId) {
             command.id = params.long("cnId")
         }
         if (curationNotes["curationImage"]) {
-            command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
+            String data = curationNotes["curationImage"]
+            String partSeparator = ","
+            if (data.contains(partSeparator)) {
+                data = data.split(partSeparator)[1]
+            }
+            byte[] decodedImg = Base64.decoder.decode(data.getBytes(StandardCharsets.UTF_8))
+            command.curationImage = decodedImg
             command.mimeType = curationNotes["mimeType"]
         }
         command
@@ -87,37 +96,40 @@ class CurationNotesController {
     }
 
     def doAddOrUpdate() {
-        def curationNotes = params.curationNotes
+        Map result = [:]
+        def curationNotes = params.curationNotes.decodeHTML()
         /**
          * {@link ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
          */
-        curationNotes = curationNotes.decodeHTML()
-        String model = params.model
-        CurationNotesTransportCommand command = parseCuratioNotes(curationNotes, model)
+        String model = params.model.decodeHTML()
+        CNTC command = parseCuratioNotes(curationNotes, model)
         // get the latest timestamp
         command.lastModified = new Date()
         if (!command.updated) {
             // this case means to add a new curation notes
             command.dateAdded = command.lastModified
         }
-        Map response = [:]
         if (command.validate()) {
             CurationNotes update = curationNotesService.doAddOrUpdateCurationNotes(command)
             if (update) {
-                response['message'] = "Curation notes have been updated successfully"
-                response['cnId'] = update.id
+                result['message'] = "Curation notes have been updated successfully"
+                result['cnId'] = update.id
             } else {
-                response['message'] = "There is an error while trying to persist the curation notes into the database"
+                result['message'] = "There is an error while trying to persist the curation notes into the database"
             }
         } else {
             String defaultMessage = command.errors.getFieldError("comment")?.defaultMessage
             if (defaultMessage?.contains("cannot be blank")) {
-                response['message'] = "The comment cannot be blank"
+                result['message'] = "The comment cannot be blank"
             } else {
-                response['message'] = command.errors.allErrors.inspect()
+                result['message'] = command.errors.allErrors.inspect()
             }
         }
-        render(response as JSON)
+        withFormat {
+            json { render result as JSON }
+            xml { render result as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
     }
 
     def reset() {

@@ -119,11 +119,9 @@ class PublicationServiceSpec extends IntegrationSpec {
         when: "fetch that publication from PubMed Central"
         assert 0 == Person.count()
         assert 0 == PublicationPerson.count()
-        def slurper = pubMedService.lookupPublicationDataInPubMed(pubMedID)
         PublicationTransportCommand ptc = pubMedService.fetchPublicationData(pubMedID)
 
         then: "publication authors should be extracted properly"
-        null != slurper
         ptc.authors.size() == 20
 
         when: "attempt to corrupt any of the authors"

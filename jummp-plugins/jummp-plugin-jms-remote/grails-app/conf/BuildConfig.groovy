@@ -58,8 +58,6 @@ grails.project.dependency.resolution = {
         }
         grailsCentral()
         // necessary because core-api depends on libPharmML
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
 
         // uncomment the below to enable remote dependency resolution
         // from public Maven repositories
@@ -104,7 +102,6 @@ grails.project.dependency.resolution = {
         compile ":jms:1.2"
 
         runtime ":hibernate4:4.3.10"
-        runtime ":jquery:1.11.1"
     }
 }
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"

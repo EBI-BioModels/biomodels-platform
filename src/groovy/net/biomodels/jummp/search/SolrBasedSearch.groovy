@@ -25,6 +25,7 @@
 package net.biomodels.jummp.search
 
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.transaction.NotTransactional
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.ModelSearchStrategy
@@ -168,6 +169,18 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         return rev?.files?.collect{it.path}
     }
 
+    @Profiled(tag="searchService.clearIndex")
+    void clearIndex(final long revisionId) {
+        log.debug("Hasn't been implemented yet!")
+    }
+
+    @Profiled(tag="searchService.clearIndex")
+    void clearIndex(RevisionTransportCommand revisionTC) {
+        if (revisionTC) {
+            clearIndex(revisionTC.id)
+        }
+    }
+
     /**
      * Adds a revision to the index
      *
@@ -176,7 +189,8 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      **/
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="searchService.updateIndex")
-    void updateIndex(RevisionTransportCommand revision) {
+    void updateIndex(RevisionTransportCommand revision,
+                     Map<String, String> options = ["level": "full", "indexer": ""] as Map) {
         Revision.withSession {
             String name = revision.name ?: ""
             String description = revision.description ?: ""
@@ -231,28 +245,15 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
                 'jummpPropFile': configurationService.getConfigFilePath(),
                 'miriamExportFile': registryExport,
                 'searchStrategy': searchStrategy,
-                'database': dbSettings)
+                'database': dbSettings,
+                'level': options["level"], 'indexer': options["indexer"])
             File indexingData = new File(exchangeFolder, "indexData.json")
             indexingData.setText(builder.toPrettyString())
 
             String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
             def argsMap = [jarPath: jarPath, jsonPath: indexingData.absolutePath]
+            argsMap.putAll(configurationService.configureProxySettings() as Map<? extends String, ? extends String>)
 
-            String httpProxy = System.getProperty("http.proxyHost")
-            if (httpProxy) {
-                String proxyPort = System.getProperty("http.proxyPort") ?: '80'
-                String nonProxyHosts = "'${System.getProperty("http.nonProxyHosts")}'"
-                StringBuilder proxySettings = new StringBuilder()
-                proxySettings.append(" -Dhttp.proxyHost=").append(httpProxy).append(
-                    " -Dhttp.proxyPort=").append(proxyPort).append(" -Dhttp.nonProxyHosts=").append(
-                    nonProxyHosts)
-                argsMap['proxySettings'] = proxySettings.toString()
-                if (IS_INFO_ENABLED) {
-                    log.info("Proxy settings for the indexer are $proxySettings")
-                }
-            } else {
-                argsMap['proxySettings'] = ""
-            }
             try {
                 producerTemplate.sendBody("seda:exec", argsMap)
             } catch (Exception e) {
@@ -363,8 +364,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    SearchResponse searchModels(String query, String domain, SortOrder sortOrder, Map<String, Integer>
-        paginationCriteria) {
+    SearchResponse searchModels(String query, String domain, SortOrder sortOrder, Map<String, Integer> paginationCriteria) {
         //solrServerHolder.init()
         long start = System.currentTimeMillis()
         SolrDocumentList results = search(query)
@@ -433,7 +433,17 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         ["relevance"]
     }
 
-    /**
+    @Override
+    @NotTransactional
+    Map checkIndexedData() {
+        null
+    }
+
+    @Override
+    void indexDB() {
+
+    }
+/**
      * Internal method to execute a query.
      *
      * Queries Solr and returns the results.

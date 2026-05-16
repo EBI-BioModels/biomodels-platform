@@ -18,19 +18,23 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
-includeTargets << new File("./scripts/WeceemExport.groovy")
+//includeTargets << new File("./scripts/AppStatus.groovy")
 
 /**
  * Script to write the git id of the build into _version.gsp
  */
 eventCompileStart = { msg ->
+    println "${new Date().format("yyyy-MM-dd HH:mm:ss")} STARTING THE APP..."
+
     // the only way I could get Groovy to execute a command with an argument containing spaces
-    def cmd = ["git", "log", "-1",
+    // the main command is to get the hash id of the last commit on the development branch
+    def cmd = ["git", "log", "-n", "1", "development",
          "--pretty=format:<a href=\"//bitbucket.org/biomodels/jummp-biomodels/commits/all?search=%h\">%h</a> | %aD"]
     def proc = cmd.execute()
     proc.waitFor()
     ant.mkdir(dir: "grails-app/views/templates/")
     String txt = proc.in.text
+    println "commit id: $txt"
     new FileOutputStream("grails-app/views/templates/_version.gsp", false) << txt
 
     // copy the messages.properties
@@ -39,5 +43,4 @@ eventCompileStart = { msg ->
 }
 
 eventCompileEnd = {
-    weceem()
 }

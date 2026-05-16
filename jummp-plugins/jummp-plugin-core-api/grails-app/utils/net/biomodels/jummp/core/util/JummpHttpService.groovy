@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -30,18 +30,24 @@
 
 package net.biomodels.jummp.core.util
 
-class JummpHttpService {
+import net.biomodels.jummp.core.constants.BioModels
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
+
+class JummpHttpService implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JummpHttpService.class)
+
+    def configurationService
+
+    private static Proxy proxy
+
     static String getStatus(String url) throws IOException {
         String result = ""
-        int code = getStatusCode(url)
+        HttpURLConnection connection = null
         try {
-            URL siteURL = new URL(url)
-            HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection()
-            connection.setRequestMethod("GET")
-            connection.setConnectTimeout(3000)
-            connection.connect()
-
-            code = connection.getResponseCode()
+            connection = establishConnection(url)
+            int code = connection.getResponseCode()
             if (code == 200) {
                 result = "-> Green <-\t" + "Code: " + code
 
@@ -50,24 +56,134 @@ class JummpHttpService {
             }
         } catch (Exception e) {
             result = "-> Red <-\t" + "Wrong domain - Exception: " + e.getMessage()
-
+        } finally {
+            if (connection) { connection.disconnect() }
         }
-        System.out.println(url + "\t\tStatus:" + result)
+        LOGGER.info(url + "\t\tStatus: " + result)
         result
     }
 
     static int getStatusCode(String url) throws IOException {
         int code = 200
+        HttpURLConnection connection = null
         try {
-            URL siteURL = new URL(url)
-            HttpURLConnection connection = (HttpURLConnection) siteURL.openConnection()
-            connection.setRequestMethod("GET")
-            connection.setConnectTimeout(3000)
-            connection.connect()
+            connection = establishConnection(url)
             code = connection.getResponseCode()
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             code = 404
+        } finally {
+            if (connection) { connection.disconnect() }
         }
         return code
+    }
+
+    static String jsonGetRequest(String urlQueryString) {
+        String json = null
+        HttpURLConnection connection = null
+        try {
+            URL url = new URL(urlQueryString)
+            if (proxy) {
+                connection = (HttpURLConnection) url.openConnection(proxy)
+            } else {
+                connection = (HttpURLConnection) url.openConnection()
+            }
+            connection.setDoOutput(true)
+            connection.setInstanceFollowRedirects(true)
+            connection.setRequestMethod("GET")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("charset", "utf-8")
+            connection.connect()
+            InputStream inStream = connection.getInputStream()
+            json = streamToString(inStream) // input stream to string
+        } catch (IOException ex) {
+            ex.printStackTrace()
+        } finally {
+            if (connection) { connection.disconnect() }
+        }
+        return json
+    }
+
+    /**
+     * <p>Extracts the data type and accession from identifier.org-based URI. If the URI isn't patterned with this
+     * service, the method should return an empty string.</p>
+     * <p><b>For example:</b></p>
+     * <ul>
+     *     <li>http://identifiers.org/taxonomy/9606 -> taxonomy/9606</li>
+     *     <li>http://identifiers.org/VTO:0011993 -> VTO:0011993</li>
+     * </ul>
+     * @param uri An identifiers.org-based URI
+     * @return A String instance including the data type and accession.
+     */
+    static String getDataTypeAndAccession(String uri) {
+        if (uri == null || uri.isEmpty() || !uri.contains(BioModels.IDENTIFIERS)) {
+            LOGGER.error("The URI given is null, empty or not in identifiers.org format! The URI is ${uri}!")
+            return null
+        }
+        if (uri.startsWith("http://")) {
+            uri = uri.replace("http", "https")
+        }
+        String rest = uri.substring(("https://identifiers.org/").length())
+        return rest
+    }
+
+    /**
+     * Checks the returned code of an arbitrary URL.
+     *
+     * Simply put, a URL is reachable if the HTTP code is less than 400. Otherwise, we say that it is unreachable.
+     *
+     * @return a boolean value indicating the URL is reachable or unreachable
+     */
+    static boolean isReachable(final String requestUrl) {
+        boolean result = true
+        if (requestUrl.startsWith("ftp")) {
+            try {
+                new URL(requestUrl).openStream().close()
+                return true
+            } catch (IOException ignored) {
+                LOGGER.debug("Error or resource {} non-exist", requestUrl)
+                return false
+            }
+        } else {
+            HttpURLConnection connection = null
+            LOGGER.info("Checking the URL: ${requestUrl}")
+            try {
+                connection = establishConnection(requestUrl)
+                int code = connection.getResponseCode()
+                LOGGER.info("When checking the URL '${requestUrl}' and getting the code: $code")
+                result = code < 400
+            } catch (Exception e) {
+                result = false
+                LOGGER.error("When checking the URL '${requestUrl}' and getting the errors ${e.toString()}")
+            } finally {
+                if (connection) {
+                    connection.disconnect()
+                }
+            }
+        }
+        return result
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        proxy = configurationService.verifyHttpProxy()
+    }
+
+    private static String streamToString(InputStream inputStream) {
+        String text = new Scanner(inputStream, "UTF-8").useDelimiter("\\Z").next()
+        return text
+    }
+
+    private static HttpURLConnection establishConnection(final String url) {
+        URL siteURL = new URL(url)
+        HttpURLConnection connection
+        if (proxy) {
+            connection = (HttpURLConnection) siteURL.openConnection(proxy)
+        } else {
+            connection = (HttpURLConnection) siteURL.openConnection()
+        }
+        connection.setRequestMethod("GET")
+        connection.setConnectTimeout(3000)
+        connection.connect()
+        connection
     }
 }

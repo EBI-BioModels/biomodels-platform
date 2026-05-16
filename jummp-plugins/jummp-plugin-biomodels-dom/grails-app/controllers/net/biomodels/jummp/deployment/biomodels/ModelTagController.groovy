@@ -22,24 +22,30 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.CommonController
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
- * This controller defines logical routes to communication between ModelTagService and Their Views
+ * This controller defines logical routes to the communication between ModelTagService and the views
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
-class ModelTagController {
-    /**
-     * The class logger
-     */
-    private static final Log log = LogFactory.getLog(ModelTagController.class)
+class ModelTagController extends CommonController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelTagController.class)
 
     def tagService
     def modelTagService
     def springSecurityService
+    private User currentUser
+
+    @Override
+    void setConfiguration(ConfigObject object) {
+        super.setConfiguration(object)
+        currentUser = springSecurityService.currentUser
+    }
 
     def fetchTagsForSelect2() {
         String term = params.get("search")
@@ -56,8 +62,7 @@ class ModelTagController {
         List tagParams = params.list("updatedTags")[0]
         Set<String> updatedTags = tagParams != "" ? tagParams.split(",") : [].toSet()
         def modelId = params.get("modelId")
-        def user = springSecurityService.currentUser
-        def result = modelTagService.update(updatedTags, modelId, user)
+        def result = modelTagService.saveOrUpdate(updatedTags, modelId, currentUser)
         response.status = result["status"]
         render(result as JSON)
     }
@@ -78,8 +83,7 @@ class ModelTagController {
         }
         command.tags = list
         if (command.validate()) {
-            def user = springSecurityService.currentUser
-            result = modelTagService.saveOrUpdate(command, user)
+            result = modelTagService.saveOrUpdate(command, currentUser)
         } else {
             response.status = 422
             def errors = command.errors.allErrors.collect {

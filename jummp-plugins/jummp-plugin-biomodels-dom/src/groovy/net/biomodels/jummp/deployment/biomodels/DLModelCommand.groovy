@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2023 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -41,17 +41,22 @@ import grails.validation.Validateable
 class DLModelCommand implements Serializable {
     private static final long serialVersionUID = 1L
 
-    String dlname
+    String dlName
     Integer totalEpoch
     Integer valPerEpoch
     Integer batchSize
     String hiddenLayer
 
     static constraints = {
-        dlname(nullable: false, blank: false)
+        dlName(nullable: false, blank: false)
         totalEpoch(nullable: false, blank: false)
         valPerEpoch(nullable: false, blank: false)
         batchSize(nullable: false, blank: false)
         hiddenLayer(nullable: false, blank: false)
+    }
+
+    String toString() {
+        """Deep Learning Model Name: ${dlName}, Total Epoch: ${totalEpoch}, \
+Value Per Epoch: ${valPerEpoch}, Batch Size: ${batchSize}, Hidden Layer: ${hiddenLayer}"""
     }
 }

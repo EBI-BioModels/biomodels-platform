@@ -67,7 +67,7 @@ class TagTransportCommand implements Serializable {
         String dateModified = sdf.format(tag.dateModified)
         new TagTransportCommand(id: tag.id,
             name: tag.name, description: tag.description,
-            userCreated: tag.userCreated.username,
+            userCreated: tag.userCreated.person.userRealName,
             dateCreated: dateCreated,
             dateModified: dateModified)
     }

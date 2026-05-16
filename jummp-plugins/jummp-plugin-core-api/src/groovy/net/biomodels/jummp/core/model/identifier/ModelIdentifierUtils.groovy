@@ -34,8 +34,8 @@ import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitio
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionManager
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionRegexFactory
 import net.biomodels.jummp.core.model.identifier.support.NumericalModelIdentifierPartition
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 
 /**
  * @short Helper class containing methods for interacting with model id scheme settings.
@@ -44,9 +44,9 @@ import org.apache.commons.logging.LogFactory
  */
 class ModelIdentifierUtils {
     /* the class logger */
-    private static final Log log = LogFactory.getLog(this)
+    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     /* semaphores for the log threshold */
-    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    private static final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
 
     /*
      * The suffix to use in the bean reference corresponding to a generator.
@@ -91,7 +91,7 @@ class ModelIdentifierUtils {
     /* Builds map of arguments to construct dataSource from the given configuration. */
     private static Map extractDatabaseSettings(ConfigObject dbSettings) {
         if (!dbSettings) {
-            log.warn "No database settings defined - using the defaults."
+            LOGGER.warn "No database settings defined - using the defaults."
         }
         String protocol
         String type = dbSettings.type
@@ -107,7 +107,7 @@ class ModelIdentifierUtils {
                 break
             case 'h2':
             default:
-                log.warn "Using H2 database $DEFAULT_URL"
+                LOGGER.warn "Using H2 database $DEFAULT_URL"
                 protocol = DEFAULT_PROTOCOL
                 driver = DEFAULT_DRIVER
                 url = DEFAULT_URL
@@ -128,7 +128,7 @@ class ModelIdentifierUtils {
         }
         def out = [ driver: driver, url: url, user: username, password: password ]
         if (IS_DEBUG_ENABLED) {
-            log.debug "Extracted the following database settings: $out"
+            LOGGER.debug "Extracted the following database settings: $out"
         }
         out
     }
@@ -153,7 +153,7 @@ class ModelIdentifierUtils {
         SortedSet<? extends OrderedModelIdentifierDecorator> decorators = new TreeSet<>()
         List<ModelIdentifierPartition> partitions = partitionManager.partitions
         if (IS_DEBUG_ENABLED) {
-            log.debug "Turned decorator settings ${c.inspect()} into ${partitions.inspect()}"
+            LOGGER.debug "Turned decorator settings ${c.inspect()} into ${partitions.inspect()}"
         }
         StringBuilder regexForThisIdentifier = new StringBuilder()
         String regex = null
@@ -161,7 +161,7 @@ class ModelIdentifierUtils {
             OrderedModelIdentifierDecorator d
             boolean validPartition = p.validate()
             if (!validPartition) {
-                log.warn "ModelIdentifierPartition ${p.dump()} is not valid!"
+                LOGGER.warn "ModelIdentifierPartition ${p.dump()} is not valid!"
                 throw new Exception("Incorrect model identifier settings: ${p.properties}")
             }
 
@@ -216,11 +216,11 @@ class ModelIdentifierUtils {
                 default:
                     partitionRegex = null
                     String M = "Unknown model identifier setting type $p"
-                    log.error M
+                    LOGGER.error M
                     throw new Exception(M)
             }
             if (IS_DEBUG_ENABLED) {
-                log.debug "Created ${d.dump()} based on partition ${p.dump()}"
+                LOGGER.debug "Created ${d.dump()} based on partition ${p.dump()}"
             }
             decorators.add d
             if (shouldComputeRegexes)
@@ -228,7 +228,7 @@ class ModelIdentifierUtils {
         }
         boolean haveVariableDecorator = decorators.find{ (!it.isFixed()) } != null
         if (!haveVariableDecorator) {
-            log.error "All Decorators in ${decorators} are fixed!"
+            LOGGER.error "All Decorators in ${decorators} are fixed!"
             def err = """The model identifier settings would yield duplicates. \
 Consider introducing variable digit patterns or dates into the identifier scheme. For example
     jummp.model.id.submission.partN.type=numerical
@@ -241,7 +241,7 @@ Consider introducing variable digit patterns or dates into the identifier scheme
         }
 
         if (IS_DEBUG_ENABLED) {
-            log.debug "Identifier settings ${c.inspect()} converted to ${decorators.inspect()} and regex $regexForThisIdentifier"
+            LOGGER.debug "Identifier settings ${c.inspect()} converted to ${decorators.inspect()} and regex $regexForThisIdentifier"
         }
         new GeneratorDetails(generatorType: type, decorators: decorators, regex: regex)
     }

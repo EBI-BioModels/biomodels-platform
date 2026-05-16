@@ -1,6 +1,7 @@
 package net.biomodels.jummp.plugins.format;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static net.biomodels.jummp.plugins.format.CommonFormat.Constants.*;
 
@@ -10,15 +11,18 @@ import static net.biomodels.jummp.plugins.format.CommonFormat.Constants.*;
  * <p style="font-weight: bold">Authors:</p>
  * <ul>
  * <li><a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a></li>
- * <li><a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glonț</a></li>
  * </ul>
  */
 public enum CommonFormat {
     C_CPP("C/C++", "C_CPP", C_CPP_MIME, "ccppFormatService"),
+    CC3DML("CompuCell3D", "CC3DML", CC3DML_MIME, "cc3dmlFormatService"),
     JAVA("Java", "Java", JAVA_MIME),
     MATHEMATICA("Mathematica", "Mathematica", MATHEMATICA_MIME),
     MATLAB("MATLAB (Octave)", "matlab", DEFAULT_VERSIONS, MATLAB_MIME, "matlabFormatService", "matlab"),
-    PYTHON("Python", "Python", PYTHON_VERSIONS, PYTHON_MIME),
+    MORPHEUSML("MorpheusML", "MorpheusML", DEFAULT_VERSIONS, MORPHEUSML_MIME, "morpheusMLFormatService", DEFAULT_CONTROLLER),
+    ONNX("Open Neural Network Exchange", "ONNX", DEFAULT_VERSIONS, ONNX_MIME, "onnxFormatService", DEFAULT_CONTROLLER),
+    BMS("BioModels Metadata Submission", "BMS", DEFAULT_VERSIONS, BMS_MIME, "bmsFormatService", DEFAULT_CONTROLLER),
+    PYTHON("Python", "Python", Stream.concat(Arrays.stream(DEFAULT_VERSIONS), Arrays.stream(PYTHON_VERSIONS)).toArray(String[]::new), PYTHON_MIME),
     R("R", "R", DEFAULT_VERSIONS, R_MIME, "rlangFormatService", DEFAULT_CONTROLLER);
 
     public String getName() {
@@ -102,6 +106,15 @@ public enum CommonFormat {
                 "application/x-matlab", "application/matlab", "text/x-matlab", "text/matlab"));
         public static final Set<String> PYTHON_MIME = new LinkedHashSet<>(
                 Collections.singletonList("text/x-python"));
+        public static final Set<String> MORPHEUSML_MIME = new LinkedHashSet<>(
+                Collections.singletonList("application/xml"));
+        public static final Set<String> ONNX_MIME = new LinkedHashSet<>(
+                Collections.singletonList("text/onnx"));
+
+        public static final Set<String> BMS_MIME = new LinkedHashSet<>(
+                Collections.singletonList("text/bms"));
+        public static final Set<String> CC3DML_MIME = new LinkedHashSet<>(
+                Collections.singletonList("application/xml"));
         public static final Set<String> R_MIME = new LinkedHashSet<>(
                 Collections.singletonList("text/x-rsrc"));
         public static final String[] DEFAULT_VERSIONS = new String[]{"*"};

@@ -48,14 +48,21 @@
     opacity: 1 !important;
 }
 .rounded-header {
-    background-color: rgb(0, 124, 150);
+    background-color: rgb(0, 124, 130) !important;
     border-bottom: 0 none;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     line-height: inherit;
     margin: 0;
-    padding: 0;
+    padding-left: 0.5em;
+    padding-top: 0.5em;
 }
 #toolbarList li .ui-button-text {
     font-size: 0.75em;
+}
+/* left and center the simple text explaining external resource icon */
+.ext-rsc-text {
+    margin: auto;
+    padding: 0.9375rem 0.9375rem 0.9375rem 0;
+    font-size: 85%;
 }

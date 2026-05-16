@@ -32,105 +32,82 @@ package net.biomodels.jummp.webapp
 
 import grails.async.Promises
 import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.core.util.JummpHttpService
+import net.biomodels.jummp.utils.CollectionHelper
+import net.biomodels.jummp.utils.FileHelper
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
+import org.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class SubmissionController {
+class SubmissionController extends CommonController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
     def fileSystemService
     def grailsApplication
     def groovyPageRenderer
-    def mailService
+    def mailingService
     def messageSource
     def modelFileFormatService
     def modelDelegateService
     def publicationService
+    def redisService
+    def springSecurityService
     def submissionService
 
+    private String EXCH_DIR
+    List validationMessages = new ArrayList<String>(3)
+    // Using the following map to store the valid submission data before submitting the submission
+    Map<String, Object> validSubmissionDataMap = new HashMap<>()
+
+    void afterPropertiesSet() throws Exception {
+        EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
+    }
+
     def completeSubmission() {
+        Map result = doCompleteSubmission()
+        render(result as JSON)
+    }
+
+    private Map doCompleteSubmission() {
         String message = ""
         String status = "Success"
-        Map working = new HashMap<String, Object>()
-        working.put("submissionFolder", params.get("submissionFolder"))
+        Map working
         try {
-            /* The following statements aims at saving the new submission or updates */
-            List<RFTC> rftcList = new ArrayList<RFTC>()
-            JSONElement mf = JSON.parse(params.modelFile.decodeHTML())
-            RFTC mfRFTC = createRFTC(mf["submissionFolder"], mf["filename"], true, mf["description"])
-            rftcList.add(mfRFTC)
-            def afs = JSON.parse(params.additionalFiles.decodeHTML())
-            for (def file : afs) {
-                mfRFTC = createRFTC(file["submissionFolder"], file["filename"], false, file["description"])
-                rftcList.add(mfRFTC)
-            }
-            working.put("repository_files", rftcList)
-            MFTC format = modelFileFormatService.inferModelFormat(rftcList)
-
-            boolean isUpdate = params.boolean("isUpdate")
-            boolean isAmend = params.boolean("isAmend")
-            working.put("isAmend", isAmend)
-            MTC model = modelDelegateService.getModel(params.modelId)
-            RTC revision = new RTC(model: model, format: format)
-            if (isAmend && params.modelId) {
-                revision = modelDelegateService.getLatestRevision(params.modelId, false)
-            }
-            revision.files = rftcList
-
-            // populate model info
-            def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
-            model.name = modelInfoData["detectedName"] ?: mf["filename"]
-            model.description = modelInfoData["detectedDescription"] ?: ""
-            working.put("modelling_approach", modelInfoData["detectedModelling"]["approach"])
-            working.put("other_info", modelInfoData["detectedModelling"]["otherInfo"])
-            working.put("model_format", modelInfoData["detectedModelFormat"]["id"])
-            working.put("readme_submission", modelInfoData["detectedModelFormat"]["readme"])
-
-            // populate publication details
-            if (params.publication) {
-                Map publicationData = publicationService.buildPublicationFromJSONData(params.publication.decodeHTML())
-                model.publication = publicationData["publication"]
-            } else {
-                model.publication = null
-            }
-            working.put("isUpdateOnExistingModel", isUpdate)
-            working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
-
-            revision.model = model
-            revision.name = model.name
-            revision.description = model.description
-            revision.validated = true
-            revision.minorRevision = false
-            revision.curationState = CurationState.NON_CURATED
-            revision.validationLevel = ValidationState.APPROVE
-            revision.comment = params.revisionComments.decodeHTML() ?: "Model revised without commit message"
-            working.put("new_name", revision.name)
-            working.put("new_description", revision.description)
-            working.put("RevisionTC", revision)
-            working.put("changesMade", params.list("changesMade[]"))
+            /* The following statements aim at saving the new submission or updates */
+            working = validSubmissionDataMap
             HashSet<String> result = submissionService.handleSubmission(working)
 
             /* Below is used for post processing submission and rendering the result to the callee */
-            String modelId = params.modelId
+            String modelId = working.get("modelId")
             working.put("accessType", "update")
             working.put("changesMade", result)
+            boolean isUpdate = working.get("isUpdate") as boolean
             if (!isUpdate) {
                 modelId = result.first()
                 working.put("accessType", "create")
                 working.put("changesMade", [])
+            } else {
+                HashSet<String> changesMade = working.get("changesMade") as HashSet<String>
+                changesMade.addAll(result)
+                HashSet<String> changes = changesMade.sort()
+                working.put("changesMade", changes)
             }
-            String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
+            String modelURL = createLink(controller: "model", action: "show", params: [id: modelId], absolute: true)
             working.putAll(["modelId": modelId, "modelURL": modelURL])
+            working.put("site", deployTarget)
 
             // Method 1: synchronous approach
             submissionService.processPostSubmission(working)
@@ -154,35 +131,18 @@ class SubmissionController {
         }*/
 
             /* Build the right messages to show at the model owner/submitter */
-            if (isUpdate) {
-                if (working.get("changesMade")) {
-                    status = "Success"
-                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successUpdate",
-                        plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
-                } else {
-                    status = "Failure"
-                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureUpdate",
-                        plugin: "jummp-plugin-web-application")
-                }
-            } else {
-                if (modelId) {
-                    status = "Success"
-                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successSubmission",
-                        plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
-                } else {
-                    status = "Failure"
-                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureSubmission",
-                        plugin: "jummp-plugin-web-application")
-                }
-            }
-            render(["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId] as JSON)
+            Map msg = buildResultMessage(isUpdate, status, message, modelURL, modelId, working)
+            message = msg.get("message")
+            status = msg.get("status")
+            return ["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId]
         } catch (Exception e) {
             status = "Failure"
             handleException(working, e)
             String errorTicketId = working.get("submissionFolder")
             message = groovyPageRenderer.render(template: "/templates/errorTemplate",
                 plugin: "jummp-plugin-web-application", model: ["errorTicketId": errorTicketId])
-            render(["ticketID": errorTicketId, "status": status, "message": message] as JSON)
+            String cause = working.get("cause")
+            return ["ticketID": errorTicketId, "status": status, "message": message, "cause": cause]
         }
     }
 
@@ -198,9 +158,8 @@ class SubmissionController {
      */
     RFTC createRFTC(final String submissionFolder, final String filename,
                     final boolean isModelFile, final String description) {
-        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory
-        File subFolder = new File(exchangeDir, submissionFolder)
-        File modelFile = new File(subFolder, filename)
+        File modelDirectory = new File(EXCH_DIR, submissionFolder)
+        File modelFile = new File(modelDirectory, filename)
 
         new RFTC(path: modelFile.getCanonicalPath(),
             mainFile: isModelFile, userSubmitted: true, hidden: false, description: description)
@@ -220,18 +179,207 @@ class SubmissionController {
                 Map detectedModelFormat = detectModelFormat(e)
                 e["detectedModelFormat"] = detectedModelFormat
                 List errors = []
-                e["validSyntax"] = validateSyntax(e, detectedModelFormat.identifier, errors)
+                e["validSyntax"] = validateSyntax(e, detectedModelFormat.identifier as String, errors)
                 e["validateSyntaxErrors"] = errors
-                Map detectedModelInfo = detectModelInfo(e, detectedModelFormat.identifier)
+                Map detectedModelInfo = detectModelInfo(e, detectedModelFormat.identifier as String)
                 e["detectedModelInfo"] = detectedModelInfo
+            }
+            // check for the valid file name
+            if (!FileHelper.isFileNameAcceptable(e["filename"] as String)) {
+                String warningMessage = """\
+Please make sure the file name '${e["filename"]}' only containing alphanumeric characters, spaces, \
+hyphens, plus signs and underscores. It should also have a proper file extension.
+"""
+                e["validateFileName"] = [warningMessage] as List<String>
             }
         }
         // Determines which files are added and removed
-        List<String> changesMade = new ArrayList<String>()
+        HashSet<String> changesMade = new ArrayList<String>()
         if (params.boolean("isUpdate")) {
-            changesMade = inferChangesMade(uploadedFiles)
+            changesMade = inferChangesMadeOnModelFiles(uploadedFiles)
         }
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
+    }
+
+    def doLastValidateSubmissionData() {
+        // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
+        /**
+         * This method is called twice:
+         * (1) in submission.js when the step is 3 to show tick or cross icon
+         * (2) clicking on the Submit button although the submission data have just been validated.
+         */
+        Map working = rebuildSubmissionData()
+        Map result = doValidateSubmissionData(working)
+
+        render(result as JSON)
+    }
+
+    private Map doValidateSubmissionData(Map working) {
+        String errMsg
+
+        // 1. Check the uploaded files
+        boolean areModelFilesValid = doValidateUploadedFiles(working)
+        // 2. Check the model metadata provided/updated
+        boolean areMetadataValid = doValidateModelInfo(working)
+        // 3. Check the publication details
+        boolean isPublicationValid = doValidatePublication(working)
+        errMsg = validationMessages.findAll { it }.join("\n")
+        Map<String, Object> result = new HashMap<>()
+        String submitterInfo = working.get("submitterInfo")
+        result.put("submitterInfo", submitterInfo)
+        String submissionFolder = working.get("submissionFolder")
+        result.put("submissionFolder", submissionFolder)
+        result.put("errMsg", errMsg)
+        result.put("areModelFilesValid", areModelFilesValid)
+        result.put("areMetadataValid", areMetadataValid)
+        result.put("isPublicationValid", isPublicationValid)
+        boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
+        result.put("currentValidation", currentValidation)
+        String strResult = toString(result)
+        logger.debug("The result of verifying the submission data: \n$strResult")
+        println("The result of verifying the submission data: \n$strResult")
+        validSubmissionDataMap = working
+        result
+    }
+
+    private boolean doValidateUploadedFiles(Map working) {
+        List<RFTC> rftcList = working.get("repository_files")
+        String errFileMsg = ""
+        Map existedFiles = [:]
+        for (RFTC rftc : rftcList) {
+            File file = new File(rftc.path)
+            existedFiles.put(rftc.path, file?.exists())
+            if (!file?.exists() || !file?.length() || file?.length() <= 0) {
+                errFileMsg += "${file.name}: Not found or not exist or empty.\n"
+            }
+        }
+        validationMessages[0] = errFileMsg
+        existedFiles.findAll { !it.value }?.isEmpty()
+    }
+
+    private boolean doValidateModelInfo(Map working) {
+        RTC revision = working.get("RevisionTC") as RTC
+        String errMsg = ""
+        // 1. Condition 1: model format is not null
+        boolean mfCond = revision.format
+        if (!mfCond) {
+            errMsg += "Model format is missing.\n"
+        }
+        // 2. Condition 2: model approach is not null
+        boolean maCond = working.containsKey("modelling_approach")
+        if (!maCond) {
+            errMsg += "Modelling approach is missing.\n"
+        }
+        // 3. Condition 3: model name is not null
+        boolean mnCond = revision.model.name
+        if (!mnCond) {
+            errMsg += "Model name is empty or blank.\n"
+        }
+        validationMessages[1] = errMsg
+        mfCond && maCond && mnCond
+    }
+
+    private boolean doValidatePublication(Map working) {
+        MTC model = working.get("ModelTC") as MTC
+        String errMsg = ""
+        if (!model.publication) {
+            return true
+        } else {
+            boolean r = model.publication.validate()
+            if (!r) {
+                errMsg += "Publication record is invalid.\n"
+            }
+            validationMessages[2] = errMsg
+            return r
+        }
+    }
+
+    def validateModelInfo() {
+        HashSet<String> changesMade = inferChangesMadeOnModelInfo()
+        render([status: "OK", changesMade: changesMade] as JSON)
+    }
+
+    def checkCurrentValidation() {
+        HashSet<String> changesMade = params.list("changesMade[]").toSet()
+        if (!changesMade) { changesMade = new HashSet<>() } else {
+            CollectionHelper.remove(changesMade, "MODEL PUBLICATION")
+        }
+        changesMade.add("MODEL PUBLICATION: Removed the publication details.")
+        render([status: "OK", changesMade: changesMade] as JSON)
+    }
+
+    def renderFileUploadFailures() {
+        render([status: "OK"] as JSON)
+    }
+
+    /**
+     * This method is designed to serve the create process called via REST API
+     * @return rendering the result map to an JSON object
+     */
+    def create() {
+        String metadata = request.reader.text
+        logger.info("Creating the new submission: $metadata")
+        Map<String, Object> working = [
+            isUpdate: false, isUpdateOnExistingModel: false,
+            isAmend: false, isMetadataSubmission: false,
+            accessType: "create", accessFormat: "json"] as HashMap<String, Object>
+        if (metadata) {
+            makeSubmission(metadata, working)
+        } else {
+            String msg = "Cannot create the model as requested because of the empty input."
+            logger.debug(msg)
+            render([message: msg, status: 400] as JSON)
+        }
+    }
+
+    /**
+     * This method is designed to serve the update process called via REST API
+     * @return rendering the result map to an JSON object
+     */
+    def update() {
+        String metadata = request.reader.text
+        logger.info("Updating the submission: $metadata")
+        Map<String, Object> working = [
+            isUpdate: true, isUpdateOnExistingModel: true,
+            isAmend : false, isMetadataSubmission: false,
+            accessType: "update", accessFormat: "json"] as Map<String, Object>
+        if (metadata) {
+            makeSubmission(metadata, working)
+        } else {
+            String msg = "Cannot update the model as requested because of the empty input."
+            logger.debug(msg)
+            render([message: msg, status: 400] as JSON)
+        }
+    }
+
+    private void makeSubmission(String metadata, Map working) {
+        String uuid = request.getHeader("SubmissionFolder")
+        working.put("submissionFolder", uuid)
+        def currentUser = springSecurityService.currentUser
+        working.put("submitterInfo", [userRealName: currentUser?.person?.userRealName,
+                                      username: currentUser.username, email: currentUser.email])
+        Map map
+        try {
+            submissionService.buildFromJSONFile(metadata, working)
+        } catch (Exception e) {
+            logger.error e.getMessage()
+        } finally {
+            def files = working["repository_files"] as List
+            if (files.isEmpty()) {
+                String msg = "Cannot find the model files. The submission process has to be terminated!"
+                logger.error(msg)
+                map = [message: msg, status: 400]
+            } else {
+                doValidateSubmissionData(working)
+                map = doCompleteSubmission()
+            }
+        }
+
+        withFormat {
+            json { render map as JSON }
+            xml { render map as XML }
+            '*' { render status: 415, view: "/errors/error415" }
+        }
     }
 
     private List validateFile(final JSONElement file) {
@@ -255,26 +403,85 @@ class SubmissionController {
         String description = jsonFileData["description"]
         RFTC mfRFTC = createRFTC(submissionFolder, filename, true, description)
         MFTC format = modelFileFormatService.inferModelFormat([mfRFTC])
-        return ["identifier": format.identifier, "name": format.name, "id": format.id]
+
+        // by the way, detecting publication annotations included in the main file, however, we select the first one
+        Map pubDetails = [:]
+        RTC revTC = new RTC(files: [mfRFTC], format: format)
+        List<String> pubURIs = modelFileFormatService.getPublicationAnnotations(revTC)
+        if (pubURIs) {
+            logger.info("""Detected publication identifiers included in the file $filename as annotations: \
+${pubURIs?.join(";")}""")
+            Map pubMeta = resolvePublicationMetadata(pubURIs)
+            if (pubMeta) { pubDetails.putAll(pubMeta) }
+        }
+
+        // TODO: add "readme": "not decided yet" with an updated value to the returned map
+        pubDetails.putAll(["identifier": format.identifier, "name": format.name, "id": format.id])
+        return pubDetails
     }
 
+    private static Map resolvePublicationMetadata(List<String> pubURIs) {
+        String firstPubURI = pubURIs?.first()
+        Map result = [:]
+        try {
+            String rest = JummpHttpService.getDataTypeAndAccession(firstPubURI)
+            if (!rest) {
+                logger.error("""Cannot fetch the publication details from ${firstPubURI} due to not resolving \
+data type and accession from the URI.""")
+                return null
+            }
+            String json = JummpHttpService.jsonGetRequest("https://resolver.api.identifiers.org/" + rest)
+            JSONObject jsonObject = new JSONObject(json)
+            JSONObject parsedCI = jsonObject.getJSONObject("payload").getJSONObject("parsedCompactIdentifier")
+            String localId = parsedCI.getString("localId")
+            String namespace = parsedCI.getString("namespace")
+            String collectionLabel
+            if ("pubmed" == namespace) {
+                collectionLabel = "PubMed ID"
+            } else if ("doi" == namespace) {
+                collectionLabel = "DOI"
+            } else {
+                collectionLabel = "unknown"
+            }
+            result = ["pubURI": firstPubURI, "namespace": namespace,
+                      "collectionLabel": collectionLabel, "accession": localId]
+        } catch (NullPointerException npe) {
+            logger.error("Cannot resolve the publication metadata for ${firstPubURI} because of NPE (${npe.message})!")
+        } finally {
+
+        }
+        return result
+    }
+
+    /**
+     * This service detects three info of the model such as name, description and modelling approach based on {@link
+     * ModelFileFormatService} which basically reads the main model file and extracts these info.
+     *
+     * @param fileJSONData  A JSON string representing the input data as the uploading files
+     * @param modelFormat   A String denoting the model format name
+     * @return              A Map of three items and their associated values
+     */
     private Map detectModelInfo(final JSONElement fileJSONData, final String modelFormat) {
         logger.debug("Detecting and extracting the model info from: $fileJSONData")
         File modelFile = fileSystemService.retrieve(fileJSONData)
         Map modelInfo = submissionService.detectModelInfo(modelFile, modelFormat)
+        // TODO: load other info from cache and update this object modelInfo.put("otherInfo", "experimental data")
         return modelInfo
     }
 
-    private List<String> inferChangesMade(Map uploadedFiles) {
-        List<String> changesMade = new ArrayList<>()
+    private HashSet<String> inferChangesMadeOnModelFiles(Map uploadedFiles) {
+        HashSet<String> changesMade = params.list("changesMade[]").toSet()
+        if (!changesMade) { changesMade = new HashSet<>() } else {
+            CollectionHelper.remove(changesMade, "MODEL FILES")
+        }
         List parsedExistingFiles = JSON.parse(params.files.decodeHTML()) as List
-        for (JSONElement e : parsedExistingFiles) {
+        for (JSONElement e : (parsedExistingFiles as List<JSONElement>)) {
             boolean exists = uploadedFiles.find { String fName, String fSize ->
                 long size = Long.parseLong(fSize)
                 e["filename"] == fName && e["size"] == size
             }
             if (!exists) {
-                changesMade.add("Removed file ${e.filename}")
+                changesMade.add("MODEL FILES: Removed file ${e.filename}".toString())
             }
         }
         uploadedFiles.each { String fName, String fSize ->
@@ -283,7 +490,60 @@ class SubmissionController {
                 it["filename"] == fName && it["size"] == size
             }
             if (!exists) {
-                changesMade.add("Added file ${fName}")
+                changesMade.add("MODEL FILES: Added file ${fName}".toString())
+            }
+        }
+        changesMade
+    }
+
+    private HashSet<String> inferChangesMadeOnModelInfo() {
+        HashSet<String> changesMade = params.list("changesMade[]")
+        if (!changesMade) { changesMade = new HashSet<>() } else {
+            CollectionHelper.remove(changesMade, "MODEL INFO")
+        }
+        if (params.boolean("isUpdate")) {
+            final String latestName = params.latestModelName.decodeHTML()
+            final String submissionFolder = params.submissionFolder.decodeHTML()
+            final String latestDescription = redisService.doRedisHGet(submissionFolder, "latestModelDescription")
+            final String editedName = params.editedModelName.decodeHTML()
+            final String editedDescription = params.editedModelDescription.decodeHTML()
+            if (latestName != editedName) {
+                changesMade.add("MODEL INFO: Edited the model name.")
+            }
+            if (latestDescription != editedDescription) {
+                changesMade.add("MODEL INFO: Edited the short submission description.")
+            }
+
+            final String latestModelFormat = params.latestModelFormat.decodeHTML()
+            final String latestModelFormatNameAndVersion = params.latestModelFormatNameAndVersion.decodeHTML()
+            final String origFormat = "$latestModelFormat (${latestModelFormatNameAndVersion})"
+
+            final String editedModelFormat = params.editedModelFormat.decodeHTML()
+            final String editedModelFormatNameAndVersion = params.editedModelFormatNameAndVersion.decodeHTML()
+            final String newFormat = "$editedModelFormat (${editedModelFormatNameAndVersion})"
+            if (latestModelFormat != editedModelFormat) {
+                changesMade.add("MODEL INFO: Changed the model format from $origFormat to $newFormat.")
+            } else {
+                final String latestReadmeSubmission = params.latestReadmeSubmission.decodeHTML()
+                final String editedReadmeSubmission = params.editedReadmeSubmission.decodeHTML()
+                if (latestReadmeSubmission != editedReadmeSubmission) {
+                    changesMade.add("MODEL INFO: Edited the submission readme.")
+                }
+            }
+
+            final String latestModellingApproach = params.latestModellingApproach.decodeHTML()
+            final String editedModellingApproach = params.editedModellingApproach.decodeHTML()
+            if (!latestModellingApproach) {
+                changesMade.add("MODEL INFO: Added the modelling approach.")
+            } else if (latestModellingApproach != editedModellingApproach) {
+                String msg = "MODEL INFO: Changed the modelling approach from $latestModellingApproach to $editedModellingApproach.".toString()
+                changesMade.add(msg)
+            } else {
+                final String latestOtherInfo = params.latestOtherInfo.decodeHTML()
+                final String editedOtherInfo = params.editedOtherInfo.decodeHTML()
+                if (latestOtherInfo != editedOtherInfo) {
+                    changesMade.add("MODEL INFO: Edited the other info.")
+                }
             }
         }
         changesMade
@@ -293,28 +553,224 @@ class SubmissionController {
         logger.error("Oops!!! There has been an error!", e)
         // rollback and backup submission
         String ticket = working.get("submissionFolder")
+        final File PARENT = new File(EXCH_DIR)
+        File submissionFiles = new File(PARENT, ticket)
+        File buggyFiles = new File(PARENT, "buggy")
+        File temporaryStorage = new File(buggyFiles, ticket)
+        temporaryStorage.mkdirs()
         if (working.containsKey("repository_files")) {
-            List repFiles = working.get("repository_files")
-            if (repFiles) {
-                final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
-                final File PARENT = new File(EXCHANGE)
-                File submissionFiles = new File(PARENT, ticket)
-                File buggyFiles = new File(PARENT, "buggy")
-                File temporaryStorage = new File(buggyFiles, ticket)
-                temporaryStorage.mkdirs()
+            List repFiles = working.get("repository_files") as List
+            if (repFiles && submissionFiles.exists()) {
                 FileUtils.copyDirectory(submissionFiles, temporaryStorage)
-
-                // TODO: create error.log containing the output of ExceptionUtils.getStackTrace(e) in this folder
-
-                // TODO: save submission metadata
+            } else {
+                logger.error("The submission files are not available for now!")
             }
         }
-        submissionService.cleanup(working)
-        mailService.sendMail {
-            to grailsApplication.config.jummp.security.registration.email.adminAddress
-            from grailsApplication.config.jummp.security.registration.email.sender
-            subject "Bug in submission: ${ticket}"
-            body "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"
+
+        // create error.log containing the output of ExceptionUtils.getStackTrace(e)
+        File errorLog = new File(temporaryStorage, "error.log")
+        errorLog.write(ExceptionUtils.getStackTrace(e))
+        logger.error(ExceptionUtils.getRootCauseMessage(e))
+        // save the submission metadata to submission.log
+        File submissionLog = new File(temporaryStorage, "submission.log")
+        def msg = working.containsKey("modelId") ?
+                    "Submission Data of ${working.get('modelId')}\n" : "Submission Data\n"
+        submissionLog.write(msg)
+        working.each {
+            submissionLog.append("${it.key}: ${it.dump()}\n")
         }
+        List<RFTC> filesList = working.get("repository_files") as List<RFTC>
+        submissionLog.append("\nDump of the repository files:\n")
+        for (RFTC fileTC : filesList) {
+            submissionLog.append(fileTC.dump())
+        }
+        submissionLog.append("\nDump of the revision transport command:\n")
+        RTC revisionTC = working.get("RevisionTC") as RTC
+        submissionLog.append(revisionTC.dump())
+        println(submissionLog.text) // sending the logs to the stdout is used for K8s ELK
+
+        submissionService.cleanup(working)
+        mailingService.send([to: grailsApplication.config.jummp.security.registration.email.adminAddress as String,
+                             subject: "Bug in submission: ${ticket}",
+                             text: "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"])
+    }
+
+    private Map rebuildSubmissionData() {
+        /* The following statements aim at saving the new submission or updates */
+        Map working = new HashMap<String, Object>()
+        working.put("submitterInfo", params.get("submitterInfo").decodeHTML())
+        String submissionFolder = params.get("submissionFolder").decodeHTML() as String
+        working.put("submissionFolder", submissionFolder)
+
+        // 1. Rebuild the uploaded files
+        List<RFTC> rftcList = new ArrayList<RFTC>()
+        rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
+            params.additionalFiles.decodeHTML() as String, working)
+        // 2. Rebuild the model format
+        MFTC format = modelFileFormatService.inferModelFormat(rftcList)
+        working.put("model_format", format)
+
+        boolean isUpdate = params.boolean("isUpdate")
+        boolean isAmend = params.boolean("isAmend")
+        boolean isMetadataSubmission = params.boolean("isMetadataSubmission")
+        working.put("isUpdate", isUpdate)
+        working.put("isAmend", isAmend)
+        working.put("isMetadataSubmission", isMetadataSubmission)
+        MTC model = new MTC()
+        if (isUpdate) {
+            model = modelDelegateService.getModel(params.modelId)
+            working.put("modelId", params.modelId)
+        }
+        RTC revision = new RTC(model: model, format: format, minorRevision: false, validated: true)
+        String modelId = params.modelId
+        working.put("modelId", modelId)
+        if (isUpdate) {
+            revision = modelDelegateService.getLatestRevision(modelId, false)
+            final String latestDescription = redisService.doRedisHGet(submissionFolder, "latestModelDescription")
+            working.putAll(["latestModelName": params.latestModelName.decodeHTML(),
+                            "latestModelDescription": latestDescription])
+        }
+
+        // rebuild the model info as much as possible detected from the former step
+        // and update them in the working map
+        rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
+
+        // populate publication details
+        if (params.publication?.decodeHTML() != "\"\"" && params.publication.decodeHTML() != "{}") {
+            populatePublication(params.publication?.decodeHTML(), model)
+        }
+
+        // populate the data on the revision
+        String revisionComments = params.revisionComments?.decodeHTML() as String
+        populateDataRevision(revision, model, working, rftcList, revisionComments, isUpdate)
+
+        working.put("ModelTC", model)
+        working.put("RevisionTC", revision)
+        working.put("isUpdateOnExistingModel", isUpdate)
+        working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
+        // Please review the callee where the changesMade Set is converted to changesMade List.
+        // The callee is an ajax invoking the completeSubmission action where it is invoking to
+        // this method. Therefore, this method can see the params object.
+        working.put("changesMade", params.list("changesMade[]"))
+
+        String lcr = params.latestContributorRole?.decodeHTML() as String
+        String contributorRole = lcr.indexOf(":") > 0 ? lcr.take(lcr.indexOf(":")) : lcr
+        working.put("contributorRole", contributorRole)
+
+        return working
+    }
+
+    private List<RFTC> rebuildRepoFiles(String paramModelFile, String paramAdditionalFiles,
+                                        HashMap<String, Object> working) {
+        List<RFTC> rftcList = new ArrayList<>()
+        JSONElement mf = JSON.parse(paramModelFile)
+        RFTC mfRFTC = createRFTC(mf["submissionFolder"] as String, mf["filename"] as String, true, mf["description"] as String)
+        rftcList.add(mfRFTC)
+        def afs = JSON.parse(paramAdditionalFiles)
+        for (def file : afs) {
+            mfRFTC = createRFTC(file["submissionFolder"] as String,
+                file["filename"] as String, false, file["description"] as String)
+            rftcList.add(mfRFTC)
+        }
+        working.put("repository_files", rftcList)
+        return rftcList
+    }
+
+    private void rebuildModelInfo(String modelInfo, List<RFTC> files,
+                                  HashMap<String, Object> working, MTC model) {
+        def modelInfoData = JSON.parse(modelInfo)
+        RFTC modelFile = files.find { it.mainFile }
+        model.name = modelInfoData["detectedName"] ?: modelFile.filename
+        model.description = modelInfoData["detectedDescription"] ?: ""
+        def detectedModelling = modelInfoData["detectedModelling"] ?
+            modelInfoData["detectedModelling"]["approach"] : ""
+        working.put("modelling_approach", detectedModelling)
+        def otherInfo = modelInfoData["detectedModelling"] ? modelInfoData["detectedModelling"]["otherInfo"] : ""
+        working.put("other_info", otherInfo)
+        def detectedModelFormat = modelInfoData["detectedModelFormat"] ?
+            modelInfoData["detectedModelFormat"]["id"] : null
+        working.put("model_format", detectedModelFormat)
+        def readme = modelInfoData["detectedModelFormat"] ? modelInfoData["detectedModelFormat"]["readme"] : ""
+        working.put("readme_submission", readme)
+    }
+
+    private void populatePublication(def paramPublication, MTC model) {
+        if (paramPublication != "{}" && paramPublication) {
+            Map publicationData = publicationService.buildPublicationFromJSONData(paramPublication)
+            model.publication = publicationData["publication"]
+        } else {
+            model.publication = null
+        }
+    }
+
+    private void populateDataRevision(RTC revision, MTC model, Map working,
+                                      ArrayList<RFTC> rftcList, String paramComments,
+                                      boolean isUpdate = false) {
+        revision.files = rftcList
+        revision.model = model
+        revision.name = model.name
+        revision.description = model.description
+        if (!isUpdate) {
+            // preserve the following properties when updating the model
+            revision.curationState = CurationState.NON_CURATED
+            revision.validationLevel = ValidationState.APPROVE
+        }
+        boolean isAmend = working.get("isAmend") as boolean
+        if (isAmend) {
+            if (paramComments) {
+                revision.comment = paramComments
+            } else if (!revision.comment) {
+                revision.comment = "Model revised without commit message"
+            }
+        } else { // new submission or update submission
+            if (paramComments) {
+                revision.comment = paramComments
+            } else if (!revision.comment) {
+                // only add the following commit message if there has been no commit message in the previous revision
+                revision.comment = "Model revised without commit message"
+            }
+        }
+        working.put("new_name", revision.name)
+        working.put("new_description", revision.description)
+        working.put("RevisionTC", revision)
+    }
+
+    private Map buildResultMessage(boolean isUpdate, String status, String message,
+        String modelURL, String modelId, Map<String, Object> working) {
+        if (isUpdate) {
+            if (working.get("changesMade")) {
+                status = "Success"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successUpdate",
+                    plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+            } else {
+                status = "Failure"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureUpdate",
+                    plugin: "jummp-plugin-web-application")
+            }
+        } else {
+            if (modelId) {
+                status = "Success"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successSubmission",
+                    plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+            } else {
+                status = "Failure"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureSubmission",
+                    plugin: "jummp-plugin-web-application")
+            }
+        }
+        [status: status, message: message] as Map<String, String>
+    }
+
+    private String toString(Map<String, Object> working) {
+        String result = "[\n"
+        result += "\tSubmitter Info: ${working.get("submitterInfo")}\n"
+        result += "\tSubmission Folder: ${working.get("submissionFolder")}\n"
+        result += "\tError Message: ${working.get("errMsg")}\n"
+        result += "\tareModelFilesValid: ${working.get("areModelFilesValid")}\n"
+        result += "\tareMetadataValid: ${working.get("areMetadataValid")}\n"
+        result += "\tisPublicationValid: ${working.get("isPublicationValid")}\n"
+        result += "\tcurrentValidation: ${working.get("currentValidation")}\n"
+        result += "]"
+        result
     }
 }

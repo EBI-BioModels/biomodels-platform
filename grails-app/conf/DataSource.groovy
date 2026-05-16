@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2021 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -19,69 +19,76 @@
 **/
 
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import net.biomodels.jummp.plugins.configuration.ConfigurationService
 
-Properties databaseProperties = new Properties()
+Properties dbProps = new Properties()
 try {
-    def service = new net.biomodels.jummp.plugins.configuration.ConfigurationService()
-    String pathToConfig=service.getConfigFilePath()
+    println "${new Date().format("yyyy-MM-dd HH:mm:ss")} ${this.getClass().name} LOADING THE EXTERNAL CONFIG FILE..."
+    def service = new ConfigurationService()
+    String pathToConfig = service.getConfigFilePath()
     if (!pathToConfig) {
         throw new Exception("No config file available, using defaults")
     }
-    databaseProperties.load(new FileInputStream(pathToConfig))
-    String server = databaseProperties.getProperty("jummp.database.server")
-    String port = databaseProperties.getProperty("jummp.database.port")
-    String database = databaseProperties.getProperty("jummp.database.database")
+    dbProps.load(new FileInputStream(pathToConfig))
+    String server = dbProps.getProperty("jummp.database.server")
+    String port = dbProps.getProperty("jummp.database.port")
+    String database = dbProps.getProperty("jummp.database.database")
     String protocol
-    switch (databaseProperties.getProperty("jummp.database.type")) {
+    String dbType = dbProps.getProperty("jummp.database.type")
+    switch (dbType) {
         case "POSTGRESQL":
             protocol = "postgresql"
-            databaseProperties.setProperty("jummp.database.driver", "org.postgresql.Driver")
-            databaseProperties.setProperty("jummp.database.dialect",
-                        "org.hibernate.dialect.PostgreSQLDialect")
+            dbProps.setProperty("jummp.database.driver", "org.postgresql.Driver")
+            dbProps.setProperty("jummp.database.dialect", "org.hibernate.dialect.PostgreSQLDialect")
             break
         case "MYSQL":
             protocol = "mysql"
-            databaseProperties.setProperty("jummp.database.driver", "com.mysql.jdbc.Driver")
-            databaseProperties.setProperty("jummp.database.dialect",
-                        "org.hibernate.dialect.MySQL5InnoDBDialect")
+            dbProps.setProperty("jummp.database.driver", "com.mysql.jdbc.Driver")
+            dbProps.setProperty("jummp.database.dialect", "org.hibernate.dialect.MySQL5InnoDBDialect")
             break
         default:
             protocol = ModelIdentifierUtils.DEFAULT_PROTOCOL
-            databaseProperties.setProperty("jummp.database.driver", DEFAULT_DRIVER)
-            databaseProperties.setProperty("jummp.database.dialect", DEFAULT_DIALECT)
-            databaseProperties.setProperty("jummp.database.username", DEFAULT_USERNAME)
-            databaseProperties.setProperty("jummp.database.password", DEFAULT_PASSWORD)
-            databaseProperties.setProperty("jummp.database.url", DEFAULT_URL)
-            databaseProperties.setProperty("jummp.database.pooled", 'false')
+            dbProps.setProperty("jummp.database.driver", ModelIdentifierUtils.DEFAULT_DRIVER)
+            dbProps.setProperty("jummp.database.dialect", ModelIdentifierUtils.DEFAULT_DIALECT)
+            dbProps.setProperty("jummp.database.username", ModelIdentifierUtils.DEFAULT_USERNAME)
+            dbProps.setProperty("jummp.database.password", ModelIdentifierUtils.DEFAULT_PASSWORD)
+            dbProps.setProperty("jummp.database.url", ModelIdentifierUtils.DEFAULT_URL)
+            dbProps.setProperty("jummp.database.pooled", 'false')
     }
     if (protocol != ModelIdentifierUtils.DEFAULT_PROTOCOL) {
-        databaseProperties.setProperty("jummp.database.url",
-                    "jdbc:${protocol}://${server}:${port}/${database}")
-        databaseProperties.setProperty("jummp.database.pooled", "true")
+        dbProps.setProperty("jummp.database.url", "jdbc:${protocol}://${server}:${port}/${database}")
+        dbProps.setProperty("jummp.database.pooled", "true")
     }
     if (protocol == 'mysql') {
-        databaseProperties.setProperty("jummp.database.url",
-            "jdbc:${protocol}://${server}:${port}/${database}?$ModelIdentifierUtils.UNICODE_OPTIONS")
+        String unicodeOpts = ModelIdentifierUtils.UNICODE_OPTIONS
+        dbProps.setProperty("jummp.database.url",
+            "jdbc:${protocol}://${server}:${port}/${database}?${unicodeOpts}")
     }
-    def databaseConfig = new ConfigSlurper().parse(databaseProperties)
+
+    ConfigObject dbConfig = new ConfigSlurper().parse(dbProps)
 
     dataSource {
+//        logSql = true
         jmxEnabled = true
-        pooled = Boolean.parseBoolean(databaseConfig.jummp.database.pooled)
-        driverClassName = databaseConfig.jummp.database.driver
-        username = databaseConfig.jummp.database.username
-        password = databaseConfig.jummp.database.password
-        dialect  = databaseConfig.jummp.database.dialect
+        pooled = Boolean.parseBoolean(dbConfig.jummp.database.pooled as String)
+        driverClassName = dbConfig.jummp.database.driver
+        dialect  = dbConfig.jummp.database.dialect
+        username = dbConfig.jummp.database.username
+        password = dbConfig.jummp.database.password
+        url = dbConfig.jummp.database.url
         if (protocol != ModelIdentifierUtils.DEFAULT_PROTOCOL) {
             properties {
+                // Documentation for Tomcat JDBC Pool
+                // http://tomcat.apache.org/tomcat-7.0-doc/jdbc-pool.html#Common_Attributes
+                // https://tomcat.apache.org/tomcat-7.0-doc/api/org/apache/tomcat/jdbc/pool/PoolConfiguration.html
                 maxActive = 100
                 maxIdle = 25
-                minIdle =1
+                minIdle = 1
                 initialSize = 1
                 minEvictableIdleTimeMillis = 60000
                 timeBetweenEvictionRunsMillis = 60000
                 numTestsPerEvictionRun = 3
-                maxWait = 10000
+                maxWait = 30000
                 maxAge = 10 * 60000
 
                 testOnBorrow = true
@@ -109,11 +116,6 @@ try {
     environments {
         development {
             dataSource {
-                driverClassName = databaseConfig.jummp.database.driver
-                username = databaseConfig.jummp.database.username
-                password = databaseConfig.jummp.database.password
-                dialect  = databaseConfig.jummp.database.dialect
-                url = databaseConfig.jummp.database.url
 //                logSql = true
 //                dbCreate = "create"
             }
@@ -131,11 +133,12 @@ try {
                 driverClassName = ModelIdentifierUtils.DEFAULT_DRIVER
                 // can't use databaseMigrations
                 dbCreate = "update"
+//                logSql = true
             }
         }
         production {
             dataSource {
-                driverClassName = databaseConfig.jummp.database.driver
+//                logSql = true
                 properties {
                     ignoreExceptionOnPreLoad = true
                     jdbcInterceptors = "ConnectionState;StatementCache(max=200)"
@@ -143,7 +146,9 @@ try {
                     removeAbandoned = true
                     removeAbandonedTimeout = 120
                     logAbandoned = false
-                    if (driverClassName == "com.mysql.jdbc.Driver") {
+                    if (it.driverClassName == "com.mysql.jdbc.Driver") {
+                        // JDBC driver properties
+                        // Mysql as example
                         dbProperties {
                             autoReconnect = false
                             jdbcCompliantTruncation = false
@@ -164,15 +169,11 @@ try {
                         }
                     }
                 }
-                username = databaseConfig.jummp.database.username
-                password = databaseConfig.jummp.database.password
-                dialect  = databaseConfig.jummp.database.dialect
-                url = databaseConfig.jummp.database.url
             }
         }
     }
 
-} catch (Exception e) {
+} catch (Exception ignored) {
     // no database configured yet, use h2
     hibernate {
         cache.use_second_level_cache = false

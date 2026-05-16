@@ -13,8 +13,7 @@
                        value="${entry?.title}">
                 <label for="shortDescription" class="required">Short Description</label>
                 <textarea id="shortDescription" required
-                          placeholder="Enter a short description for this MoM entry.
-                          This description will be shown on the MoM widget. It shouldn't be left empty."
+                          placeholder="Enter a short description for this MoM entry. This description will be shown on the MoM widget. It shouldn't be left empty."
                           aria-multiline="true" rows="5"
                           style="white-space: pre-wrap">${entry?.shortDescription}</textarea>
                 <textarea id="tmpShortDescription"
@@ -23,8 +22,7 @@
                     ${entry?.shortDescription}</textarea>
                 <label for="models" class="required">Models associated with (separated by commas)</label>
                 <input type="text" id="models" name="models" required
-                       placeholder="Model identifiers associated with this entry separated by commas.
-                       These identifiers must be determined to create backlinks to be shown underneath the model name on the model display page"
+                       placeholder="Model identifiers associated with this entry separated by commas. Not allowed null."
                        value="${entry?.models}">
                 <div class="row">
                     <div class="small-12 medium-6 large-6 columns">
@@ -38,6 +36,20 @@
                         <input type="text" id="lastUpdated" name="lastUpdated" required
                                placeholder="Latest Updated Date of MoM"
                                value="${dateFormat.format(entry?.lastUpdated)}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="small-12 medium-6 large-6 columns">
+                        <label for="publishedFrom">Published From Date</label>
+                        <input type="text" id="publishedFrom" name="publishedFrom"
+                               placeholder="Published From Which Date"
+                               <g:if test="${entry?.publishedFrom}">value="${dateFormat.format(entry?.publishedFrom)}"</g:if>>
+                    </div>
+                    <div class="small-12 medium-6 large-6 columns">
+                        <label for="publishedUntil">Published Until Date</label>
+                        <input type="text" id="publishedUntil" name="publishedUntil"
+                               placeholder="Published Until Which Date"
+                               <g:if test="${entry?.publishedUntil}">value="${dateFormat.format(entry?.publishedUntil)}"</g:if>>
                     </div>
                 </div>
             </div>
@@ -58,8 +70,11 @@
 
         <div class="row">
             <div class="small-12 medium-6 large-6 columns" style="text-align: left">
+                <a class="button"
+                   href="${createLink(controller: "modelOfTheMonth", action: "index")}"
+                   title="Go to the page of showing all MOM entries">Access all MOM entries</a>
                 <a class="button" onclick="window.history.back()"
-                   title="Back to the model display page">Back</a>
+                   title="Back to the previous page">Back</a>
                 <button type="button" class="button" id="btnSave">Save</button>
                 <button type="button" class="button" id="btnReset">Reset</button>
             </div>
@@ -101,6 +116,24 @@
         }
     });
 
+    $('#publishedFrom').datepicker({
+        dateFormat: 'yy-mm-dd',
+        onSelect: function(datetext) {
+            datetext = datetext + getTimeStamp();
+            $('#datepicker').val(datetext);
+            $(this).val(datetext);
+        }
+    });
+
+    $('#publishedUntil').datepicker({
+        dateFormat: 'yy-mm-dd',
+        onSelect: function(datetext) {
+            datetext = datetext + getTimeStamp();
+            $('#datepicker').val(datetext);
+            $(this).val(datetext);
+        }
+    });
+
     function checkCustomValidity() {
         return Object.keys(messages).length === 0;
     }
@@ -132,6 +165,8 @@
         var shortDescription = $('#shortDescription').val();
         var publicationDate = $('#publicationDate').val();
         var lastUpdated = $('#lastUpdated').val();
+        var publishedFrom = $('#publishedFrom').val();
+        var publishedUntil = $('#publishedUntil').val();
         var models = $('#models').val();
         var momEntryTC = {
             'id': id,
@@ -140,6 +175,8 @@
             'shortDescription': shortDescription,
             'publicationDate': publicationDate,
             'lastUpdated': lastUpdated,
+            'publishedFrom': publishedFrom,
+            'publishedUntil': publishedUntil,
             'updated': ${entry?.updated},
             'models': models
         };

@@ -1,3 +1,5 @@
+<%@ page import="grails.plugin.springsecurity.SpringSecurityUtils" %>
+<%@ page import="grails.util.Environment" %>
 <%--
  Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
@@ -17,16 +19,6 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-
-
-
-
-
-
-
-
-
-
 <footer id="local-footer" class="local-footer">
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
     <div  id="footer" class="row">
@@ -36,8 +28,7 @@
             </div>
             <div class="small-12 medium-6 large-6 columns" style="text-align: right">
                 <span style="font-size: small">
-                    <g:if test="${grails.util.Environment.isDevelopmentMode() ||
-                        grails.plugin.springsecurity.SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
+                    <g:if test="${Environment.isDevelopmentMode() || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
                         <g:render template="/templates/biomodels/renderedFrom"/></span>
                     </g:if>
             </div>
@@ -50,6 +41,7 @@
           data-use-basic-styles="true"></div>
      <script defer="defer"
              src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/elixirBanner.js"></script>
+%{--    <g:javascript src="hamburger-debug-script.js" async="async"/>--}%
      <style>
          .elixir-ribbon {
              padding: 1rem 0;
@@ -106,32 +98,6 @@
     </div>
      <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
      <g:render template="/templates/biomodels/searchTips" />
+     <g:render template="/templates/biomodels/embl-ebi-data-preservation-statement" />
      <g:render template="/templates/biomodels/domainSwitcherExplanation" />
 </footer>
-</div> <!--! end of #mainframe -->
-
-<!-- JavaScript at the bottom for fast page loading -->
-<script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/script.js"></script>
-<!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-
-<!-- The Foundation theme JavaScript -->
-<script src="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/libraries/foundation-6/js/foundation.js"></script>
-<script src="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/js/foundationExtendEBI.js"></script>
-<script type="text/JavaScript">$(document).foundation();</script>
-<script type="text/JavaScript">$(document).foundationExtendEBI();</script>
-
-<!-- customised scripts -->
-<g:javascript src="common.js"></g:javascript>
-<!-- end scripts-->
-
-<!-- Google Analytics details... -->
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-39747892-1"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'UA-39747892-1');
-</script>
-

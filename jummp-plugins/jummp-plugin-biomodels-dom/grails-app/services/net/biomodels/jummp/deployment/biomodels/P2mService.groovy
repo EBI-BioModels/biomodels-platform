@@ -36,7 +36,7 @@ class P2mService extends AutoGenModelService {
             projections {
                 property 'member'
             }
-        }
+        } as List<String>
     }
 
     @Override
@@ -47,7 +47,7 @@ class P2mService extends AutoGenModelService {
                 property "representative"
             }
             inList "member", missing
-        }
+        } as List
     }
 
     String getRepresentativeId(String id) {

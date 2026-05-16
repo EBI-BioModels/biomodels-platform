@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2021 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -34,34 +34,42 @@
 
 package net.biomodels.jummp.plugins.omex
 
-import grails.test.mixin.*
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+
+import grails.test.mixin.TestFor
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import org.apache.commons.io.FileUtils
-import org.junit.*
+import org.junit.Test
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 @TestFor(OmexService)
 class OmexServiceTests {
+    def omexService
+
+    void setUp() {
+        omexService = new OmexService()
+    }
 
     @Test
     void testValidation() {
-        def omexService = new OmexService()
-        assertFalse(omexService.validate(null))
-        assertFalse(omexService.validate([]))
-        assertFalse(omexService.validate([new File("inexistent")]))
+        assertFalse(omexService.validate(null, null))
+        assertFalse(omexService.validate([], []))
+        assertFalse(omexService.validate([new File("inexistent")], []))
         def randomFile = new File("target/misc.txt")
         FileUtils.touch(randomFile)
         randomFile.setText("Hello")
         assertTrue randomFile.exists()
-        assertFalse omexService.validate([randomFile])
+        assertFalse omexService.validate([randomFile], [])
         def omexFile = new File("test/files/sample archive.omex")
-        assertTrue omexService.validate([omexFile])
+        assertTrue omexService.validate([omexFile], [])
     }
 
     @Test
     void testExtractName() {
-        def omexService = new OmexService()
         List<File> modelFiles = null
         assertEquals("", omexService.extractName(modelFiles))
         modelFiles = [new File("test/files/sample archive.omex")]
@@ -70,7 +78,6 @@ class OmexServiceTests {
 
     @Test
     void testExtractDescription() {
-        def omexService = new OmexService()
         List<File> modelFiles = null
         assertEquals("", omexService.extractDescription(modelFiles))
         modelFiles = [new File("test/files/sample archive.omex")]
@@ -79,27 +86,58 @@ class OmexServiceTests {
 
     @Test
     void testExtractAnno() {
-        def omexService = new OmexService()
         assertEquals([], omexService.getAllAnnotationURNs(null))
-        def omexFormat = new ModelFormatTransportCommand(identifier: "OMEX",
-                name: "Open Modelling Exchange Format")
-        def file = new RepositoryFileTransportCommand(path: "test/files/sample archive.omex",
+        def omexFormat = new MFTC(identifier: "OMEX", name: "Open Modelling Exchange Format")
+        def file = new RFTC(path: "test/files/sample archive.omex",
                 mainFile: true, hidden: false, userSubmitted: true)
-        def revision = new RevisionTransportCommand(format: omexFormat, files: [file])
+        def revision = new RTC(format: omexFormat, files: [file])
 
         assertEquals([], omexService.getAllAnnotationURNs(revision))
     }
 
     @Test
     void testGetPublicationAnno() {
-        def omexService = new OmexService()
         assertEquals([], omexService.getPubMedAnnotation(null))
-        def omexFormat = new ModelFormatTransportCommand(identifier: "OMEX",
-                name: "Open Modelling Exchange Format")
-        def file = new RepositoryFileTransportCommand(path: "test/files/sample archive.omex",
-                mainFile: true, hidden: false, userSubmitted: true)
-        def revision = new RevisionTransportCommand(format: omexFormat, files: [file])
+        def omexFormat = new MFTC(identifier: "OMEX", name: "Open Modelling Exchange Format")
+        def file = new RFTC(path: "test/files/sample archive.omex", mainFile: true,
+            hidden: false, userSubmitted: true)
+        def revision = new RTC(format: omexFormat, files: [file])
 
         assertEquals([], omexService.getPubMedAnnotation(revision))
+    }
+
+    @Test
+    void testCreateCombineArchive() {
+        String retOmexFileName = omexService.createCombineArchive([], "", 0)
+        assertTrue("" == retOmexFileName)
+        retOmexFileName = omexService.createCombineArchive([], "BIOMD0000001000", 0)
+        assertTrue("" == retOmexFileName)
+
+        /* create a list of {link @RFTC} objects */
+        Path resourcesDirectory = Paths.get("test", "files", "create")
+        File main = new File(resourcesDirectory.toFile(), "Aubry1995.xml")
+        def cmdMainFile = new RFTC(path: main.absolutePath, mainFile: true,
+            hidden: false, userSubmitted: true, filename: "Aubury1995.xml", size: 1000, description: "Main file",
+            mimeType: "application/xml", revision: null)
+        File additional = new File(resourcesDirectory.toFile(), "curated.csv")
+        def cmdAdditionalFile = new RFTC(path: additional.absolutePath, mainFile:
+            false, hidden: false, userSubmitted: true, filename: "curated.csv", size: 1000, description: "Main file",
+            mimeType: "application/xml", revision: null)
+        List repoFiles = [cmdMainFile, cmdAdditionalFile]
+        retOmexFileName = omexService.createCombineArchive(repoFiles, "dummy", 1)
+        assertNotNull(retOmexFileName)
+        /* clean up the newly created files during testing */
+        if (retOmexFileName != null) {
+            try {
+                boolean result = Files.deleteIfExists(Paths.get(retOmexFileName))
+                if (result) {
+                    println "File is deleted."
+                } else {
+                    println "Sorry, unable to delete the file."
+                }
+            } catch (IOException ioEx) {
+                println "Found errors while trying to delete the file ${retOmexFileName}"
+            }
+        }
     }
 }

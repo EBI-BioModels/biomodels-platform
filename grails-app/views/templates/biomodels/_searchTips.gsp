@@ -1,3 +1,4 @@
+<%@ page import="net.biomodels.jummp.core.constants.BioModels" %>
 <div class="reveal" id="searchTipsBox" data-reveal>
     <h3 id="messageTitle"
         style="border-bottom: 1px solid grey">Search Tips/Tricks</h3>
@@ -16,10 +17,10 @@
                 title="Search by Glucose term in the 'name' field" target="_blank">name:"Glucose"</g:link></li>
             <li>Matches all models having model elements that were annotated with Gene Ontology term cell growth. Example:
                 <g:link
-                    controller="search" action="search" params="${[query: "GO:GO:0016049"]}" class="secondary label"
-                    title="Search by Gene Ontology term cell growth" target="_blank">GO:GO:0016049</g:link></li>
+                    controller="search" action="search" params="${[query: "GO:0016049"]}" class="secondary label"
+                    title="Search by Gene Ontology term cell growth" target="_blank">GO:0016049</g:link></li>
         </ul>
-        <p><a href="https://www.ebi.ac.uk/biomodels-static/jummp-biomodels-help/model_search.html"
+        <p><a href="${grailsApplication.config.jummp.context.help.root}/model_search.html"
               target="_blank">Learn more about searching models</a></p>
     </div>
 </div>

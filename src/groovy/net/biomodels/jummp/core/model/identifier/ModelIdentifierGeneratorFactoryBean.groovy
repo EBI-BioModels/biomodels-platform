@@ -20,13 +20,14 @@
 
 package net.biomodels.jummp.core.model.identifier
 
+import grails.util.Holders
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator as DMIG
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierGeneratorInitializer as MIGI
-import net.biomodels.jummp.utils.redis.Operations
+import net.biomodels.jummp.utils.redis.RedisService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.BeansException
@@ -65,7 +66,11 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
     ApplicationContext applicationContext
     String initializerBeanName
     boolean shouldComputeRegex
-
+    /**
+     * IMPORTANT: don't eagerly fetch beans from Holders/mainContext at field init time.
+     * Resolve lazily (or let Spring inject).
+     */
+    RedisService redisService
     /**
      * The configuration settings for this model identifier generator
      */
@@ -81,13 +86,16 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
         this(null, null, false, null)
     }
 
-    ModelIdentifierGeneratorFactoryBean(ConfigObject config,
-            String initializerBeanName,
-            boolean computeRegex, String generatorType) {
-        idSettings = config
-        this.initializerBeanName = Optional.ofNullable(initializerBeanName)
+    ModelIdentifierGeneratorFactoryBean(
+        ConfigObject config,
+        String initializerBeanName,
+        boolean computeRegex, String generatorType
+    ) {
+        this.idSettings = config
+        this.initializerBeanName = Optional
+            .ofNullable(initializerBeanName)
             .orElse(defaultInitializerBeanName)
-        shouldComputeRegex = computeRegex
+        this.shouldComputeRegex = computeRegex
         this.generatorType = generatorType
     }
 
@@ -103,15 +111,20 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
     @Override
     ModelIdentifierGenerator getObject() throws Exception {
         synchronized(this) {
+            if (redisService == null) {
+                redisService = Objects.requireNonNull(applicationContext)
+                    .getBean("redisService", RedisService.class)
+            }
+
             if (!idSettings || idSettings.isEmpty()) {
                 return new NullModelIdentifierGenerator()
             }
             // get the last used value from the database
             String seed = Objects.requireNonNull(initializer).lastUsedValue
-            String cachedSeed = Operations.doRedisGet(initializer.redisKeyForLastUsedValue)
+            String cachedSeed = redisService.doRedisGet(initializer.redisKeyForLastUsedValue)
             String type
             if (!cachedSeed && seed) {
-                Operations.doRedisSet(initializer.redisKeyForLastUsedValue, seed)
+                redisService.doRedisSet(initializer.redisKeyForLastUsedValue, seed)
                 type = "from database"
             } else if (cachedSeed) {
                 seed = cachedSeed
@@ -122,8 +135,8 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
             }
             LOGGER.debug("Seed: $seed --- type: $type")
 
-            GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(generatorType,
-                idSettings, seed, shouldComputeRegex)
+            GeneratorDetails details = ModelIdentifierUtils.
+                buildDecoratorsFromSettings(generatorType, idSettings, seed, shouldComputeRegex)
 
             new DMIG(details)
         }

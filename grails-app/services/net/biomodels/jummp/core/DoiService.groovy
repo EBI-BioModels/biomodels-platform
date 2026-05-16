@@ -28,9 +28,11 @@ import grails.plugin.cache.Cacheable
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
-import net.biomodels.jummp.core.user.PersonTransportCommand
-import net.biomodels.jummp.model.PublicationLinkProvider
-import org.apache.commons.lang3.StringUtils
+import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
+import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * @short Singleton-scoped facade for fetching publication metadata via DOI.
@@ -39,64 +41,86 @@ import org.apache.commons.lang3.StringUtils
  *
  * @author <a href="mailto:tungnguyenvn@pm.me">tungnguyenvn@pm.me</a>
  * @date   2021-01-17
+ * @update 2025-10-14
  */
-class DoiService implements PubDataFetchStrategy {
+class DoiService extends AbstractPubDataFetchStrategy implements InitializingBean {
     static transactional = false
+    private static final Logger logger = LoggerFactory.getLogger(DoiService.class)
 
     @Override
     PubTC fetchPublicationData(final String doi) throws JummpException {
         Map fetchedData = lookupPublicationDataFromDOI(doi)
         PubTC pubTC = buildPubTCFromRawData(fetchedData)
-        PubTC.fromDOI(pubTC)
+        if (pubTC.validate()) {
+            return PubTC.fromDOI(pubTC)
+        } else {
+            logger.error("The DOI ${doi}: cannot pull all required information! Errors: ${pubTC.errors.toString()}")
+            return null
+        }
     }
 
     @Cacheable("doiLinkProviderInstance")
     @Override
     PLPTC createLinkProviderInstance() {
-        PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
-            eq("linkType", PublicationLinkProvider.LinkType.DOI)
-        }
+        PubLP link = PubLP.withCriteria(uniqueResult: true) {
+            eq("linkType", PubLP.LinkType.DOI)
+        } as PubLP
         PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
         linkCommand
     }
 
-    PubTC buildPubTCFromRawData(final Map rawData) {
+    private PubTC buildPubTCFromRawData(final Map rawData) {
+        String doi = rawData["doi"]
         String rawPubDetails = rawData["pubDetails"]
+        if (!rawPubDetails) {
+            logger.debug("The raw details of the publication record ${rawData.get('doi')} cannot be empty.")
+            return null
+        }
+        char at = '@'
+        if (rawPubDetails.charAt(0) != at) {
+            logger.debug("DOI ${doi} Not Found")
+            return null
+        }
         String left = rawPubDetails.substring(rawPubDetails.indexOf(",") + 1)
-        String need = left.substring(0, left.lastIndexOf("}") - 1)
-        String[] parts = need.split(",")
+        left = left?.substring(0, left?.length() - 1)
+        String need = left?.substring(0, left.lastIndexOf("}"))
+        List<String> parts = need?.tokenize("\n")
+        // parts[0].replace("\n", "")
         PLPTC linkProvider = createLinkProviderInstance()
         PubTC pubTC = new PubTC(linkProvider: linkProvider, link: rawData["doi"])
         Map pubMap = [:]
-        println parts
         for (String p : parts) {
-            String[] items = p.substring(p.indexOf("\t")).split(" = ")
+            // p looks like
+            // "title = {Physiologically based pharmacokinetic (PBPK) model of glimepiride},"
+            List items = p.tokenize("=")
             String attr = items[0].trim()
-            String val = items[1].trim()
-            val = StringUtils.stripStart(val, "{")
-            val = StringUtils.stripEnd(val, "}")
-            pubMap.put(attr, val)
-            println "$attr: $val"
+            String value = items[1].replaceAll(/[{}]/, "").trim()
+            // remove the comma at the end of the value
+            value = value.endsWith(",") ? value[0..-2] : value
+            pubMap.put(attr, value)
         }
         if (!pubMap?.isEmpty()) {
             pubTC.link = pubMap.get("doi")
-            pubTC.title = pubMap.get("title")
-            pubTC.journal = pubMap.get("journal")
-            pubTC.authors = parseAuthorsFromRawText(pubMap.get("author"))
-            pubTC.volume = pubMap.get("volume")
-            pubTC.issue = pubMap.get("number")
-            pubTC.pages = pubMap.get("pages")
-            pubTC.year = Integer.parseInt(pubMap.get("year"))
-            pubTC.month = inferFromMonthName(pubMap.get("month"))
-
-            // Currently, the three attributes below are missing due to the limitations of this approach
+            pubTC.title = pubMap.get("title") ?: "N/A"
+            pubTC.journal = pubMap.get("journal") ?: (pubMap.get("publisher") ?: "N/A")
+            pubTC.authors = parseAuthorsFromRawText(pubMap.get("author") as String) as List
+            pubTC.volume = pubMap.get("volume") ?: "N/A"
+            pubTC.issue = pubMap.get("number") ?: "N/A"
+            pubTC.pages = pubMap.get("pages") ?: "N/A"
+            pubTC.year = Integer.parseInt(pubMap.get("year") as String) ?: new Date().format("yyyy").toInteger()
+            pubTC.month = inferFromMonthName(pubMap.get("month") as String) ?: new Date().format("mm").toInteger()
+            pubTC.affiliation = pubMap.get("affiliation") ?: "N/A"
+            pubTC.synopsis = pubMap.get("synopsis") ?: "N/A"
+            // Currently, the two attributes below are missing due to the limitations of this approach
             /*pubTC.affiliation
             pubTC.synopsis*/
         }
         return pubTC
     }
 
-    private Map lookupPublicationDataFromDOI(final String doi) {
+    private static Map lookupPublicationDataFromDOI(final String doi) {
+        // this method works without specifying proxy in the curl command
+        // because we had given the proxy arguments to JVM
         Map result = ["doi": doi]
         String url = "https://dx.doi.org/$doi"
         String[] cmd = ["curl", "-LH", "Accept: application/x-bibtex", url]
@@ -105,13 +129,13 @@ class DoiService implements PubDataFetchStrategy {
         result
     }
 
-    List<PersonTransportCommand> parseAuthorsFromRawText(final String rawText) {
-        List<PersonTransportCommand> authors = new ArrayList<>()
+    private static List<PersonTC> parseAuthorsFromRawText(final String rawText) {
+        List<PersonTC> authors = new ArrayList<>()
         if (rawText) {
             String[] authorSet = rawText.trim().split(" and ")
             if (authorSet?.size()) {
                 for (String authorName : authorSet) {
-                    PersonTransportCommand author = new PersonTransportCommand()
+                    PersonTC author = new PersonTC()
                     author.userRealName = authorName
                     authors.add(author)
                 }
@@ -120,8 +144,8 @@ class DoiService implements PubDataFetchStrategy {
         return authors
     }
 
-    private String inferFromMonthName(final String name) {
-        int retVal
+    private static String inferFromMonthName(final String name) {
+        int retVal = 0
         switch (name) {
             case "jan":
                 retVal = 1
@@ -161,5 +185,10 @@ class DoiService implements PubDataFetchStrategy {
                 break
         }
         retVal as String
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        logger.info("Finished the bean initialisation")
     }
 }

@@ -66,26 +66,28 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.codehaus.org"
         //mavenRepo "http://download.java.net/maven/2/"
         //mavenRepo "http://repository.jboss.com/maven2/"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4.5-b1")
-        compile("net.biomodels.jummp:AnnotationStore:0.3.5") {
+        compile("net.biomodels.jummp:AnnotationStore:0.3.6") {
             excludes 'slf4j-log4j12'
         }
-        compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
-            excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
-        }
-        compile("uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0") {
+//        compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
+//            excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
+//        }
+        compile("uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.3-SNAPSHOT") {
             excludes 'slf4j-log4j12'
         }
         // Jackson DataBinder has 'provided' scope in DDI: See
         //      https://github.com/BD2K-DDI/ddi-base-master/blob/2326b4/pom.xml
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
-        compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.9.0"
+        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.0"
         compile "org.apache.commons:commons-lang3:3.3.2"
         compile "org.apache.tika:tika-core:1.23"
+        compile "redis.clients:jedis:2.9.0"
+        compile "org.apache.httpcomponents:httpclient:4.5.14"
+        compile "org.json:json:20251224"
     }
     plugins {
         build ":tomcat:7.0.55.3"
@@ -94,5 +96,10 @@ grails.project.dependency.resolution = {
         compile ":spring-security-acl:2.0.1"
         compile ":spring-security-core:2.0.0"
         compile ":spring-security-ldap:2.0.1"
+        compile ":rest-client-builder:2.1.1"
+        compile ":quartz:1.0.2"
+        compile(":spring-security-rest:1.5.3") {
+            excludes "rest-client-builder"
+        }
     }
 }

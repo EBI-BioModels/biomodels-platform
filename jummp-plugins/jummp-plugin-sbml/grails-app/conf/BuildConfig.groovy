@@ -67,8 +67,6 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://download.java.net/maven/2/"
         //mavenRepo "http://repository.jboss.com/maven2/"
         // repository for miriam lib
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         mavenRepo "https://oss.sonatype.org/content/repositories/snapshots/" // for JSBML snapshots
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
@@ -78,7 +76,7 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.13'
         // miriam lib required by sbml converters
         runtime('uk.ac.ebi.miriam:miriam-lib:1.1.3')// { transitive = false }
-        compile("org.sbml.jsbml:jsbml:1.5") {
+        compile("org.sbml.jsbml:jsbml:1.6.1") {
             // Java 1.6+ already has these classes
             excludes 'stax-api', 'slf4j-log4j12', 'log4j-slf4j-impl', 'log4j-core', 'log4j-api', 'log4j-1.2-api'
         }

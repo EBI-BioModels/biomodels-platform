@@ -22,7 +22,10 @@ package net.biomodels.jummp.plugins.security
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.user.PersonCategory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * @short Controller class for interacting with user teams.
@@ -31,8 +34,9 @@ import net.biomodels.jummp.core.user.PersonCategory
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Secured(["isAuthenticated()"])
-class TeamController {
+class TeamController extends CommonController {
     static allowedMethods = [update: "POST"]
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeamController.class)
     /**
      * Dependency Injection of Spring Security Service
      */
@@ -46,7 +50,9 @@ class TeamController {
      * Renders the form to create new teams.
      */
     def create() {
-        render view: "create", model: [teamOwner: springSecurityService.getCurrentUser()]
+        Map model = [teamOwner: springSecurityService.getCurrentUser()]
+        model.putAll(COMMON_PROPERTIES)
+        render view: "create", model: model
     }
 
     def save() {
@@ -62,8 +68,7 @@ class TeamController {
     		for (int i = 0; i < collabs.length(); i++) {
     			users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")))
     		}
-    	}
-    	catch(Exception e) {
+    	} catch(Exception e) {
     		render "Error processing parameters: ${e.getMessage()}"
     		return
     	}
@@ -76,8 +81,7 @@ class TeamController {
         }
     	if (!team.validate()) {
             render "Error creating team. Team could not be validated."
-        }
-        else {
+        } else {
         	team.save(flush: true)
         	users.each {
         		UserTeam.create(it, team, true)
@@ -96,7 +100,9 @@ class TeamController {
      */
     def index() {
         def user = springSecurityService.getCurrentUser()
-        [teams: teamService.getTeamsForUser(user)]
+        Map model = COMMON_PROPERTIES
+        model.put("teams", teamService.getTeamsForUser(user))
+        model
     }
 
     def edit(Long id) {
@@ -121,7 +127,7 @@ class TeamController {
             showStandardErrorMessage()
         } else {
             try {
-                log.info("Team existing.")
+                LOGGER.debug("Team deleting")
                 boolean deleted = teamService.deleteTeam(id)
                 if (deleted) {
                     flash.message = "The team has been deleted successfully."
@@ -189,13 +195,16 @@ class TeamController {
             showStandardErrorMessage()
         }
         else {
+            Map model = COMMON_PROPERTIES
         	List<UserTeam> usersInTeam = UserTeam.findAllByTeam(team)
-        	[team: team, users: usersInTeam.collect { UserTeam ut ->
+        	Map teamDetails = [team: team, users: usersInTeam.collect { UserTeam ut ->
                 use(PersonCategory) {
                     ut.user.person.toCommandObject()
                 }
                 //new PersonAdapter(person: it.user.person).toCommandObject()
             }]
+            model.putAll(teamDetails)
+            model
         }
     }
 }

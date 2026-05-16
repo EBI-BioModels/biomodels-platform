@@ -34,8 +34,12 @@
 
 package net.biomodels.jummp.core.model
 
-import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
-import net.biomodels.jummp.core.certification.QcInfoTransportCommand
+import grails.util.Holders
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
+import net.biomodels.jummp.core.certification.QcInfoTransportCommand as QcInfoTC
+import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.model.Model
 import org.springframework.context.ApplicationContext
 
 /**
@@ -51,6 +55,8 @@ import org.springframework.context.ApplicationContext
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class RevisionTransportCommand implements Serializable {
+    def grailsApplication = Holders.grailsApplication
+
     private static final long serialVersionUID = 1L
     /**
      * The application context. Populated during bootstrap.
@@ -101,33 +107,44 @@ class RevisionTransportCommand implements Serializable {
     /**
      * The list of files associated with this revision
      */
-    List<RepositoryFileTransportCommand> files = null
+    List<RFTC> files = null
     /**
      * The list of annotations for this revision.
      */
-    List<ElementAnnotationTransportCommand> annotations = null
+    List<EATC> annotations = null
 
     ValidationState validationLevel
 
     String validationReport
 
-    QcInfoTransportCommand qcInfo
+    QcInfoTC qcInfo
 
+    /**
+     * Capture the extra info about the submission. For example, if the model format is unknown,
+     * the submitter can leave the language used to implement the model.
+     */
     String readmeSubmission
+
+    Map<String, List<CTC>> contributors
+    Map<String, List<CTC>> getContributors() {
+        Model m = Model.findBySubmissionId(this.model.submissionId)
+        contributors = context.contributorService.getContributorsForModel(m, this.revisionNumber.toString())
+        return contributors
+    }
 
     /**
      * The curation state of this revision
      */
     CurationState curationState
 
-    List<ElementAnnotationTransportCommand> getAnnotations() {
+    List<EATC> getAnnotations() {
         if (!annotations) {
             annotations = context.metadataDelegateService.fetchAnnotations(this)
         }
         return annotations
     }
 
-     List<RepositoryFileTransportCommand> getFiles() {
+     List<RFTC> getFiles() {
          if (!files) {
              files = context.modelDelegateService.retrieveModelFiles(this)
          }
@@ -162,7 +179,7 @@ class RevisionTransportCommand implements Serializable {
         getValidationLevelMessage(validationLevel)
     }
 
-    String getValidationLevelMessage(ValidationState validationLevel){
+    static String getValidationLevelMessage(ValidationState validationLevel){
         switch (validationLevel) {
             case ValidationState.APPROVE:
                 return "Annotations have not been checked."
@@ -173,5 +190,9 @@ class RevisionTransportCommand implements Serializable {
             case ValidationState.REJECTED:
                 return "Annotations are incorrect"
         }
+    }
+
+    String url() {
+        grailsApplication.config.grails.serverURL + "/" + identifier()
     }
 }

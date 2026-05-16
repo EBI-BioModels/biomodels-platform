@@ -29,7 +29,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
-        <title>Model Listing | BioModels</title>
+        <title>My Models | BioModels</title>
         <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main" />
         <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
         <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
@@ -40,11 +40,11 @@
     </body>
     <content tag="sidebar">
         <!-- quick links -->
-        <g:render template="/templates/listRightSidebar" />
+        <g:render template="/templates/search/listRightSidebar" />
     </content>
     <content tag="facetsearch">
-        <!-- show facets search on the left side bar -->
-        <g:render template="/templates/leftSidebar" />
+        <!-- show facets search on the left sidebar -->
+        <g:render template="/templates/search/leftSidebar" />
     </content>
     <content tag="mymodels">
         selected

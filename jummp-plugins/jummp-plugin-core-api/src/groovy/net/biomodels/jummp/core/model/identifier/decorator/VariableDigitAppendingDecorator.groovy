@@ -23,11 +23,11 @@ package net.biomodels.jummp.core.model.identifier.decorator
 import grails.util.Holders
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.utils.redis.KeyCollection
-import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.utils.redis.PublishClient
 
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
+import net.biomodels.jummp.utils.redis.RedisService
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -44,7 +44,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
     /* semaphore for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
-    Operations redisService
+    RedisService redisService = Holders.grailsApplication.mainContext.getBean("redisService") as RedisService
 
     PublishClient publishClientService = Holders.grailsApplication.mainContext.getBean("publishClientService") as PublishClient
 
@@ -127,7 +127,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
 
     private String updateNextValueIfNeeded(final String lastUsedValue) {
         final String lastUsedCount = data(lastUsedValue)
-        final String lastCount = Operations.doRedisGet(KeyCollection.getLastUsedIdCountKey(generator.type))
+        final String lastCount = redisService.doRedisGet(KeyCollection.getLastUsedIdCountKey(generator.type))
         log.debug("Last Count (from Redis): $lastCount")
         // The next counter will be either 1 (when the date segment has been reset and the counter has been reset)
         // or the next value of the last used count (when the date segment was reset)

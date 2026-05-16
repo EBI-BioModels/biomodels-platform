@@ -27,6 +27,7 @@ package net.biomodels.jummp.core
 import net.biomodels.jummp.Feedback
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * @short A light-weight feedback mechanism
@@ -38,7 +39,7 @@ import org.apache.commons.logging.LogFactory
  * @date 14/09/2017
  */
 
-class FeedbackService {
+class FeedbackService implements InitializingBean {
     static final Log log = LogFactory.getLog(FeedbackService.class)
     /**
      * Flag indicating the logger's verbosity threshold.
@@ -56,5 +57,10 @@ class FeedbackService {
             return false
         }
         return true
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

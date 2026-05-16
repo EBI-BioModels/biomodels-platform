@@ -32,15 +32,17 @@
 package net.biomodels.jummp.plugins.git
 
 import net.biomodels.jummp.core.vcs.*
-import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.*
 import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.api.errors.RefNotFoundException
 import org.eclipse.jgit.errors.CheckoutConflictException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.DepthWalk.RevWalk
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -52,7 +54,6 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
-
 /**
  * @short GitManager provides the interface to a local git clone.
  *
@@ -74,6 +75,8 @@ import java.util.concurrent.locks.ReentrantLock
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class GitManager implements VcsManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(GitManager.class)
+
     // uid for generating unique checkout directory names
     private static final AtomicInteger uid = new AtomicInteger(0)
     // locks to ensure model directories are not accessed concurrently
@@ -246,7 +249,6 @@ class GitManager implements VcsManager {
     private void initRepository(File modelDirectory) {
         if (initedRepositories.containsKey(modelDirectory)) {
             throw new VcsAlreadyInitedException()
-            return
         }
         if (exchangeDirectory == null) {
             throw new VcsException("Exchange directory cannot be null!")
@@ -348,7 +350,7 @@ class GitManager implements VcsManager {
             FileRepositoryBuilder builder = new FileRepositoryBuilder()
             Repository repository
             repository = builder
-                .setGitDir(new File(".git", modelDirectory))
+                .setGitDir(new File(".git", modelDirectory.name))
                 .readEnvironment()
                 .findGitDir().build()
 
@@ -454,11 +456,16 @@ class GitManager implements VcsManager {
                 // return current HEAD revision
                 downloadFiles(modelDirectory, returnedFiles)
             } else {
-                if (!getRevisionsPrivate(modelDirectory, false).contains(revision))
+                if (!getRevisionsPrivate(modelDirectory, false).containsKey(revision))
                     throw new VcsException("Revision '$revision' not found in model directory '$modelDirectory' !")
+                String branchName = ""
                 try {
                     // need to checkout in a temporary branch
-                    String branchName = UUID.randomUUID()
+                    branchName = UUID.randomUUID()
+                    if (!initedRepositories.get(modelDirectory).status().call().clean) {
+                        LOGGER.debug("Revision: $revision, model directory: ${modelDirectory.name}, is unclean.")
+                        initedRepositories.get(modelDirectory).stashCreate().call()
+                    }
                     initedRepositories.get(modelDirectory).
                         checkout().
                         setCreateBranch(true).
@@ -466,17 +473,23 @@ class GitManager implements VcsManager {
                         setStartPoint(revision).
                         call()
                     downloadFiles(modelDirectory, returnedFiles)
-                    initedRepositories.get(modelDirectory).checkout().setName("master").call()
-                    initedRepositories.get(modelDirectory).branchDelete().setBranchNames(branchName).call()
                 } catch (VcsException e) {
                     throw new VcsException("Checking out file from git directory ${modelDirectory?.name} failed: ", e)
+                } catch (RefNotFoundException rnfEx) {
+                    throw new VcsException("""Error while checking out the revision $revision of \
+the model git directory ${modelDirectory?.absolutePath}""", rnfEx)
+                } finally {
+                    if (modelDirectory && branchName) {
+                        // clear all the recently changes made and checkout the master brain
+                        Git git = initedRepositories.get(modelDirectory)
+                        doGitCleanAndCheckoutMasterBranch(git, branchName)
+                    }
                 }
             }
         } catch (VcsException e) {
-            String errMsg = """\
-The working directory of the revision ${revision} at ${modelDirectory.absolutePath} hasn't been initialised any VCS yet
-"""
-            throw new VcsNotInitedException(errMsg)
+            String errMsg = """The working directory of the revision ${revision} at ${modelDirectory.absolutePath} \
+has not been initialised any VCS yet."""
+            throw new VcsException(errMsg, e)
         } finally {
             unlockModelRepository(modelDirectory)
         }
@@ -487,11 +500,11 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
      * Retrieves the revisions associated with the model by looking at the git log.
      *
      * Locks model directory. Iterates through the git log, adding the revision
-     * id associated with each commit to the returned list.
+     * id associated with each commit to the returned map.
      * @param modelDirectory The model directory
      */
     @Profiled(tag = "gitManager.getRevisions")
-    List<String> getRevisions(File modelDirectory) throws VcsException {
+    Map getRevisions(File modelDirectory) throws VcsException {
         return getRevisionsPrivate(modelDirectory, true)
     }
 
@@ -505,23 +518,29 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
      * @param acquireLocks Whether or not to acquire locks.
      */
     @Profiled(tag = "gitManager.getRevisionsPrivate")
-    private List<String> getRevisionsPrivate(File modelDirectory, boolean acquireLocks) {
+    private Map getRevisionsPrivate(File modelDirectory, boolean acquireLocks) {
         ensureRepInited(modelDirectory)
-        List<String> myList = new LinkedList<String>()
+        Map mapRev = new HashMap()
         if (acquireLocks) {
             lockModelRepository(modelDirectory)
         }
         try {
             Iterator<RevCommit> log = initedRepositories.get(modelDirectory).log().call().iterator()
             log.each {
-                myList.add(it.getName())
+                PersonIdent authorIdent = it.getAuthorIdent()
+                Date authorDate = authorIdent.getWhen()
+                // TimeZone authorTimeZone = authorIdent.getTimeZone()
+                // PersonIdent committerIdent = it.getCommitterIdent()
+                LOGGER.debug "${it.name}: ${authorDate}: ${it.shortMessage}"
+                Map map = [date: authorDate, message: it.fullMessage]
+                mapRev.put(it.name, map)
             }
         } finally {
             if (acquireLocks) {
                 unlockModelRepository(modelDirectory)
             }
         }
-        return myList
+        return mapRev
     }
 
     /**
@@ -632,7 +651,7 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
             files.each {
                 Path sourcePath = it.toPath()
                 Path targetPath = Paths.get(modelDirectory.absolutePath, it.getName())
-                Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+                Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
                 add = add.addFilepattern(it.getName())
             }
             add.call()
@@ -648,5 +667,36 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
               git.push().call()
         }*/
         revision
+    }
+
+    /**
+     * Cleans or stashes the temporary branch if there has been changes.
+     * Then do checkout the master or main branch.
+     *
+     * @param git A Git object representing the model git directory in question
+     * @param branchName A String representing the provisional branch
+     */
+    private void doGitCleanAndCheckoutMasterBranch(Git git, String branchName) {
+        try {
+            LOGGER.debug("Checking out the master branch...")
+            if (!git.status().call().clean) {
+                git.stashCreate().call()
+            }
+            Ref ref = git.branchList().call().find { it.name == "refs/heads/master" }
+            if (ref) {
+                git.checkout().setName("master").call()
+            } else {
+                ref = git.branchList().call().find { it.name == "refs/heads/main" }
+                if (ref) { git.checkout().setName("main").call() }
+            }
+        } catch (RefNotFoundException rnfException) {
+            String gitDir = git?.getRepository()?.directory?.name
+            String msg = "Cannot find the branch $branchName under the Git repository ${gitDir}"
+            LOGGER.error(msg, rnfException)
+            // the println statement aims to send the message to the stdout for ELK
+            println("$msg\n${rnfException.toString()}")
+        } finally {
+            git.branchDelete().setBranchNames(branchName).call()
+        }
     }
 }

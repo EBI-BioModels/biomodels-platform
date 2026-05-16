@@ -24,8 +24,9 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 
 /**
  * @short Interface describing the service to access an SBML Model.
@@ -45,19 +46,19 @@ interface ISbmlService {
      * @param revision
      * @return MetaId on Model level
      */
-    public String getMetaId(RevisionTransportCommand revision)
+    public String getMetaId(RevisionTC revision)
     /**
      *
      * @param revision
      * @return Version of the SBML file
      */
-    public long getVersion(RevisionTransportCommand revision)
+    public long getVersion(RevisionTC revision)
     /**
      *
      * @param revision
      * @return Level of the SBML file
      */
-    public long getLevel(RevisionTransportCommand revision)
+    public long getLevel(RevisionTC revision)
     /**
      * Retrieves the notes element as an xml String on model level.
      * It cannot be used to retrieve notes on another level. If there
@@ -65,7 +66,7 @@ interface ISbmlService {
      * @param revision
      * @return The notes of the model.
      */
-    public String getNotes(RevisionTransportCommand revision)
+    public String getNotes(RevisionTC revision)
 
     /**
      * Retrieves the MIRIAM annotations for the model element.
@@ -82,7 +83,7 @@ interface ISbmlService {
      * @param revision
      * @return List of all MIRIAM annotations of the model element
      */
-    public List<Map> getAnnotations(RevisionTransportCommand revision)
+    public List<Map> getAnnotations(RevisionTC revision)
 
     /**
      * Retrieves the global parameters of the SBML Model.
@@ -97,7 +98,7 @@ interface ISbmlService {
      * @param revision
      * @return List of all parameters in the Model
      */
-    public List<Map> getParameters(RevisionTransportCommand revision)
+    public List<Map> getParameters(RevisionTC revision)
     /**
      * Retrieves the parameter with given @p id from the SBML Model.
      * The returned Map contains all the elements as explained in @link getParameters
@@ -107,7 +108,7 @@ interface ISbmlService {
      * @param id The unique id in the SBML Model.
      * @return Map of all parameter data
      */
-    public Map getParameter(RevisionTransportCommand revision, String id)
+    public Map getParameter(RevisionTC revision, String id)
     /**
      * Retrieves all parameters local to the reactions in the SBML Model.
      * The parameters are sorted to the reactions. The returned list is actually a list
@@ -119,7 +120,7 @@ interface ISbmlService {
      * @param revision
      * @return List of all reactions with their parameters
      */
-    public List<Map> getLocalParameters(RevisionTransportCommand revision)
+    public List<Map> getLocalParameters(RevisionTC revision)
     /**
      * Retrieves all reactions in the SBML Model.
      * The returned list contains one map for each reaction with the following keys/values:
@@ -141,7 +142,7 @@ interface ISbmlService {
      * @param revision
      * @return  List of all reactions
      */
-    public List<Map> getReactions(RevisionTransportCommand revision)
+    public List<Map> getReactions(RevisionTC revision)
     /**
      * Retrieves the Reaction with the given @p id from the SBML Model.
      * The returned Map contains all the elements as explained in @link getReactions
@@ -153,7 +154,7 @@ interface ISbmlService {
      * @param id The id of the Reaction
      * @return Map describing the reaction
      */
-    public Map getReaction(RevisionTransportCommand revision, String id)
+    public Map getReaction(RevisionTC revision, String id)
     /**
      * Retrieves all events in the SBML Model.
      * The returned list contains one map for each event with the following keys/values:
@@ -170,7 +171,7 @@ interface ISbmlService {
      * @param revision
      * @return List of all events
      */
-    public List<Map> getEvents(RevisionTransportCommand revision)
+    public List<Map> getEvents(RevisionTC revision)
     /**
      * Retrieves the Event with the given @p id from the SBML Model.
      * The returned map contains all the elements as explained in @link getEvents
@@ -181,7 +182,7 @@ interface ISbmlService {
      * @param id The Id of the Event
      * @return Map describing the event
      */
-    public Map getEvent(RevisionTransportCommand revision, String id)
+    public Map getEvent(RevisionTC revision, String id)
     /**
      * Retrieves all rules in the SBML Model.
      * The returned list contains one map for each rule with the following keys/values:
@@ -194,7 +195,7 @@ interface ISbmlService {
      * @param revision
      * @return List of all rules
      */
-    public List<Map> getRules(RevisionTransportCommand revision)
+    public List<Map> getRules(RevisionTC revision)
     /**
      * Retrieves the Rule for the given referenced @p variable in the SBML Model.
      * The returned map contains all the elements as explained in @link getRules with
@@ -204,7 +205,7 @@ interface ISbmlService {
      * @param variable The id of the referenced Variable
      * @return Map describing the Rule
      */
-    public Map getRule(RevisionTransportCommand revision, String variable)
+    public Map getRule(RevisionTC revision, String variable)
     /**
      * Retrieves all function definitions in the SBML Model.
      * The returned list contains one map for each function definition with the following keys/values:
@@ -215,7 +216,7 @@ interface ISbmlService {
      * @param revision
      * @return List of all Function Definitions
      */
-    public List<Map> getFunctionDefinitions(RevisionTransportCommand revision)
+    public List<Map> getFunctionDefinitions(RevisionTC revision)
     /**
      * Retrieves the Function Definition with the given @p id in the SBML Model.
      * The returned map contains all the elements as explained in @link getFunctionDefinitions with
@@ -225,7 +226,7 @@ interface ISbmlService {
      * @param id
      * @return Map describing the Function Definition
      */
-    public Map getFunctionDefinition(RevisionTransportCommand revision, String id)
+    public Map getFunctionDefinition(RevisionTC revision, String id)
     /**
      * Retrieves all compartments in the SBML Model.
      * The returned list contains one map for each compartment with the following keys/values:
@@ -242,7 +243,7 @@ interface ISbmlService {
      * @param revision
      * @return List of all Compartments
      */
-    public List<Map> getCompartments(RevisionTransportCommand revision)
+    public List<Map> getCompartments(RevisionTC revision)
     /**
      * Retrieves the Compartment with the given @p id in the SBML Model.
      * The returned map contains all the elements as explained in @link getCompartments with
@@ -252,7 +253,7 @@ interface ISbmlService {
      * @param id
      * @return Map describing the Compartment
      */
-    public Map getCompartment(RevisionTransportCommand revision, String id)
+    public Map getCompartment(RevisionTC revision, String id)
     /**
      * Retrieves all species in the SBML Model.
      * The returned list contains one map for each compartment with the following keys/values:
@@ -266,7 +267,7 @@ interface ISbmlService {
      * @param revisionNumber
      * @return List of all species
      */
-    public List<Map> getAllSpecies(RevisionTransportCommand revision)
+    public List<Map> getAllSpecies(RevisionTC revision)
     /**
      * Retrieves the Species for the given referenced @p variable in the SBML Model.
      * The returned map contains all the elements as explained in @link getAllSpecies with
@@ -276,7 +277,7 @@ interface ISbmlService {
      * @param id
      * @return Map describing the Species
      */
-     public Map getSpecies(RevisionTransportCommand revision, String id)
+     public Map getSpecies(RevisionTC revision, String id)
     /**
      * Triggers the generation of a sub model taking selected parts of an existing model.
      * The returned String contains the generated SBML model.
@@ -290,28 +291,28 @@ interface ISbmlService {
      * @param eventIds: The selected event ids
      * @return String containing the generated SBML model
      */
-    public String triggerSubmodelGeneration(RevisionTransportCommand revision, String subModelId, String metaId, List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds, List<String> ruleIds, List<String> eventIds)
+    public String triggerSubmodelGeneration(RevisionTC revision, String subModelId, String metaId, List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds, List<String> ruleIds, List<String> eventIds)
     /**
      * Generates an SVG for the given SBML model.
      * @param revision The Revision identifying an SBML model
      * @return Content of generated SVG
      */
-    public byte[] generateSvg(RevisionTransportCommand revision)
+    public byte[] generateSvg(RevisionTC revision)
     /**
      * Generates Octave output for the given SBML model.
      * @param revision The Revision identifying an SBML model
      * @return Content of generated Octave file
      */
-    public String generateOctave(RevisionTransportCommand revision)
+    public String generateOctave(RevisionTC revision)
     /**
      * Generates BioPAX output for the given SBML model.
      * @param revision The Revision identifying an SBML model
      * @return Content of generated BioPAX file
      */
-    public String generateBioPax(RevisionTransportCommand revision)
+    public String generateBioPax(RevisionTC revision)
 
     /**
-     * Adds the identifiers to the model-level annotations of a {@link RevisionTransportCommand}.
+     * Adds the identifiers to the model-level annotations of a {@link RevisionTC}.
      *
      * @param identifiers the identifier URIs that should be added to the model's annotations
      *           (e.g. http://identifiers.org/biomodels.db/BIOMD0000000001).
@@ -319,9 +320,18 @@ interface ISbmlService {
      * @return true if the annotation
      * @throws ModelException in case of I/O or parsing issues when updating the model file.
      */
-    boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
+    boolean addModelIdentifiersAsAnnotation(RevisionTC revision, String... identifiers)
             throws ModelException
 
-    boolean addModellingApproachAsAnnotation(RevisionTransportCommand revision, ModellingApproach approach) throws
+    boolean addModellingApproachAsAnnotation(RevisionTC revision, ModellingApproach approach) throws
         ModelException
+
+    /**
+     * Adds publication identifier (DOI or PubMed) as an annotation
+     * @param revision  A RevisionTC instance to be added the publication annotation
+     * @param publication A PublicationTransportCommand instance indicating the publication record to be added to the revision
+     * @return true or false indicating the operation succeeds or fails
+     * @throws ModelException
+     */
+    boolean addPublicationAsAnnotation(RevisionTC revision, PubTC publication) throws ModelException
 }

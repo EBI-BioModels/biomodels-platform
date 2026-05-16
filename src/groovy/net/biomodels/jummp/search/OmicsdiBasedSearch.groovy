@@ -24,19 +24,32 @@
 
 package net.biomodels.jummp.search
 
+import grails.plugin.cache.Cacheable
 import grails.transaction.NotTransactional
 import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
-import net.biomodels.jummp.core.ModelSearchStrategy
+import net.biomodels.jummp.annotationstore.RevisionAnnotation
+import net.biomodels.jummp.annotationstore.Statement
+import net.biomodels.jummp.core.ModelSearchStrategy as MST
 import net.biomodels.jummp.core.events.ModelOperationEvent
-import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.model.ModelState
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import net.biomodels.jummp.indexing.IndexingPlan
 import net.biomodels.jummp.model.Revision
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
-import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
+import net.biomodels.jummp.utils.EbiSearchHelper
+import net.biomodels.jummp.utils.FileHelper
+import net.biomodels.jummp.utils.WebServiceFetcher
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware as GCA
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
@@ -50,7 +63,7 @@ import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
 
 import java.text.SimpleDateFormat
-
+import java.util.regex.Pattern
 /**
  * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
  *
@@ -62,23 +75,21 @@ import java.text.SimpleDateFormat
  * @date   12/09/2016
  */
 
-class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrategy,
-    ApplicationListener<ModelOperationEvent> {
+class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperationEvent> {
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(OmicsdiBasedSearch.class)
+    static final Logger LOGGER = LoggerFactory.getLogger(OmicsdiBasedSearch.class)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    static final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
     /**
      * Flag indicating the logger's verbosity threshold.
      */
-    static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd")
 
-    private final java.util.regex.Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
+    private final Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
     private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
 
     private final Map<String, Integer> FACET_ORDER = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER) {
@@ -86,7 +97,7 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
             put("Curation status", 1)
             put("Model format", 2)
             put("Modelling approach", 3)
-            put("Model flag", 4)
+            put("Model Tag", 4)
             put("Organisms", 5)
             put("Disease", 6)
             put("GO", 7)
@@ -94,6 +105,7 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
             put("ChEBI", 9)
             put("ChEMBL", 10)
             put("Ensembl", 11)
+            put("Model flag", 12)
         }
     }
 
@@ -130,6 +142,8 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
 
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
+    def redisService = Holders.grailsApplication.mainContext.getBean('redisService')
+
     private String httpProxyHost = "localhost"
     private int httpProxyPort = 80
 
@@ -149,9 +163,34 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
         ["relevance", "submissionid", "name"]
     }
 
+    @Override
     @NotTransactional
+    Map checkIndexedData() {
+        LOGGER.debug("Checking whether BioModels duplicated entries on EBI Search Server...")
+        EbiSearchHelper.checkIndexedData()
+    }
+
+    @Override
+    void indexDB() {
+        // Export OmicsDI XML Files and leave them processed by DDI Team and EBI Search Team
+        // This job will call a service running on the ebi-mol-sys-dev machine to launch a job on SLURM cluster
+        // It will generate all OmicsDI XML files.
+        boolean inProdMode = Environment.current == Environment.PRODUCTION
+        if (inProdMode) {
+            LOGGER.info("Submitted the job for exporting OmicsDI XML files...")
+            final String SVC_URL = "http://ebi-mol-sys-dev.ebi.ac.uk:8000/search/export/omicsdi"
+            WebServiceFetcher fetcher = new WebServiceFetcher(SVC_URL)
+            def result = fetcher.getText()
+            LOGGER.info(result as String)
+        } else {
+            LOGGER.info("No need to export OmicsDI XML files for the local development.")
+        }
+    }
+
+    @NotTransactional
+    @Cacheable("searchResults")
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
-            Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
+            Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 20]) {
         long startAt = System.currentTimeMillis()
         boolean inProdMode = Environment.current == Environment.PRODUCTION
         AbstractEbeyeWsConfig ebeyeWsConfig
@@ -164,15 +203,10 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
          * At the current settings, using HTTP PROXY to access the internet in the cloud based deployment.
          * Because of that, we need to tell ddi-ebe-ws-dao the information of HTTP PROXY
          */
-        String _httpProxyHost = System.getenv("HTTP_PROXY_HOST")
+        String _httpProxyHost = System.getProperty("http.proxyHost") ?: System.getenv("http.proxyHost")
         String proxyHost = _httpProxyHost != null ? _httpProxyHost : this.httpProxyHost
-        String _httpProxyPort = System.getenv("HTTP_PROXY_PORT")
+        String _httpProxyPort = System.getProperty("http.proxyPort") ?: System.getenv("http.proxyPort")
         int proxyPort = _httpProxyPort != null ? _httpProxyPort.toInteger().intValue() : this.httpProxyPort
-        if (_httpProxyHost && _httpProxyPort) {
-            log.debug("HTTP Proxy information is retrieved from environment variables")
-        } else {
-            log.debug("Using the default information about HTTP Proxy")
-        }
         ebeyeWsConfig.setHttpProxyHost(proxyHost)
         ebeyeWsConfig.setHttpProxyPort(proxyPort)
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
@@ -183,9 +217,11 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
         // TODO: should allow searching information of other fields
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()
-        String[] fields = ["name", "description", "submitter", "curationstatus",
-                           "last_modification_date", "submission_date",
-                           "modelformat", "levelversion", "first_author", "publication_year", "isprivate"]
+        String[] fields = [
+            "name", "description", "submitter", "curationstatus", "last_modification_date", "submission_date",
+            "modellingapproach", "modelformat", "levelversion", "first_author", "publication_year", "isprivate",
+            "submitter_keywords", "full_dataset_link"
+        ]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
         String sort = sortField ? String.format("%s:%s", sortField, sortDir) : ""
@@ -198,14 +234,14 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
             int facetCount = paginationCriteria['facetCount']
             result = datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
         } catch (HttpServerErrorException e) {
-            log.debug("""There was a problem obtaining search result from EBI search server. \
+            LOGGER.debug("""There was a problem obtaining search result from EBI search server. \
 The root cause is ${e.toString()}""")
-            log.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
+            LOGGER.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
             result = null
         } catch (HttpClientErrorException e) {
-            log.error("There was a problem searching models from BioModels ${e.toString()}")
+            LOGGER.error("There was a problem searching models from BioModels ${e.toString()}")
             if (e.statusCode.value() == 400) {
-                log.error("The querying string might be wrong syntax or contains restricted characters.")
+                LOGGER.error("The querying string might be wrong syntax or contains restricted characters.")
             }
             result = null
         } catch (UnknownHostException ignored ) {
@@ -240,13 +276,9 @@ The root cause is ${e.toString()}""")
                     )
                 } else {
                     state = ModelState.PUBLISHED
-                    String submissionDateString = getSingleValueForEntryField(  entry,
-                            'submission_date')
-                    Date submissionDate = formatParsedDateString(submissionDateString)
                     String submitterName = getSingleValueForEntryField(entry, 'submitter')
-                    String modifiedDateString = getSingleValueForEntryField(entry,
-                            'last_modification_date')
-                    Date modifiedDate = formatParsedDateString(modifiedDateString)
+                    Date submissionDate = inferDateField(entry, "submission_date", submissionId)
+                    Date modifiedDate = inferDateField(entry, "last_submission_date", submissionId)
                     String formatName = getSingleValueForEntryField(entry, 'modelformat')
                     String formatVersion = getSingleValueForEntryField(entry, 'levelversion')
                     String publicationYear = getSingleValueForEntryField(entry, 'publication_year')
@@ -268,6 +300,7 @@ The root cause is ${e.toString()}""")
                         publication: ptc
                     )
                 }
+                mtc.searchableLink = getSingleValueForEntryField(entry, 'full_dataset_link')
                 results.add(mtc)
             }
             // facets
@@ -282,7 +315,9 @@ The root cause is ${e.toString()}""")
                 if (facet.id == "modelFlag") {
                     facet.id = "modelflag"
                 }
-
+                if (facet.id == "submitter_keywords") {
+                    facet.label = "Model Tag"
+                }
                 shouldBeHidden = hiddenFacets.contains(facet.label.toUpperCase())
                 if (!shouldBeHidden) {
                     facets.add(facet)
@@ -293,25 +328,12 @@ The root cause is ${e.toString()}""")
             results = []
             facets = []
         }
-        Set<String> immutableFacets = ["Organisms", "Publication Date", "Omics type"]
 
-        // potentially turn facets into a HashSet/HashMap so that we can more easily
-        // compute the delta b/w facets and immutable facets
-        List<FacetValue> facetValues = facets.findAll({ Facet f ->
-            !(immutableFacets.contains(f.label))
-        })*.facetValues.flatten().findAll { FacetValue value -> !value.label.contains(' ') }
-        Map<String, String> labelsForAccessions = new LinkedHashMap<>(facetValues.size())
-        List<String> labels = facetValues.collect { it.label }
-        List<ResourceReference> references = ResourceReference.findAllByAccessionInList(labels)
-        references.each { ResourceReference r ->
-            labelsForAccessions[r.accession] = r.name
+        if (facets) {
+            LOGGER.info("Disabling resolving name for accession to debug 500 error")
+            // findNameForAccession(facets)
         }
-        facetValues.each { FacetValue v ->
-            String referenceName = labelsForAccessions[v.label]
-            if (referenceName) {
-                v.label = referenceName
-            }
-        }
+
         // build a TreeMap based on the deliberately designed order of our Facets
         TreeSet<OrderedFacet> orderedFacets = new TreeSet<OrderedFacet>()
         facets.each {Facet facet ->
@@ -323,27 +345,23 @@ The root cause is ${e.toString()}""")
         // the insertion order. Here we just copy all facets ordered above to the
         // SearchResponse's facets placeholder
         orderedFacets.each {
-            searchResponse.facets.putAt(it.facet.label, it)
+            (searchResponse.facets[it.facet.label] = it)
         }
         searchResponse.results = results
         searchResponse.totalCount = totalCount
         if (IS_DEBUG_ENABLED) {
-            log.debug("Search terms: $query")
-            log.debug("Results processed in ${System.currentTimeMillis() - startAt}")
+            LOGGER.debug("Search terms: $query")
+            LOGGER.debug("Results processed in ${System.currentTimeMillis() - startAt}")
         }
         return searchResponse
     }
 
-    void updateIndex(RevisionTransportCommand revision) {
+    void updateIndex(RevisionTC revision,
+                     Map<String, String> options = ["level": "full", "indexer": ""] as Map) {
+        LOGGER.info("Indexing options for this revsion ${revision.identifier()}: $options")
         Revision.withSession {
-            String name = revision.name ?: ""
-            String description = revision.description ?: ""
-            String submissionId = revision.model.submissionId
-            String publicationId = revision.model.publicationId ?: ""
-            int versionNumber = revision.revisionNumber
-            boolean isCertified = null != revision.qcInfo
-            final String uniqueId = "${submissionId}.${versionNumber}"
-            String exchangeFolder = new File(revision?.files?.first().path).getParent()
+            def partialData = buildPartialData(revision)
+            String exchangeFolder = grailsApplication.config.jummp.vcs.exchangeDirectory
             String registryExport = miriamService.registryExport.canonicalPath
             def dsConfig = grailsApplication.config.dataSource
             def searchStrategy = grailsApplication.config.jummp.search.strategy
@@ -353,35 +371,6 @@ The root cause is ${e.toString()}""")
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
             def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
-            def tags = modelTagService.getTagsByModelId(revision?.model?.submissionId)
-            def partialData = [
-                'submissionId': submissionId,
-                'publicationId' :publicationId,
-                'name': name,
-                'description' : description,
-                'modelFormat' : revision.format.name,
-                'levelVersion' : revision.format.formatVersion,
-                'submitter' : revision.owner,
-                'submitterUsername' :  revision.model.submitterUsername,
-                'publicationTitle' : revision.model.publication ?
-                    revision.model.publication.title  :  "",
-                'publicationAbstract' : revision.model.publication ?
-                    revision.model.publication.synopsis : "",
-                'publicationAuthor': revision.model.publication?.authors ?
-                    revision.model.publication.authors.collect {
-                        it.userRealName }.join(', ') : "",
-                'publicationYear': revision.model.publication?.year ?: 0,
-                'model_id' : revision.model.id,
-                'revision_id' :  revision.id,
-                'deleted' :  revision.model.deleted,
-                'public' :  revision.model.firstPublished ? 'true'  :  'false',
-                'certified' : isCertified ? 'true' : 'false',
-                'versionNumber' : versionNumber,
-                'submissionDate' : revision.model.submissionDate,
-                'lastModified' :  revision.model.lastModifiedDate,
-                'uniqueId' : uniqueId,
-                'tags': tags
-            ]
             def builder = new JsonBuilder()
             builder(partialData: partialData,
                 'folder': exchangeFolder,
@@ -390,32 +379,28 @@ The root cause is ${e.toString()}""")
                 'jummpPropFile': configurationService.getConfigFilePath(),
                 'miriamExportFile': registryExport,
                 'searchStrategy': searchStrategy,
-                'database': dbSettings)
-            File indexingData = new File(exchangeFolder, "indexData.json")
-            indexingData.setText(builder.toPrettyString())
+                'database': dbSettings,
+                'level': options["level"],
+                'indexer': options["indexer"])
+            String sep = File.separator
+
+            String indexingFolder = "$exchangeFolder${sep}indexing${sep}${revision.identifier()}"
+            File indexingData = FileHelper.createFile(indexingFolder, "indexData.json")
+            if (indexingData) {
+                indexingData.setText(builder.toPrettyString())
+            } else {
+                LOGGER.info("Cannot create indexData.json to index the model {}.", revision.identifier())
+                throw new RuntimeException("Cannot create indexData.json to index the model ${revision.identifier()}.")
+            }
 
             String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
             def argsMap = [jarPath: jarPath, jsonPath: indexingData.absolutePath]
+            argsMap.putAll(configurationService.configureProxySettings() as Map<? extends String, ? extends String>)
 
-            String httpProxy = System.getProperty("http.proxyHost")
-            if (httpProxy) {
-                String proxyPort = System.getProperty("http.proxyPort") ?: '80'
-                String nonProxyHosts = "'${System.getProperty("http.nonProxyHosts")}'"
-                StringBuilder proxySettings = new StringBuilder()
-                proxySettings.append(" -Dhttp.proxyHost=").append(httpProxy).append(
-                    " -Dhttp.proxyPort=").append(proxyPort).append(" -Dhttp.nonProxyHosts=").append(
-                    nonProxyHosts)
-                argsMap['proxySettings'] = proxySettings.toString()
-                if (IS_INFO_ENABLED) {
-                    log.info("Proxy settings for the indexer are $proxySettings")
-                }
-            } else {
-                argsMap['proxySettings'] = ""
-            }
             try {
                 producerTemplate.sendBody("seda:exec", argsMap)
             } catch (Exception e) {
-                log.error("Failed to index revision $revision.properties - ${e.message}", e)
+                LOGGER.error("Failed to index revision $revision.properties - ${e.message}", e)
                 //TODO RETRY
             }
         }
@@ -424,12 +409,92 @@ The root cause is ${e.toString()}""")
     void clearIndex() {
         // Delete indexing plans from the database
         if (IS_DEBUG_ENABLED) {
-            log.debug "Clearing the indexing plans."
+            LOGGER.debug "Clearing the indexing plans."
         }
         Revision.executeUpdate("delete IndexingPlan")
     }
 
-    private Date formatParsedDateString(String dateString) {
+    @Override
+    void clearIndex(final long revisionId) {
+        List revisionAnnotationRecords = RevisionAnnotation.findAll {
+            revision.id == revisionId
+        }
+
+        // delete RevisionAnnotation
+        LOGGER.info("Clearing all ${revisionAnnotationRecords.size()} the relevant records of RevisionAnnotation")
+        revisionAnnotationRecords.each {
+            LOGGER.info "deleting RevisionAnnotation: ${it.id}"
+            try {
+                it.delete(flush: true)
+            } catch (Exception ex) {
+                LOGGER.error("Cannot delete the ${revisionId}: RevisionAnnotation id: ${it.id} due to ${ex.message}.")
+            }
+        }
+        RevisionAnnotation.withSession { it.flush() }
+
+        // delete ElementAnnotation
+        List listElementAnnotation = revisionAnnotationRecords*.elementAnnotation
+        List<Long> statements = new ArrayList<>()
+        List<Long> references = new ArrayList<>()
+        LOGGER.info("Clearing all ${listElementAnnotation.size()} the relevant records of ElementAnnotation")
+        listElementAnnotation.each {
+            try {
+                if (it.statement) statements.add(it.statement.id)
+                if (it.statement?.object) references.add(it.statement.object.id)
+                LOGGER.info "deleting ElementAnnotation: ${it.id}"
+                it.delete(flush: true)
+            } catch (Exception ex) {
+                LOGGER.error("Cannot delete the ${revisionId}: ElementAnnotation id: ${it.id} due to ${ex.message}.")
+            }
+        }
+        ElementAnnotation.withSession { it.flush() }
+        // delete Statement
+        LOGGER.info("Clearing all the ${statements.size()} relevant records of Statement")
+        statements.each { Long id ->
+            LOGGER.info "deleting Statement: ${id}"
+            def qStr = "delete Statement s where s.id = :sId"
+            Statement.executeUpdate(qStr, [sId: id])
+        }
+        Statement.withSession { it.flush() }
+
+        // delete ResourceReference
+        LOGGER.info("Clearing all the ${references.size()} relevant records of ResourceReference")
+        references.each { Long id ->
+            LOGGER.info("deleting ResourceReference: ${id}")
+            def qStr = "delete ResourceReference r where r.id = :rId"
+            ResourceReference.executeUpdate(qStr, [rId: id])
+        }
+        ResourceReference.withSession { it.flush() }
+
+        // remove all indexing plans
+        clearIndexingPlan(revisionId)
+    }
+
+    /**
+     * Clears the indexed data (annotations)
+     *
+     * @param revisionTC {@link net.biomodels.jummp.core.model.RevisionTransportCommand} object holding the revision
+     */
+    void clearIndex(RevisionTC revisionTC) {
+        if (revisionTC) {
+            clearIndex(revisionTC.id)
+        }
+    }
+
+    void clearIndexingPlan(final long revisionId) {
+        def indexingPlans = IndexingPlan.where {
+            revision.id == revisionId
+        }
+        if (indexingPlans) {
+            List plans = indexingPlans.toList()
+            plans.each {
+                def qStr = "delete IndexingPlan ip where ip.revision.id = :revId"
+                IndexingPlan.executeUpdate(qStr, [revId: revisionId])
+            }
+        }
+    }
+
+    private static Date formatParsedDateString(String dateString) {
         Date date = null
         if (!dateString.isEmpty()) {
             date = dateFormat.parse(dateString)
@@ -455,9 +520,9 @@ The root cause is ${e.toString()}""")
         values
     }
 
-    private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {
+    private List<String> fetchFilesFromRevision(RevisionTC rev, boolean filterMains) {
         if (filterMains) {
-            return rev?.files?.findAll{it.mainFile}.collect{it.path}
+            return rev?.files?.findAll{it.mainFile}?.collect{it.path}
         }
         return rev?.files?.collect{it.path}
     }
@@ -470,5 +535,103 @@ The root cause is ${e.toString()}""")
         }
         matcher.appendTail(out)
         out.toString()
+    }
+
+    private Map buildPartialData(RevisionTC revision) {
+        String submissionId = revision.model.submissionId
+        String publicationId = revision.model.publicationId ?: ""
+        String name = revision.name ?: ""
+        String description = revision.description ?: ""
+
+        int versionNumber = revision.revisionNumber
+        boolean isCertified = null != revision.qcInfo
+
+        final String uniqueId = "${submissionId}.${versionNumber}"
+        def tags = modelTagService.getTagsByModelId(revision?.model?.submissionId)
+
+        Map data = [
+            'submissionId': submissionId,
+            'publicationId' :publicationId,
+            'name': name,
+            'description' : description,
+            'modelFormat' : revision.format.identifier,
+            'levelVersion' : revision.format.formatVersion,
+            'submitter' : revision.owner,
+            'submitterUsername' :  revision.model.submitterUsername,
+            'publicationLinkType': revision.model.publication ? revision.model.publication?.linkProvider?.linkType : "",
+            'publicationLink': revision.model.publication ? revision.model.publication.link : "",
+            'publicationTitle' : revision.model.publication ?
+                revision.model.publication.title  :  "",
+            'publicationAbstract' : revision.model.publication ?
+                revision.model.publication.synopsis : "",
+            'publicationAuthor': revision.model.publication?.authors ?
+                revision.model.publication.authors.collect {
+                    it.userRealName }.join(', ') : "",
+            'publicationYear': revision.model.publication?.year ?: 0,
+            'modelId' : revision.model.id,
+            'revisionId' :  revision.id,
+            'deleted' :  revision.model.deleted,
+            'public' :  revision.model.firstPublished ? 'true'  :  'false',
+            'certified' : isCertified ? 'true' : 'false',
+            'versionNumber' : versionNumber,
+            'submissionDate' : revision.model.submissionDate,
+            'lastModified' :  revision.model.lastModifiedDate,
+            'uniqueId' : uniqueId,
+            'tags': tags,
+            'isMetadataSubmission': revision.model.isMetadataSubmission
+        ]
+        return data
+    }
+
+    private Date inferDateField(Entry entry, final String fieldName, final String submissionId) {
+        String fieldValue = getSingleValueForEntryField(entry, fieldName)
+        Date date = null
+        try {
+            if (fieldValue != "") {
+                date = formatParsedDateString(fieldValue)
+            }
+        } catch (NumberFormatException e1) {
+            println("${submissionId} errors: ${e1.message} - ${fieldName}: ${entry.getFields().get(fieldName)}")
+            LOGGER.debug("${submissionId} errors: ${e1.message} - ${fieldName}: ${entry.getFields().get(fieldName)}")
+        }
+
+        date
+    }
+
+    private void findNameForAccession(List<Facet> facets) {
+        Set<String> immutableFacets = ["Organisms", "Publication Date", "Omics type"]
+        // potentially turn facets into a HashSet/HashMap so that we can more easily
+        // compute the delta b/w facets and immutable facets
+        List<FacetValue> facetValues = facets.findAll({ Facet f ->
+            !(immutableFacets.contains(f.label))
+        })*.facetValues.flatten().findAll { FacetValue value -> !value.label.contains(' ') } as List<FacetValue>
+        Map<String, String> labelsForAccessions = new LinkedHashMap<>(facetValues.size())
+        List<String> lstAccessions = facetValues.collect { it.label }
+
+        // the `rrmap` is the key holding all the pairs of accession and its name of Taxonomy, Gene Ontology, UniProt
+        // Knowledgebase, and ChEBI. They were cached on Redis in the preparation stage. The key is converted to JSON
+        // string from a map.
+        String strJson = redisService.doRedisGet("rrmap")
+        if (strJson) {
+            def json = new JsonSlurper().parseText(strJson)
+            Map references = [:]
+            for (def obj in json) {
+                if (lstAccessions.contains(obj.key)) {
+                    references.put(obj.key, obj.value)
+                    labelsForAccessions[obj.key] = obj.value
+                }
+            }
+        } else {
+            List<ResourceReference> references = ResourceReference.findAllByAccessionInList(lstAccessions)
+            references.each { ResourceReference r ->
+                labelsForAccessions[r.accession] = r.name
+            }
+        }
+        facetValues.each { FacetValue v ->
+            String referenceName = labelsForAccessions[v.label]
+            if (referenceName) {
+                v.label = referenceName
+            }
+        }
     }
 }

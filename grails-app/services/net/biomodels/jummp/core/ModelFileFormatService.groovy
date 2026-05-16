@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelElementTypeCategory as METC
 import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand as METTC
 import net.biomodels.jummp.model.ModelElementType as MET
@@ -46,6 +47,10 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.perf4j.aop.Profiled
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
+import org.springframework.jdbc.BadSqlGrammarException
 
 /**
  * @short Service to handle Model files.
@@ -66,7 +71,8 @@ import net.biomodels.jummp.core.adapters.ModelFormatAdapter
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * Last modified date: 14/04/2016
  */
-class ModelFileFormatService {
+class ModelFileFormatService implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelFileFormatService.class)
 
     static transactional = true
     /**
@@ -99,7 +105,12 @@ class ModelFileFormatService {
         List<File> fileList = new LinkedList<File>()
         modelFiles.each {
             if (it.mainFile) {
-                fileList.add(new File(it.path))
+                File file = new File(it.path)
+                if (file.length() <= 100*1024*1024) {
+                    fileList.add(file)
+                } else {
+                    LOGGER.debug("The model main file ${it.path} exceeds 100MB to able to detect a model format.")
+                }
             }
         }
         Map<String, String> services = getServices()
@@ -108,7 +119,8 @@ class ModelFileFormatService {
             if (it == "UNKNOWN") return false
             String serviceName = services[it]
             def ffs = grailsApplication.mainContext.getBean(serviceName, FileFormatService)
-            return ffs.areFilesThisFormat(fileList)
+            boolean isThisFormat = ffs.areFilesThisFormat(fileList)
+            isThisFormat
         }
         if (!match) {
             return new ModelFormatAdapter(format:
@@ -161,7 +173,7 @@ class ModelFileFormatService {
             } else {
                 modelElementType = new MET(modelFormat: modelFormat, name: name)
                 if (!modelElementType.save(flush: true)) {
-                    def err = modelElementType.errors.allErrors()
+                    def err = modelElementType.errors.allErrors
                     String msg = "Illegal element type $name for fmt ${modelFormat.id}: ${err}"
                     throw new IllegalArgumentException(msg)
                 }
@@ -169,8 +181,8 @@ class ModelFileFormatService {
                     return modelElementType.toCommandObject()
                 }
             }
-        } catch (org.springframework.jdbc.BadSqlGrammarException exception) {
-            throw new IllegalStateException("Model element type table does not exist")
+        } catch (BadSqlGrammarException exception) {
+            throw new IllegalStateException("Model element type table does not exist. Caused ${exception.message}")
         }
     }
 
@@ -237,9 +249,14 @@ class ModelFileFormatService {
      * @return true if the operation was successful, false otherwise.
      */
     boolean updateName(RTC revision, final String name) {
-        FileFormatService service = serviceForFormat(revision.format)
-        assert service
-        service.updateName(revision, name)
+        try {
+            FileFormatService service = serviceForFormat(revision.format)
+            assert service
+            service.updateName(revision, name)
+        } catch (Exception exception) {
+            LOGGER.error("Failed to update the model name. Caused ${exception.message}")
+            return false
+        }
     }
 
     /**
@@ -271,15 +288,25 @@ class ModelFileFormatService {
     }
 
     /**
-     * Retrieves the version of the format in which @p revisiontransportcommand is encoded.
-     * @param revision the RevisionTransportCommand/Revision for which to extract the format version.
+     * Retrieves the version of the format in which {@link RTC} is encoded.
+     * @param revision the {@link RTC} for which to extract the format version.
      * @return The format version, or '*' if this cannot be extracted.
      */
-    String getFormatVersion(def revision) {
+    String getFormatVersion(final RTC revision) {
         FileFormatService service = serviceForFormat(revision?.format)
         return service ? service.getFormatVersion(revision) : "*"
     }
 
+    Map getAllFormats() {
+        List<ModelFormat> allFormats = ModelFormat.all
+        Map results = new HashMap()
+        for (ModelFormat format in allFormats) {
+            Map map = [name: format.name, identifier: format.identifier, version: format.version,
+                       formatVersion: format.formatVersion]
+            results.put(format.identifier, map)
+        }
+        results
+    }
     /**
      * Retrieves all annotation URNs through the service responsible for the format used
      * by the @p revision.
@@ -289,7 +316,8 @@ class ModelFileFormatService {
     List<String> getAllAnnotationURNs(Revision rev) {
         FileFormatService service = serviceForFormat(rev.format)
         if (service) {
-            return service.getAllAnnotationURNs(new ModelFormatAdapter(format:rev).toCommandObject())
+            RTC rtc = new RevisionAdapter(revision: rev).toCommandObject()
+            return service.getAllAnnotationURNs(rtc)
         } else {
             return []
         }
@@ -298,13 +326,49 @@ class ModelFileFormatService {
     /**
      * Retrieves all pubmed annotations through the service responsible for the format used
      * by the @p revision.
-     * @param rev The Revision for which all pubmed annotations should be retrieved
+     * @param revision The Revision for which all pubmed annotations should be retrieved
      * @return List of all pubmeds used in the Revision
      */
     List<String> getPubMedAnnotation(Revision rev) {
         FileFormatService service = serviceForFormat(rev.format)
         if (service) {
-            return service.getPubMedAnnotation(new ModelFormatAdapter(format:rev).toCommandObject())
+            return service.getPubMedAnnotation(new RevisionAdapter(revision: rev).toCommandObject())
+        } else {
+            return []
+        }
+    }
+
+    List<String> getPubMedAnnotation(final RTC rev) {
+        FileFormatService service = serviceForFormat(rev.format.identifier)
+        if (service) {
+            return service.getPubMedAnnotation(rev)
+        } else {
+            return []
+        }
+    }
+
+    Map<String, String> getContentsOfSpecificTabs(final RTC rev) {
+        FileFormatService service = serviceForFormat(rev.format.identifier)
+        if (service) {
+            service.getContentsOfSpecificTabs(rev)
+        } else {
+            return null
+        }
+    }
+
+    List<String> getNamesOfSpecificTabs(final RTC rev) {
+        FileFormatService service = serviceForFormat(rev.format.identifier)
+        if (service) {
+            return service.getNamesOfSpecificTabs(rev)
+        } else {
+            return []
+        }
+    }
+
+    List<String> getPublicationAnnotations(final RTC rev) {
+        FileFormatService service = serviceForFormat(rev.format.identifier)
+        if (service) {
+            return service.getPublicationAnnotations(rev)
         } else {
             return []
         }
@@ -327,7 +391,6 @@ class ModelFileFormatService {
             return null
         }
     }
-
 
     /**
      * Used to select the templates used to display the model of the @p format provided.
@@ -371,7 +434,9 @@ class ModelFileFormatService {
             }
             Map<String,String> services = getServices()
             if (services.containsKey(formatIdentifier)) {
-                return grailsApplication.mainContext.getBean((String)services.getAt(formatIdentifier))
+                return grailsApplication.mainContext.getBean((String) services[formatIdentifier])
+            } else {
+                return null
             }
         } else {
             return null
@@ -384,5 +449,10 @@ class ModelFileFormatService {
 
     private Map<String,String> getControllers() {
         grailsApplication.mainContext.getBean("modelFileFormatConfig").getControllers()
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        log.info("Finished the bean initialisation")
     }
 }

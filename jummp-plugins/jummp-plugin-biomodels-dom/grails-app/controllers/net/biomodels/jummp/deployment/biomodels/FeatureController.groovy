@@ -21,15 +21,21 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.plugin.springsecurity.annotation.Secured
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * This controller aims to serve special features
  */
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 class FeatureController {
+    private final Logger LOGGER = LoggerFactory.getLogger(FeatureController.class)
+
     def featureService
 
     def agedbrain() {
+        String svgAgedBrain = featureService.svgAgedBrain
+        [svgAgedBrain: svgAgedBrain]
     }
 
     def path2models() {
@@ -41,6 +47,6 @@ class FeatureController {
     }
 
     def reproducibility() {
-        [content: featureService.loadContentForReproducibilityPage]
+        [content: featureService.contentForReproducibilityPage]
     }
 }
