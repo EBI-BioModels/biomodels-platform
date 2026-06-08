@@ -102,8 +102,12 @@ class ModelIdentifierUtils {
                 driver = 'org.postgresql.Driver'
                 break
             case 'MYSQL':
-                protocol ='mysql'
-                driver = 'com.mysql.jdbc.Driver'
+                protocol = 'mysql'
+                driver = 'com.mysql.cj.jdbc.Driver'
+                break
+            case 'MARIADB':
+                protocol = 'mariadb'
+                driver = 'org.mariadb.jdbc.Driver'
                 break
             case 'h2':
             default:
@@ -125,6 +129,9 @@ class ModelIdentifierUtils {
         }
         if (protocol == 'mysql') {
             url = "$url?$UNICODE_OPTIONS"
+        }
+        if (protocol == 'mariadb') {
+            url = "jdbc:mariadb://$server:$port/$db?$UNICODE_OPTIONS"
         }
         def out = [ driver: driver, url: url, user: username, password: password ]
         if (IS_DEBUG_ENABLED) {

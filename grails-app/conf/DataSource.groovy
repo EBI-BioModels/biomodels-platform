@@ -43,7 +43,12 @@ try {
             break
         case "MYSQL":
             protocol = "mysql"
-            dbProps.setProperty("jummp.database.driver", "com.mysql.jdbc.Driver")
+            dbProps.setProperty("jummp.database.driver", "com.mysql.cj.jdbc.Driver")
+            dbProps.setProperty("jummp.database.dialect", "org.hibernate.dialect.MySQL5InnoDBDialect")
+            break
+        case "MARIADB":
+            protocol = "mariadb"
+            dbProps.setProperty("jummp.database.driver", "org.mariadb.jdbc.Driver")
             dbProps.setProperty("jummp.database.dialect", "org.hibernate.dialect.MySQL5InnoDBDialect")
             break
         default:
@@ -60,9 +65,13 @@ try {
         dbProps.setProperty("jummp.database.pooled", "true")
     }
     if (protocol == 'mysql') {
-        String unicodeOpts = ModelIdentifierUtils.UNICODE_OPTIONS
-        unicodeOpts = "useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL"
+        String unicodeOpts = "useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL"
         unicodeOpts += "&serverTimezone=GMT&useSSL=false&allowPublicKeyRetrieval=true"
+        dbProps.setProperty("jummp.database.url",
+            "jdbc:${protocol}://${server}:${port}/${database}?${unicodeOpts}")
+    }
+    if (protocol == 'mariadb') {
+        String unicodeOpts = "useUnicode=true&characterEncoding=UTF-8"
         dbProps.setProperty("jummp.database.url",
             "jdbc:${protocol}://${server}:${port}/${database}?${unicodeOpts}")
     }
@@ -148,7 +157,7 @@ try {
                     removeAbandoned = true
                     removeAbandonedTimeout = 120
                     logAbandoned = false
-                    if (it.driverClassName == "com.mysql.jdbc.Driver") {
+                    if (it.driverClassName in ["com.mysql.cj.jdbc.Driver", "org.mariadb.jdbc.Driver"]) {
                         // JDBC driver properties
                         // Mysql as example
                         dbProperties {

@@ -84,6 +84,7 @@ grails.project.dependency.resolution = {
         compile 'org.codehaus.groovy:groovy-backports-compat23:2.4.21'
         compile "com.googlecode.multithreadedtc:multithreadedtc:1.01"
         runtime 'mysql:mysql-connector-java:8.0.11'
+        runtime 'org.mariadb.jdbc:mariadb-java-client:2.7.12'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
         compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.3-SNAPSHOT"
