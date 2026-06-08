@@ -61,6 +61,8 @@ try {
     }
     if (protocol == 'mysql') {
         String unicodeOpts = ModelIdentifierUtils.UNICODE_OPTIONS
+        unicodeOpts = "useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL"
+        unicodeOpts += "&serverTimezone=GMT&useSSL=false&allowPublicKeyRetrieval=true"
         dbProps.setProperty("jummp.database.url",
             "jdbc:${protocol}://${server}:${port}/${database}?${unicodeOpts}")
     }
