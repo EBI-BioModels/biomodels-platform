@@ -22,7 +22,7 @@
         <g:if test="${revision.qcInfo != null}">
             <jummp:renderStarLevels flag="${revision.qcInfo.flag}" />
         </g:if>
-            <a href="javascript:void(0)" onclick="linkServeOmex()"
+            <a href="${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}"
                title="Click here to download OMEX format of this model">
                 <i class="icon icon-common icon-download"></i></a>
             <a href="${g.createLink(controller: "model", action: "metadatardf", id: revision.identifier())}"
