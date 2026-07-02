@@ -478,11 +478,11 @@ grails.plugin.springsecurity.filterChain.chainMap = [
     '/api/guest/**': 'anonymousAuthenticationFilter,restTokenValidationFilter,restExceptionTranslationFilter,filterInvocationInterceptor',
     // '/api/**': 'anonymousAuthenticationFilter,restTokenValidationFilter,restExceptionTranslationFilter,filterInvocationInterceptor',
     '/api/**/**': 'JOINED_FILTERS,-exceptionTranslationFilter,-authenticationProcessingFilter,-securityContextPersistenceFilter,-rememberMeAuthenticationFilter',  // Stateless chain
-    '/**': 'JOINED_FILTERS,-restTokenValidationFilter,-restExceptionTranslationFilter',                                                                         // Traditional chain
     '/css/**': 'none',
     '/images/**': 'none',
     '/js/**': 'none',
-    '/fonts/**': 'none'
+    '/fonts/**': 'none',
+    '/**': 'JOINED_FILTERS,-restTokenValidationFilter,-restExceptionTranslationFilter'                                                                           // Traditional chain
 ]
 grails.plugin.springsecurity.useSecurityEventListener = true
 
