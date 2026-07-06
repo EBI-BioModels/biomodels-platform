@@ -40,7 +40,7 @@
                 <h1>
                     <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage"
                     style="text-decoration: none; border-bottom-style: none">
-                        <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
+                        <img src="${g.resource(dir: 'images/biomodels', file: 'logo_small.png')}"
                              title="BioModels Homepage"/>
                         <span class="hide-for-small-only">BioModels</span></a>
                 </h1>

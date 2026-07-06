@@ -45,7 +45,7 @@ relevant mechanistic models in standard formats."/>
 
 <!-- Place favicon.ico and apple-touch-icon.png in the root directory: mathiasbynens.be/notes/touch-icons -->
 <%
-    bmUrlPrefix = "${grailsApplication.config.grails.serverURL}/images/biomodels"
+    bmUrlPrefix = g.resource(dir: 'images/biomodels')
 %>
 <link rel="apple-touch-icon" sizes="57x57" href="${bmUrlPrefix}/apple-icon-57x57.png">
 <link rel="apple-touch-icon" sizes="60x60" href="${bmUrlPrefix}/apple-icon-60x60.png">

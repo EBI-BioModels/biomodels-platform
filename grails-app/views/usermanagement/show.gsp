@@ -203,21 +203,21 @@
 						<td>
 							<g:if test="${perm.sendNotification}">
 								<img width="20px" height="auto" title="Receiving notifications on the website"
-                                     src="${grailsApplication.config.grails.serverURL}/images/Accept.png" alt="Accept"/>
+                                     src="${g.resource(dir: 'images', file: 'Accept.png')}" alt="Accept"/>
 							</g:if>
 							<g:else>
 								<img width="20px" height="auto" title="Not receiving notifications on the website"
-                                     src="${grailsApplication.config.grails.serverURL}/images/close.png" alt="Close"/>
+                                     src="${g.resource(dir: 'images', file: 'close.png')}" alt="Close"/>
 							</g:else>
 						</td>
 						<td>
 							<g:if test="${perm.sendMail}">
 								<img width="20px" height="auto" title="Receiving notifications by email"
-                                     src="${grailsApplication.config.grails.serverURL}/images/Accept.png" alt="Accept"/>
+                                     src="${g.resource(dir: 'images', file: 'Accept.png')}" alt="Accept"/>
 							</g:if>
 							<g:else>
 								<img width="20px" height="auto" title="Not receiving notifications by email"
-                                     src="${grailsApplication.config.grails.serverURL}/images/close.png" alt="Close"/>
+                                     src="${g.resource(dir: 'images', file: 'close.png')}" alt="Close"/>
 							</g:else>
 						</td></tr>
 					</g:each>
