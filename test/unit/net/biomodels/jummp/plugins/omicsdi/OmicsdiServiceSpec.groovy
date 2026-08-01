@@ -8,10 +8,11 @@ import spock.lang.Specification
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions.
  *
- * RedisService's actual read/write methods are `static`, backed by a live Jedis pool, so they
- * can't be intercepted with a normal Spock Mock(). Instead - following the same pattern already
- * used in ModelIdentifierGeneratorIntegrationSpec - a real RedisService instance is assigned and
- * individual methods are overridden per-test via closure reassignment on that instance.
+ * RedisService's read/write methods are `static`, backed by a live Jedis pool, so a plain
+ * per-instance closure reassignment (`redisService.doRedisSet = {...}`) doesn't intercept them -
+ * that syntax only overrides instance methods. Static methods have to be stubbed on the class's
+ * own metaClass instead (`RedisService.metaClass.static.doRedisSet = {...}`), which is reset in
+ * cleanup() since it would otherwise leak into every other spec that runs in the same JVM.
  */
 @TestFor(OmicsdiService)
 class OmicsdiServiceSpec extends Specification {
@@ -27,13 +28,14 @@ class OmicsdiServiceSpec extends Specification {
 
     def cleanup() {
         tempDir?.deleteDir()
+        GroovySystem.metaClassRegistry.removeMetaClass(RedisService)
     }
 
     void "markExportDirty writes a non-empty value to the omicsdi dirty-flag redis key"() {
         given:
         String capturedKey
         String capturedValue
-        service.redisService.doRedisSet = { String key, String value ->
+        RedisService.metaClass.static.doRedisSet = { String key, String value ->
             capturedKey = key
             capturedValue = value
         }
@@ -48,7 +50,7 @@ class OmicsdiServiceSpec extends Specification {
 
     void "isExportDirty reflects whatever redisService.exists reports for the dirty-flag key"() {
         given:
-        service.redisService.exists = { String key -> key == Redis.REDIS_KEY_OMICSDI_EXPORT_DIRTY }
+        RedisService.metaClass.static.exists = { String key -> key == Redis.REDIS_KEY_OMICSDI_EXPORT_DIRTY }
 
         expect:
         service.isExportDirty()
@@ -56,7 +58,7 @@ class OmicsdiServiceSpec extends Specification {
 
     void "isExportDirty is false when the dirty-flag key is absent"() {
         given:
-        service.redisService.exists = { String key -> false }
+        RedisService.metaClass.static.exists = { String key -> false }
 
         expect:
         !service.isExportDirty()
@@ -66,7 +68,7 @@ class OmicsdiServiceSpec extends Specification {
         given:
         grailsApplication.config.jummp.omicsdi.git.enabled = false
         boolean deleteCalled = false
-        service.redisService.doRedisDel = { String key -> deleteCalled = true }
+        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
 
         expect:
         !service.archiveExportedXmlToGit()
@@ -93,7 +95,7 @@ class OmicsdiServiceSpec extends Specification {
         and:
         configureGit(repoDir, exportFolder)
         boolean deleteCalled = false
-        service.redisService.doRedisDel = { String key -> deleteCalled = true }
+        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
 
         when:
         boolean result = service.archiveExportedXmlToGit()
@@ -128,7 +130,7 @@ class OmicsdiServiceSpec extends Specification {
         and:
         configureGit(repoDir, exportFolder)
         boolean deleteCalled = false
-        service.redisService.doRedisDel = { String key -> deleteCalled = true }
+        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
 
         when:
         boolean result = service.archiveExportedXmlToGit()
@@ -150,7 +152,7 @@ class OmicsdiServiceSpec extends Specification {
         and:
         configureGit(notARepo, exportFolder)
         boolean deleteCalled = false
-        service.redisService.doRedisDel = { String key -> deleteCalled = true }
+        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
 
         when:
         boolean result = service.archiveExportedXmlToGit()
