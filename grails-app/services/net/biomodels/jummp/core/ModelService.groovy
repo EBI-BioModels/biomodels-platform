@@ -136,6 +136,7 @@ class ModelService implements ApplicationListener<ModelOperationEvent> {
     def repositoryFileService
     def redisService
     def contributorService
+    def omicsdiService
 
     ObjectFactory<MIGRS> idGeneratorRegistryFactoryBean
 
@@ -2008,6 +2009,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
         if (succeed) {
             grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this,
                 new ModelAdapter(model: model).toCommandObject()))
+            omicsdiService.markExportDirty()
         }
         return succeed
     }
@@ -2032,6 +2034,7 @@ on the revision ${revision.getId()}: ${revision.getName()} caused by:""")
             logger.info("${model.submissionId} has been deleted (aka. archived).")
             ModelDeletedEvent event = new ModelDeletedEvent(this, new ModelAdapter(model: model).toCommandObject())
             grailsApplication.mainContext.publishEvent(event)
+            omicsdiService.markExportDirty()
         }
         return succeed
     }
@@ -2166,12 +2169,13 @@ for the model ${model.submissionId} due to ${ex.message}.""")
             // revision is already deleted
             return false
         }
-        // check if the revision is the latest non-deleted method
-        if (revision.id != revision.model.revisions.findAll { !it.deleted }.sort { it.revisionNumber }.last().id) {
-            // TODO: maybe better throw an exception
+        // check if the revision can be deleted: it must be either the latest, or a minor revision
+        def nonDeleted = revision.model.revisions.findAll { !it.deleted }.sort { it.revisionNumber }
+        boolean isLatest = revision.id == nonDeleted.last().id
+        if (!isLatest && !revision.minorRevision) {
             return false
         }
-        if (revision.model.revisions.findAll { !it.deleted }.size() == 1) {
+        if (nonDeleted.size() == 1) {
             // only one revision, delete the Model
             // first check the ACL, has to be manual as Spring would not intercept the direct method call
             if (aclUtilService.hasPermission(springSecurityService.authentication, revision.model,
@@ -2184,6 +2188,7 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         // TODO: delete the model if the revision is the first revision of the model
         revision.deleted = true
         revision.save(flush: true)
+        omicsdiService.markExportDirty()
         return true
     }
 
@@ -2328,10 +2333,18 @@ for the model ${model.submissionId} due to ${ex.message}.""")
                 revision.discard()
                 // we've just added a new private revision atop of a public one. make HEAD public
                 markRevisionAsPublic updated
-                return updated.save(flush: true)
+                Revision saved = updated.save(flush: true)
+                if (saved) {
+                    omicsdiService.markExportDirty()
+                }
+                return saved
             }
         }
-        revision.save(flush:true)
+        Revision saved = revision.save(flush: true)
+        if (saved) {
+            omicsdiService.markExportDirty()
+        }
+        saved
     }
 
     /**
@@ -2374,6 +2387,7 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         }
         //ModelPublishedEvent event = new ModelPublishedEvent(new Object(), cmd)
         //grailsApplication.mainContext.publishEvent(event)
+        omicsdiService.markExportDirty()
 
         // publish the revision files to the EBI's public FTP sever for serving our users
         // TODO: we should support the availability of the FTP settings instead of fixing the domain name
@@ -2530,6 +2544,8 @@ the perennial publication identifier to the model file.""")
         // revision.model.publicationId = null
         if (!revision.save(flush: true)) {
             logger.error("Revision ${revision.id} cannot be turned private due to: ${revision.errors.allErrors.toString()}")
+        } else {
+            omicsdiService.markExportDirty()
         }
     }
 

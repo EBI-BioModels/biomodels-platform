@@ -94,6 +94,7 @@ class SubmissionService implements InitializingBean {
     ModelDelegateService modelDelegateService
     FileSystemService fileSystemService
     PublicationService publicationService
+    def omicsdiService
     def springSecurityService
     def userService
     /**
@@ -1493,7 +1494,11 @@ an annotation to SBML document.""")
     @Profiled(tag = "submissionService.processPostSubmission")
     HashSet<String> processPostSubmission(Map<String, Object> workingMemory) {
         StateMachineStrategy strategy = getStrategyFromContext(workingMemory)
-        strategy.processPostSubmission(workingMemory)
+        HashSet<String> result = strategy.processPostSubmission(workingMemory)
+        // covers new model submissions, new revisions, and in-place revision updates alike,
+        // since all three StateMachineStrategy implementations funnel through here.
+        omicsdiService.markExportDirty()
+        result
     }
 
     /**

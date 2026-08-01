@@ -635,6 +635,27 @@ else {
 	println "WARN\tSetting jummp.search.pathToIndexerExecutable is undefined. Models will not be indexed correctly in the search engine."
 }
 
+// Local clone of the git repo that archives exported OmicsDI XML files (e.g. EBI-BioModels/repository-archives).
+// The path is host-specific and must live in the external jummp config file, never in this (public) repo.
+if (!(jummpConfig.jummp.omicsdi.git.repoPath instanceof ConfigObject)) {
+    jummp.omicsdi.git.repoPath = jummpConfig.jummp.omicsdi.git.repoPath
+    jummp.omicsdi.git.enabled = true
+} else {
+    jummp.omicsdi.git.enabled = false
+    println "WARN\tSetting jummp.omicsdi.git.repoPath is undefined. OmicsDI exports will not be archived to git."
+}
+jummp.omicsdi.git.remote = (jummpConfig.jummp.omicsdi.git.remote instanceof ConfigObject) ?
+    "origin" : jummpConfig.jummp.omicsdi.git.remote
+jummp.omicsdi.git.branch = (jummpConfig.jummp.omicsdi.git.branch instanceof ConfigObject) ?
+    "metadata" : jummpConfig.jummp.omicsdi.git.branch
+// subdirectory inside the repo clone where XML files are placed before committing
+jummp.omicsdi.git.subdir = (jummpConfig.jummp.omicsdi.git.subdir instanceof ConfigObject) ?
+    "omicsdi" : jummpConfig.jummp.omicsdi.git.subdir
+jummp.omicsdi.git.commitUserName = (jummpConfig.jummp.omicsdi.git.commitUserName instanceof ConfigObject) ?
+    "BioModels OmicsDI Bot" : jummpConfig.jummp.omicsdi.git.commitUserName
+jummp.omicsdi.git.commitUserEmail = (jummpConfig.jummp.omicsdi.git.commitUserEmail instanceof ConfigObject) ?
+    "noreply@biomodels.org" : jummpConfig.jummp.omicsdi.git.commitUserEmail
+
 // registration settings
 boolean emailSend = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send as String)
 if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && emailSend) {

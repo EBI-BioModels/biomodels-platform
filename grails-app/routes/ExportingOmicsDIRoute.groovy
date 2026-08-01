@@ -27,17 +27,25 @@ import org.apache.camel.builder.RouteBuilder
 
 class ExportingOmicsDIRoute extends RouteBuilder {
     final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]} ${body[omicsdi]}'
+    // exec:java has no timeout by default (ExecEndpoint.timeout defaults to Long.MAX_VALUE), so a
+    // hung indexer jar would wedge this route's single seda consumer thread forever, silently
+    // blocking every export request behind it. Fail loudly after 30 minutes instead.
+    static final long EXEC_TIMEOUT_MS = 30 * 60 * 1000L
 
     @Override
     void configure() {
         from("seda:omicsDiExport")
         .setHeader("CamelExecCommandArgs", simple(JAR_ARGS))
-        .to("exec:java")
+        .to("exec:java?timeout=${EXEC_TIMEOUT_MS}")
         .process(new Processor() {
             @Override
             void process(Exchange exchange) throws Exception {
                 println "The job has been launched!"
             }
         })
+        // once the indexer jar (jummp.search.pathToIndexerExecutable, invoked above) has finished
+        // writing the XML files, archive them to git. Runs on this same seda consumer thread, so the
+        // caller that triggered the export (e.g. OmicsdiGitExportJob) is not blocked waiting for it.
+        .to("bean:omicsdiService?method=archiveExportedXmlToGit")
     }
 }
