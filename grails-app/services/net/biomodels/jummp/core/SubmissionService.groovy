@@ -55,6 +55,7 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.plugins.omicsdi.OmicsdiService
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.hibernate.SessionFactory
 import org.perf4j.aop.Profiled
@@ -94,7 +95,7 @@ class SubmissionService implements InitializingBean {
     ModelDelegateService modelDelegateService
     FileSystemService fileSystemService
     PublicationService publicationService
-    def omicsdiService
+    OmicsdiService omicsdiService
     def springSecurityService
     def userService
     /**
