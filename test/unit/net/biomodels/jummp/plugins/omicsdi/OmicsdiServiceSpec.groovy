@@ -162,6 +162,70 @@ class OmicsdiServiceSpec extends Specification {
         !deleteCalled
     }
 
+    void "archiveExportedXmlToGit refuses a relative repoPath instead of falling back to the JVM's working directory"() {
+        // Regression test: a .properties-style config file (unlike Groovy ConfigSlurper) does not
+        // strip quotes around a value, so `repoPath="/some/path"` there previously produced the
+        // literal string `"/some/path"` - not absolute - which made new File(...) resolve relative
+        // to cwd (this app's own checkout) and silently git-commit/push into the wrong repo.
+        given: "an export folder with a freshly generated XML file"
+        File exportFolder = new File(tempDir, "export")
+        exportFolder.mkdirs()
+        new File(exportFolder, "entries.xml").text = "<database/>"
+
+        and: "repoPath is relative, as it would be if wrapped in stray quote characters"
+        configureGit(new File(tempDir, "repo"), exportFolder)
+        grailsApplication.config.jummp.omicsdi.git.repoPath = "some/relative/path"
+        boolean deleteCalled = false
+        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
+
+        when:
+        boolean result = service.archiveExportedXmlToGit()
+
+        then: "it refuses outright rather than mkdir'ing/committing anywhere"
+        !result
+        !deleteCalled
+        !new File("some").exists()
+    }
+
+    void "archiveExportedXmlToGit strips stray quote characters from configured git properties"() {
+        // Regression test for the same misconfiguration as above, but where repoPath still
+        // happens to resolve to a real absolute path once the surrounding quotes are stripped -
+        // e.g. `repoPath="/abs/path"` in a .properties file.
+        given: "a bare repo standing in for the real GitHub remote"
+        File remoteDir = new File(tempDir, "remote.git")
+        runGit(tempDir, "init", "--bare", "--initial-branch=metadata", remoteDir.canonicalPath)
+
+        and: "a local clone of it, with one commit so the branch exists"
+        File repoDir = new File(tempDir, "repo")
+        runGit(tempDir, "clone", remoteDir.canonicalPath, repoDir.canonicalPath)
+        runGit(repoDir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
+                "commit", "--allow-empty", "-m", "init")
+        runGit(repoDir, "push", "origin", "HEAD:metadata")
+
+        and: "an export folder with a freshly generated XML file"
+        File exportFolder = new File(tempDir, "export")
+        exportFolder.mkdirs()
+        new File(exportFolder, "entries.xml").text = "<database><entries/></database>"
+
+        and: "every configured git property is wrapped in stray quote characters"
+        configureGit(repoDir, exportFolder)
+        grailsApplication.config.jummp.omicsdi.git.repoPath = "\"${repoDir.canonicalPath}\"".toString()
+        grailsApplication.config.jummp.omicsdi.git.subdir = '"omicsdi"'
+        grailsApplication.config.jummp.omicsdi.git.remote = "'origin'"
+        grailsApplication.config.jummp.omicsdi.git.branch = '"metadata"'
+        boolean deleteCalled = false
+        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
+
+        when:
+        boolean result = service.archiveExportedXmlToGit()
+
+        then:
+        result
+        deleteCalled
+        new File(repoDir, "omicsdi/entries.xml").text == "<database><entries/></database>"
+        runGit(remoteDir, "log", "metadata", "--oneline").contains("Automated OmicsDI export")
+    }
+
     private void configureGit(File repoDir, File exportFolder) {
         grailsApplication.config.jummp.omicsdi.git.enabled = true
         grailsApplication.config.jummp.omicsdi.git.repoPath = repoDir.canonicalPath

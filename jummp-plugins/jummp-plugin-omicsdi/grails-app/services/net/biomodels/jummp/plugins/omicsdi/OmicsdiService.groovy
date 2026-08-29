@@ -170,11 +170,22 @@ class OmicsdiService {
             log.warn("jummp.omicsdi.git.repoPath is not configured; skipping the OmicsDI git archive step.")
             return false
         }
-        File repoDir = new File(grailsApplication.config.jummp.omicsdi.git.repoPath as String)
-        String subdir = grailsApplication.config.jummp.omicsdi.git.subdir as String
-        String remote = grailsApplication.config.jummp.omicsdi.git.remote as String
-        String branch = grailsApplication.config.jummp.omicsdi.git.branch as String
+        File repoDir = new File(stripQuotes(grailsApplication.config.jummp.omicsdi.git.repoPath as String))
+        String subdir = stripQuotes(grailsApplication.config.jummp.omicsdi.git.subdir as String)
+        String remote = stripQuotes(grailsApplication.config.jummp.omicsdi.git.remote as String)
+        String branch = stripQuotes(grailsApplication.config.jummp.omicsdi.git.branch as String)
         String exportFolder = grailsApplication.config.jummp.search.exportFolder as String
+
+        // Never let a misconfigured repoPath (e.g. one with stray quote characters, which makes
+        // it a relative path) fall through to mkdir'ing/committing/pushing inside whatever the
+        // JVM's working directory happens to be - for a Grails app run from its own checkout,
+        // that's this very repo. Refuse to proceed unless repoPath unambiguously points at an
+        // existing git working copy.
+        if (!repoDir.isAbsolute() || !new File(repoDir, ".git").exists()) {
+            log.error("jummp.omicsdi.git.repoPath (`${repoDir}`) is not an absolute path to an " +
+                "existing git repository; refusing to touch it. Skipping the OmicsDI git archive step.")
+            return false
+        }
 
         try {
             File targetDir = new File(repoDir, subdir)
@@ -206,6 +217,21 @@ class OmicsdiService {
             log.error("Failed to archive OmicsDI XML files to git: ${e.message}", e)
             return false
         }
+    }
+
+    /**
+     * Defensively strips one layer of matching leading/trailing quote characters. Unlike Groovy
+     * ConfigSlurper (.groovy) config files, a plain .properties file does not strip quotes around
+     * a value - `key="/some/path"` there ends up with the quote characters baked into the string
+     * itself, silently turning an absolute path into a relative (and nonsensical) one.
+     */
+    private static String stripQuotes(String value) {
+        if (value?.length() >= 2 &&
+                ((value.startsWith('"') && value.endsWith('"')) ||
+                 (value.startsWith("'") && value.endsWith("'")))) {
+            return value[1..-2]
+        }
+        value
     }
 
     private static int copyXmlFilesIntoRepo(File exportFolder, File targetDir) {
