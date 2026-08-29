@@ -24,8 +24,14 @@
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.apache.camel.builder.RouteBuilder
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ExportingOmicsDIRoute extends RouteBuilder {
+    // plain println only ever reaches the process's raw stdout (e.g. catalina.out), never any of
+    // the named log4j appenders below - use a real logger so this shows up in jummp-debug.log.
+    private static final Logger LOG = LoggerFactory.getLogger(ExportingOmicsDIRoute)
+
     final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]} ${body[omicsdi]}'
     // exec:java has no timeout by default (ExecEndpoint.timeout defaults to Long.MAX_VALUE), so a
     // hung indexer jar would wedge this route's single seda consumer thread forever, silently
@@ -40,7 +46,7 @@ class ExportingOmicsDIRoute extends RouteBuilder {
         .process(new Processor() {
             @Override
             void process(Exchange exchange) throws Exception {
-                println "The job has been launched!"
+                LOG.info("The job has been launched!")
             }
         })
         // once the indexer jar (jummp.search.pathToIndexerExecutable, invoked above) has finished

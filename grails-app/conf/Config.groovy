@@ -337,7 +337,13 @@ log4j.main = {
         'net.biomodels.jummp.security',
         'net.biomodels.jummp.utils.redis',
         'net.biomodels.jummp.webapp',
-        'grails.app.conf.BootStrap'
+        'grails.app.conf.BootStrap',
+        // Grails prefixes an auto-injected service's `log` category with "grails.app.service.",
+        // so OmicsdiService's plain net.biomodels.jummp.* ancestor entry above does not cover it.
+        'grails.app.service.net.biomodels.jummp.plugins.omicsdi.OmicsdiService',
+        // Camel RouteBuilders declared under grails-app/routes/ are plain (unpackaged) classes,
+        // so this is keyed on the bare class name rather than a net.biomodels.jummp.* path.
+        'ExportingOmicsDIRoute'
         /*"grails.plugin.springsecurity",
         "org.springframework.security",
         "org.pac4j"*/
