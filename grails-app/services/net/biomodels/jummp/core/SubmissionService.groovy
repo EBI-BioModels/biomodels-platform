@@ -55,6 +55,7 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.plugins.omicsdi.OmicsdiService
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.hibernate.SessionFactory
 import org.perf4j.aop.Profiled
@@ -94,6 +95,7 @@ class SubmissionService implements InitializingBean {
     ModelDelegateService modelDelegateService
     FileSystemService fileSystemService
     PublicationService publicationService
+    OmicsdiService omicsdiService
     def springSecurityService
     def userService
     /**
@@ -1493,7 +1495,11 @@ an annotation to SBML document.""")
     @Profiled(tag = "submissionService.processPostSubmission")
     HashSet<String> processPostSubmission(Map<String, Object> workingMemory) {
         StateMachineStrategy strategy = getStrategyFromContext(workingMemory)
-        strategy.processPostSubmission(workingMemory)
+        HashSet<String> result = strategy.processPostSubmission(workingMemory)
+        // covers new model submissions, new revisions, and in-place revision updates alike,
+        // since all three StateMachineStrategy implementations funnel through here.
+        omicsdiService.markExportDirty()
+        result
     }
 
     /**
