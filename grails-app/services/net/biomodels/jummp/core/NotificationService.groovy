@@ -445,6 +445,50 @@ caused by ${ntp?.errors?.toString()}""")
             [body.star, body.email, body.comment] as String[], NT.FEEDBACK_ARRIVED, user, watchers, null)
     }
 
+    /**
+     * Raised once a day by {@link net.biomodels.jummp.plugins.omicsdi.OmicsdiGitExportJob} when it
+     * finds Model/Revision activity since the last completed OmicsDI export. Emails the configured
+     * address(es) - {@code jummp.omicsdi.export.notify.email}, falling back to
+     * {@code jummp.security.registration.email.adminAddress} - and raises an in-app notification for
+     * every {@code ROLE_ADMIN} user.
+     *
+     * @param activitySince the timestamp the export-dirty flag was last set, or {@code null}
+     */
+    void notifyOmicsdiExportPending(String activitySince) {
+        String[] bodyParams = [activitySince ?: "an earlier point", serverURL] as String[]
+        String emailBody = messageSource.getMessage(
+                "notification.omicsdi.exportPending.body", bodyParams, LCH.getLocale())
+        String subject = "[BioModels] " + messageSource.getMessage(
+                "notification.omicsdi.exportPending.title", [] as String[], LCH.getLocale())
+        String from = grailsApplication.config.jummp.security.registration.email.sender
+
+        def configured = grailsApplication.config.jummp.omicsdi.export.notify.email
+        String recipients = (configured instanceof ConfigObject) ? null : configured?.toString()?.trim()
+        if (!recipients) {
+            recipients = grailsApplication.config.jummp.security.registration.email.adminAddress
+        }
+        (recipients?.split(",") ?: [] as String[]).collect { it.trim() }.findAll { it }.each { String addr ->
+            try {
+                sendConfirmationOrNotificationEmail(from, addr, subject, emailBody)
+            } catch (Exception e) {
+                logger.warn("OmicsDI export-pending email to ${addr} failed: ${e.message}")
+            }
+        }
+
+        Role adminRole = Role.findByAuthority("ROLE_ADMIN")
+        Set<User> admins = adminRole ?
+                (UserRole.findAllByRole(adminRole).collect { it.user } as Set) : ([] as Set)
+        if (!admins) {
+            logger.warn("No ROLE_ADMIN users; OmicsDI export-pending in-app notification skipped.")
+            return
+        }
+        User sender = User.findByUsername("administrator") ?: admins.first()
+        useGenericNotificationStructure(
+                "notification.omicsdi.exportPending.title", [] as String[],
+                "notification.omicsdi.exportPending.body", bodyParams,
+                NT.OMICSDI_EXPORT_PENDING, sender, admins, null)
+    }
+
     @Override
     void afterPropertiesSet() throws Exception {
         serverURL = grailsApplication.config.grails.serverURL

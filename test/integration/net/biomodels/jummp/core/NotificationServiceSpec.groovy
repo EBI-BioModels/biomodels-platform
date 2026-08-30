@@ -25,4 +25,14 @@ class NotificationServiceSpec extends IntegrationSpec {
         expect:
             notificationService.feedback2Admin([star: 4, email: "tung@test.com", comment: "Love it!"])
     }
+
+    void "notifyOmicsdiExportPending emails and notifies the admin group without error"() {
+        expect:
+            notificationService.notifyOmicsdiExportPending("2026-08-30T22:00:00+0000")
+    }
+
+    void "notifyOmicsdiExportPending tolerates a null activity timestamp"() {
+        expect:
+            notificationService.notifyOmicsdiExportPending(null)
+    }
 }

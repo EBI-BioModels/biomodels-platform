@@ -66,6 +66,16 @@ class OmicsdiServiceSpec extends Specification {
         !service.isExportDirty()
     }
 
+    void "exportDirtySince returns the value stored under the dirty-flag key"() {
+        given:
+        RedisService.metaClass.static.doRedisGet = { String key ->
+            key == Redis.REDIS_KEY_OMICSDI_EXPORT_DIRTY ? "2026-08-30T22:00:00+0000" : null
+        }
+
+        expect:
+        service.exportDirtySince() == "2026-08-30T22:00:00+0000"
+    }
+
     void "saveOmicsdiExportSettings rewrites a jdbc:mariadb datasource URL to jdbc:mysql for the indexer jar"() {
         // The standalone indexer jar bundles only MySQL Connector/J; a jdbc:mariadb: URL makes it
         // abort at startup with "No suitable driver" and no XML is produced.

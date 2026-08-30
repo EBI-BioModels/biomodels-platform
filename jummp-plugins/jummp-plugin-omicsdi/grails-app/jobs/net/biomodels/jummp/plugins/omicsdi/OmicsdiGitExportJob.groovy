@@ -20,6 +20,7 @@ class OmicsdiGitExportJob {
     static final Logger LOGGER = LoggerFactory.getLogger(OmicsdiGitExportJob.class)
 
     def omicsdiService
+    def notificationService
 
     static triggers = {
         // Every day at 22:30
@@ -32,6 +33,13 @@ class OmicsdiGitExportJob {
             return
         }
         LOGGER.info("Model/Revision activity detected; enqueuing an OmicsDI export + git archive...")
+        // Let the admins know an export is running today, before we enqueue it. A mail/notification
+        // failure must never stop the export itself.
+        try {
+            notificationService.notifyOmicsdiExportPending(omicsdiService.exportDirtySince())
+        } catch (Exception e) {
+            LOGGER.warn("Could not send the OmicsDI export-pending notification: ${e.message}", e)
+        }
         omicsdiService.exportOmicsdiEntries()
     }
 }
