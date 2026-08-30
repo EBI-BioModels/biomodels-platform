@@ -77,6 +77,15 @@ class OmicsdiService {
     static final String GRAILS_CONF_LOCATION = "grails-app/conf"
     static final String OMICSDI_CONFIG_LOCATION = "omicsdi"
 
+    /**
+     * Matches the hand-maintained {@code omicsdi-config.json} that has always worked when the
+     * indexer is run by hand. {@code numberEntriesOnEachFile} must be a positive integer whenever
+     * {@code allowMultipleFiles} is true (the indexer casts it straight to {@code Integer});
+     * {@code tagsExcluded} is the curation policy for the unattended daily export.
+     */
+    static final int DEFAULT_ENTRIES_PER_FILE = 1000
+    static final List<String> DEFAULT_TAGS_EXCLUDED = ['Auto-Generated', 'Uhlen'].asImmutable()
+
     @Profiled(tag="omicsdiService.loadSchemaXml")
     String loadSchemaXml() {
         return GRAILS_CONF_LOCATION.concat("/").concat(OMICSDI_CONFIG_LOCATION)
@@ -101,10 +110,15 @@ class OmicsdiService {
         ]
         builder(partialData: partialData,
             'folder': exportFolder,
+            // The indexer refreshes miriam.xml at this path, and - more importantly - its
+            // RequestContext constructor throws when the key is absent, which is what silently
+            // aborted every app-triggered export (the hand-maintained omicsdi-config.json always
+            // carried it, so `run.sh` was fine).
+            'miriamExportFile': new File(exportFolder as String, "miriam.xml").path,
             'jummpPropFile': configurationService.getConfigFilePath(),
             'searchStrategy': searchStrategy,
             'database': dbSettings,
-            'options': options)
+            'options': normaliseExportOptions(options))
         File indexingData = new File(exportFolder, "omicsdiSettings.json")
         indexingData.setText(builder.toPrettyString())
         return indexingData
@@ -113,8 +127,8 @@ class OmicsdiService {
     void exportOmicsdiEntries(Map options = [:]) {
         Map exportOptions = [
             'allowMultipleFiles': true,
-            'numberEntriesOnEachFile': 'undefined',
-            'tagsExcluded': []
+            'numberEntriesOnEachFile': DEFAULT_ENTRIES_PER_FILE,
+            'tagsExcluded': new ArrayList<String>(DEFAULT_TAGS_EXCLUDED)
         ] + options
         File indexingData = saveOmicsdiExportSettings(exportOptions)
         String jarJummpIndexerPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
@@ -224,6 +238,31 @@ class OmicsdiService {
             log.error("Failed to archive OmicsDI XML files to git: ${e.message}", e)
             return false
         }
+    }
+
+    /**
+     * Brings an OmicsDI export options map into a shape the indexer jar can actually consume.
+     *
+     * When {@code allowMultipleFiles} is true the indexer casts {@code numberEntriesOnEachFile}
+     * straight to {@code Integer}. The admin form submits the string {@code "undefined"} when that
+     * field is left blank ({@link OmicsdiController#parseOptions}), and that used to be the default
+     * here too, so the cast threw {@code NumberFormatException} and the run died before writing a
+     * single XML file. Coerce it to a positive integer, falling back to
+     * {@link #DEFAULT_ENTRIES_PER_FILE}.
+     */
+    private static Map normaliseExportOptions(def options) {
+        Map opts = (options instanceof Map) ? new LinkedHashMap(options as Map) : [:]
+        if (opts.allowMultipleFiles) {
+            def raw = opts.numberEntriesOnEachFile
+            Integer entries = null
+            if (raw instanceof Number) {
+                entries = (raw as Number).intValue()
+            } else if ((raw as String)?.isInteger()) {
+                entries = (raw as String).toInteger()
+            }
+            opts.numberEntriesOnEachFile = (entries != null && entries > 0) ? entries : DEFAULT_ENTRIES_PER_FILE
+        }
+        opts
     }
 
     private static final String MARIADB_JDBC_PREFIX = "jdbc:mariadb:"
