@@ -37,6 +37,7 @@ enum NotificationType {
     FEEDBACK_ARRIVED(6, "A feedback has been sent to you", "feedback-sent-to-you"),
     SUBMIT_FOR_PUBLICATION(7, "A model has been submitted to you for publication", "request-sent-to-you-for-publication"),
     UNPUBLISH(8, "Unpublish", "model-unpublished"),
+    OMICSDI_EXPORT_PENDING(9, "An OmicsDI metadata export is due", "omicsdi-export-pending"),
 
     final int id
     final String textRepresentation
@@ -59,6 +60,7 @@ enum NotificationType {
             case 6: return FEEDBACK_ARRIVED
             case 7: return SUBMIT_FOR_PUBLICATION
             case 8: return UNPUBLISH
+            case 9: return OMICSDI_EXPORT_PENDING
         }
     }
 

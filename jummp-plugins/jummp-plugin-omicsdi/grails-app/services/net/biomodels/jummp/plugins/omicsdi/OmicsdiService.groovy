@@ -164,6 +164,11 @@ class OmicsdiService {
         redisService.exists(Redis.REDIS_KEY_OMICSDI_EXPORT_DIRTY)
     }
 
+    /** Timestamp recorded the last time {@link #markExportDirty} ran, or {@code null} if the flag is clear. */
+    String exportDirtySince() {
+        redisService.doRedisGet(Redis.REDIS_KEY_OMICSDI_EXPORT_DIRTY)
+    }
+
     private void clearExportDirty() {
         redisService.doRedisDel(Redis.REDIS_KEY_OMICSDI_EXPORT_DIRTY)
     }

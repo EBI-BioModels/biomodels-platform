@@ -661,6 +661,11 @@ jummp.omicsdi.git.commitUserName = (jummpConfig.jummp.omicsdi.git.commitUserName
     "BioModels OmicsDI Bot" : jummpConfig.jummp.omicsdi.git.commitUserName
 jummp.omicsdi.git.commitUserEmail = (jummpConfig.jummp.omicsdi.git.commitUserEmail instanceof ConfigObject) ?
     "noreply@biomodels.org" : jummpConfig.jummp.omicsdi.git.commitUserEmail
+// comma-separated address(es) notified by OmicsdiGitExportJob when a daily export is due; falls
+// back to jummp.security.registration.email.adminAddress when unset.
+if (!(jummpConfig.jummp.omicsdi.export.notify.email instanceof ConfigObject)) {
+    jummp.omicsdi.export.notify.email = jummpConfig.jummp.omicsdi.export.notify.email
+}
 
 // registration settings
 boolean emailSend = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send as String)
