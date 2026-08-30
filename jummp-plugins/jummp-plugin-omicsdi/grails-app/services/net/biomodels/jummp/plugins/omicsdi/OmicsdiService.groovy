@@ -172,6 +172,13 @@ class OmicsdiService {
         }
         File repoDir = new File(stripQuotes(grailsApplication.config.jummp.omicsdi.git.repoPath as String))
         String subdir = stripQuotes(grailsApplication.config.jummp.omicsdi.git.subdir as String)
+        // An explicit empty value in the external .properties config (jummp.omicsdi.git.subdir=)
+        // gets past Config.groovy's ConfigObject fallback as "". `new File(repoDir, "")` still
+        // resolves to the repo root, but `git add -- ""` / `git status -- ""` abort with
+        // "empty string is not a valid pathspec" (git >= 2.16), so normalise it to ".".
+        if (!subdir?.trim()) {
+            subdir = "."
+        }
         String remote = stripQuotes(grailsApplication.config.jummp.omicsdi.git.remote as String)
         String branch = stripQuotes(grailsApplication.config.jummp.omicsdi.git.branch as String)
         String exportFolder = grailsApplication.config.jummp.search.exportFolder as String

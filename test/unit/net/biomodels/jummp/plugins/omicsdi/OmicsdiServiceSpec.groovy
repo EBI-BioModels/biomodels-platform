@@ -260,6 +260,41 @@ class OmicsdiServiceSpec extends Specification {
         runGit(remoteDir, "log", "metadata", "--oneline").contains("Automated OmicsDI export")
     }
 
+    void "archiveExportedXmlToGit treats an empty subdir as the repo root instead of aborting on an empty git pathspec"() {
+        // An explicit `jummp.omicsdi.git.subdir=` in the external .properties config reaches the
+        // service as "". `git add -- ""` / `git status -- ""` abort with "empty string is not a
+        // valid pathspec" (git >= 2.16), so the service must normalise "" to "." - XML then lands
+        // at the repo root and the archive still commits + pushes.
+        given: "a bare repo standing in for the real GitHub remote, plus a local clone with the branch"
+        File remoteDir = new File(tempDir, "remote.git")
+        runGit(tempDir, "init", "--bare", "--initial-branch=metadata", remoteDir.canonicalPath)
+        File repoDir = new File(tempDir, "repo")
+        runGit(tempDir, "clone", remoteDir.canonicalPath, repoDir.canonicalPath)
+        runGit(repoDir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
+                "commit", "--allow-empty", "-m", "init")
+        runGit(repoDir, "push", "origin", "HEAD:metadata")
+
+        and: "an export folder with a freshly generated XML file"
+        File exportFolder = new File(tempDir, "export")
+        exportFolder.mkdirs()
+        new File(exportFolder, "entries.xml").text = "<database><entries/></database>"
+
+        and: "subdir is configured empty"
+        configureGit(repoDir, exportFolder)
+        grailsApplication.config.jummp.omicsdi.git.subdir = ""
+        boolean deleteCalled = false
+        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
+
+        when:
+        boolean result = service.archiveExportedXmlToGit()
+
+        then:
+        result
+        deleteCalled
+        new File(repoDir, "entries.xml").text == "<database><entries/></database>"
+        runGit(remoteDir, "log", "metadata", "--oneline").contains("Automated OmicsDI export")
+    }
+
     private void stubExportSettingsConfig(String datasourceUrl) {
         grailsApplication.config.dataSource = [url: datasourceUrl, username: "root", password: "secret"]
         grailsApplication.config.jummp.search.strategy = "omicsdi"
