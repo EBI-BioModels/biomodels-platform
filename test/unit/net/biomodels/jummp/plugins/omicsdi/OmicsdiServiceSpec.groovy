@@ -1,9 +1,11 @@
 package net.biomodels.jummp.plugins.omicsdi
 
 import grails.test.mixin.TestFor
+import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.constants.Redis
 import net.biomodels.jummp.utils.redis.RedisService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions.
@@ -62,6 +64,38 @@ class OmicsdiServiceSpec extends Specification {
 
         expect:
         !service.isExportDirty()
+    }
+
+    void "saveOmicsdiExportSettings rewrites a jdbc:mariadb datasource URL to jdbc:mysql for the indexer jar"() {
+        // The standalone indexer jar bundles only MySQL Connector/J; a jdbc:mariadb: URL makes it
+        // abort at startup with "No suitable driver" and no XML is produced.
+        given:
+        stubExportSettingsConfig("jdbc:mariadb://localhost:3306/biomodels_prod?useUnicode=true&characterEncoding=UTF-8")
+
+        when:
+        File settings = service.saveOmicsdiExportSettings([:])
+
+        then:
+        new JsonSlurper().parse(settings).database.url ==
+                "jdbc:mysql://localhost:3306/biomodels_prod?useUnicode=true&characterEncoding=UTF-8"
+    }
+
+    @Unroll
+    void "saveOmicsdiExportSettings passes a #scheme datasource URL through to the indexer jar unchanged"() {
+        given:
+        stubExportSettingsConfig(url)
+
+        when:
+        File settings = service.saveOmicsdiExportSettings([:])
+
+        then:
+        new JsonSlurper().parse(settings).database.url == url
+
+        where:
+        scheme       | url
+        "jdbc:mysql" | "jdbc:mysql://localhost:3306/biomodels_prod?useUnicode=true"
+        "postgresql" | "jdbc:postgresql://localhost:5432/biomodels_prod"
+        "h2"         | "jdbc:h2:mem:testDb"
     }
 
     void "archiveExportedXmlToGit is a no-op and leaves the dirty flag untouched when git archiving is not configured"() {
@@ -224,6 +258,17 @@ class OmicsdiServiceSpec extends Specification {
         deleteCalled
         new File(repoDir, "omicsdi/entries.xml").text == "<database><entries/></database>"
         runGit(remoteDir, "log", "metadata", "--oneline").contains("Automated OmicsDI export")
+    }
+
+    private void stubExportSettingsConfig(String datasourceUrl) {
+        grailsApplication.config.dataSource = [url: datasourceUrl, username: "root", password: "secret"]
+        grailsApplication.config.jummp.search.strategy = "omicsdi"
+        grailsApplication.config.jummp.search.exportFolder = tempDir.canonicalPath
+        grailsApplication.config.jummp.metadata.officialDatabaseName = "BioModels"
+        grailsApplication.config.grails.serverURL = "http://localhost:8080/jummp"
+        service.configurationService = new Object() {
+            String getConfigFilePath() { "/etc/jummp/jummp-config.properties" }
+        }
     }
 
     private void configureGit(File repoDir, File exportFolder) {
