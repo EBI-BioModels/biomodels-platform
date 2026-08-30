@@ -31,10 +31,11 @@ import net.biomodels.jummp.core.constants.Redis
 import org.perf4j.aop.Profiled
 
 import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+import java.util.zip.ZipOutputStream
 
 /**
  * @short Omicsdi class for managing OmicsDI's settings
@@ -211,27 +212,62 @@ class OmicsdiService {
         try {
             File targetDir = new File(repoDir, subdir)
             targetDir.mkdirs()
-            int copied = copyXmlFilesIntoRepo(new File(exportFolder), targetDir)
-            log.info("Copied ${copied} OmicsDI XML file(s) into ${targetDir.canonicalPath}.")
 
-            runCommand(["git", "add", "-A", "--", subdir], repoDir)
-            String status = runCommand(["git", "status", "--porcelain", "--", subdir], repoDir)
-            if (!status?.trim()) {
-                log.info("No OmicsDI XML changes to archive today.")
+            TreeMap<String, List<File>> runs = groupXmlByRun(new File(exportFolder))
+            if (runs.isEmpty()) {
+                log.warn("No OmicsDIEntries-*.xml under ${exportFolder}; nothing to archive.")
+                clearExportDirty()
+                return true
+            }
+            String currentRun = runs.lastKey()                       // newest yyyyMMdd-HHmmss
+            List<File> currentRunFiles = runs[currentRun].sort { it.name }
+            String currentDate = currentRun.substring(0, 8)          // yyyyMMdd
+
+            File biomodelsZip = new File(targetDir, ARCHIVE_ZIP_NAME)
+            String archivedRun = biomodelsZip.isFile() ? runTimestampInZip(biomodelsZip) : null
+            if (archivedRun == currentRun) {
+                log.info("${ARCHIVE_ZIP_NAME} already holds run ${currentRun}; nothing to archive.")
                 clearExportDirty()
                 return true
             }
 
+            // Rotate the export currently in biomodels.zip out to its own dated bundle, then rebuild
+            // biomodels.zip from this run. miriam.xml is never bundled (it is the indexer's
+            // Identifiers.org input, not an export artifact).
+            if (archivedRun) {
+                File rotated = new File(targetDir, "BioModels-metadata-${archivedRun.substring(0, 8)}.zip")
+                Files.copy(biomodelsZip.toPath(), rotated.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                log.info("Rotated the previous OmicsDI export to ${rotated.name}.")
+            }
+            writeZip(currentRunFiles, biomodelsZip)
+            log.info("Bundled ${currentRunFiles.size()} XML file(s) from run ${currentRun} into ${ARCHIVE_ZIP_NAME}.")
+
+            // Sweep up loose OmicsDIEntries-*.xml that the pre-zip archive behaviour committed.
+            targetDir.eachFile { File f ->
+                if (OMICSDI_ENTRIES_XML.matcher(f.name).matches()) {
+                    Files.deleteIfExists(f.toPath())
+                }
+            }
+
+            runCommand(["git", "add", "-A", "--", subdir], repoDir)
+            String status = runCommand(["git", "status", "--porcelain", "--", subdir], repoDir)
+            if (!status?.trim()) {
+                log.info("No OmicsDI archive changes to commit today.")
+                clearExportDirty()
+                return true
+            }
+
+            String isoDate = "${currentDate[0..3]}-${currentDate[4..5]}-${currentDate[6..7]}"
             List<String> commitCommand = [
                 "git",
                 "-c", "user.name=${grailsApplication.config.jummp.omicsdi.git.commitUserName}".toString(),
                 "-c", "user.email=${grailsApplication.config.jummp.omicsdi.git.commitUserEmail}".toString(),
-                "commit", "-m", "Automated OmicsDI export - ${new Date().format('yyyy-MM-dd')}".toString()
+                "commit", "-m", "JBM-710 Add BioModels metadata exported on ${isoDate}".toString()
             ]
             runCommand(commitCommand, repoDir)
             runCommand(["git", "push", remote, branch], repoDir)
 
-            log.info("Archived and pushed today's OmicsDI export to ${remote}/${branch}.")
+            log.info("Archived and pushed the OmicsDI export for ${isoDate} to ${remote}/${branch}.")
             clearExportDirty()
             return true
         } catch (Exception e) {
@@ -304,14 +340,62 @@ class OmicsdiService {
         value
     }
 
-    private static int copyXmlFilesIntoRepo(File exportFolder, File targetDir) {
-        int copied = 0
-        exportFolder.eachFileMatch(~/(?i).*\.xml$/) { File xmlFile ->
-            Path destination = Paths.get(targetDir.canonicalPath, xmlFile.name)
-            Files.copy(xmlFile.toPath(), destination, StandardCopyOption.REPLACE_EXISTING)
-            copied++
+    /** {@code OmicsDIEntries-<yyyyMMdd>-<HHmmss>-<n>.xml} - the only files the indexer emits. */
+    private static final java.util.regex.Pattern OMICSDI_ENTRIES_XML =
+            ~/OmicsDIEntries-(\d{8}-\d{6})-\d+\.xml/
+    /** Zip in the archive repo that always holds the most recent OmicsDI export. */
+    static final String ARCHIVE_ZIP_NAME = "biomodels.zip"
+
+    /**
+     * Groups the indexer's XML output in {@code exportFolder} by run.
+     *
+     * The indexer names every file {@code OmicsDIEntries-<yyyyMMdd>-<HHmmss>-<n>.xml} and only ever
+     * appends to {@code jummp.search.exportFolder} - it never tidies up, and the miriam refresh
+     * drops a {@code miriam.xml} there too. Keys are the {@code <yyyyMMdd>-<HHmmss>} run stamps
+     * (so the map iterates oldest-first); anything that is not an {@code OmicsDIEntries-*} file is
+     * ignored.
+     */
+    private static TreeMap<String, List<File>> groupXmlByRun(File exportFolder) {
+        TreeMap<String, List<File>> runs = new TreeMap<>()
+        exportFolder.eachFile { File f ->
+            def matcher = OMICSDI_ENTRIES_XML.matcher(f.name)
+            if (matcher.matches()) {
+                runs.get(matcher.group(1), new ArrayList<File>()) << f
+            }
         }
-        copied
+        runs
+    }
+
+    /**
+     * Returns the {@code <yyyyMMdd>-<HHmmss>} run stamp of the OmicsDIEntries files inside a
+     * {@code biomodels.zip}, or {@code null} if it holds none - used to name the dated bundle the
+     * previous export is rotated into and to detect a no-op re-run.
+     */
+    private static String runTimestampInZip(File zip) {
+        new ZipFile(zip).withCloseable { ZipFile zf ->
+            Enumeration<? extends ZipEntry> entries = zf.entries()
+            while (entries.hasMoreElements()) {
+                def matcher = OMICSDI_ENTRIES_XML.matcher(entries.nextElement().name)
+                if (matcher.matches()) {
+                    return matcher.group(1)
+                }
+            }
+            null
+        }
+    }
+
+    /** Writes {@code files} (stored under their base names) into {@code zipTarget}, replacing it. */
+    private static void writeZip(List<File> files, File zipTarget) {
+        zipTarget.parentFile?.mkdirs()
+        new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipTarget))).withCloseable { ZipOutputStream zos ->
+            files.each { File f ->
+                ZipEntry entry = new ZipEntry(f.name)
+                entry.time = f.lastModified()
+                zos.putNextEntry(entry)
+                Files.copy(f.toPath(), zos)
+                zos.closeEntry()
+            }
+        }
     }
 
     /**
