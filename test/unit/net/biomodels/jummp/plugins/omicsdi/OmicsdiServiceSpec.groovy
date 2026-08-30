@@ -157,24 +157,13 @@ class OmicsdiServiceSpec extends Specification {
         !deleteCalled
     }
 
-    void "archiveExportedXmlToGit copies exported XML, commits, pushes it, and clears the dirty flag"() {
-        given: "a bare repo standing in for the real GitHub remote"
-        File remoteDir = new File(tempDir, "remote.git")
-        runGit(tempDir, "init", "--bare", "--initial-branch=metadata", remoteDir.canonicalPath)
-
-        and: "a local clone of it, standing in for the host's existing checkout, with one commit so the branch exists"
-        File repoDir = new File(tempDir, "repo")
-        runGit(tempDir, "clone", remoteDir.canonicalPath, repoDir.canonicalPath)
-        runGit(repoDir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
-                "commit", "--allow-empty", "-m", "init")
-        runGit(repoDir, "push", "origin", "HEAD:metadata")
-
-        and: "an export folder with a freshly generated XML file"
-        File exportFolder = new File(tempDir, "export")
-        exportFolder.mkdirs()
-        new File(exportFolder, "entries.xml").text = "<database><entries/></database>"
-
-        and:
+    void "archiveExportedXmlToGit bundles the latest run into biomodels.zip, commits it under the run's date, pushes, clears the dirty flag"() {
+        given:
+        File repoDir = freshArchiveClone()
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<part 1/>"
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-2.xml").text = "<part 2/>"
+        new File(exportFolder, "miriam.xml").text = "<registry/>"
         configureGit(repoDir, exportFolder)
         boolean deleteCalled = false
         RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
@@ -185,31 +174,49 @@ class OmicsdiServiceSpec extends Specification {
         then:
         result
         deleteCalled
-        new File(repoDir, "omicsdi/entries.xml").text == "<database><entries/></database>"
-        runGit(remoteDir, "log", "metadata", "--oneline").contains("Automated OmicsDI export")
+        File zip = new File(repoDir, "omicsdi/biomodels.zip")
+        zipEntryNames(zip) == ["OmicsDIEntries-20260830-123537-1.xml", "OmicsDIEntries-20260830-123537-2.xml"]
+        zipEntryText(zip, "OmicsDIEntries-20260830-123537-1.xml") == "<part 1/>"
+        !new File(repoDir, "omicsdi/miriam.xml").exists()
+        runGit(repoDir, "log", "metadata", "--oneline").contains("Add BioModels metadata exported on 2026-08-30")
     }
 
-    void "archiveExportedXmlToGit clears the dirty flag without creating an empty commit when nothing changed"() {
-        given: "a repo that already has today's XML committed and pushed"
-        File remoteDir = new File(tempDir, "remote.git")
-        runGit(tempDir, "init", "--bare", "--initial-branch=metadata", remoteDir.canonicalPath)
-        File repoDir = new File(tempDir, "repo")
-        runGit(tempDir, "clone", remoteDir.canonicalPath, repoDir.canonicalPath)
-        File subdir = new File(repoDir, "omicsdi")
-        subdir.mkdirs()
-        new File(subdir, "entries.xml").text = "<database><entries/></database>"
+    void "archiveExportedXmlToGit rotates the previous biomodels.zip to BioModels-metadata-<its date>.zip"() {
+        given:
+        File repoDir = freshArchiveClone()
+        File subdir = new File(repoDir, "omicsdi"); subdir.mkdirs()
+        makeZip(new File(subdir, "biomodels.zip"), ["OmicsDIEntries-20260827-100000-1.xml": "<previous run/>"])
         runGit(repoDir, "add", "-A")
-        runGit(repoDir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
-                "commit", "-m", "pre-existing export")
+        runGit(repoDir, "-c", "user.name=T", "-c", "user.email=t@e.com", "commit", "-m", "prior export")
         runGit(repoDir, "push", "origin", "HEAD:metadata")
-        String beforeLog = runGit(remoteDir, "log", "metadata", "--oneline")
 
-        and: "the export folder produces byte-identical XML"
-        File exportFolder = new File(tempDir, "export")
-        exportFolder.mkdirs()
-        new File(exportFolder, "entries.xml").text = "<database><entries/></database>"
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<new run/>"
+        configureGit(repoDir, exportFolder)
+        RedisService.metaClass.static.doRedisDel = { String key -> }
 
-        and:
+        when:
+        boolean result = service.archiveExportedXmlToGit()
+
+        then: "the old export is preserved under its own date and biomodels.zip carries the new one"
+        result
+        File rotated = new File(subdir, "BioModels-metadata-20260827.zip")
+        zipEntryText(rotated, "OmicsDIEntries-20260827-100000-1.xml") == "<previous run/>"
+        zipEntryNames(new File(subdir, "biomodels.zip")) == ["OmicsDIEntries-20260830-123537-1.xml"]
+    }
+
+    void "archiveExportedXmlToGit makes no commit when biomodels.zip already holds the latest run"() {
+        given:
+        File repoDir = freshArchiveClone()
+        File subdir = new File(repoDir, "omicsdi"); subdir.mkdirs()
+        makeZip(new File(subdir, "biomodels.zip"), ["OmicsDIEntries-20260830-123537-1.xml": "<x/>"])
+        runGit(repoDir, "add", "-A")
+        runGit(repoDir, "-c", "user.name=T", "-c", "user.email=t@e.com", "commit", "-m", "already archived")
+        runGit(repoDir, "push", "origin", "HEAD:metadata")
+        String beforeLog = runGit(repoDir, "log", "metadata", "--oneline")
+
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<x/>"
         configureGit(repoDir, exportFolder)
         boolean deleteCalled = false
         RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
@@ -220,18 +227,66 @@ class OmicsdiServiceSpec extends Specification {
         then:
         result
         deleteCalled
-        runGit(remoteDir, "log", "metadata", "--oneline") == beforeLog
+        !new File(subdir, "BioModels-metadata-20260830.zip").exists()
+        runGit(repoDir, "log", "metadata", "--oneline") == beforeLog
+    }
+
+    void "archiveExportedXmlToGit sweeps up loose OmicsDIEntries XML from earlier breakage but keeps miriam.xml"() {
+        given:
+        File repoDir = freshArchiveClone()
+        File subdir = new File(repoDir, "omicsdi"); subdir.mkdirs()
+        new File(subdir, "OmicsDIEntries-20260830-074824-1.xml").text = "<loose stale/>"
+        new File(subdir, "miriam.xml").text = "<registry/>"
+        runGit(repoDir, "add", "-A")
+        runGit(repoDir, "-c", "user.name=T", "-c", "user.email=t@e.com", "commit", "-m", "breakage")
+        runGit(repoDir, "push", "origin", "HEAD:metadata")
+
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<fresh/>"
+        configureGit(repoDir, exportFolder)
+        RedisService.metaClass.static.doRedisDel = { String key -> }
+
+        when:
+        boolean result = service.archiveExportedXmlToGit()
+
+        then:
+        result
+        !new File(subdir, "OmicsDIEntries-20260830-074824-1.xml").exists()
+        new File(subdir, "miriam.xml").text == "<registry/>"
+        new File(subdir, "biomodels.zip").isFile()
+    }
+
+    void "archiveExportedXmlToGit leaves the archive alone when the export folder has no OmicsDIEntries files"() {
+        given:
+        File repoDir = freshArchiveClone()
+        File subdir = new File(repoDir, "omicsdi"); subdir.mkdirs()
+        makeZip(new File(subdir, "biomodels.zip"), ["OmicsDIEntries-20260830-123537-1.xml": "<kept/>"])
+        runGit(repoDir, "add", "-A")
+        runGit(repoDir, "-c", "user.name=T", "-c", "user.email=t@e.com", "commit", "-m", "prior")
+        runGit(repoDir, "push", "origin", "HEAD:metadata")
+        String beforeLog = runGit(repoDir, "log", "metadata", "--oneline")
+
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "miriam.xml").text = "<registry/>"
+        configureGit(repoDir, exportFolder)
+        boolean deleteCalled = false
+        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
+
+        when:
+        boolean result = service.archiveExportedXmlToGit()
+
+        then:
+        result
+        deleteCalled
+        zipEntryText(new File(subdir, "biomodels.zip"), "OmicsDIEntries-20260830-123537-1.xml") == "<kept/>"
+        runGit(repoDir, "log", "metadata", "--oneline") == beforeLog
     }
 
     void "archiveExportedXmlToGit leaves the dirty flag set when the git repo is unusable"() {
-        given: "a repoPath that is not actually a git repository"
-        File notARepo = new File(tempDir, "not-a-repo")
-        notARepo.mkdirs()
-        File exportFolder = new File(tempDir, "export")
-        exportFolder.mkdirs()
-        new File(exportFolder, "entries.xml").text = "<database/>"
-
-        and:
+        given:
+        File notARepo = new File(tempDir, "not-a-repo"); notARepo.mkdirs()
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<x/>"
         configureGit(notARepo, exportFolder)
         boolean deleteCalled = false
         RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
@@ -249,12 +304,9 @@ class OmicsdiServiceSpec extends Specification {
         // strip quotes around a value, so `repoPath="/some/path"` there previously produced the
         // literal string `"/some/path"` - not absolute - which made new File(...) resolve relative
         // to cwd (this app's own checkout) and silently git-commit/push into the wrong repo.
-        given: "an export folder with a freshly generated XML file"
-        File exportFolder = new File(tempDir, "export")
-        exportFolder.mkdirs()
-        new File(exportFolder, "entries.xml").text = "<database/>"
-
-        and: "repoPath is relative, as it would be if wrapped in stray quote characters"
+        given:
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<x/>"
         configureGit(new File(tempDir, "repo"), exportFolder)
         grailsApplication.config.jummp.omicsdi.git.repoPath = "some/relative/path"
         boolean deleteCalled = false
@@ -270,77 +322,47 @@ class OmicsdiServiceSpec extends Specification {
     }
 
     void "archiveExportedXmlToGit strips stray quote characters from configured git properties"() {
-        // Regression test for the same misconfiguration as above, but where repoPath still
-        // happens to resolve to a real absolute path once the surrounding quotes are stripped -
-        // e.g. `repoPath="/abs/path"` in a .properties file.
-        given: "a bare repo standing in for the real GitHub remote"
-        File remoteDir = new File(tempDir, "remote.git")
-        runGit(tempDir, "init", "--bare", "--initial-branch=metadata", remoteDir.canonicalPath)
-
-        and: "a local clone of it, with one commit so the branch exists"
-        File repoDir = new File(tempDir, "repo")
-        runGit(tempDir, "clone", remoteDir.canonicalPath, repoDir.canonicalPath)
-        runGit(repoDir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
-                "commit", "--allow-empty", "-m", "init")
-        runGit(repoDir, "push", "origin", "HEAD:metadata")
-
-        and: "an export folder with a freshly generated XML file"
-        File exportFolder = new File(tempDir, "export")
-        exportFolder.mkdirs()
-        new File(exportFolder, "entries.xml").text = "<database><entries/></database>"
-
-        and: "every configured git property is wrapped in stray quote characters"
+        // Regression test for the same misconfiguration as above, but where repoPath still resolves
+        // to a real absolute path once the surrounding quotes are stripped.
+        given:
+        File repoDir = freshArchiveClone()
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<x/>"
         configureGit(repoDir, exportFolder)
         grailsApplication.config.jummp.omicsdi.git.repoPath = "\"${repoDir.canonicalPath}\"".toString()
         grailsApplication.config.jummp.omicsdi.git.subdir = '"omicsdi"'
         grailsApplication.config.jummp.omicsdi.git.remote = "'origin'"
         grailsApplication.config.jummp.omicsdi.git.branch = '"metadata"'
-        boolean deleteCalled = false
-        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
+        RedisService.metaClass.static.doRedisDel = { String key -> }
 
         when:
         boolean result = service.archiveExportedXmlToGit()
 
         then:
         result
-        deleteCalled
-        new File(repoDir, "omicsdi/entries.xml").text == "<database><entries/></database>"
-        runGit(remoteDir, "log", "metadata", "--oneline").contains("Automated OmicsDI export")
+        zipEntryNames(new File(repoDir, "omicsdi/biomodels.zip")) == ["OmicsDIEntries-20260830-123537-1.xml"]
+        runGit(repoDir, "log", "metadata", "--oneline").contains("Add BioModels metadata exported on 2026-08-30")
     }
 
     void "archiveExportedXmlToGit treats an empty subdir as the repo root instead of aborting on an empty git pathspec"() {
-        // An explicit `jummp.omicsdi.git.subdir=` in the external .properties config reaches the
-        // service as "". `git add -- ""` / `git status -- ""` abort with "empty string is not a
-        // valid pathspec" (git >= 2.16), so the service must normalise "" to "." - XML then lands
-        // at the repo root and the archive still commits + pushes.
-        given: "a bare repo standing in for the real GitHub remote, plus a local clone with the branch"
-        File remoteDir = new File(tempDir, "remote.git")
-        runGit(tempDir, "init", "--bare", "--initial-branch=metadata", remoteDir.canonicalPath)
-        File repoDir = new File(tempDir, "repo")
-        runGit(tempDir, "clone", remoteDir.canonicalPath, repoDir.canonicalPath)
-        runGit(repoDir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
-                "commit", "--allow-empty", "-m", "init")
-        runGit(repoDir, "push", "origin", "HEAD:metadata")
-
-        and: "an export folder with a freshly generated XML file"
-        File exportFolder = new File(tempDir, "export")
-        exportFolder.mkdirs()
-        new File(exportFolder, "entries.xml").text = "<database><entries/></database>"
-
-        and: "subdir is configured empty"
+        // `jummp.omicsdi.git.subdir=` in the .properties config reaches the service as "";
+        // `git add -- ""` aborts with "empty string is not a valid pathspec" (git >= 2.16), so it
+        // is normalised to "." and the archive lands at the repo root.
+        given:
+        File repoDir = freshArchiveClone()
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<x/>"
         configureGit(repoDir, exportFolder)
         grailsApplication.config.jummp.omicsdi.git.subdir = ""
-        boolean deleteCalled = false
-        RedisService.metaClass.static.doRedisDel = { String key -> deleteCalled = true }
+        RedisService.metaClass.static.doRedisDel = { String key -> }
 
         when:
         boolean result = service.archiveExportedXmlToGit()
 
         then:
         result
-        deleteCalled
-        new File(repoDir, "entries.xml").text == "<database><entries/></database>"
-        runGit(remoteDir, "log", "metadata", "--oneline").contains("Automated OmicsDI export")
+        new File(repoDir, "biomodels.zip").isFile()
+        runGit(repoDir, "log", "metadata", "--oneline").contains("Add BioModels metadata exported on 2026-08-30")
     }
 
     private void stubExportSettingsConfig(String datasourceUrl) {
@@ -363,6 +385,39 @@ class OmicsdiServiceSpec extends Specification {
         grailsApplication.config.jummp.omicsdi.git.commitUserName = "Test Bot"
         grailsApplication.config.jummp.omicsdi.git.commitUserEmail = "test@example.com"
         grailsApplication.config.jummp.search.exportFolder = exportFolder.canonicalPath
+    }
+
+    /** Bare remote on branch `metadata` + a local clone with one commit, ready to archive into. */
+    private File freshArchiveClone() {
+        File remoteDir = new File(tempDir, "remote.git")
+        runGit(tempDir, "init", "--bare", "--initial-branch=metadata", remoteDir.canonicalPath)
+        File repoDir = new File(tempDir, "repo")
+        runGit(tempDir, "clone", remoteDir.canonicalPath, repoDir.canonicalPath)
+        runGit(repoDir, "-c", "user.name=Test", "-c", "user.email=test@example.com",
+                "commit", "--allow-empty", "-m", "init")
+        runGit(repoDir, "push", "origin", "HEAD:metadata")
+        repoDir
+    }
+
+    private static void makeZip(File target, Map<String, String> entries) {
+        target.parentFile?.mkdirs()
+        new java.util.zip.ZipOutputStream(new FileOutputStream(target)).withCloseable { zos ->
+            entries.each { String name, String content ->
+                zos.putNextEntry(new java.util.zip.ZipEntry(name))
+                zos.write(content.getBytes("UTF-8"))
+                zos.closeEntry()
+            }
+        }
+    }
+
+    private static List<String> zipEntryNames(File zip) {
+        new java.util.zip.ZipFile(zip).withCloseable { zf -> zf.entries().collect { it.name }.sort() }
+    }
+
+    private static String zipEntryText(File zip, String name) {
+        new java.util.zip.ZipFile(zip).withCloseable { zf ->
+            zf.getInputStream(zf.getEntry(name)).getText("UTF-8")
+        }
     }
 
     private static String runGit(File dir, String... args) {
