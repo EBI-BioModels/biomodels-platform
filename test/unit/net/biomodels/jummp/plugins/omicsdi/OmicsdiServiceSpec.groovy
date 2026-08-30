@@ -98,6 +98,54 @@ class OmicsdiServiceSpec extends Specification {
         "h2"         | "jdbc:h2:mem:testDb"
     }
 
+    void "saveOmicsdiExportSettings writes a miriamExportFile inside the export folder"() {
+        // The indexer's RequestContext constructor throws when this key is absent, which silently
+        // aborted every app-triggered export.
+        given:
+        stubExportSettingsConfig("jdbc:mysql://localhost:3306/biomodels_prod")
+
+        when:
+        File settings = service.saveOmicsdiExportSettings([:])
+
+        then:
+        new JsonSlurper().parse(settings).miriamExportFile ==
+                new File(tempDir.canonicalPath, "miriam.xml").path
+    }
+
+    @Unroll
+    void "saveOmicsdiExportSettings coerces numberEntriesOnEachFile #raw to #expected when allowMultipleFiles is set"() {
+        given:
+        stubExportSettingsConfig("jdbc:mysql://localhost:3306/biomodels_prod")
+
+        when:
+        File settings = service.saveOmicsdiExportSettings(
+                [allowMultipleFiles: true, numberEntriesOnEachFile: raw, tagsExcluded: []])
+
+        then:
+        new JsonSlurper().parse(settings).options.numberEntriesOnEachFile == expected
+
+        where:
+        raw          | expected
+        "undefined"  | 1000
+        ""           | 1000
+        0            | 1000
+        -5           | 1000
+        250          | 250
+        "500"        | 500
+    }
+
+    void "saveOmicsdiExportSettings leaves numberEntriesOnEachFile alone when a single file is requested"() {
+        given:
+        stubExportSettingsConfig("jdbc:mysql://localhost:3306/biomodels_prod")
+
+        when:
+        File settings = service.saveOmicsdiExportSettings(
+                [allowMultipleFiles: false, numberEntriesOnEachFile: "undefined", tagsExcluded: []])
+
+        then:
+        new JsonSlurper().parse(settings).options.numberEntriesOnEachFile == "undefined"
+    }
+
     void "archiveExportedXmlToGit is a no-op and leaves the dirty flag untouched when git archiving is not configured"() {
         given:
         grailsApplication.config.jummp.omicsdi.git.enabled = false
