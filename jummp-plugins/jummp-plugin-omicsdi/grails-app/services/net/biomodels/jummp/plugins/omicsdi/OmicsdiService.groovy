@@ -86,7 +86,7 @@ class OmicsdiService {
         def dsConfig = grailsApplication.config.dataSource
         String searchStrategy = grailsApplication.config.jummp.search.strategy
         String exportFolder = grailsApplication.config.jummp.search.exportFolder
-        String dbUrl = dsConfig?.url
+        String dbUrl = rewriteJdbcUrlForIndexer(dsConfig?.url as String)
         String dbUsername = dsConfig?.username
         String dbPassword = dsConfig?.password
         def dbSettings = ['url': dbUrl, 'username': dbUsername, 'password': dbPassword]
@@ -217,6 +217,30 @@ class OmicsdiService {
             log.error("Failed to archive OmicsDI XML files to git: ${e.message}", e)
             return false
         }
+    }
+
+    private static final String MARIADB_JDBC_PREFIX = "jdbc:mariadb:"
+    private static final String MYSQL_JDBC_PREFIX = "jdbc:mysql:"
+
+    /**
+     * Rewrites a {@code jdbc:mariadb:...} datasource URL to its {@code jdbc:mysql:...} equivalent
+     * before it is handed to the standalone indexer jar ({@code jummp.search.pathToIndexerExecutable},
+     * invoked via {@code exec:java} in {@code ExportingOmicsDIRoute}).
+     *
+     * That jar bundles only the MySQL Connector/J driver - it has no {@code org.mariadb.jdbc.Driver}
+     * on its classpath - so a {@code jdbc:mariadb:} URL (what {@code DataSource.groovy} builds when
+     * {@code jummp.database.type=MARIADB}) makes it abort at GORM startup with
+     * {@code java.sql.SQLException: No suitable driver} and no XML is produced. Connector/J 8 speaks
+     * to a MariaDB server over a {@code jdbc:mysql:} URL, and the query parameters our config appends
+     * ({@code useUnicode}, {@code characterEncoding}) are understood by both drivers.
+     *
+     * Any other URL (mysql, postgresql, the in-memory h2 used by tests) is returned unchanged.
+     */
+    private static String rewriteJdbcUrlForIndexer(String url) {
+        if (url?.startsWith(MARIADB_JDBC_PREFIX)) {
+            return MYSQL_JDBC_PREFIX + url.substring(MARIADB_JDBC_PREFIX.length())
+        }
+        url
     }
 
     /**
