@@ -48,6 +48,7 @@ class UsermanagementController extends CommonController {
     def springSecurityService
     def messageSource
     def notificationService
+    def mailingService
 
     private String checkForMessage() {
         String flashMessage = ""
@@ -554,13 +555,13 @@ further instructions"""
         final User USER = User.findByUsername(username)
         if (USER) {
             final String SUBJECT = "[BioModels] Your Password Has Been Updated Successfully"
-            final String BODY = """Dear ${USER.person.userRealName},\
-<p>We want to inform you that your password has been successfully changed.</p>\
-<p>If you did not request this change, please contact us asap.</p>\
-<p>Thank you for your cooperation.</p>\
-<p>Kind regards,<br/>\
-The BioModels Team</p>"""
-            userService.sendEmail(USER, BODY, SUBJECT)
+            final String INNER = """
+      <p style="margin:0 0 16px;">Dear ${USER.person.userRealName},</p>
+      <p style="margin:0 0 16px;">We want to inform you that your password has been successfully changed.</p>
+      <p style="margin:0 0 16px;">If you did not request this change, please contact us asap.</p>
+      <p style="margin:0 0 16px;">Thank you for your cooperation.</p>
+      <p style="margin:0 0 16px;">Kind regards,<br/>The BioModels Team</p>"""
+            userService.sendEmail(USER, mailingService.wrapHtml(INNER, [showMaintainer: true]), SUBJECT)
         }
     }
 
@@ -569,14 +570,13 @@ The BioModels Team</p>"""
         if (USER) {
             final String link = createLink(controller: "usermanagement", action: "editPassword", absolute: true)
             final String SUBJECT = "[BioModels] Compromised Password Alert!"
-            final String BODY = """Dear ${USER.person.userRealName},\
-<p>Your password has appeared in one or more data breaches which puts your account at high risk of compromise. \
-You should change your password immediately.</p>\
-<p>Open this link ${link} to change your password.</p>\
-<p>Thank you for your cooperation.</p>\
-<p>Best regards,<br/>\
-The BioModels Team</p>"""
-            userService.sendEmail(USER, BODY, SUBJECT)
+            final String INNER = """
+      <p style="margin:0 0 16px;">Dear ${USER.person.userRealName},</p>
+      <p style="margin:0 0 16px;">Your password has appeared in one or more data breaches which puts your account at high risk of compromise. You should change your password immediately.</p>
+      <p style="margin:0 0 16px;">Open <a href="${link}" style="color:#0F5CB1;">this link</a> to change your password.</p>
+      <p style="margin:0 0 16px;">Thank you for your cooperation.</p>
+      <p style="margin:0 0 16px;">Best regards,<br/>The BioModels Team</p>"""
+            userService.sendEmail(USER, mailingService.wrapHtml(INNER, [showMaintainer: true]), SUBJECT)
         }
     }
 

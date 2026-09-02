@@ -47,6 +47,7 @@ class RestAccessTokenService implements ApplicationListener<RestTokenCreationEve
 
     def redisService
     def userService
+    def mailingService
 
     @Override
     void onApplicationEvent(RestTokenCreationEvent event) {
@@ -167,45 +168,39 @@ $username (${requester.person.userRealName}) when issuing a new access token. Th
     private void notifyByEmail(final AuthTokenManager atm) {
         String friendlyName = atm.user?.person?.userRealName ?: atm.user.username
         String endingToken = atm.accessToken[-8..-1]
-        final String BODY = """Dear ${friendlyName},\
-<p>We are writing to inform you that your access token ending <strong>$endingToken</strong> has \
-expired at <strong>${atm.expiredDate.format('HH:mm:ss')}</strong> on <strong>${atm.expiredDate.format('dd-MM-yyyy')}</strong>.</p>\
-<p>You can create a new access token now to avoid any unexpected downtime.</p>
-<p>If you need any assistance, please contact us asap.</p>
-<br/>
-<p>Best regards,<br/>
-The BioModels Team</p>"""
+        final String INNER = """
+      <p style="margin:0 0 16px;">Dear ${friendlyName},</p>
+      <p style="margin:0 0 16px;">We are writing to inform you that your access token ending <strong>$endingToken</strong> has expired at <strong>${atm.expiredDate.format('HH:mm:ss')}</strong> on <strong>${atm.expiredDate.format('dd-MM-yyyy')}</strong>.</p>
+      <p style="margin:0 0 16px;">You can create a new access token now to avoid any unexpected downtime.</p>
+      <p style="margin:0 0 16px;">If you need any assistance, please contact us asap.</p>
+      <p style="margin:0 0 16px;">Best regards,<br/>The BioModels Team</p>"""
         final String SUBJECT = "[BioModels] Access Token Expiration"
-        userService.sendEmail(atm.user, BODY, SUBJECT)
+        userService.sendEmail(atm.user, mailingService.wrapHtml(INNER, [showMaintainer: true]), SUBJECT)
     }
 
     private void remindByEmail(final AuthTokenManager atm) {
         String friendlyName = atm.user?.person?.userRealName ?: atm.user.username
         String endingToken = atm.accessToken[-8..-1]
-        final String BODY = """Dear ${friendlyName},\
-<p>We are writing to inform you that your access token ending <strong>$endingToken</strong> is \
-about to expire at <strong>${atm.expiredDate.format('HH:mm:ss')}</strong> on <strong>${atm.expiredDate.format('dd-MM-yyyy')}</strong>.</p>\
-<p>You can create a new access token now to avoid unnecessary downtime.</p>
-<p>If you need any assistance, please contact us asap.</p>
-<br/>
-<p>Best regards,<br/>
-The BioModels Team</p>"""
+        final String INNER = """
+      <p style="margin:0 0 16px;">Dear ${friendlyName},</p>
+      <p style="margin:0 0 16px;">We are writing to inform you that your access token ending <strong>$endingToken</strong> is about to expire at <strong>${atm.expiredDate.format('HH:mm:ss')}</strong> on <strong>${atm.expiredDate.format('dd-MM-yyyy')}</strong>.</p>
+      <p style="margin:0 0 16px;">You can create a new access token now to avoid unnecessary downtime.</p>
+      <p style="margin:0 0 16px;">If you need any assistance, please contact us asap.</p>
+      <p style="margin:0 0 16px;">Best regards,<br/>The BioModels Team</p>"""
         final String SUBJECT = "[BioModels] Access Token Expiring Soon"
-        userService.sendEmail(atm.user, BODY, SUBJECT)
+        userService.sendEmail(atm.user, mailingService.wrapHtml(INNER, [showMaintainer: true]), SUBJECT)
     }
 
     private void confirmByEmail(final User requester, final String username, final String endingToken) {
         String friendlyName = requester?.person?.userRealName ?: username
-        final String BODY = """Hey ${friendlyName},<p>An access token ending <strong>$endingToken</strong> was recently issued to your account. \
-The token will be expired after 30 days since now.</p>\
-<p>Notes that the former tokens have been deleted, therefore, you have to update it in your work \
-to avoid unnecessary interuptions.</p>
-<p>If you didn't request it or you run into problems, please contact us asap.</p>
-<br/>
-Thank you,<br/>
-The BioModels Team"""
+        final String INNER = """
+      <p style="margin:0 0 16px;">Hey ${friendlyName},</p>
+      <p style="margin:0 0 16px;">An access token ending <strong>$endingToken</strong> was recently issued to your account. The token will be expired after 30 days since now.</p>
+      <p style="margin:0 0 16px;">Notes that the former tokens have been deleted, therefore, you have to update it in your work to avoid unnecessary interuptions.</p>
+      <p style="margin:0 0 16px;">If you didn't request it or you run into problems, please contact us asap.</p>
+      <p style="margin:0 0 16px;">Thank you,<br/>The BioModels Team</p>"""
         final String SUBJECT = "[BioModels] An access token has been issued to your account"
-        userService.sendEmail(requester, BODY, SUBJECT)
+        userService.sendEmail(requester, mailingService.wrapHtml(INNER, [showMaintainer: true]), SUBJECT)
     }
 
     private void sendReminderEmail(final AuthTokenManager account) {
