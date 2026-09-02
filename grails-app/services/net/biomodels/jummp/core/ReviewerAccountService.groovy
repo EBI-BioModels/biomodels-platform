@@ -114,15 +114,7 @@ class ReviewerAccountService extends UserService implements InitializingBean {
         String u = reviewerInfo.user.username
         String p = reviewerInfo.password
         final String CURATION_EMAIL = grailsApplication.config.jummp.model.curators.mailinglist
-        String message = """
-<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
-  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
-    <div style="background-color:#ED6B21;height:5px;"></div>
-    <div style="background-color:#072C55;padding:24px 32px 20px;">
-      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
-      <div style="font-size:12px;color:#D3DEEB;margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
-    </div>
-    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+        String inner = """
       <p style="margin:0 0 16px;">A reviewer account has been created for your model(s) <strong>${modelsToReview}</strong>. Please forward the following credentials to your reviewer(s).</p>
       <p style="margin:0 0 8px;font-weight:bold;">Access instructions</p>
       <ol style="margin:0 0 16px;padding-left:20px;">
@@ -135,16 +127,11 @@ class ReviewerAccountService extends UserService implements InitializingBean {
 <strong>${u}</strong>.</p>
       <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
         <a href="${serverURL}" style="color:#0F5CB1;">${serverURL}</a>
-      </p>
-    </div>
-    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
-    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
-      You are receiving this email because a reviewer account has been created for your submission on
+      </p>"""
+        String footerNote = """You are receiving this email because a reviewer account has been created for your submission on
       <a href="${serverURL}" style="color:#0F5CB1;">BioModels</a>.
-      This is an automatically generated email &mdash; replies are not monitored.
-    </div>
-  </div>
-</div>"""
+      This is an automatically generated email &mdash; replies are not monitored."""
+        String message = mailingService.wrapHtml(inner, [footerNote: footerNote])
         String emailBody = message
         String emailSubject = "[BioModels] Reviewer account for your model ${modelsToReview}"
         def currentUser = sss.currentUser

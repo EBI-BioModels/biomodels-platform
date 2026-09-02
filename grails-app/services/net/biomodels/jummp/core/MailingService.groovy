@@ -53,6 +53,26 @@ class MailingService {
 
     def grailsApplication
     def mailService
+    def groovyPageRenderer
+
+    /**
+     * Wrap inner body HTML in the shared BioModels email shell
+     * (orange accent bar + navy UF/LSM header + white body + grey footer).
+     *
+     * @param bodyContent raw HTML for the white body panel
+     * @param opts        optional: footerNote (raw HTML contextual footer line),
+     *                    showMaintainer (boolean, append the "maintained by ..." block)
+     * @return the complete HTML document ready to pass as the {@code html} param of {@link #send}
+     */
+    String wrapHtml(String bodyContent, Map opts = [:]) {
+        groovyPageRenderer.render(template: "/templates/email/shell", model: [
+                bodyContent   : bodyContent,
+                rootUrl       : grailsApplication.config.grails.serverURL ?: "https://www.biomodels.org",
+                footerNote    : opts.footerNote ?: null,
+                showMaintainer: opts.showMaintainer ? true : false,
+                year          : new Date().format("yyyy"),
+        ]).toString()
+    }
 
     void send(Map params) {
         String toAddr      = EmailUtils.extractEmail(params.to as String)

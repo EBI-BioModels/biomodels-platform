@@ -46,6 +46,7 @@ class AuthService implements IAuthService {
     def grailsApplication
     def redisService
     def userService
+    def mailingService
 
     @Override
     List<TwoFactorAuth> findAll(final String username, final String otp, final String sessionId) {
@@ -268,50 +269,24 @@ further support"""
       <p style="margin:0 0 16px;">Two-Factor Authentication has been disabled on your BioModels account. You can now sign in using your username and password only.</p>
       <p style="margin:0 0 16px;">If you change your mind, you can <a href="${SVR_URL}/user" style="color:#0F5CB1;">re-enable 2FA</a> from your profile at any time.</p>"""
         }
-        String BODY = """
-<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
-  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
-    <div style="background-color:#ED6B21;height:5px;"></div>
-    <div style="background-color:#072C55;padding:24px 32px 20px;">
-      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
-      <div style="font-size:12px;color:#D3DEEB;margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
-    </div>
-    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+        String INNER = """
       <p style="margin:0 0 16px;">Dear ${USER.person.userRealName},</p>
       ${MAIN_TEXT}
       <p style="margin:0 0 16px;">If you did not make this change, please <a href="mailto:${SENDER}" style="color:#0F5CB1;">contact us</a> immediately, as your account may be at risk.</p>
       <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
         <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">${BioModels.BM_ROOT_URL}</a>
-      </p>
-    </div>
-    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
-    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
-      You are receiving this email because you have an account on
+      </p>"""
+        String FOOTER_NOTE = """You are receiving this email because you have an account on
       <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">BioModels</a>,
       a repository of mathematical models of biological processes.
-      This is an automatically generated email &mdash; replies are not monitored.<br/><br/>
-      BioModels is maintained by the Laboratory for Systems Medicine,
-      Department of Medicine, Division of Pulmonary &ndash; Systems Medicine,
-      <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" style="color:#0F5CB1;">University of Florida</a>.<br/>
-      &copy; ${new Date().format("YYYY")} University of Florida Health
-    </div>
-  </div>
-</div>
-"""
+      This is an automatically generated email &mdash; replies are not monitored."""
+        String BODY = mailingService.wrapHtml(INNER, [footerNote: FOOTER_NOTE, showMaintainer: true])
         userService.sendEmail(USER, BODY, SUBJECT)
     }
 
     private void emailOTP(final String realName, final String toEmail, final String OTP) {
         final String CONTACT = grailsApplication.config.jummp.security.registration.email.contact
-        final String BODY = """
-<div style="background-color:#f4f4f4;margin:0;padding:32px 0;font-family:Arial,Helvetica,sans-serif;color:#333333;">
-  <div style="max-width:620px;margin:0 auto;background-color:#ffffff;border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.10);">
-    <div style="background-color:#ED6B21;height:5px;"></div>
-    <div style="background-color:#072C55;padding:24px 32px 20px;">
-      <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
-      <div style="font-size:12px;color:#D3DEEB;margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
-    </div>
-    <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
+        final String INNER = """
       <p style="margin:0 0 16px;">Dear ${realName},</p>
       <p style="margin:0 0 16px;">We received a request to verify your identity on your BioModels account. Please use the code below to complete your request.</p>
       <div style="background-color:#f0f4fa;border-left:4px solid #072C55;padding:20px;margin:0 0 20px;text-align:center;border-radius:0 4px 4px 0;">
@@ -321,22 +296,12 @@ further support"""
       <p style="margin:0 0 16px;">If you did not request this code, please <a href="mailto:${CONTACT}" style="color:#0F5CB1;">contact us</a> immediately, as your account may be at risk.</p>
       <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
         <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">${BioModels.BM_ROOT_URL}</a>
-      </p>
-    </div>
-    <hr style="border:none;border-top:1px solid #e8e8e8;margin:0;"/>
-    <div style="background-color:#f8f8f8;padding:20px 32px;font-size:12px;color:#777777;line-height:1.6;">
-      You are receiving this email because you have an account on
+      </p>"""
+        final String FOOTER_NOTE = """You are receiving this email because you have an account on
       <a href="${BioModels.BM_ROOT_URL}" style="color:#0F5CB1;">BioModels</a>,
       a repository of mathematical models of biological processes.
-      This is an automatically generated email &mdash; replies are not monitored.<br/><br/>
-      BioModels is maintained by the Laboratory for Systems Medicine,
-      Department of Medicine, Division of Pulmonary &ndash; Systems Medicine,
-      <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" style="color:#0F5CB1;">University of Florida</a>.<br/>
-      &copy; ${new Date().format("YYYY")} University of Florida Health
-    </div>
-  </div>
-</div>
-"""
+      This is an automatically generated email &mdash; replies are not monitored."""
+        final String BODY = mailingService.wrapHtml(INNER, [footerNote: FOOTER_NOTE, showMaintainer: true])
         final String SUBJECT = "[BioModels] Your Verification Code"
         userService.sendEmail(toEmail, BODY, SUBJECT)
     }
