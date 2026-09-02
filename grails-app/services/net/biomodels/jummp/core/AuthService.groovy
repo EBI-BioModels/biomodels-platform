@@ -274,7 +274,7 @@ further support"""
     <div style="background-color:#ED6B21;height:5px;"></div>
     <div style="background-color:#072C55;padding:24px 32px 20px;">
       <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+      <div style="font-size:12px;color:#D3DEEB;margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
     </div>
     <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
       <p style="margin:0 0 16px;">Dear ${USER.person.userRealName},</p>
@@ -309,7 +309,7 @@ further support"""
     <div style="background-color:#ED6B21;height:5px;"></div>
     <div style="background-color:#072C55;padding:24px 32px 20px;">
       <div style="font-size:22px;font-weight:bold;color:#ffffff;letter-spacing:0.5px;">BioModels</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.75);margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
+      <div style="font-size:12px;color:#D3DEEB;margin-top:4px;letter-spacing:0.3px;">Laboratory for Systems Medicine &bull; University of Florida</div>
     </div>
     <div style="padding:32px;font-size:15px;line-height:1.7;color:#333333;">
       <p style="margin:0 0 16px;">Dear ${realName},</p>
