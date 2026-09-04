@@ -537,22 +537,40 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             String recipient = newUser.email
             def bccRecipients = []
             String emailSubject = grailsApplication.config.jummp.security.registration.email.subject
-            String emailBody = grailsApplication.config.jummp.security.registration.email.body
             if (grailsApplication.config.jummp.security.registration.email.sendToAdmin) {
                 bccRecipients = grailsApplication.config.jummp.security.registration.email.adminAddress
                 emailSubject = "[BioModels - new registration] ${newUser.username} account has been created"
             }
-            emailBody = emailBody.replace("{{USERNAME}}", newUser.username)
-            emailBody = emailBody.replace("{{PASSWORD}}", p)
-            emailBody = emailBody.replace("{{REALNAME}}", newUser.person.userRealName)
             String webURL = grailsApplication.config.grails.serverURL
             if (!webURL) {
                 webURL = "http://localhost:8080/${Metadata.current.'app.name'}"
             }
-            emailBody = emailBody.replace("{{WEBURL}}", webURL)
+            String friendlyName = newUser.person.userRealName ?: newUser.username
+            String INNER = """
+      <p style="margin:0 0 16px;">Dear ${friendlyName.encodeAsHTML()},</p>
+      <p style="margin:0 0 16px;">An account to access <a href="${webURL}" style="color:#0F5CB1;">BioModels</a> has been created for you.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 16px;font-size:15px;">
+        <tr>
+          <td style="padding:4px 20px 4px 0;color:#555555;">Username</td>
+          <td style="padding:4px 0;font-family:'Courier New',Courier,monospace;font-weight:bold;">${newUser.username.encodeAsHTML()}</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 20px 4px 0;color:#555555;">Password</td>
+          <td style="padding:4px 0;font-family:'Courier New',Courier,monospace;font-weight:bold;">${p.encodeAsHTML()}</td>
+        </tr>
+      </table>
+      <p style="margin:0 0 16px;">This password was generated automatically &mdash; you can change it from your account settings after your first login.</p>
+      <p style="margin:0 0 16px;">Log in here: <a href="${webURL}/login/auth" style="color:#0F5CB1;">${webURL}/login/auth</a></p>
+      <p style="margin:0 0 16px;">Kind regards,<br/><strong>The BioModels Team</strong><br/>
+        <a href="${webURL}" style="color:#0F5CB1;">${webURL}</a>
+      </p>"""
+            String footerNote = """You are receiving this email because an account was created for you on
+      <a href="${webURL}" style="color:#0F5CB1;">BioModels</a>, a repository of mathematical models of biological processes.
+      This is an automatically generated email &mdash; replies are not monitored."""
+            String emailBody = mailingService.wrapHtml(INNER, [footerNote: footerNote, showMaintainer: true])
             String fromRecipient = grailsApplication.config.jummp.security.registration.email.sender as String
             mailingService.send([to: recipient, from: fromRecipient, subject: emailSubject,
-                                 text: emailBody, bcc: bccRecipients ?: null])
+                                 html: emailBody, bcc: bccRecipients ?: null])
         }
         return User.findByUsername(user.username).id
     }
