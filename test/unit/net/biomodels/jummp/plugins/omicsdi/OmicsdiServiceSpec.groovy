@@ -215,6 +215,39 @@ class OmicsdiServiceSpec extends Specification {
         zipEntryNames(new File(subdir, "biomodels.zip")) == ["OmicsDIEntries-20260830-123537-1.xml"]
     }
 
+    void "archiveExportedXmlToGit prunes dated metadata archives beyond the retention window"() {
+        given: "4 previously-rotated dated archives already committed, one per past export day"
+        File repoDir = freshArchiveClone()
+        File subdir = new File(repoDir, "omicsdi"); subdir.mkdirs()
+        ["20260820", "20260822", "20260824", "20260826"].each { String date ->
+            makeZip(new File(subdir, "BioModels-metadata-${date}.zip"),
+                    [("OmicsDIEntries-${date}-100000-1.xml".toString()): "<run ${date}/>".toString()])
+        }
+        makeZip(new File(subdir, "biomodels.zip"), ["OmicsDIEntries-20260828-100000-1.xml": "<run 20260828/>"])
+        runGit(repoDir, "add", "-A")
+        runGit(repoDir, "-c", "user.name=T", "-c", "user.email=t@e.com", "commit", "-m", "history")
+        runGit(repoDir, "push", "origin", "HEAD:metadata")
+
+        and: "a new run rotates biomodels.zip out to its own dated bundle, making a 5th dated file"
+        File exportFolder = new File(tempDir, "export"); exportFolder.mkdirs()
+        new File(exportFolder, "OmicsDIEntries-20260830-123537-1.xml").text = "<run 20260830/>"
+        configureGit(repoDir, exportFolder)
+        RedisService.metaClass.static.doRedisDel = { String key -> }
+
+        when:
+        boolean result = service.archiveExportedXmlToGit()
+
+        then: "only the 3 most recent dated bundles survive"
+        result
+        !new File(subdir, "BioModels-metadata-20260820.zip").exists()
+        !new File(subdir, "BioModels-metadata-20260822.zip").exists()
+        new File(subdir, "BioModels-metadata-20260824.zip").isFile()
+        new File(subdir, "BioModels-metadata-20260826.zip").isFile()
+        new File(subdir, "BioModels-metadata-20260828.zip").isFile()
+        zipEntryNames(new File(subdir, "biomodels.zip")) == ["OmicsDIEntries-20260830-123537-1.xml"]
+        runGit(repoDir, "log", "metadata", "--oneline").contains("Add BioModels metadata exported on 2026-08-30")
+    }
+
     void "archiveExportedXmlToGit makes no commit when biomodels.zip already holds the latest run"() {
         given:
         File repoDir = freshArchiveClone()

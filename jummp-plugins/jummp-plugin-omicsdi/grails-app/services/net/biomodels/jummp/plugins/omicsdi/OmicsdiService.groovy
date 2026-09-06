@@ -247,6 +247,12 @@ class OmicsdiService {
             writeZip(currentRunFiles, biomodelsZip)
             log.info("Bundled ${currentRunFiles.size()} XML file(s) from run ${currentRun} into ${ARCHIVE_ZIP_NAME}.")
 
+            int pruned = pruneOldMetadataArchives(targetDir)
+            if (pruned) {
+                log.info("Pruned ${pruned} dated OmicsDI archive(s) beyond the " +
+                    "${METADATA_ZIP_RETENTION}-file retention window.")
+            }
+
             // Sweep up loose OmicsDIEntries-*.xml that the pre-zip archive behaviour committed.
             targetDir.eachFile { File f ->
                 if (OMICSDI_ENTRIES_XML.matcher(f.name).matches()) {
@@ -350,6 +356,10 @@ class OmicsdiService {
             ~/OmicsDIEntries-(\d{8}-\d{6})-\d+\.xml/
     /** Zip in the archive repo that always holds the most recent OmicsDI export. */
     static final String ARCHIVE_ZIP_NAME = "biomodels.zip"
+    /** {@code BioModels-metadata-<yyyyMMdd>.zip} - a dated bundle that {@code biomodels.zip} was rotated out to. */
+    private static final java.util.regex.Pattern METADATA_ZIP_PATTERN = ~/BioModels-metadata-\d{8}\.zip/
+    /** How many dated rotated bundles to keep in the archive repo; older ones are deleted on each run. */
+    static final int METADATA_ZIP_RETENTION = 3
 
     /**
      * Groups the indexer's XML output in {@code exportFolder} by run.
@@ -387,6 +397,32 @@ class OmicsdiService {
             }
             null
         }
+    }
+
+    /**
+     * Deletes the oldest dated {@code BioModels-metadata-<yyyyMMdd>.zip} bundles in {@code targetDir}
+     * until at most {@link #METADATA_ZIP_RETENTION} remain, so the archive repo does not grow
+     * unbounded by one zip per export day forever. {@code biomodels.zip} itself (the always-current
+     * export) is untouched - only the rotated dated copies are subject to this window. The filename's
+     * {@code yyyyMMdd} date sorts lexicographically the same as chronologically, so a plain name sort
+     * is enough to find the oldest entries.
+     *
+     * @return how many files were deleted, purely for logging at the call site.
+     */
+    private static int pruneOldMetadataArchives(File targetDir) {
+        List<File> dated = []
+        targetDir.eachFile { File f ->
+            if (METADATA_ZIP_PATTERN.matcher(f.name).matches()) {
+                dated << f
+            }
+        }
+        dated.sort { it.name }
+        int excess = dated.size() - METADATA_ZIP_RETENTION
+        if (excess <= 0) {
+            return 0
+        }
+        dated[0..<excess].each { File f -> Files.deleteIfExists(f.toPath()) }
+        excess
     }
 
     /** Writes {@code files} (stored under their base names) into {@code zipTarget}, replacing it. */
