@@ -28,6 +28,8 @@ import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifi
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
+import net.biomodels.jummp.utils.redis.PublishClient
+import net.biomodels.jummp.utils.redis.RedisService
 import org.junit.*
 
 import static org.junit.Assert.*
@@ -37,6 +39,18 @@ import static org.junit.Assert.*
  */
 @TestMixin(GrailsUnitTestMixin)
 class ModelIdentifierUtilsSpec {
+    // VariableDigitAppendingDecorator (built by buildDecoratorsFromSettings for a 'numerical'
+    // part) looks up redisService/publishClientService directly off Holders.grailsApplication at
+    // construction time (field initialisers, not injected properties), so both beans need to
+    // exist in the unit test's mock context before any test method constructs one.
+    @Before
+    void registerRedisBeans() {
+        defineBeans {
+            redisService(RedisService)
+            publishClientService(PublishClient)
+        }
+    }
+
     void testParseSettingsExpectsPartsToBeConsecutive() {
         def conf = '''
             part1 {
@@ -108,7 +122,11 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
         GeneratorDetails results = ModelIdentifierUtils.buildDecoratorsFromSettings('submission', settings)
         assertNotNull results
 
-        def actualDecorators = results.decorators.first().generator.getDecoratorRegistry()
+        // buildDecoratorsFromSettings() never wires .generator onto its decorators - that only
+        // happens later, inside DefaultModelIdentifierGenerator's own constructor, which this
+        // test never calls - so results.decorators (already the sorted set under test) is used
+        // directly instead of going through the (always-null here) generator indirection.
+        def actualDecorators = results.decorators
         assertEquals 3, actualDecorators.size()
         def literalDecorator = ((FixedLiteralAppendingDecorator) actualDecorators.first())
         assertEquals 0, literalDecorator.ORDER
@@ -122,7 +140,12 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
         assertEquals 2, numericalDecorator.ORDER
         final int WIDTH = 12
         assertEquals WIDTH, numericalDecorator.WIDTH
-        assertEquals "0".padLeft(12, '0'), numericalDecorator.nextValue.get()
+        // Unlike DateAppendingDecorator (nextValue.set() above), buildDecoratorsFromSettings never
+        // sets nextValue for a variable-digit numerical decorator - it stays lazily unset until
+        // the first decorate()/refresh() call queries Redis for the last used count (see
+        // VariableDigitAppendingDecorator.updateNextValueIfNeeded). What it does set here is
+        // initialValue, already zero-padded to WIDTH by NumericalModelIdentifierPartition itself.
+        assertEquals "0".padLeft(12, '0'), numericalDecorator.initialValue
     }
 
     void testParseSettingsHasMandatoryConfigAttribute() {
