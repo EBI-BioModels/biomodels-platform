@@ -33,6 +33,15 @@ grails.project.source.level = 1.7
 grails.project.target.level = 1.7
 grails.project.dependency.resolver = "maven"
 
+// Shared dependency versions - see jummpDependencyVersions.properties at the jummp-biomodels
+// project root (this plugin is built inline, so that file is on the path).
+def jummpDependencyVersions = new Properties()
+File jummpVersionsFile = new File("jummpDependencyVersions.properties")
+if (!jummpVersionsFile.exists()) {
+    throw new RuntimeException("Cannot find ${jummpVersionsFile.absolutePath} - run grails from the jummp-biomodels project root")
+}
+jummpVersionsFile.withInputStream { jummpDependencyVersions.load(it) }
+
 grails.project.fork = [
     // configure settings for the test-app JVM, uses the daemon by default
     test: false, //[maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, daemon:true],
@@ -69,7 +78,7 @@ grails.project.dependency.resolution = {
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
     dependencies {
-        compile("net.biomodels.jummp:AnnotationStore:0.3.6") {
+        compile("net.biomodels.jummp:AnnotationStore:${jummpDependencyVersions['annotationStore.version']}") {
             excludes 'slf4j-log4j12'
         }
     }
