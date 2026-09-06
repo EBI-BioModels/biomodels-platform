@@ -143,6 +143,18 @@ class JummpController extends CommonController {
         render(view: "curatorZone", model: model)
     }
 
+    def annotationInfo() {
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.annotationInfo.${theme}.title")
+        render(view: "annotationInfo", model: model)
+    }
+
+    def annotationTips() {
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.annotationTips.${theme}.title")
+        render(view: "annotationTips", model: model)
+    }
+
     def developerZone() {
         Map model = COMMON_PROPERTIES
         model.put("titleCode", "jummp.developerZone.${theme}.title")
@@ -334,6 +346,16 @@ class JummpController extends CommonController {
         }
         mkb.url {
             loc("${BioModels.BM_ROOT_URL}/curation-docs")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/curation-docs/annotation")
+            changefreq('yearly')
+            priority(0.8)
+        }
+        mkb.url {
+            loc("${BioModels.BM_ROOT_URL}/curation-docs/annotation-tips")
             changefreq('yearly')
             priority(0.8)
         }

@@ -116,7 +116,13 @@
             <li class="divider"></li>
             <li><a href="${grailsApplication.config.jummp.context.help.root}/manual.html" target="_blank">User Manual</a></li>
             <li class="divider"></li>
-            <li><a href="${createLink(controller: 'jummp', action: 'curatorZone')}">Curator's Zone</a></li>
+            <li><a>Curator's Zone</a>
+                <ul class="menu">
+                    <li><a href="${createLink(controller: 'jummp', action: 'curatorZone')}">Overview</a></li>
+                    <li><a href="${createLink(controller: 'jummp', action: 'annotationInfo')}">Annotation Information</a></li>
+                    <li><a href="${createLink(controller: 'jummp', action: 'annotationTips')}">Annotation Guidelines</a></li>
+                </ul>
+            </li>
             <li class="divider"></li>
             <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Developer's Zone</a></li>
             <li class="divider"></li>
