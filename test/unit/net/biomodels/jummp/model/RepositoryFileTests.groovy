@@ -61,9 +61,12 @@ class RepositoryFileTests {
         //nulls are not accepted
         repositoryFile = new RepositoryFile()
         assertFalse(repositoryFile.validate())
-        assertEquals(2, repositoryFile.errors.getErrorCount())
+        // mimeType(nullable: false, blank: false) was added to RepositoryFile (AnnotationStore)
+        // after this test was written, adding a 3rd required-field error alongside path/revision.
+        assertEquals(3, repositoryFile.errors.getErrorCount())
         assertEquals("nullable", repositoryFile.errors["path"])
         assertEquals("nullable", repositoryFile.errors["revision"])
+        assertEquals("nullable", repositoryFile.errors["mimeType"])
 
         // path cannot be blank
         def rev = new Revision(vcsId: "1", revisionNumber: 1, minorRevision: false,
@@ -74,11 +77,13 @@ class RepositoryFileTests {
         assertEquals("nullable", repositoryFile.errors["path"])
         assertEquals(1, repositoryFile.errors.getErrorCount())
 
-        // empty file descriptions and mimeTypes are acceptable
+        // Empty file descriptions are acceptable (nullable: true, no blank: false), but mimeType
+        // has since gained blank: false ("the mime type should be known by now") - an empty one
+        // is no longer valid, so a real value is supplied here instead.
         def newPath = createFile("target/vcs/aaa/model1/m1a.xml").absolutePath
         assertTrue(new File(newPath).exists())
-        def repositoryFile2 = new RepositoryFile(path: newPath, description: "model", mainFile: false,
-                mimeType: "", hidden: false, revision: new Revision())
+        def repositoryFile2 = new RepositoryFile(path: newPath, description: "", mainFile: false,
+                mimeType: "application/octet-stream", hidden: false, revision: new Revision())
         assertTrue(repositoryFile2.validate())
 
     }
