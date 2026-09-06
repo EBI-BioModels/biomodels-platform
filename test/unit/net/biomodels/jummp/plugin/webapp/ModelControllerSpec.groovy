@@ -2,17 +2,33 @@ package net.biomodels.jummp.plugin.webapp
 
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.web.FiltersUnitTestMixin
 import net.biomodels.jummp.core.ModelDelegateService
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PermissionTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.utils.redis.RedisService
 import net.biomodels.jummp.webapp.ModelController
 import spock.lang.Specification
 
 @TestFor(ModelController)
+@TestMixin(FiltersUnitTestMixin)
 @Mock([Revision])
 class ModelControllerSpec extends Specification {
+    // JBM-705 added a mandatory redisService lookup to CommonController.setConfiguration(), which
+    // runs as part of every controller bean's initialisation (not just when an action touches
+    // Redis). @TestFor's generated `controller` getter mocks (and so initialises) the controller
+    // bean in an instance-level @Before fixture, which runs before Spock's own setup() - so the
+    // bean has to be registered at the class level (setupSpec()), not per-test, or it is still
+    // missing when the controller bean gets created.
+    def setupSpec() {
+        defineBeans {
+            redisService(RedisService)
+        }
+    }
+
     def setup() {
     }
 
@@ -86,8 +102,16 @@ class ModelControllerSpec extends Specification {
         }
         controller.modelDelegateService = modelDelegateService
 
+        // the id/revisionId encoding under test happens in ParameterFilters.before, not in the
+        // show action itself - withFilters wraps the call so that filter actually runs.
+        // ParameterFilters (grails-app/conf/ParameterFilters.groovy) is in the default package;
+        // a bare reference from this named-package spec resolves as a runtime property lookup
+        // rather than a compile-time class literal (there is no import syntax that crosses the
+        // default-package boundary), so it is looked up reflectively instead.
+        mockFilters(Class.forName("ParameterFilters"))
+
         when: "the show action is called"
-        withFilters(action: "show") {
+        withFilters(controller: "Model", action: "show") {
             controller.show()
         }
 
