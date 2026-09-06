@@ -61,9 +61,13 @@ class ModelControllerSpec extends Specification {
             )
         }
         mds.demand.getPermissionsMap() { id ->
-            [ new PermissionTransportCommand(id: "0", name: "Me", read: true, write: true),
-            new PermissionTransportCommand(id: "1", name: "Myself", read: true),
-            new PermissionTransportCommand(id: "2", name: "I", read: true),
+            // PermissionTransportCommand.id is a primitive int - passing a single-character
+            // String here (as this used to) doesn't parse as a number: Groovy's map constructor
+            // coerces a one-char String into an int property via its Unicode code point, so
+            // id: "0"/"1"/"2" silently became 48/49/50 (the ASCII codes of '0'/'1'/'2'), not 0/1/2.
+            [ new PermissionTransportCommand(id: 0, name: "Me", read: true, write: true),
+            new PermissionTransportCommand(id: 1, name: "Myself", read: true),
+            new PermissionTransportCommand(id: 2, name: "I", read: true),
             ]
         }
         def springSecurityService = new Object()
@@ -82,10 +86,12 @@ class ModelControllerSpec extends Specification {
         model != null
         grails.converters.JSON perms = model.permissions
         String jsonPerms = perms.toString(false)
+        // id is a primitive int (unquoted in JSON, not the earlier "0"/"1"/"2" strings), and
+        // PermissionTransportCommand has since gained a username field, serialised alongside it.
         String expected = """\
-[{"disabledEdit":false,"id":"0","name":"Me","read":true,"show":true,"write":true},\
-{"disabledEdit":false,"id":"1","name":"Myself","read":true,"show":true,"write":false},\
-{"disabledEdit":false,"id":"2","name":"I","read":true,"show":true,"write":false}]"""
+[{"disabledEdit":false,"id":0,"name":"Me","read":true,"show":true,"username":null,"write":true},\
+{"disabledEdit":false,"id":1,"name":"Myself","read":true,"show":true,"username":null,"write":false},\
+{"disabledEdit":false,"id":2,"name":"I","read":true,"show":true,"username":null,"write":false}]"""
         jsonPerms == expected
     }
 
