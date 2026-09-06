@@ -31,6 +31,7 @@
 package net.biomodels.jummp.core
 
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.plugins.configuration.VcsCommand
 import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.CountDownLatch
@@ -43,14 +44,41 @@ import static org.junit.Assert.*
 class FileSystemServiceTests {
     File parentLocation
 
+    /**
+     * Stand-in for the real ConfigurationService, providing just enough of
+     * loadVcsConfiguration() for FileSystemService.findRoot() (called from
+     * afterPropertiesSet(), which Spring invokes as soon as the service bean is created -
+     * i.e. before setUp() gets a chance to configure anything on the service instance itself).
+     */
+    private static class StubConfigurationService {
+        VcsCommand vcsCommand
+        VcsCommand loadVcsConfiguration() { vcsCommand }
+    }
+
     @Before
     void setUp() {
+        // FileSystemService no longer has a grailsApplication property at all - it now reads its
+        // VCS config via configurationService.loadVcsConfiguration() (see findRoot()). None of the
+        // tests below exercise that path themselves (they drive root/currentModelContainer/
+        // maxContainerSize directly and call findCurrentModelContainer(), which never touches
+        // configurationService) - but FileSystemService implements InitializingBean, so
+        // afterPropertiesSet() (and so findRoot()/configurationService) runs unconditionally the
+        // moment `service` is first accessed below, regardless of what any test method needs.
+        // configurationService has to be registered as a real Spring bean (defineBeans, before
+        // that first access) rather than just assigned onto `service` afterwards - by then
+        // afterPropertiesSet() has already run and failed.
         final String workingDirectoryPath = "target/vcs/workingDirectory/"
-        grailsApplication.config.jummp.vcs.plugin = "git"
-        grailsApplication.config.jummp.vcs.workingDirectory = workingDirectoryPath
-        service.grailsApplication = grailsApplication
         parentLocation = new File(workingDirectoryPath)
         FileUtils.deleteDirectory(parentLocation)
+        // findRoot() logs (but tolerates) a missing root, but afterPropertiesSet()'s own
+        // getFolders(root) call NPEs on a root that doesn't exist yet (File#listFiles() returns
+        // null, not an empty array, for a non-existent directory).
+        parentLocation.mkdirs()
+        defineBeans {
+            configurationService(StubConfigurationService) {
+                vcsCommand = new VcsCommand(vcs: "git", workingDirectory: workingDirectoryPath)
+            }
+        }
         service.root = parentLocation
         def container = new File(parentLocation, "ttt")
         container.mkdirs()
