@@ -26,14 +26,40 @@ import net.biomodels.jummp.core.ModelService
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
+import net.biomodels.jummp.utils.redis.PublishClient
+import net.biomodels.jummp.utils.redis.RedisService
 import org.apache.tomcat.jdbc.pool.DataSource
 import spock.lang.Specification
 
 @TestMixin(GrailsUnitTestMixin)
 class ModelIdentifierGeneratorFactoryBeanSpec extends Specification {
 
+    // ModelIdentifierGeneratorFactoryBean, VariableDigitAppendingDecorator and
+    // DefaultModelIdentifierGenerator are all @CompileStatic, so their redisService.doRedisGet/
+    // doRedisSet calls are bound directly to RedisService's real static methods at compile time -
+    // metaClass stubbing (the pattern used elsewhere for RedisService, e.g. OmicsdiServiceSpec)
+    // can't intercept them, and this test genuinely hits whatever Redis server is reachable at
+    // localhost:6379.
+    //
+    // DefaultModelIdentifierGenerator.generate() seeds itself from
+    // KeyCollection.getLastUsedIdValueKey("submission") ("submission-id-last-used-value") if that
+    // key holds a value, falling back to getDefaultIdentifier() (which needs each decorator's
+    // initialValue - never set here, since buildDecoratorsFromSettings only sets it when no
+    // mostRecentId was supplied, and this test's DummyModelIdentifierInitializer always supplies
+    // one) only when the key is empty. So "MoDeL02" being produced depends on that key holding
+    // exactly "MoDeL01" going in - explicitly seeding it makes the test deterministic regardless
+    // of whatever this key was left holding by earlier runs, rather than assuming it always
+    // already happens to be "MoDeL01".
+    private static final String LAST_USED_VALUE_KEY = "submission-id-last-used-value"
+    private static final String SEEDED_LAST_USED_VALUE = "MoDeL01"
+
     def "test injection of model identifier generator factory bean"() {
         defineBeans {
+            // ModelIdentifierGeneratorFactoryBean.getObject() looks up redisService straight off
+            // the application context (lazily, not injected); building a variable-digit decorator
+            // for the 'numerical' part also needs publishClientService, same way.
+            redisService(RedisService)
+            publishClientService(PublishClient)
             // there's no dataSource bean defined in unit tests
             dataSource(DataSource) {
                 driverClassName = "org.h2.Driver"
@@ -59,7 +85,10 @@ class ModelIdentifierGeneratorFactoryBeanSpec extends Specification {
                 width = '2'
             }''')
 
-            sig(ModelIdentifierGeneratorFactoryBean, idSettings, "initializer", true) {
+            // ModelIdentifierGeneratorFactoryBean's constructor gained a 4th generatorType
+            // parameter; without it here, Spring tries to autowire that trailing String
+            // constructor arg itself and fails with "Ambiguous constructor argument types".
+            sig(ModelIdentifierGeneratorFactoryBean, idSettings, "initializer", true, "submission") {
                 it.scope = 'prototype'
             }
             pig(ModelIdentifierGeneratorFactoryBean) {
@@ -69,6 +98,12 @@ class ModelIdentifierGeneratorFactoryBeanSpec extends Specification {
             springConfig.addAlias('submissionIdGenerator', 'sig')
             springConfig.addAlias('publicationIdGenerator', 'pig')
         }
+        // defineBeans() only registers the bean definition - Spring may not eagerly instantiate
+        // it (and so may not yet have run RedisService.setConfiguration(), which builds the
+        // static jedisPool) until something actually looks it up. Force that now, before trying
+        // to use it, rather than relying on incidental instantiation order.
+        applicationContext.getBean("redisService")
+        RedisService.doRedisSet(LAST_USED_VALUE_KEY, SEEDED_LAST_USED_VALUE)
 
         when: 'we request id generator beans'
         def sig  = applicationContext.getBean('sig', ModelIdentifierGenerator.class)
