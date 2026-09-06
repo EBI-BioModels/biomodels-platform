@@ -52,13 +52,17 @@ class FeedbackSpec extends Specification {
     }
 
     void "test create a Flag object and validate it"() {
-        given: "a Feedback object"
-            String email = "user@test.com"
+        // star is a primitive byte, not a nullable Byte - GORM has no notion of a "missing"
+        // value for a primitive (it just defaults to 0), so omitting it here was never actually
+        // enough to fail validation. Exercising the email format constraint instead, which is
+        // genuinely enforced (Feedback.email has the `email: true` validator).
+        given: "a Feedback object with a malformed email address"
+            String email = "not-an-email"
             String comment = "Excellent website"
-            Feedback f = new Feedback(email: email, comment: comment)
+            Feedback f = new Feedback(star: 4, email: email, comment: comment)
         when: "call validate method"
             f.validate()
-        then: "hope to have issues because of missing star as a required parameter"
+        then: "hope to have issues because of the malformed email"
             f.hasErrors()
     }
 
