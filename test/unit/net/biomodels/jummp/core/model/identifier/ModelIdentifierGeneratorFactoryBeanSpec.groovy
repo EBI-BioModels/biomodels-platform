@@ -42,15 +42,22 @@ class ModelIdentifierGeneratorFactoryBeanSpec extends Specification {
     // localhost:6379.
     //
     // DefaultModelIdentifierGenerator.generate() seeds itself from
-    // KeyCollection.getLastUsedIdValueKey("submission") ("submission-id-last-used-value") if that
-    // key holds a value, falling back to getDefaultIdentifier() (which needs each decorator's
-    // initialValue - never set here, since buildDecoratorsFromSettings only sets it when no
-    // mostRecentId was supplied, and this test's DummyModelIdentifierInitializer always supplies
-    // one) only when the key is empty. So "MoDeL02" being produced depends on that key holding
-    // exactly "MoDeL01" going in - explicitly seeding it makes the test deterministic regardless
-    // of whatever this key was left holding by earlier runs, rather than assuming it always
-    // already happens to be "MoDeL01".
-    private static final String LAST_USED_VALUE_KEY = "submission-id-last-used-value"
+    // KeyCollection.getLastUsedIdValueKey(generatorType) if that key holds a value, falling back
+    // to getDefaultIdentifier() (which needs each decorator's initialValue - never set here, since
+    // buildDecoratorsFromSettings only sets it when no mostRecentId was supplied, and this test's
+    // DummyModelIdentifierInitializer always supplies one) only when the key is empty. So
+    // "MoDeL02" being produced depends on that key holding exactly "MoDeL01" going in.
+    //
+    // generatorType MUST NOT be "submission" (or any other real generator type this app uses) -
+    // an earlier version of this fix did exactly that and, since doRedisSet here is a real write
+    // against whatever Redis this JVM is configured for, clobbered the live
+    // submission-id-last-used-value key with this test's own short "MoDeLnn" value, which then
+    // broke the *real* submissionIdGenerator bean on the next full app/integration bootstrap
+    // (StringIndexOutOfBoundsException, extracting a partition from a value far shorter than
+    // production identifiers). Using a generatorType unique to this test keeps its Redis writes
+    // fully isolated from anything the app itself, or any other test, ever reads.
+    private static final String TEST_GENERATOR_TYPE = "jbm350ModelIdentifierGeneratorFactoryBeanSpec"
+    private static final String LAST_USED_VALUE_KEY = "${TEST_GENERATOR_TYPE}-id-last-used-value"
     private static final String SEEDED_LAST_USED_VALUE = "MoDeL01"
 
     def "test injection of model identifier generator factory bean"() {
@@ -88,7 +95,7 @@ class ModelIdentifierGeneratorFactoryBeanSpec extends Specification {
             // ModelIdentifierGeneratorFactoryBean's constructor gained a 4th generatorType
             // parameter; without it here, Spring tries to autowire that trailing String
             // constructor arg itself and fails with "Ambiguous constructor argument types".
-            sig(ModelIdentifierGeneratorFactoryBean, idSettings, "initializer", true, "submission") {
+            sig(ModelIdentifierGeneratorFactoryBean, idSettings, "initializer", true, TEST_GENERATOR_TYPE) {
                 it.scope = 'prototype'
             }
             pig(ModelIdentifierGeneratorFactoryBean) {
