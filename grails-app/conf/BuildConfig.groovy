@@ -72,8 +72,18 @@ grails.project.dependency.resolution = {
     repositories {
         inherits true //inherit repo definitions from plugins
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
-            println "INFO\tArtifactory URL: " + System.getenv("JUMMP_ARTIFACTORY_URL")
-            mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
+            String artifactoryUrl = System.getenv("JUMMP_ARTIFACTORY_URL")
+            println "INFO\tArtifactory URL: " + artifactoryUrl
+            String ghUser = System.getenv("GITHUB_USERNAME")
+            String ghToken = System.getenv("GITHUB_READ_ACCESS_TOKEN")
+            if (ghUser && ghToken) {
+                // GitHub Packages rejects anonymous reads (401); attach the token from the environment
+                mavenRepo(artifactoryUrl) {
+                    auth username: ghUser, password: ghToken
+                }
+            } else {
+                mavenRepo artifactoryUrl
+            }
         }
         grailsPlugins()
         grailsHome()
@@ -104,7 +114,7 @@ grails.project.dependency.resolution = {
         compile "com.fasterxml.jackson.core:jackson-databind:2.9.0"
         compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.0"
 
-        compile "net.biomodels.jummp:AnnotationStore:${jummpDependencyVersions['annotationStore.version']}"
+        compile "net.biomodels.jummp:annotationstore:${jummpDependencyVersions['annotationStore.version']}"
         compile "org.apache.solr:solr-solrj:5.4.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"

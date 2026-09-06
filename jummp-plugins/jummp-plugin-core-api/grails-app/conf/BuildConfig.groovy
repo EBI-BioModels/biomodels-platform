@@ -79,7 +79,7 @@ grails.project.dependency.resolution = {
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4.5-b1")
-        compile("net.biomodels.jummp:AnnotationStore:${jummpDependencyVersions['annotationStore.version']}") {
+        compile("net.biomodels.jummp:annotationstore:${jummpDependencyVersions['annotationStore.version']}") {
             excludes 'slf4j-log4j12'
         }
 //        compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
