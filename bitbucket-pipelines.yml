@@ -1,0 +1,9 @@
+clone:
+  depth: full
+
+pipelines:
+  default:
+    - step:
+        name: Mirror to GitHub
+        script:
+          - git push --mirror git@github.com:EBI-BioModels/biomodels-platform.git
