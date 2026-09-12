@@ -6,4 +6,9 @@ pipelines:
     - step:
         name: Mirror to GitHub
         script:
-          - git push --mirror git@github.com:EBI-BioModels/biomodels-platform.git
+          # The pipeline's own clone only checks out the triggering branch as a
+          # real local ref; every other branch lands as refs/remotes/origin/*.
+          # Re-fetch everything into proper refs/heads and refs/tags first, so
+          # we don't end up pushing (and mirror-deleting) origin/-prefixed refs.
+          - git fetch origin --prune '+refs/heads/*:refs/heads/*' '+refs/tags/*:refs/tags/*'
+          - git push git@github.com:EBI-BioModels/biomodels-platform.git --prune --force 'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
