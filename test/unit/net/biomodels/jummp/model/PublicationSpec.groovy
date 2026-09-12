@@ -79,31 +79,29 @@ class PublicationSpec extends ConstraintUnitSpec {
         'nullable'          | 'link'        | null
     }
 
-    @Unroll("test Publication link and linkProvider have no unique constraint at the domain level")
-    def "test Publication link and linkProvider have no unique constraint at the domain level"() {
-        // Publication.link carries no `unique:` constraint in the current AnnotationStore domain
-        // class (link(nullable: true), nothing else) - this test used to assert the opposite,
-        // expecting pub2.validate() to fail on a duplicate link+linkProvider. That's apparently
-        // been the case since domain classes were extracted into the separate AnnotationStore
-        // project (2015, commit 3e92bbf70) - see JBM-743 for the follow-up on whether that
-        // constraint should be restored there. Deduplication in this app is instead handled
-        // procedurally, in PublicationService.findByPublicationTransportCommand(), which looks up
-        // an existing Publication by link+linkType before creating a new one.
+    @Unroll("test Publication unique constraint set for link and link provider")
+    def "test Publication unique constraint set for link and link provider"() {
+        // AnnotationStore's Publication carries link(nullable: true, unique: 'linkProvider'),
+        // restored in 0.3.7 under JBM-743 - the domain model now enforces uniqueness of the
+        // link+linkProvider pair, matching the DB index unique_link on
+        // publication(link_provider_id, link). Deduplication in the normal submission flow is
+        // still short-circuited earlier, in PublicationService.findByPublicationTransportCommand().
         given: "instantiate two mocked publications sharing the same link and link provider"
         PublicationLinkProvider provider = new PublicationLinkProvider(linkType: PublicationLinkProvider.LinkType.PUBMED, pattern: "^\\d+\$")
         mockForConstraintsTests(Publication)
         Publication pub1 = new Publication(title: "Title 1", linkProvider: provider, link: '123456789')
 
-        when: "validate and save these publications"
+        when: "validate and save the first publication, then a second sharing the same link+provider"
         assertTrue pub1.validate()
         pub1.save(flush: true)
         1 == Publication.count()
         Publication pub2 = new Publication(title: "Title 2", linkProvider: provider, link: '123456789')
         mockForConstraintsTests(Publication, [pub2, pub1])
 
-        then: "both validate successfully - the domain model does not itself enforce uniqueness"
-        pub1.validate()
-        pub2.validate()
-        !pub2.hasErrors()
+        then: "the second publication fails validation on the unique constraint"
+        !pub2.validate()
+        pub2.hasErrors()
+        "unique" == pub2.errors['link'] // mockForConstraintsTests gives the name of failed constraint
+        1 == Publication.count()
     }
 }

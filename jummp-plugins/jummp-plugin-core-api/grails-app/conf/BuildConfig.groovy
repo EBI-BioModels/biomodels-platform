@@ -44,6 +44,16 @@ grails.project.fork = [
 ]
 
 grails.project.dependency.resolver = "maven"
+
+// Shared dependency versions - see jummpDependencyVersions.properties at the jummp-biomodels
+// project root (this plugin is built inline, so that file is on the path).
+def jummpDependencyVersions = new Properties()
+File jummpVersionsFile = new File("jummpDependencyVersions.properties")
+if (!jummpVersionsFile.exists()) {
+    throw new RuntimeException("Cannot find ${jummpVersionsFile.absolutePath} - run grails from the jummp-biomodels project root")
+}
+jummpVersionsFile.withInputStream { jummpDependencyVersions.load(it) }
+
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies
     inherits("global") {
@@ -69,7 +79,7 @@ grails.project.dependency.resolution = {
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4.5-b1")
-        compile("net.biomodels.jummp:AnnotationStore:0.3.6") {
+        compile("net.biomodels.jummp:annotationstore:${jummpDependencyVersions['annotationStore.version']}") {
             excludes 'slf4j-log4j12'
         }
 //        compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {

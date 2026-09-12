@@ -36,6 +36,16 @@ grails.server.host="0.0.0.0"
 grails.server.port.http = 8080
 grails.project.dependency.resolver = "maven"
 
+// Shared dependency versions, declared once in jummpDependencyVersions.properties at the project
+// root and also read by the jummp-plugin-configuration / jummp-plugin-core-api plugin BuildConfigs,
+// so a coordinated bump (e.g. AnnotationStore) is a single edit instead of three.
+def jummpDependencyVersions = new Properties()
+File jummpVersionsFile = new File("jummpDependencyVersions.properties")
+if (!jummpVersionsFile.exists()) {
+    throw new RuntimeException("Cannot find ${jummpVersionsFile.absolutePath} - run grails from the jummp-biomodels project root")
+}
+jummpVersionsFile.withInputStream { jummpDependencyVersions.load(it) }
+
 customJvmArgs = ["-server", "-noverify", "-XX:+UseConcMarkSweepGC", "-XX:+UseParNewGC" ]
 grails.project.fork = [
     // configure settings for the test-app JVM, uses the daemon by default
@@ -62,8 +72,18 @@ grails.project.dependency.resolution = {
     repositories {
         inherits true //inherit repo definitions from plugins
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
-            println "INFO\tArtifactory URL: " + System.getenv("JUMMP_ARTIFACTORY_URL")
-            mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
+            String artifactoryUrl = System.getenv("JUMMP_ARTIFACTORY_URL")
+            println "INFO\tArtifactory URL: " + artifactoryUrl
+            String ghUser = System.getenv("GITHUB_USERNAME")
+            String ghToken = System.getenv("GITHUB_READ_ACCESS_TOKEN")
+            if (ghUser && ghToken) {
+                // GitHub Packages rejects anonymous reads (401); attach the token from the environment
+                mavenRepo(artifactoryUrl) {
+                    auth username: ghUser, password: ghToken
+                }
+            } else {
+                mavenRepo artifactoryUrl
+            }
         }
         grailsPlugins()
         grailsHome()
@@ -94,8 +114,7 @@ grails.project.dependency.resolution = {
         compile "com.fasterxml.jackson.core:jackson-databind:2.9.0"
         compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.0"
 
-        // remember to update this setting in jummp-plugin-configuration, jummp-plugin-core-api
-        compile "net.biomodels.jummp:AnnotationStore:0.3.6"
+        compile "net.biomodels.jummp:annotationstore:${jummpDependencyVersions['annotationStore.version']}"
         compile "org.apache.solr:solr-solrj:5.4.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
