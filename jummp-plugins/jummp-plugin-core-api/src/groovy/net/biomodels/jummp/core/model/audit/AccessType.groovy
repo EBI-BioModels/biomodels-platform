@@ -51,6 +51,8 @@ enum AccessType {
    	   	   case "publish": return PUBLISH
    	   	   case "unpublish": return UNPUBLISH
    	   	   case "delete": return ARCHIVE
+   	   	   case "deleterevision": return ARCHIVE
+   	   	   case "toggleminorrevision": return UPDATE
    	   	   case "download": return DOWNLOAD
    	   	   case "shareupdate": return SHARE
    	   	   case "files": return FILES

@@ -785,11 +785,21 @@ session: ${TSM.getResource(Holders.applicationContext.sessionFactory)
         } catch (Exception ignore) {
 
         }
+        AccessType type = AccessType.fromAction(accessType)
+        if (!type) {
+            // AccessType.fromAction only recognises a fixed whitelist of controller actions;
+            // ModelAudit.type is not nullable, so an unmapped action (typically a new
+            // ModelController action nobody added to that whitelist, or to AUDIT_EXCEPTIONS)
+            // would otherwise fail this save silently on every single request. Fail safe
+            // instead of failing every audit write for this action from now on.
+            LOGGER.warn("No AccessType mapping for action '$accessType' - defaulting to UPDATE for auditing")
+            type = AccessType.UPDATE
+        }
         ModelATC audit = new ModelATC(
             model: model,
             username: user,
             format: format,
-            type: AccessType.fromAction(accessType),
+            type: type,
             changesMade: changesMade,
             success: success)
         return createAuditItem(audit)
