@@ -939,6 +939,19 @@ Please contact the developers team for support!"""])
             RTC rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
             String modelId = rev.modelIdentifier()
             boolean deleted = modelDelegateService.deleteRevision(rev)
+            if (deleted) {
+                // notify the submitter/curators/admin the same way delete() does for a whole
+                // model - see NotificationRoute's seda:model.revisionDeleted -> revisionDeleted()
+                def currentUser = springSecurityService.currentUser
+                if (currentUser) {
+                    def notification = [
+                        model   : rev.model,
+                        revision: rev,
+                        user    : currentUser,
+                        perms   : modelDelegateService.getPermissionsMap(modelId)]
+                    sendMessage("seda:model.revisionDeleted", notification)
+                }
+            }
             redirect(action: "showWithMessage", id: modelId,
                 params: [flashMessage: deleted ?
                     "Revision ${rev.revisionNumber} has been deleted." :
