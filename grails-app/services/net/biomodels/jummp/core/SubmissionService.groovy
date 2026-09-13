@@ -1205,9 +1205,13 @@ an annotation to SBML document.""")
             workingMemory.put("previousContributorRole", previousContributorRole)
             workingMemory.put("files", files)
 
-            // protect the first version: only allow to amend from the second version
-            List revisions = Model.get(latest.model.id).revisions as List
-            boolean amendable = revisions.size() >= 2
+            // protect the first version: only allow amending the revision actually being
+            // amended - the current latest, non-deleted one - when it isn't the model's
+            // first. Counting Model.revisions (all revisions ever created, deleted or not)
+            // was wrong: after deleting revision 2, a model with revisions [1, 2(deleted)]
+            // would wrongly count as amendable even though revision 1 - the original
+            // submission - is the only one left and must stay unmodifiable.
+            boolean amendable = latest.revisionNumber > 1
             workingMemory.put("amendable", amendable)
 
             // is it metadata submission? this property should be updated here
