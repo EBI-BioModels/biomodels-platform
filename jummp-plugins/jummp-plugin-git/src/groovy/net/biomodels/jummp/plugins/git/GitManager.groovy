@@ -379,19 +379,25 @@ class GitManager implements VcsManager {
     }
 
     void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
-        Repository repository = GitSupport.buildRepository(modelDirectory)
-        Git git = new Git(repository)
-        git.init().setDirectory(modelDirectory).call()
+        ensureRepInited(modelDirectory)
+        lockModelRepository(modelDirectory)
         try {
-            ResetCommand resetCmd = git.reset()
-            resetCmd.setRef(commitId)
-            resetCmd.setMode(ResetCommand.ResetType.HARD)
-            resetCmd.call()
-        } catch (GitAPIException | CheckoutConflictException ex) {
-            String errMsg = "Exception thrown during git reset $commitId in ${modelDirectory.name}"
-            throw new VcsException(errMsg, ex)
+            Repository repository = GitSupport.buildRepository(modelDirectory)
+            Git git = new Git(repository)
+            git.init().setDirectory(modelDirectory).call()
+            try {
+                ResetCommand resetCmd = git.reset()
+                resetCmd.setRef(commitId)
+                resetCmd.setMode(ResetCommand.ResetType.HARD)
+                resetCmd.call()
+            } catch (GitAPIException | CheckoutConflictException ex) {
+                String errMsg = "Exception thrown during git reset $commitId in ${modelDirectory.name}"
+                throw new VcsException(errMsg, ex)
+            } finally {
+                repository.close()
+            }
         } finally {
-            repository.close()
+            unlockModelRepository(modelDirectory)
         }
     }
 
