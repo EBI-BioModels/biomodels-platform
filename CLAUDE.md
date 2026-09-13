@@ -12,7 +12,7 @@ BioModels is the world's largest repository of mathematical models of biological
 
 ## Institutional Context
 
-BioModels was developed and hosted at EMBL-EBI (European Bioinformatics Institute) for ~20 years with European Commission funding. In 2025 it migrated to the **Laboratory for Systems Medicine (LSM)**, Department of Medicine, Division of Pulmonary – Systems Medicine, University of Florida.
+BioModels was developed and hosted at EMBL-EBI (European Bioinformatics Institute) for ~20 years with European Commission funding. In 2025, it migrated to the **Laboratory for Systems Medicine (LSM)**, Department of Medicine, Division of Pulmonary – Systems Medicine, University of Florida.
 
 - LSM BioModels page: https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/
 - Contact: DOM-LabforSysMedicin@ad.ufl.edu
@@ -22,12 +22,12 @@ BioModels was developed and hosted at EMBL-EBI (European Bioinformatics Institut
 
 A mandatory security rollout went live **04 May 2026**, announced to all users by email. Features added:
 
-| Feature | Detail |
-|---|---|
+| Feature                         | Detail                                                           |
+|---------------------------------|------------------------------------------------------------------|
 | Two-Factor Authentication (2FA) | Email-based OTP at login; optional 30-day device trust (JBM-689) |
-| Smart Account Lockout | 1-hour lock after 3 consecutive failed login attempts (JBM-686) |
-| Compromised Password Monitoring | Cross-checks passwords against known breach databases |
-| Updated Password Standards | Stricter complexity and history rules |
+| Smart Account Lockout           | 1-hour lock after 3 consecutive failed login attempts (JBM-686)  |
+| Compromised Password Monitoring | Cross-checks passwords against known breach databases            |
+| Updated Password Standards      | Stricter complexity and history rules                            |
 
 Email templates for this campaign are in `logs/context/` (`email_template.txt`, `email_template.html`). The HTML template uses UF/LSM brand colours: orange `#ED6B21` (accent) and deep navy `#072C55` (header/headings). Use these colours for any future user-facing HTML emails.
 
@@ -51,7 +51,7 @@ Rules:
 - Always prefix with `[BioModels]` — helps users filter emails and identifies the sender at a glance
 - Include the model ID in the subject when the email is about a specific model
 - Drop trailing "on BioModels" — the prefix already identifies the product
-- Keep subjects concise; put detail in the email body
+- Keep subjects concise; put details in the email body
 
 ### HTML template
 Use the standard two-panel HTML layout (orange accent bar + navy header + white body + grey footer). Sender address is `noreply@biomodels.org`. Contact address is `contact@biomodels.org`.
@@ -77,7 +77,7 @@ Use the standard two-panel HTML layout (orange accent bar + navy header + white 
 # Clean build artifacts
 ./grailsw clean
 
-# Run tests for a specific plugin (each plugin has its own grailsw)
+# Run tests for a specific plugin (each plugin has its own `grailsw`)
 cd jummp-plugins/jummp-plugin-<name> && ./grailsw test-app <FullyQualifiedTestClassName>
 ```
 
@@ -92,29 +92,32 @@ Dependencies are resolved via Maven (configured in `grails-app/conf/BuildConfig.
 The application is split into a core Grails app (`grails-app/`) and 23+ plugins under `jummp-plugins/`. Each plugin is a self-contained Grails plugin with its own controllers, services, domain classes, and tests.
 
 Key plugins:
-- `jummp-plugin-core-api` — shared interfaces and DTOs used across plugins
-- `jummp-plugin-security` — Spring Security configuration and 2FA support
-- `jummp-plugin-git` — Git-backed versioned file storage for models
+- `jummp-plugin-core-api` — shared interfaces, DTOs, and domain adapters used across plugins
+- `jummp-plugin-git` — Git-backed versioned file storage for models (via JGit)
 - `jummp-plugin-sbml` — SBML format parsing and validation (via JSBML)
 - `jummp-plugin-combine-archive` — COMBINE Archive format support
-- `jummp-plugin-solr` — Solr search integration
 - `jummp-plugin-configuration` — externalised application configuration
-- `jummp-plugin-jms` — JMS messaging (background job coordination)
+- `jummp-plugin-jms` — JMS messaging (background job coordination; disabled by default, only active when `JUMMP_EXPORT=jms`)
 - `jummp-plugin-annotation-*` — biological entity annotation
+- `jummp-plugin-web-application` — main MVC web layer; also hosts `Team`/contributor management (the former `jummp-plugin-security` plugin was deleted in 2019 and merged in here)
+
+Note: there is no `jummp-plugin-security` or `jummp-plugin-solr` plugin. Spring Security/2FA configuration lives directly in `grails-app/conf/Config.groovy` plus `grails-app/controllers/.../security/AuthController.groovy` and `grails-app/conf/VerifyOtpFilters.groovy`. Solr integration lives in `src/groovy/net/biomodels/jummp/search/` (`SolrBasedSearch`, `SolrServerHolder`), not a separate plugin. See `documentation/architecture-analysis.md` for the full plugin inventory and dependency graph (the checked-in `documentation/plugin-dependency.dot` is stale and still shows the deleted security plugin).
 
 ### Request flow
 
 URL routing is defined in `grails-app/conf/UrlMappings.groovy`. Incoming requests go to controllers in `grails-app/controllers/net/biomodels/jummp/`, which delegate to services in `grails-app/services/net/biomodels/jummp/core/`. Key services:
 
 - `ModelService` — model lifecycle (create, update, publish, delete)
-- `SubmissionService` — multi-step model submission workflow
+- `SubmissionService` — multistep model submission workflow
 - `SearchService` — Solr-backed search and faceting
 - `VcsService` — version control operations (delegates to git plugin)
 - `FileSystemService` — file storage and retrieval
 
 ### Domain model
 
-GORM domain classes in `grails-app/domain/net/biomodels/jummp/` represent: `Model`, `Revision`, `Publication`, `Person`, `Team`, `RepositoryFile`.
+`grails-app/domain/net/biomodels/jummp/` only contains a handful of local domain classes: `Feedback`, `model.ModelAudit`, `model.ModelHistoryItem`, `security.TwoFactorAuth`. `Team`/`UserTeam` live under `jummp-plugin-web-application`.
+
+The central entities — `Model`, `Revision`, `Publication`, `PublicationLinkProvider`, `RepositoryFile`, `ModelFormat`, `Person`, `User`, `Role`, `UserRole` — are **not present as source in this repository**. They were moved out to a separate Maven project in 2015 (commit `3e92bbf70`) and, for the security-related classes, formerly lived in a `jummp-plugin-security` plugin that was deleted in 2019 (commit `2e9bf35e5`) once its remaining wiring was merged into `jummp-plugin-web-application`. That separate project is **`AnnotationStore`**, declared as `compile "net.biomodels.jummp:AnnotationStore:0.3.6"` in `grails-app/conf/BuildConfig.groovy` — checked out locally as a sibling repo at `../annotationstore` (relative to this repo). Its domain classes live under `src/main/groovy/net/biomodels/jummp/{model,plugins.security}/`. To read or edit these classes' fields/constraints, open that sibling checkout directly; schema changes require bumping the `AnnotationStore` version in `BuildConfig.groovy` (and the corresponding version references in `jummp-plugin-configuration`/`jummp-plugin-core-api`) and cutting a new release there. Code in this repo consumes them via wrapper/adapter classes in `jummp-plugin-core-api/src/groovy/.../core/adapters/` (`ModelAdapter`, `RevisionAdapter`, `PublicationAdapter`, `PersonAdapter`, etc.), which convert them to `*TransportCommand` DTOs. See `documentation/architecture-analysis.md` §3 for full field-level detail on each class.
 
 ### Revision deletion (JBM-349)
 
@@ -172,4 +175,4 @@ Tests use the Spock framework (`.groovy` files in `test/unit/` and `test/integra
 
 ### Commit style
 
-Commits follow the pattern `JBM-### type: message` where type is `fix`, `feat`, `chore`, or `docs`, e.g. `JBM-686 fix: skip attempt counting for non-existing users`.
+Commits follow the pattern `JBM-### type: message` where the type is `fix`, `feat`, `chore`, or `docs`, e.g. `JBM-686 fix: skip attempt counting for non-existing users`.
