@@ -116,6 +116,38 @@ URL routing is defined in `grails-app/conf/UrlMappings.groovy`. Incoming request
 
 GORM domain classes in `grails-app/domain/net/biomodels/jummp/` represent: `Model`, `Revision`, `Publication`, `Person`, `Team`, `RepositoryFile`.
 
+### Revision deletion (JBM-349)
+
+Deleting a `Revision` (`ModelService.deleteRevision`) is a soft delete at the DB layer but a
+**hard, one-way delete at the VCS layer** — this asymmetry is intentional, not a bug:
+
+- **DB**: just flips `revision.deleted = true` and saves; the row stays in `revision` forever
+  (audit trail, `revisionNumber` gap preserved, still queryable). There is no
+  `undeleteRevision` anywhere (unlike `Model`, which has `undeleteModel`) — nothing ever
+  flips the flag back.
+- **VCS**: the underlying git commit is actually excised from the branch's reachable
+  history via `VcsService`/`GitManager` (`jummp-plugin-git`), not just soft-flagged:
+  - Mid-history revision: `GitManager.deleteCommit` cherry-pick-replays every later commit
+    onto the deleted one's parent and force-moves the branch; the original commit becomes
+    unreachable. If a replayed commit's own diff is empty (e.g. a metadata-only
+    resubmission), it forces a real (empty) commit anyway — two revisions can never share
+    one commit sha, since `Revision.vcsId` is `unique:'model'`.
+  - Latest revision: `VcsService.resetModelRepository` hard-resets the branch pointer to
+    the previous revision's commit instead — no replay needed since nothing comes after it.
+  - An excised commit isn't instantly gone (it lingers as a loose object until git's next
+    GC prunes it), but there is no porcelain path back to it, and later revisions' `vcsId`s
+    get remapped away from it — so it is never referenced again.
+
+The model's **first revision (`revisionNumber == 1`) can never be deleted or flagged minor**,
+enforced in `ModelService.deleteRevision`/`setMinorRevision` themselves (not just hidden in
+the UI) — it must stay retained and unmodifiable as the model's traceable starting point.
+
+The update-model wizard's "amend" checkbox (`SubmissionService`, `isAmend`) has the same
+first-revision protection: it must check the revision actually being amended (the current,
+non-deleted latest one)'s own `revisionNumber`, never `Model.revisions.size()` — that raw
+collection counts deleted revisions too, which previously let the checkbox appear for a
+model reduced to just its first revision by an earlier deletion.
+
 ### GSP Layouts
 
 Two site-wide layouts live in `grails-app/views/layouts/biomodels/`:
