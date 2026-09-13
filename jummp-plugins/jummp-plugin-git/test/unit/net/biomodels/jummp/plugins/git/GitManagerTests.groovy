@@ -186,6 +186,82 @@ class GitManagerTests extends GrailsUnitTestCase {
     }
 
     @Test
+    void testDeleteCommit() {
+        println ">> Running testDeleteCommit()"
+        gitManager.init(clone)
+        String authorName = "Admin"
+        String authorEmail = "admin@example.com"
+
+        // commit 1: fileA.txt
+        File fileA = new File(clone, "fileA.txt")
+        fileA.text = "fileA v1"
+        FileUtils.touch(fileA)
+        GitSupport.importFile(git, fileA.name)
+        GitSupport.makeCommit(git, authorName, authorEmail, "Add fileA")
+
+        // commit 2: fileB.txt - this is the minor revision we are going to delete
+        File fileB = new File(clone, "fileB.txt")
+        fileB.text = "fileB v1"
+        FileUtils.touch(fileB)
+        GitSupport.importFile(git, fileB.name)
+        String secondCommitHash = GitSupport.makeCommit(git, authorName, authorEmail,
+            "Add fileB (minor revision)").name
+
+        // commit 3: fileC.txt
+        File fileC = new File(clone, "fileC.txt")
+        fileC.text = "fileC v1"
+        FileUtils.touch(fileC)
+        GitSupport.importFile(git, fileC.name)
+        String thirdCommitHash = GitSupport.makeCommit(git, authorName, authorEmail, "Add fileC").name
+
+        // commit 4: fileD.txt
+        File fileD = new File(clone, "fileD.txt")
+        fileD.text = "fileD v1"
+        FileUtils.touch(fileD)
+        GitSupport.importFile(git, fileD.name)
+        String fourthCommitHash = GitSupport.makeCommit(git, authorName, authorEmail, "Add fileD").name
+
+        Map<String, String> shaMapping = gitManager.deleteCommit(clone, secondCommitHash)
+
+        // the two commits after the deleted one should have been replayed under new ids
+        assertEquals(2, shaMapping.size())
+        assertTrue(shaMapping.containsKey(thirdCommitHash))
+        assertTrue(shaMapping.containsKey(fourthCommitHash))
+        assertNotEquals(thirdCommitHash, shaMapping[thirdCommitHash])
+        assertNotEquals(fourthCommitHash, shaMapping[fourthCommitHash])
+
+        RevWalk revWalk = new RevWalk(repository)
+        ObjectId head = repository.resolve(Constants.HEAD)
+        RevCommit newHead = revWalk.parseCommit(head)
+        assertEquals(shaMapping[fourthCommitHash], newHead.name)
+
+        RevCommit newThird = revWalk.parseCommit(newHead.parents[0])
+        assertEquals(shaMapping[thirdCommitHash], newThird.name)
+
+        // the replayed third commit's parent is now the first commit: fileB never existed
+        RevCommit newFirst = revWalk.parseCommit(newThird.parents[0])
+        assertEquals(0, newFirst.parentCount)
+
+        // resulting history has fileA, fileC and fileD, but not fileB
+        List<String> files = GitSupport.lsFiles(git, newHead)
+        assertEquals(3, files.size())
+        assertTrue(files.contains("fileA.txt"))
+        assertTrue(files.contains("fileC.txt"))
+        assertTrue(files.contains("fileD.txt"))
+        assertFalse(files.contains("fileB.txt"))
+
+        // the deleted commit no longer exists in history, so deleting it again must fail
+        shouldFail VcsException, {
+            gitManager.deleteCommit(clone, secondCommitHash)
+        }
+
+        // there is nothing to reparent the first commit onto
+        shouldFail VcsException, {
+            gitManager.deleteCommit(clone, newFirst.name)
+        }
+    }
+
+    @Test
     void testRetrieveModel() {
         println ">> Running testRetrieveModel()"
         shouldFail VcsException, {
