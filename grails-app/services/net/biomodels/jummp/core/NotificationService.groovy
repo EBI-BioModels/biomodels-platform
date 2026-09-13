@@ -349,6 +349,26 @@ caused by ${ntp?.errors?.toString()}""")
     }
 
     /**
+     * Sending a notification to the submitter, curators, and administrators when a revision
+     * is deleted from a model's history (either a mid-history minor revision, or the latest
+     * revision) - see ModelController.deleteRevision.
+     * @param body
+     */
+    void revisionDeleted(def body) {
+        MTC model = body.model as MTC
+        RTC revision = body.revision as RTC
+        User user = body.user as User
+        String notifyTitle = "notification.revision.deleted.title"
+        String notifyBody = "notification.revision.deleted.body"
+        String modelLink = "${serverURL}/${model.submissionId}"
+        String revisionNumber = revision.revisionNumber.toString()
+        Set<User> recipients = getNotificationRecipients(body.perms)
+        useGenericNotificationStructure(notifyTitle, [model.name, revisionNumber] as String[],
+            notifyBody, [model.name, revisionNumber, user.username, modelLink, "${serverURL}/user", serverURL] as String[],
+            NT.REVISION_DELETED, user, recipients, model)
+    }
+
+    /**
      * Sending a notification to the subscribers when the model is updated.
      * @param body
      */
