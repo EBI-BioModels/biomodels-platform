@@ -2243,6 +2243,9 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         revision.deleted = true
         revision.save(flush: true)
         omicsdiService.markExportDirty()
+        String actor = springSecurityService.authentication?.name ?: "unknown"
+        log.info("""Revision ${revision.revisionNumber} of model ${revision.model.submissionId} \
+(id ${revision.model.id}) deleted by $actor""")
         return true
     }
 
