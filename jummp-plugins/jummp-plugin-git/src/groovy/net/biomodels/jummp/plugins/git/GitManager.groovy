@@ -456,7 +456,25 @@ ${modelDirectory.name} via deleteCommit; delete the Model instead""")
                     throw new VcsException("""Cherry-pick of ${original.name} failed with \
 status ${result.status} while deleting $commitId in ${modelDirectory.name}""")
                 }
-                shaMapping.put(original.name, result.newHead.name)
+                if (result.cherryPickedRefs.empty) {
+                    // The replayed commit's diff against its own original parent was empty
+                    // (e.g. it reverted a change introduced only by the commit we just excised),
+                    // so its net effect on the new tip is nothing - JGit skips creating a commit
+                    // for it and result.newHead is just the tip, unchanged. Revision.vcsId is
+                    // unique per model though, so this revision can never be remapped onto the
+                    // same sha as the one before it: force a real (empty) commit of our own so
+                    // it keeps a distinct sha to be remapped to.
+                    RevCommit replacement = git.commit()
+                        .setMessage(original.fullMessage)
+                        .setAuthor(original.authorIdent)
+                        .setCommitter(original.committerIdent)
+                        .setAllowEmpty(true)
+                        .setNoVerify(true)
+                        .call()
+                    shaMapping.put(original.name, replacement.name)
+                } else {
+                    shaMapping.put(original.name, result.newHead.name)
+                }
             }
 
             git.branchCreate().setName(originalBranch).setStartPoint(tempBranch).setForce(true).call()
