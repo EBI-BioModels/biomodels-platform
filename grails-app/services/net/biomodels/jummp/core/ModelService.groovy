@@ -2225,6 +2225,13 @@ for the model ${model.submissionId} due to ${ex.message}.""")
                         log.error("""Could not remap vcsId of revision ${laterRevision.id} \
 (model ${revision.model.id}) to $newVcsId: ${laterRevision.errors}""")
                     }
+                    // The replay may have added, removed, or changed files relative to what was
+                    // on disk before the deletion (e.g. a file only ever present because of the
+                    // commit we just excised), but RepositoryFileService's on-disk cache is keyed
+                    // by (modelId, revisionNumber) alone - it has no idea the underlying commit
+                    // just changed and would otherwise keep serving the pre-deletion file list
+                    // for this revisionNumber forever.
+                    repositoryFileService.invalidateModelRevisionCache(laterRevision)
                 }
             }
         } else {

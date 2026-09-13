@@ -247,6 +247,42 @@ $modelId, revision $revNum: ${e.message}""")
         return result
     }
 
+    /**
+     * Deletes the on-disk cache directory for @p revision, if one exists.
+     *
+     * get()/retrieveFiles() key the cache purely by (model submissionId, revisionNumber) and
+     * never compare it against the revision's current vcsId, so once populated it is never
+     * refreshed on its own - fine as long as a given revisionNumber's underlying commit never
+     * changes. ModelService.deleteRevision's mid-history path breaks that assumption: it
+     * remaps a later revision's vcsId onto a newly cherry-pick-replayed commit, which can add,
+     * remove, or change files relative to what was cached before the deletion (e.g. a file only
+     * ever present because of the now-excised commit). updateModelRevisionCache() alone can't
+     * fix this either, since it only overwrites/adds files from the new tree and never removes
+     * ones the old cached directory has that the new tree doesn't. Call this right after such a
+     * remap so the next retrieveFiles() call falls through to VCS and repopulates the cache
+     * directory from scratch instead of silently keeping stale content.
+     *
+     * @param revision the Revision whose cache directory should be invalidated
+     * @return true if there was a cache directory and it was removed, false if there was
+     *         nothing to remove or removal failed
+     */
+    boolean invalidateModelRevisionCache(final Revision revision) {
+        String modelId = revision.model.submissionId
+        String revNum = revision.revisionNumber.toString()
+        File modelRevDir = Paths.get(modelCacheDir, modelId, revNum).toFile()
+        if (!modelRevDir.exists()) {
+            return false
+        }
+        boolean deleted = modelRevDir.deleteDir()
+        if (!deleted) {
+            logger.error("""Could not remove the stale cache directory '${modelRevDir.absolutePath}' \
+for model ${modelId} revision ${revNum}; it may keep serving files from a commit that no longer exists.""")
+        } else {
+            logger.debug("Removed the stale cache directory '${modelRevDir.absolutePath}'")
+        }
+        return deleted
+    }
+
     List<RFTC> getRepositoryFilesForRevision(final Revision revision) {
         List<RFTC> repFiles = new LinkedList<RFTC>()
         List<File> files = retrieveFiles(revision)
