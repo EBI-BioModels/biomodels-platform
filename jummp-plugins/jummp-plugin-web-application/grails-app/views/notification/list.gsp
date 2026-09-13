@@ -61,7 +61,12 @@
                				<td>${msg.notification.dateCreated}</td>
                				<tr id='msgbody-${msg.notification.id}' style="display: none;" class="msgbody ${ (i % 2) == 0 ? 'even' : 'odd'}">
                 				<td colspan="3">
-                					${msg.notification.body}
+                					<%-- Notification.body is shared by every recipient and is persisted before
+                					     NotificationService's per-user substitution runs (that only patches an
+                					     in-memory copy for the outgoing email), so the raw body still has the
+                					     literal "USER_REALNAME" placeholder - substitute it here with the name
+                					     of the user actually viewing their own notification list. --%>
+                					${raw(msg.notification.body.replace('USER_REALNAME', msg.user.person.userRealName ?: msg.user.username))}
                 				</td>
                 			</tr>
                 		</tr>
