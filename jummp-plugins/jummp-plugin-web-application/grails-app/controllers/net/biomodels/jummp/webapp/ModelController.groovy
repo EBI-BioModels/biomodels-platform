@@ -933,6 +933,22 @@ Please contact the developers team for support!"""])
         }
     }
 
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def deleteRevision() {
+        try {
+            RTC rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+            String modelId = rev.modelIdentifier()
+            boolean deleted = modelDelegateService.deleteRevision(rev)
+            redirect(action: "showWithMessage", id: modelId,
+                params: [flashMessage: deleted ?
+                    "Revision ${rev.revisionNumber} has been deleted." :
+                    "Revision ${rev.revisionNumber} could not be deleted."])
+        } catch (Exception e) {
+            LOGGER.error e.message, e
+            forward(controller: "errors", action: "error403")
+        }
+    }
+
     // uses revision id and filename
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def getFileDetails() {

@@ -30,6 +30,13 @@
                    href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
                     <i class="icon icon-common icon-download" title="Download this version"></i>
                 </a>
+                <g:if test="${rv.minorRevision && (hasCuratorRole || hasAdminRole)}">
+                    <a class="versionDelete" title="delete minor revision ${rv.revisionNumber}"
+                       href="${g.createLink(controller: 'model', action: 'deleteRevision', id: rv.identifier())}"
+                       onclick="return confirm('Are you sure you want to permanently delete minor revision ${rv.revisionNumber}?')">
+                        <i class="icon icon-common icon-trash" title="Delete this minor revision"></i>
+                    </a>
+                </g:if>
                 <ul>
                     <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>
                     <li>Submitted by: ${rv.owner}</li>
