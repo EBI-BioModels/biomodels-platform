@@ -76,14 +76,14 @@
         "use strict";
         $(document).on("click", ".versionToggleMinor", function (e) {
             e.preventDefault();
-            var $link = $(this);
+            const $link = $(this);
             if ($link.data("busy")) {
                 return;
             }
-            var url = $link.attr("href");
-            var $icon = $link.find("i");
-            var revisionId = $link.data("revision-id");
-            var $deleteWrapper = $(".versionDeleteWrapper[data-revision-id='" + revisionId + "']");
+            const url = $link.attr("href");
+            const $icon = $link.find("i");
+            const revisionId = $link.data("revision-id");
+            const $deleteWrapper = $(".versionDeleteWrapper[data-revision-id='" + revisionId + "']");
             $link.data("busy", true);
             fetch(url, {
                 method: "POST",
@@ -93,12 +93,12 @@
                     return {status: result.status, data: data};
                 });
             }).then(function (res) {
-                var data = res.data;
+                const data = res.data;
                 if (res.status !== 200 || !data.success) {
                     toastr.error(data.message || "Could not update this revision.");
                     return;
                 }
-                var isMinor = data.minorRevision;
+                const isMinor = data.minorRevision;
                 $link.attr("data-minor", isMinor);
                 $link.attr("title", (isMinor ? "unmark" : "mark") + " version " +
                     data.revisionNumber + " as a minor revision");
