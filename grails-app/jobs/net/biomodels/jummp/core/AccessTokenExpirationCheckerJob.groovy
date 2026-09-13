@@ -43,7 +43,7 @@ ${new Date().format('yyyy-MM-dd HH:mm:ss')} QuartzJob: Started checking the acce
         try {
             restAccessTokenService.doCheckAndExpireAccessTokens()
         } catch (Exception e) {
-            println "${new Date().format('yyyy-MM-dd HH:mm:ss')} QuartzJob: Caught the bug and do nothing ${e.getMessage()}"
+            LOGGER.error("QuartzJob: Caught an exception while checking access token expiration, doing nothing.", e)
         }
     }
 }
