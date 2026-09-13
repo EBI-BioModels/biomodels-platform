@@ -145,6 +145,23 @@
 <div class="row spacing-row even-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
+            Is this a minor revision?
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="is-minor-revision-row">
+            <g:checkBox name="isMinorRevision" id="is-minor-revision" value="${false}"
+                        title="Minor revisions can later be deleted by the submitter, a curator, or an administrator without removing the rest of the model's history"/>
+            <span>&nbsp;(<strong>Note</strong>: only check this box for a small, non-scientific correction - e.g.
+                fixing a typo or a file that shouldn't have been included. A minor revision can be removed later
+                from the model's history without affecting subsequent revisions.)</span>
+        </div>
+    </div>
+</div>
+
+<div class="row spacing-row odd-row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
             Contributor Role
         </span>
     </div>
@@ -155,7 +172,7 @@
     </div>
 </div>
 
-<div class="row spacing-row odd-row">
+<div class="row spacing-row even-row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             <g:message code="submission.summary.revisionLabel"/>
@@ -229,6 +246,7 @@
                 submitterInfo: submitterInfo,
                 isUpdate: isUpdate,
                 isAmend: isAmend,
+                isMinorRevision: isMinorRevision,
                 isMetadataSubmission: isMetadataSubmission,
                 modelFile: JSON.stringify(modelFile),
                 additionalFiles: JSON.stringify(additionalFiles),
@@ -289,6 +307,10 @@
         } else {
 
         }
+    });
+
+    $('#is-minor-revision').on("click", function () {
+        isMinorRevision = $(this).is(":checked");
     });
 
     $('#chk-is-metadata-submission').on("click", function () {

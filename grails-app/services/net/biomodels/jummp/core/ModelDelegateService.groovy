@@ -653,6 +653,10 @@ session: ${TSM.getResource(Holders.applicationContext.sessionFactory)
         return modelService.deleteRevision(Revision.get(revision.id))
     }
 
+    boolean setMinorRevision(RevisionTC revision, boolean minor) {
+        return modelService.setMinorRevision(Revision.get(revision.id), minor)
+    }
+
     Collection<PermissionTransportCommand> getPermissionsMap(String modelId, boolean authenticated = true) {
         return modelService.getPermissionsMap(modelService.findByPerennialIdentifier(modelId), authenticated)
     }

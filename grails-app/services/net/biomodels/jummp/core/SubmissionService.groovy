@@ -775,6 +775,10 @@ an annotation to SBML document.""")
                 state: ModelState.UNPUBLISHED, curationState: CurationState.NON_CURATED,
                 format: formatTC, files: allFiles, minorRevision: false, validated: true)
             boolean isAmend = jsonObj["isAmend"] ?: false
+            // Only an update can be flagged minor - a brand new model has no earlier revision to
+            // be "minor" relative to. Submitters (for their own models), curators and admins can
+            // all reach this update API, so the flag is available to all three.
+            boolean isMinorRevision = working["isUpdate"] ? (jsonObj["isMinorRevision"] ?: false) : false
             if (working["isUpdate"]) {
                 String submissionId = jsonObj["submissionId"] as String
                 if (!submissionId) {
@@ -785,6 +789,7 @@ an annotation to SBML document.""")
                 Set<String> changesMade = new HashSet<>()
                 // get the latest revision
                 revisionTC = modelDelegateService.getLatestRevision(submissionId, true)
+                revisionTC.minorRevision = isMinorRevision
                 modelTC = revisionTC.model
                 String comment = jsonObj["comment"] ?: (isAmend ? revisionTC.comment : "Updated the model revision.")
                 revisionTC.comment = comment

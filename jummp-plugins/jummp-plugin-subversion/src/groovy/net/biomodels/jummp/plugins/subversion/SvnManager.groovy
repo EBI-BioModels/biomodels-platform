@@ -331,6 +331,11 @@ class SvnManager implements VcsManager {
     void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
         throw new UnsupportedOperationException("Not implemented yet")
     }
+
+    @Override
+    Map<String, String> deleteCommit(File modelDirectory, String commitId) throws VcsException {
+        throw new UnsupportedOperationException("Not implemented yet")
+    }
 /*
      * Initializes the library to work with a repository via
      * different protocols.

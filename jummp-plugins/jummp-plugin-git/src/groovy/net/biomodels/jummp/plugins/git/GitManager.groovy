@@ -379,20 +379,127 @@ class GitManager implements VcsManager {
     }
 
     void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
-        Repository repository = GitSupport.buildRepository(modelDirectory)
-        Git git = new Git(repository)
-        git.init().setDirectory(modelDirectory).call()
+        ensureRepInited(modelDirectory)
+        lockModelRepository(modelDirectory)
         try {
-            ResetCommand resetCmd = git.reset()
-            resetCmd.setRef(commitId)
-            resetCmd.setMode(ResetCommand.ResetType.HARD)
-            resetCmd.call()
-        } catch (GitAPIException | CheckoutConflictException ex) {
-            String errMsg = "Exception thrown during git reset $commitId in ${modelDirectory.name}"
-            throw new VcsException(errMsg, ex)
+            Repository repository = GitSupport.buildRepository(modelDirectory)
+            Git git = new Git(repository)
+            git.init().setDirectory(modelDirectory).call()
+            try {
+                ResetCommand resetCmd = git.reset()
+                resetCmd.setRef(commitId)
+                resetCmd.setMode(ResetCommand.ResetType.HARD)
+                resetCmd.call()
+            } catch (GitAPIException | CheckoutConflictException ex) {
+                String errMsg = "Exception thrown during git reset $commitId in ${modelDirectory.name}"
+                throw new VcsException(errMsg, ex)
+            } finally {
+                repository.close()
+            }
         } finally {
-            repository.close()
+            unlockModelRepository(modelDirectory)
         }
+    }
+
+    /**
+     * Removes a single commit from a model's history and replays every later commit
+     * on top of its parent.
+     *
+     * There is no git primitive to delete a commit in place, so this does a cherry-pick
+     * replay: it walks the log (assumed linear - this class never creates merge commits),
+     * finds @p commitId, checks out a scratch branch at its parent, cherry-picks every
+     * commit after it in original order, then force-moves the real branch to the
+     * rebuilt tip and discards the scratch branch. Every replayed commit gets a new id;
+     * the old-to-new mapping is returned so the caller can update any persisted
+     * revision id (e.g. Revision.vcsId) that pointed at the old ids.
+     *
+     * Refuses to delete the first commit of the repository, since there is no parent
+     * to reparent onto - callers should delete the whole Model in that case.
+     *
+     * @param modelDirectory The model directory
+     * @param commitId The commit to remove, identified by its SHA-1
+     * @return A Map from each replayed commit's original id to its new id, ordered
+     *         oldest first
+     */
+    @Profiled(tag = "gitManager.deleteCommit")
+    Map<String, String> deleteCommit(File modelDirectory, String commitId) throws VcsException {
+        ensureRepInited(modelDirectory)
+        lockModelRepository(modelDirectory)
+        Map<String, String> shaMapping = new LinkedHashMap<String, String>()
+        String tempBranch = "delete-${commitId}-${UUID.randomUUID()}"
+        Git git = initedRepositories.get(modelDirectory)
+        String originalBranch = git.repository.branch
+        boolean onTempBranch = false
+        try {
+            List<RevCommit> ordered = git.log().call().toList().reverse() // oldest first
+            int targetIndex = ordered.findIndexOf { it.name == commitId }
+            if (targetIndex < 0) {
+                throw new VcsException("Commit $commitId not found in ${modelDirectory.name}")
+            }
+            if (targetIndex == 0) {
+                throw new VcsException("""Cannot delete the first commit of \
+${modelDirectory.name} via deleteCommit; delete the Model instead""")
+            }
+            List<RevCommit> toReplay = ordered.subList(targetIndex + 1, ordered.size())
+            String parentSha = ordered[targetIndex - 1].name
+
+            if (!git.status().call().clean) {
+                git.stashCreate().call()
+            }
+
+            git.checkout().setCreateBranch(true).setName(tempBranch).setStartPoint(parentSha).call()
+            onTempBranch = true
+
+            toReplay.each { RevCommit original ->
+                CherryPickResult result = git.cherryPick().include(original).call()
+                if (result.status != CherryPickResult.CherryPickStatus.OK) {
+                    throw new VcsException("""Cherry-pick of ${original.name} failed with \
+status ${result.status} while deleting $commitId in ${modelDirectory.name}""")
+                }
+                if (result.cherryPickedRefs.empty) {
+                    // The replayed commit's diff against its own original parent was empty
+                    // (e.g. it reverted a change introduced only by the commit we just excised),
+                    // so its net effect on the new tip is nothing - JGit skips creating a commit
+                    // for it and result.newHead is just the tip, unchanged. Revision.vcsId is
+                    // unique per model though, so this revision can never be remapped onto the
+                    // same sha as the one before it: force a real (empty) commit of our own so
+                    // it keeps a distinct sha to be remapped to.
+                    RevCommit replacement = git.commit()
+                        .setMessage(original.fullMessage)
+                        .setAuthor(original.authorIdent)
+                        .setCommitter(original.committerIdent)
+                        .setAllowEmpty(true)
+                        .setNoVerify(true)
+                        .call()
+                    shaMapping.put(original.name, replacement.name)
+                } else {
+                    shaMapping.put(original.name, result.newHead.name)
+                }
+            }
+
+            git.branchCreate().setName(originalBranch).setStartPoint(tempBranch).setForce(true).call()
+            git.checkout().setName(originalBranch).call()
+            onTempBranch = false
+            git.branchDelete().setBranchNames(tempBranch).setForce(true).call()
+        } catch (GitAPIException gitEx) {
+            throw new VcsException(
+                "Exception thrown while deleting commit $commitId in ${modelDirectory.name}", gitEx)
+        } finally {
+            try {
+                if (onTempBranch) {
+                    // leave no half-finished cherry-pick behind; original history is untouched
+                    // since we never force-moved originalBranch in this branch of execution
+                    git.checkout().setForced(true).setName(originalBranch).call()
+                }
+                if (git.branchList().call().find { it.name == "refs/heads/$tempBranch" }) {
+                    git.branchDelete().setBranchNames(tempBranch).setForce(true).call()
+                }
+            } catch (Exception cleanupEx) {
+                LOGGER.warn("Could not clean up scratch branch $tempBranch in ${modelDirectory.name}", cleanupEx)
+            }
+            unlockModelRepository(modelDirectory)
+        }
+        return shaMapping
     }
 
     /**

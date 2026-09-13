@@ -2172,6 +2172,14 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         // check if the revision can be deleted: it must be either the latest, or a minor revision
         def nonDeleted = revision.model.revisions.findAll { !it.deleted }.sort { it.revisionNumber }
         boolean isLatest = revision.id == nonDeleted.last().id
+        if (revision.revisionNumber == 1 && nonDeleted.size() > 1) {
+            // the first revision is the original submission - it must stay retained and
+            // unmodifiable for as long as any later revision exists, so there is always a
+            // traceable starting point for the model's history. (GitManager.deleteCommit
+            // would refuse this too, but that's an implementation detail of the VCS layer,
+            // not something this method's contract should depend on to stay correct.)
+            return false
+        }
         if (!isLatest && !revision.minorRevision) {
             return false
         }
@@ -2184,11 +2192,95 @@ for the model ${model.submissionId} due to ${ex.message}.""")
             } else {
                 throw new AccessDeniedException("No permission to delete Model ${revision.model.id}")
             }
+            revision.deleted = true
+            revision.save(flush: true)
+            omicsdiService.markExportDirty()
+            return true
+        }
+        if (!isLatest) {
+            // revision.minorRevision is guaranteed true here (checked above); it sits in the
+            // middle of the history, with later revisions depending on it. Actually excise its
+            // commit from the VCS and repoint every later revision at its replayed commit -
+            // otherwise their vcsId would keep pointing at shas that no longer resolve.
+            // NOTE: the VCS rewrite below is not covered by this method's DB transaction. If a
+            // later save() in this loop fails, the commit has still been removed from git while
+            // the DB rollback leaves the old (now dangling) vcsId in place - this can only be
+            // resolved by re-running vcsService.fixVcsIds(revision.model) by hand afterwards.
+            Map<String, String> shaMapping
+            try {
+                shaMapping = vcsService.deleteCommit(revision.model, revision.vcsId)
+            } catch (VcsException vcsEx) {
+                log.error("Could not delete commit ${revision.vcsId} of model ${revision.model.id} from the VCS", vcsEx)
+                return false
+            }
+            List<Revision> laterRevisions = nonDeleted.findAll { it.revisionNumber > revision.revisionNumber }
+            laterRevisions.each { Revision laterRevision ->
+                String newVcsId = shaMapping[laterRevision.vcsId]
+                if (newVcsId) {
+                    laterRevision.vcsId = newVcsId
+                    // save() alone would fail this silently (e.g. a vcsId collision against
+                    // Revision's unique:'model' constraint) and leave the dangling old vcsId
+                    // in place with no trace in the logs - make that loud instead.
+                    if (!laterRevision.save(flush: true)) {
+                        log.error("""Could not remap vcsId of revision ${laterRevision.id} \
+(model ${revision.model.id}) to $newVcsId: ${laterRevision.errors}""")
+                    }
+                }
+            }
+        } else {
+            // deleting the newest revision: nothing comes after it to replay, so a hard
+            // reset to the previous revision's commit is enough - every remaining
+            // revision's vcsId is untouched by a reset, unlike deleteCommit's replay.
+            Revision previousRevision = nonDeleted[nonDeleted.size() - 2]
+            try {
+                vcsService.resetModelRepository(revision.model, previousRevision.vcsId)
+            } catch (VcsException vcsEx) {
+                log.error("Could not reset VCS repository for model ${revision.model.id} to ${previousRevision.vcsId}", vcsEx)
+                return false
+            }
         }
         // TODO: delete the model if the revision is the first revision of the model
         revision.deleted = true
         revision.save(flush: true)
         omicsdiService.markExportDirty()
+        String actor = springSecurityService.authentication?.name ?: "unknown"
+        log.info("""Revision ${revision.revisionNumber} of model ${revision.model.submissionId} \
+(id ${revision.model.id}) deleted by $actor""")
+        return true
+    }
+
+    /**
+     * Flags an existing revision as a minor revision (or clears that flag), in place.
+     *
+     * This is pure metadata: it does not touch the VCS, does not create a new commit or
+     * revision, and does not require going through the submission/update flow. It exists so
+     * a submitter, curator, or admin can retroactively mark an already-submitted revision as
+     * minor - making it eligible for deletion via deleteRevision - without re-submitting it.
+     * @param revision The Revision to flag
+     * @param minor The new value of Revision.minorRevision
+     * @return @c true if the flag was updated, @c false if the revision is deleted or is the
+     *         model's first revision (which stays retained and unmodifiable)
+     */
+    @PreAuthorize("hasPermission(#revision, write) or hasRole('ROLE_ADMIN') or hasRole('ROLE_CURATOR')")
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag = "modelService.setMinorRevision")
+    boolean setMinorRevision(Revision revision, boolean minor) {
+        if (!revision) {
+            throw new IllegalArgumentException("Revision may not be null")
+        }
+        if (revision.deleted) {
+            // nothing sensible to flag on a revision that no longer exists
+            return false
+        }
+        if (revision.revisionNumber == 1) {
+            // the first revision is the original submission and must stay retained and
+            // unmodifiable so there is always a traceable starting point for the model's
+            // history - flagging it minor would be misleading anyway, since deleteRevision
+            // refuses to ever act on it while a later revision exists
+            return false
+        }
+        revision.minorRevision = minor
+        revision.save(flush: true)
         return true
     }
 

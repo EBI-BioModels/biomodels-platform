@@ -30,6 +30,32 @@
                    href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
                     <i class="icon icon-common icon-download" title="Download this version"></i>
                 </a>
+                <%-- Revision 1 is the original submission: it must stay retained and
+                     unmodifiable so there is always a traceable starting point for the
+                     model's history, so neither icon is offered for it at all. --%>
+                <g:if test="${rv.revisionNumber > 1}">
+                    <g:if test="${canUpdate || hasCuratorRole || hasAdminRole}">
+                        <a class="versionToggleMinor" data-revision-id="${rv.identifier()}"
+                           data-revision-number="${rv.revisionNumber}" data-minor="${rv.minorRevision}"
+                           title="${rv.minorRevision ? 'unmark' : 'mark'} version ${rv.revisionNumber} as a minor revision"
+                           href="${g.createLink(controller: 'model', action: 'toggleMinorRevision', id: rv.identifier())}">
+                            <i class="icon icon-common ${rv.minorRevision ? 'icon-times' : 'icon-flag'}"
+                               title="${rv.minorRevision ?
+                                   'This is flagged as a minor revision - click to unflag it' :
+                                   'Flag this as a minor revision, e.g. a small non-scientific correction'}"></i>
+                        </a>
+                    </g:if>
+                    <g:if test="${hasCuratorRole || hasAdminRole}">
+                        <span class="versionDeleteWrapper" data-revision-id="${rv.identifier()}"
+                              ${rv.minorRevision ? '' : 'hidden="hidden"'}>
+                            <a class="versionDelete" title="delete minor revision ${rv.revisionNumber}"
+                               href="${g.createLink(controller: 'model', action: 'deleteRevision', id: rv.identifier())}"
+                               onclick="return confirm('Are you sure you want to permanently delete minor revision ${rv.revisionNumber}?')">
+                                <i class="icon icon-common icon-trash" title="Delete this minor revision"></i>
+                            </a>
+                        </span>
+                    </g:if>
+                </g:if>
                 <ul>
                     <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>
                     <li>Submitted by: ${rv.owner}</li>
@@ -46,3 +72,54 @@
     </g:if>
 </div>
 </div>
+
+<script type="text/javascript">
+    /* global $, toastr, fetch */
+    // Flips Revision.minorRevision in place via fetch() instead of a full page reload, so the
+    // History tab stays put. See ModelController.toggleMinorRevision, which always answers JSON.
+    (function () {
+        "use strict";
+        $(document).on("click", ".versionToggleMinor", function (e) {
+            e.preventDefault();
+            const $link = $(this);
+            if ($link.data("busy")) {
+                return;
+            }
+            const url = $link.attr("href");
+            const $icon = $link.find("i");
+            const revisionId = $link.data("revision-id");
+            const $deleteWrapper = $(".versionDeleteWrapper[data-revision-id='" + revisionId + "']");
+            $link.data("busy", true);
+            fetch(url, {
+                method: "POST",
+                headers: {"X-Requested-With": "XMLHttpRequest"}
+            }).then(function (result) {
+                return result.json().then(function (data) {
+                    return {status: result.status, data: data};
+                });
+            }).then(function (res) {
+                const data = res.data;
+                if (res.status !== 200 || !data.success) {
+                    toastr.error(data.message || "Could not update this revision.");
+                    return;
+                }
+                const isMinor = data.minorRevision;
+                $link.attr("data-minor", isMinor);
+                $link.attr("title", (isMinor ? "unmark" : "mark") + " version " +
+                    data.revisionNumber + " as a minor revision");
+                $icon.removeClass("icon-flag icon-times").addClass(isMinor ? "icon-times" : "icon-flag");
+                $icon.attr("title", isMinor ?
+                    "This is flagged as a minor revision - click to unflag it" :
+                    "Flag this as a minor revision, e.g. a small non-scientific correction");
+                if ($deleteWrapper.length) {
+                    $deleteWrapper.prop("hidden", !isMinor);
+                }
+                toastr.success(data.message);
+            }).catch(function () {
+                toastr.error("Bad Server Response");
+            }).finally(function () {
+                $link.data("busy", false);
+            });
+        });
+    }());
+</script>

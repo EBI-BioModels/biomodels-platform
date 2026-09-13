@@ -152,4 +152,22 @@ public interface VcsManager {
      * @param commitId          A String object denoting the git commit identifier
      */
     void resetModelRepository(final File modelDirectory, final String commitId) throws VcsException;
+
+    /**
+     * Removes a single commit from the middle of a model's history, replaying every
+     * commit that came after it onto the deleted commit's parent.
+     *
+     * Git has no primitive for excising one commit in place: every commit after the
+     * one removed gets a new id. The mapping from old id to new id is returned so the
+     * caller can repoint any persisted revision identifiers (e.g. Revision.vcsId) that
+     * referred to the old commits.
+     *
+     * @param modelDirectory    A File object denoting the model repository
+     * @param commitId          A String object denoting the git commit identifier to remove
+     * @return A Map from each replayed commit's original id to its new id, ordered oldest
+     *         first. Does not include an entry for @p commitId itself.
+     * @throws VcsException if @p commitId does not exist, is the first commit of the
+     *         repository, or the replay fails (e.g. a conflict)
+     */
+    Map<String, String> deleteCommit(final File modelDirectory, final String commitId) throws VcsException;
 }

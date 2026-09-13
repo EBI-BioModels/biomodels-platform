@@ -55,6 +55,7 @@
         var existingFiles = ${existingFiles};
         var isUpdate = ${isUpdate};
         var isAmend = false;
+        var isMinorRevision = false;
         var revisionComments = "";
         var modelId = "${modelId}";
         var revisionId = "${RevisionID}";

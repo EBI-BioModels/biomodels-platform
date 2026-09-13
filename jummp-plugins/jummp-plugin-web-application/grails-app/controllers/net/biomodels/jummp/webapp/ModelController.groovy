@@ -933,6 +933,62 @@ Please contact the developers team for support!"""])
         }
     }
 
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def deleteRevision() {
+        try {
+            RTC rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+            String modelId = rev.modelIdentifier()
+            boolean deleted = modelDelegateService.deleteRevision(rev)
+            if (deleted) {
+                // notify the submitter/curators/admin the same way delete() does for a whole
+                // model - see NotificationRoute's seda:model.revisionDeleted -> revisionDeleted()
+                def currentUser = springSecurityService.currentUser
+                if (currentUser) {
+                    def notification = [
+                        model   : rev.model,
+                        revision: rev,
+                        user    : currentUser,
+                        perms   : modelDelegateService.getPermissionsMap(modelId)]
+                    sendMessage("seda:model.revisionDeleted", notification)
+                }
+            }
+            redirect(action: "showWithMessage", id: modelId,
+                params: [flashMessage: deleted ?
+                    "Revision ${rev.revisionNumber} has been deleted." :
+                    "Revision ${rev.revisionNumber} could not be deleted."])
+        } catch (Exception e) {
+            LOGGER.error e.message, e
+            forward(controller: "errors", action: "error403")
+        }
+    }
+
+    // pure metadata flip on an existing revision: no VCS interaction, no new commit/revision -
+    // open to the model's submitter as well as curators/admins, unlike deleteRevision above.
+    // ModelService.setMinorRevision's @PreAuthorize does the real permission check.
+    // Called via fetch() from _history.gsp so the History tab can update in place instead of
+    // reloading the whole model display page - always responds with JSON, never redirects.
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    def toggleMinorRevision() {
+        try {
+            RTC rev = modelDelegateService.getRevisionFromParams(params.id as String, params.revisionId as String)
+            boolean newValue = !rev.minorRevision
+            boolean updated = modelDelegateService.setMinorRevision(rev, newValue)
+            render([
+                success       : updated,
+                revisionId    : rev.identifier(),
+                revisionNumber: rev.revisionNumber,
+                minorRevision : updated ? newValue : rev.minorRevision,
+                message       : updated ?
+                    "Revision ${rev.revisionNumber} marked as ${newValue ? 'minor' : 'not minor'}." :
+                    "Could not update revision ${rev.revisionNumber}."
+            ] as JSON)
+        } catch (Exception e) {
+            LOGGER.error e.message, e
+            response.status = 403
+            render([success: false, message: "You are not allowed to do that."] as JSON)
+        }
+    }
+
     // uses revision id and filename
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def getFileDetails() {

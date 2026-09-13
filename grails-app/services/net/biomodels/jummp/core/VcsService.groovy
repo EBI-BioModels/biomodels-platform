@@ -212,6 +212,45 @@ class VcsService implements GrailsConfigurationAware, InitializingBean {
         return vcsManager.getFileDetails(MODEL_FOLDER, path)
     }
 
+    /**
+     * Resets a model's VCS working copy HARD to a specific commit, discarding every
+     * commit after it. Use when deleting the newest revision of a model, where there is
+     * nothing later that needs replaying.
+     * @param model The Model whose VCS repository should be reset
+     * @param commitId The commit to reset to, as stored in Revision.vcsId
+     * @throws VcsException passes along the VcsException thrown by VcsManager
+     */
+    @PreAuthorize("hasPermission(#model, delete) or hasRole('ROLE_ADMIN')")
+    @Profiled(tag = "vcsService.resetModelRepository")
+    void resetModelRepository(final Model model, final String commitId) throws VcsException {
+        if (!isValid()) {
+            throw new VcsException("Version Control System is not valid")
+        }
+        final File MODEL_FOLDER = new File(modelContainerRoot, model.vcsIdentifier)
+        vcsManager.resetModelRepository(MODEL_FOLDER, commitId)
+    }
+
+    /**
+     * Removes a single commit from a model's VCS history, replaying every later commit
+     * onto the deleted commit's parent.
+     *
+     * Only touches the working copy: it is the caller's responsibility to update any
+     * persisted revision id (e.g. Revision.vcsId) using the returned mapping.
+     * @param model The Model whose VCS repository the commit should be removed from
+     * @param commitId The commit to remove, as stored in Revision.vcsId
+     * @return A Map from each replayed commit's original id to its new id
+     * @throws VcsException passes along the VcsException thrown by VcsManager
+     */
+    @PreAuthorize("hasPermission(#model, delete) or hasRole('ROLE_ADMIN')")
+    @Profiled(tag = "vcsService.deleteCommit")
+    Map<String, String> deleteCommit(final Model model, final String commitId) throws VcsException {
+        if (!isValid()) {
+            throw new VcsException("Version Control System is not valid")
+        }
+        final File MODEL_FOLDER = new File(modelContainerRoot, model.vcsIdentifier)
+        return vcsManager.deleteCommit(MODEL_FOLDER, commitId)
+    }
+
     @Override
     void setConfiguration(ConfigObject co) {
         LOGGER.debug("Model Container Root: $modelContainerRoot")

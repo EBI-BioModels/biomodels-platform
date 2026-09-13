@@ -612,9 +612,14 @@ data type and accession from the URI.""")
 
         boolean isUpdate = params.boolean("isUpdate")
         boolean isAmend = params.boolean("isAmend")
+        // Only an update can be flagged minor - a brand new model has no earlier revision to
+        // be "minor" relative to. Submitters (for their own models), curators and admins can
+        // all reach this update flow, so the checkbox is available to all three.
+        boolean isMinorRevision = isUpdate && params.boolean("isMinorRevision")
         boolean isMetadataSubmission = params.boolean("isMetadataSubmission")
         working.put("isUpdate", isUpdate)
         working.put("isAmend", isAmend)
+        working.put("isMinorRevision", isMinorRevision)
         working.put("isMetadataSubmission", isMetadataSubmission)
         MTC model = new MTC()
         if (isUpdate) {
@@ -626,6 +631,7 @@ data type and accession from the URI.""")
         working.put("modelId", modelId)
         if (isUpdate) {
             revision = modelDelegateService.getLatestRevision(modelId, false)
+            revision.minorRevision = isMinorRevision
             final String latestDescription = redisService.doRedisHGet(submissionFolder, "latestModelDescription")
             working.putAll(["latestModelName": params.latestModelName.decodeHTML(),
                             "latestModelDescription": latestDescription])
