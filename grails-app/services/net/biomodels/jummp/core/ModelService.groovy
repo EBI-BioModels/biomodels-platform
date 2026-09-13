@@ -2233,6 +2233,33 @@ for the model ${model.submissionId} due to ${ex.message}.""")
     }
 
     /**
+     * Flags an existing revision as a minor revision (or clears that flag), in place.
+     *
+     * This is pure metadata: it does not touch the VCS, does not create a new commit or
+     * revision, and does not require going through the submission/update flow. It exists so
+     * a submitter, curator, or admin can retroactively mark an already-submitted revision as
+     * minor - making it eligible for deletion via deleteRevision - without re-submitting it.
+     * @param revision The Revision to flag
+     * @param minor The new value of Revision.minorRevision
+     * @return @c true if the flag was updated, @c false if the revision is null or deleted
+     */
+    @PreAuthorize("hasPermission(#revision, write) or hasRole('ROLE_ADMIN') or hasRole('ROLE_CURATOR')")
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag = "modelService.setMinorRevision")
+    boolean setMinorRevision(Revision revision, boolean minor) {
+        if (!revision) {
+            throw new IllegalArgumentException("Revision may not be null")
+        }
+        if (revision.deleted) {
+            // nothing sensible to flag on a revision that no longer exists
+            return false
+        }
+        revision.minorRevision = minor
+        revision.save(flush: true)
+        return true
+    }
+
+    /**
      * Tests if the user can publish this revision
      * Only a Curator or an Administrator are allowed to call this method.
      * @param revision The Revision to be published
