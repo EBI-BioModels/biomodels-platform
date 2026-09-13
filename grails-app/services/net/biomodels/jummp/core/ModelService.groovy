@@ -2184,6 +2184,46 @@ for the model ${model.submissionId} due to ${ex.message}.""")
             } else {
                 throw new AccessDeniedException("No permission to delete Model ${revision.model.id}")
             }
+            revision.deleted = true
+            revision.save(flush: true)
+            omicsdiService.markExportDirty()
+            return true
+        }
+        if (!isLatest) {
+            // revision.minorRevision is guaranteed true here (checked above); it sits in the
+            // middle of the history, with later revisions depending on it. Actually excise its
+            // commit from the VCS and repoint every later revision at its replayed commit -
+            // otherwise their vcsId would keep pointing at shas that no longer resolve.
+            // NOTE: the VCS rewrite below is not covered by this method's DB transaction. If a
+            // later save() in this loop fails, the commit has still been removed from git while
+            // the DB rollback leaves the old (now dangling) vcsId in place - this can only be
+            // resolved by re-running vcsService.fixVcsIds(revision.model) by hand afterwards.
+            Map<String, String> shaMapping
+            try {
+                shaMapping = vcsService.deleteCommit(revision.model, revision.vcsId)
+            } catch (VcsException vcsEx) {
+                log.error("Could not delete commit ${revision.vcsId} of model ${revision.model.id} from the VCS", vcsEx)
+                return false
+            }
+            List<Revision> laterRevisions = nonDeleted.findAll { it.revisionNumber > revision.revisionNumber }
+            laterRevisions.each { Revision laterRevision ->
+                String newVcsId = shaMapping[laterRevision.vcsId]
+                if (newVcsId) {
+                    laterRevision.vcsId = newVcsId
+                    laterRevision.save(flush: true)
+                }
+            }
+        } else {
+            // deleting the newest revision: nothing comes after it to replay, so a hard
+            // reset to the previous revision's commit is enough - every remaining
+            // revision's vcsId is untouched by a reset, unlike deleteCommit's replay.
+            Revision previousRevision = nonDeleted[nonDeleted.size() - 2]
+            try {
+                vcsService.resetModelRepository(revision.model, previousRevision.vcsId)
+            } catch (VcsException vcsEx) {
+                log.error("Could not reset VCS repository for model ${revision.model.id} to ${previousRevision.vcsId}", vcsEx)
+                return false
+            }
         }
         // TODO: delete the model if the revision is the first revision of the model
         revision.deleted = true
