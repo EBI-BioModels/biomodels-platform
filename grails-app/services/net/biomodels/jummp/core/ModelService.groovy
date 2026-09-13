@@ -2210,7 +2210,13 @@ for the model ${model.submissionId} due to ${ex.message}.""")
                 String newVcsId = shaMapping[laterRevision.vcsId]
                 if (newVcsId) {
                     laterRevision.vcsId = newVcsId
-                    laterRevision.save(flush: true)
+                    // save() alone would fail this silently (e.g. a vcsId collision against
+                    // Revision's unique:'model' constraint) and leave the dangling old vcsId
+                    // in place with no trace in the logs - make that loud instead.
+                    if (!laterRevision.save(flush: true)) {
+                        log.error("""Could not remap vcsId of revision ${laterRevision.id} \
+(model ${revision.model.id}) to $newVcsId: ${laterRevision.errors}""")
+                    }
                 }
             }
         } else {
