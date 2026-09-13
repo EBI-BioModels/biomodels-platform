@@ -2172,6 +2172,14 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         // check if the revision can be deleted: it must be either the latest, or a minor revision
         def nonDeleted = revision.model.revisions.findAll { !it.deleted }.sort { it.revisionNumber }
         boolean isLatest = revision.id == nonDeleted.last().id
+        if (revision.revisionNumber == 1 && nonDeleted.size() > 1) {
+            // the first revision is the original submission - it must stay retained and
+            // unmodifiable for as long as any later revision exists, so there is always a
+            // traceable starting point for the model's history. (GitManager.deleteCommit
+            // would refuse this too, but that's an implementation detail of the VCS layer,
+            // not something this method's contract should depend on to stay correct.)
+            return false
+        }
         if (!isLatest && !revision.minorRevision) {
             return false
         }
@@ -2247,7 +2255,8 @@ for the model ${model.submissionId} due to ${ex.message}.""")
      * minor - making it eligible for deletion via deleteRevision - without re-submitting it.
      * @param revision The Revision to flag
      * @param minor The new value of Revision.minorRevision
-     * @return @c true if the flag was updated, @c false if the revision is null or deleted
+     * @return @c true if the flag was updated, @c false if the revision is deleted or is the
+     *         model's first revision (which stays retained and unmodifiable)
      */
     @PreAuthorize("hasPermission(#revision, write) or hasRole('ROLE_ADMIN') or hasRole('ROLE_CURATOR')")
     @PostLogging(LoggingEventType.UPDATE)
@@ -2258,6 +2267,13 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         }
         if (revision.deleted) {
             // nothing sensible to flag on a revision that no longer exists
+            return false
+        }
+        if (revision.revisionNumber == 1) {
+            // the first revision is the original submission and must stay retained and
+            // unmodifiable so there is always a traceable starting point for the model's
+            // history - flagging it minor would be misleading anyway, since deleteRevision
+            // refuses to ever act on it while a later revision exists
             return false
         }
         revision.minorRevision = minor
