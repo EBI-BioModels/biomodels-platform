@@ -36,7 +36,14 @@ class NotificationTypePreferences implements Serializable {
     private static final long serialVersionUID = 1L
     
     NotificationType notificationType
-    boolean sendMail = false
+    // Matches UserService.getPreferences()'s registration-time default (notify=1, email=1
+    // for every type when no explicit options are given). getDefault() below relies on this
+    // field default whenever a user has no persisted preference row yet for a given type -
+    // which is always true for every existing user the first time a *new* NotificationType is
+    // introduced (their rows were seeded before that type existed). Defaulting to false here
+    // silently opted every existing user out of email for any newly-added type, e.g. nobody -
+    // administrator included - ever got an email for NotificationType.REVISION_DELETED.
+    boolean sendMail = true
     boolean sendNotification = true
     static belongsTo = [user:User]
     
