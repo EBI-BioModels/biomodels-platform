@@ -84,19 +84,21 @@
                 $(this).data("reset", true);
                 }
             });
-            loginInput.on("keyup", function(event) {
-                // magic value 13 is entered
-                if (event.which === 13) {
-                    loginForm.submit();
-                    checkCompromisedPasswordOnServerSide(loginUsername.val(), loginPassword.val());
-                }
-            });
-            const loginSubmit = $("#btnLogIn");
-            loginSubmit.on("click", function() {
+            function submitLogin() {
                 const deviceInfo = $("#j_deviceInfo");
                 $(deviceInfo).val(localStorage.getItem(loginUsername.val()));
                 loginForm.submit();
                 checkCompromisedPasswordOnServerSide(loginUsername.val(), loginPassword.val());
+            }
+            loginInput.on("keyup", function(event) {
+                // magic value 13 is entered
+                if (event.which === 13) {
+                    submitLogin();
+                }
+            });
+            const loginSubmit = $("#btnLogIn");
+            loginSubmit.on("click", function() {
+                submitLogin();
             });
             $(document).ready(function() {
                 if (referrer.indexOf("biomodels/MODEL") > 0) {

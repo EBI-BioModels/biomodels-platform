@@ -198,6 +198,11 @@
         let isChecked = $(this).is(':checked');
 
         getIP().
+        catch((error) => {
+            console.error("Unable to determine public IP address; falling back to 'unknown' so the trust " +
+                "device preference is still saved.", error);
+            return "unknown";
+        }).
         then((data) => {
             const ipaddr = data;
             const type = deviceType();
