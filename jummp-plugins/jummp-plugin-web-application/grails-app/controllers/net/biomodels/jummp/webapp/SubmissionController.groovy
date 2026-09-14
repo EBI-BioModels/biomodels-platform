@@ -721,20 +721,18 @@ data type and accession from the URI.""")
             revision.curationState = CurationState.NON_CURATED
             revision.validationLevel = ValidationState.APPROVE
         }
-        boolean isAmend = working.get("isAmend") as boolean
-        if (isAmend) {
-            if (paramComments) {
-                revision.comment = paramComments
-            } else if (!revision.comment) {
-                revision.comment = "Model revised without commit message"
-            }
-        } else { // new submission or update submission
-            if (paramComments) {
-                revision.comment = paramComments
-            } else if (!revision.comment) {
-                // only add the following commit message if there has been no commit message in the previous revision
-                revision.comment = "Model revised without commit message"
-            }
+        // On an update/amend, `revision` here is the latest revision's own RTC (see
+        // rebuildSubmissionData()) - its .comment already holds *that* revision's old commit
+        // message, carried over as a base for the fields we do want to inherit (name,
+        // description, format, ...). The default below must therefore be driven by whether the
+        // submitter actually typed something this time (paramComments), never by whether
+        // revision.comment happens to be non-blank - it always is on an update, which used to
+        // make this branch a no-op and silently leave the previous revision's message in place
+        // whenever the comment box was left empty.
+        if (paramComments) {
+            revision.comment = paramComments
+        } else {
+            revision.comment = "Model revised without commit message"
         }
         working.put("new_name", revision.name)
         working.put("new_description", revision.description)
