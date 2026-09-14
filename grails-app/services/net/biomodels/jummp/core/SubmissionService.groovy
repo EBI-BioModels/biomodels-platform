@@ -790,6 +790,14 @@ an annotation to SBML document.""")
                 // get the latest revision
                 revisionTC = modelDelegateService.getLatestRevision(submissionId, true)
                 revisionTC.minorRevision = isMinorRevision
+                // Snapshot the pre-update baseline file list under its own key *before*
+                // revisionTC.files gets overwritten with this submission's own new file list
+                // a few lines below. NewRevisionStateMachine.completeSubmission() needs this
+                // baseline (not the new list) to detect additional files the submitter removed,
+                // so they get deleted from VCS instead of silently lingering there untracked
+                // (JBM-764) - accessing revisionTC.files here, while it's still unset, lazily
+                // fetches the latest revision's actual current files.
+                working.put("previousRevisionFiles", revisionTC.files)
                 modelTC = revisionTC.model
                 String comment = jsonObj["comment"] ?: (isAmend ? revisionTC.comment : "Updated the model revision.")
                 revisionTC.comment = comment
@@ -1303,18 +1311,22 @@ an annotation to SBML document.""")
             // Additional files belonging to the revision being updated/amended that aren't
             // part of this submission must be treated as removed from the VCS, not silently
             // abandoned there forever, untracked by any revision from this point on (JBM-764).
-            // revision.files is the file list of the revision this submission is based on -
-            // it was already fetched (and cached on this very RTC instance) back in
-            // initialise(), before any of this submission's own changes were applied, so it
-            // reflects the pre-update baseline rather than what's about to be submitted. The
-            // main file is always present in repoFiles by name (carried forward unchanged, or
-            // replaced), so this only ever catches additional files nothing resubmitted -
-            // unless the main file itself was replaced by a differently-named one, in which
-            // case the old one is correctly caught here too, for the same reason.
+            // "previousRevisionFiles" is the file list of the revision this submission is
+            // based on, snapshotted by whichever caller built this working memory
+            // (SubmissionController.rebuildSubmissionData() or
+            // SubmissionService.buildFromJSONFile()) *before* revision.files got overwritten
+            // with this submission's own new file list - revision.files itself can't be used
+            // here any more precisely because of that overwrite, which happens well before
+            // completeSubmission() ever runs. The main file is always present in repoFiles by
+            // name (carried forward unchanged, or replaced), so this only ever catches
+            // additional files nothing resubmitted - unless the main file itself was replaced
+            // by a differently-named one, in which case the old one is correctly caught here
+            // too, for the same reason.
             Set<String> keptOrAlreadyDeletedNames = (repoFiles + deleteFiles).collect {
                 new File(it.path).getName()
             } as Set<String>
-            revision.files?.each { RFTC existingFile ->
+            List<RFTC> previousFiles = workingMemory.get("previousRevisionFiles") as List<RFTC>
+            previousFiles?.each { RFTC existingFile ->
                 String existingName = new File(existingFile.path).getName()
                 if (!keptOrAlreadyDeletedNames.contains(existingName)) {
                     deleteFiles.add(existingFile)
