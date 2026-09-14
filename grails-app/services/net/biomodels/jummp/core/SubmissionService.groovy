@@ -1298,7 +1298,29 @@ an annotation to SBML document.""")
             HashSet<String> changes = workingMemory['changesMade'] as HashSet<String>
             RTC revision = workingMemory.get("RevisionTC") as RTC
             List<RFTC> repoFiles = getRepFiles(workingMemory)
-            List<RFTC> deleteFiles = getRepFiles(workingMemory, "removeFromVCS")
+            List<RFTC> deleteFiles = (getRepFiles(workingMemory, "removeFromVCS") ?: []) as List<RFTC>
+
+            // Additional files belonging to the revision being updated/amended that aren't
+            // part of this submission must be treated as removed from the VCS, not silently
+            // abandoned there forever, untracked by any revision from this point on (JBM-764).
+            // revision.files is the file list of the revision this submission is based on -
+            // it was already fetched (and cached on this very RTC instance) back in
+            // initialise(), before any of this submission's own changes were applied, so it
+            // reflects the pre-update baseline rather than what's about to be submitted. The
+            // main file is always present in repoFiles by name (carried forward unchanged, or
+            // replaced), so this only ever catches additional files nothing resubmitted -
+            // unless the main file itself was replaced by a differently-named one, in which
+            // case the old one is correctly caught here too, for the same reason.
+            Set<String> keptOrAlreadyDeletedNames = (repoFiles + deleteFiles).collect {
+                new File(it.path).getName()
+            } as Set<String>
+            revision.files?.each { RFTC existingFile ->
+                String existingName = new File(existingFile.path).getName()
+                if (!keptOrAlreadyDeletedNames.contains(existingName)) {
+                    deleteFiles.add(existingFile)
+                    keptOrAlreadyDeletedNames.add(existingName)
+                }
+            }
 
             // update model format, modelling approach and readme info if they're provided and changed
             storeModelInfo(revision, workingMemory)
