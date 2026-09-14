@@ -2202,10 +2202,19 @@ for the model ${model.submissionId} due to ${ex.message}.""")
             // middle of the history, with later revisions depending on it. Actually excise its
             // commit from the VCS and repoint every later revision at its replayed commit -
             // otherwise their vcsId would keep pointing at shas that no longer resolve.
-            // NOTE: the VCS rewrite below is not covered by this method's DB transaction. If a
-            // later save() in this loop fails, the commit has still been removed from git while
-            // the DB rollback leaves the old (now dangling) vcsId in place - this can only be
-            // resolved by re-running vcsService.fixVcsIds(revision.model) by hand afterwards.
+            // NOTE: the VCS rewrite below is not covered by this method's DB transaction, and
+            // is irreversible once it succeeds - unlike a DB write, there is no rollback for a
+            // git commit that has already been excised. Everything from here on is therefore
+            // deliberately written so nothing but the vcsService calls themselves can abort
+            // this method: a later exception here would roll back every DB change already
+            // flushed in this transaction (including ones that look "done") while leaving the
+            // git-level mutation permanently applied - see JBM-772, where exactly that happened
+            // (an unrelated MissingMethodException from a stale hot-reload rolled back both the
+            // vcsId remap below and the revision.deleted flag at the end of this method,
+            // leaving two revisions claiming to be alive with no commit to back them, and one
+            // commit nothing in the DB pointed to any more). If this still somehow leaves a
+            // dangling vcsId despite the safeguards below, re-run
+            // vcsService.fixVcsIds(revision.model) by hand afterwards.
             Map<String, String> shaMapping
             try {
                 shaMapping = vcsService.deleteCommit(revision.model, revision.vcsId)
@@ -2230,8 +2239,15 @@ for the model ${model.submissionId} due to ${ex.message}.""")
                     // commit we just excised), but RepositoryFileService's on-disk cache is keyed
                     // by (modelId, revisionNumber) alone - it has no idea the underlying commit
                     // just changed and would otherwise keep serving the pre-deletion file list
-                    // for this revisionNumber forever.
-                    repositoryFileService.invalidateModelRevisionCache(laterRevision)
+                    // for this revisionNumber forever. This is best-effort tidying, not something
+                    // the vcsId remap above (or revision.deleted below) should ever be undone
+                    // over - see the NOTE above the try block.
+                    try {
+                        repositoryFileService.invalidateModelRevisionCache(laterRevision)
+                    } catch (Exception e) {
+                        log.error("""Could not invalidate the cache for revision ${laterRevision.id} \
+(model ${revision.model.id}); it may keep serving pre-deletion content until cleaned up by hand.""", e)
+                    }
                 }
             }
         } else {
@@ -2248,20 +2264,30 @@ for the model ${model.submissionId} due to ${ex.message}.""")
         }
         // Both branches above have just hard-deleted revision's own content from the VCS (its
         // commit excised, or the branch reset past it) - unlike Model, Revision has no
-        // undelete, so this is permanent. RepositoryFileService's on-disk cache is oblivious to
-        // either: purge it here so modelCache/<modelId>/<revisionNumber>/ doesn't keep serving
-        // (or merely occupying disk with) content that no longer exists anywhere else. This is
+        // undelete, so this is permanent. Persist that fact right away, before any further
+        // best-effort tidying runs (see the NOTE in the mid-history branch above) - nothing
+        // below this point may be allowed to throw uncaught, or a failure there would roll
+        // back this flag along with it and leave the revision claiming to be alive.
+        // TODO: delete the model if the revision is the first revision of the model
+        revision.deleted = true
+        revision.save(flush: true)
+        // RepositoryFileService's on-disk cache is oblivious to either branch above: purge it
+        // here so modelCache/<modelId>/<revisionNumber>/ doesn't keep serving (or merely
+        // occupying disk with) content that no longer exists anywhere else. This is
         // deliberately outside the isLatest/mid-history branches above and the early return for
         // the "only one revision - delete the whole Model instead" case further up: that path
         // is a soft, undoable Model-level delete (see undeleteModel) that never touches the VCS
         // at all, so its cache must stay intact.
-        if (!repositoryFileService.purgeCachedDirOfRevision(revision)) {
-            log.debug("""No cache directory to purge for revision ${revision.revisionNumber} \
+        try {
+            if (!repositoryFileService.purgeCachedDirOfRevision(revision)) {
+                log.debug("""No cache directory to purge for revision ${revision.revisionNumber} \
 of model ${revision.model.submissionId} (id ${revision.model.id}), or purging it failed.""")
+            }
+        } catch (Exception e) {
+            log.error("""Could not purge the cache directory for revision ${revision.revisionNumber} \
+of model ${revision.model.submissionId} (id ${revision.model.id}); it may keep occupying disk until \
+cleaned up by hand.""", e)
         }
-        // TODO: delete the model if the revision is the first revision of the model
-        revision.deleted = true
-        revision.save(flush: true)
         omicsdiService.markExportDirty()
         String actor = springSecurityService.authentication?.name ?: "unknown"
         log.info("""Revision ${revision.revisionNumber} of model ${revision.model.submissionId} \
