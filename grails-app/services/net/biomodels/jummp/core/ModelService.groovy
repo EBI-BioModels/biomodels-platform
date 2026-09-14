@@ -2246,6 +2246,19 @@ for the model ${model.submissionId} due to ${ex.message}.""")
                 return false
             }
         }
+        // Both branches above have just hard-deleted revision's own content from the VCS (its
+        // commit excised, or the branch reset past it) - unlike Model, Revision has no
+        // undelete, so this is permanent. RepositoryFileService's on-disk cache is oblivious to
+        // either: purge it here so modelCache/<modelId>/<revisionNumber>/ doesn't keep serving
+        // (or merely occupying disk with) content that no longer exists anywhere else. This is
+        // deliberately outside the isLatest/mid-history branches above and the early return for
+        // the "only one revision - delete the whole Model instead" case further up: that path
+        // is a soft, undoable Model-level delete (see undeleteModel) that never touches the VCS
+        // at all, so its cache must stay intact.
+        if (!repositoryFileService.purgeCachedDirOfRevision(revision)) {
+            log.debug("""No cache directory to purge for revision ${revision.revisionNumber} \
+of model ${revision.model.submissionId} (id ${revision.model.id}), or purging it failed.""")
+        }
         // TODO: delete the model if the revision is the first revision of the model
         revision.deleted = true
         revision.save(flush: true)
