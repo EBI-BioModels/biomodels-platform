@@ -8,4 +8,8 @@ function task2() {
     ./grailsw run-script scripts/RedisCacheManager.groovy --verbose
 }
 
-task2 # task1
+function task3() {
+    ./grailsw run-script scripts/AuditOrphanedRevisionFiles.groovy --verbose
+}
+
+task3 # task1 task2
