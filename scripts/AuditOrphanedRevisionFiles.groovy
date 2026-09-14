@@ -89,7 +89,7 @@ WHERE r.deleted = false
   AND r.uploadDate < :cutoff
 ORDER BY m.submissionId, r.revisionNumber
 """
-            List<Revision> revisions = Revision.executeQuery(query, [cutoff: cutoff])
+            List<Revision> revisions = Revision.executeQuery(query, [cutoff: cutoff], [:])
             println "Found ${revisions.size()} non-deleted revisions (of non-deleted models) uploaded before the cutoff.\n"
 
             revisions.each { Revision revision ->
