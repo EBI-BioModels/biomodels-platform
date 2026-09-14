@@ -38,6 +38,7 @@ import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
+import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
@@ -98,11 +99,22 @@ class NotificationService implements InitializingBean {
 
     Set<User> getNotificationRecipients(def permissionsMap) {
         def writeAccessList = permissionsMap.findAll { ptc -> ptc.write }
-        List<User> recipients = writeAccessList.collect { User.get(it.id as Long) }
-        // Administrator should be notified for administration and tracking
-        User administrator = User.findByUsername("administrator")
-        if (administrator) {
-            recipients.add(administrator)
+        Set<User> recipients = writeAccessList.collect { User.get(it.id as Long) } as Set<User>
+
+        // Curators and admins are granted access to a model via a *role*-based ACE
+        // (aclUtilService.addPermission(model, "ROLE_CURATOR"/"ROLE_ADMIN", ...), see
+        // ModelService's model-creation code), not a per-user one - so permissionsMap
+        // (built by ModelService.getPermissionsMap(), which explicitly skips
+        // GrantedAuthoritySid entries) never contains them at all, regardless of mail
+        // preference. Resolve them by role instead, the same way
+        // notifyOmicsdiExportPending() already does for admins. This also replaces the
+        // previous hardcoded lookup of the single literal "administrator" account, which
+        // missed every other ROLE_ADMIN user.
+        ["ROLE_CURATOR", "ROLE_ADMIN"].each { String authority ->
+            Role role = Role.findByAuthority(authority)
+            if (role) {
+                recipients.addAll(UserRole.findAllByRole(role).collect { it.user })
+            }
         }
         recipients
     }
@@ -363,6 +375,15 @@ caused by ${ntp?.errors?.toString()}""")
         String modelLink = "${serverURL}/${model.submissionId}"
         String revisionNumber = revision.revisionNumber.toString()
         Set<User> recipients = getNotificationRecipients(body.perms)
+        // The revision's own submitter is granted permissions on the revision's own ACL, not
+        // the model's (see ModelService.doUpdatePermissions), so getNotificationRecipients()
+        // above - which only reads the model's ACL - can miss them entirely unless they also
+        // happen to hold model-level access (e.g. as the model's original creator). Add them
+        // explicitly so the person whose revision was just deleted always hears about it.
+        Revision domainRevision = Revision.get(revision.id)
+        if (domainRevision?.owner) {
+            recipients.add(domainRevision.owner)
+        }
         useGenericNotificationStructure(notifyTitle, [model.name, revisionNumber] as String[],
             notifyBody, [model.name, revisionNumber, user.username, modelLink, "${serverURL}/user", serverURL] as String[],
             NT.REVISION_DELETED, user, recipients, model)
