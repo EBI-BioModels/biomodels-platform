@@ -635,6 +635,14 @@ data type and accession from the URI.""")
             final String latestDescription = redisService.doRedisHGet(submissionFolder, "latestModelDescription")
             working.putAll(["latestModelName": params.latestModelName.decodeHTML(),
                             "latestModelDescription": latestDescription])
+            // Snapshot the pre-update baseline file list under its own key *before*
+            // populateDataRevision() below overwrites revision.files with this submission's
+            // own new file list. SubmissionService.NewRevisionStateMachine.completeSubmission()
+            // needs this baseline (not the new list) to detect additional files the submitter
+            // removed, so they get deleted from VCS instead of silently lingering there
+            // untracked (JBM-764) - accessing revision.files here, while it's still unset,
+            // lazily fetches the latest revision's actual current files.
+            working.put("previousRevisionFiles", revision.files)
         }
 
         // rebuild the model info as much as possible detected from the former step
