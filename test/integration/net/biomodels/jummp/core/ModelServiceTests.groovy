@@ -1134,6 +1134,136 @@ class ModelServiceTests extends JummpIntegrationTest {
     }
 
     @Test
+    void testDeleteRevisionInvalidatesLaterRevisionFileCache() {
+        // RepositoryFileService is prototype-scoped and re-reads jummp.model.cache.dir from
+        // GrailsConfigurationAware.setConfiguration() on each instantiation, but ModelService's
+        // own internal repositoryFileService references (inside deleteRevision(),
+        // retrieveModelFiles(), etc.) go through a scoped proxy that re-resolves a fresh
+        // instance per call - mutating grailsApplication.config here does not reliably reach
+        // those internal calls in this full integration-test context (unlike the isolated
+        // unit-test Spring context RepositoryFileServiceSpec builds). So this test uses the
+        // real, shared cache dir instead, under an obviously-fake submissionId that cannot
+        // collide with a real model's cache, and cleans that one directory up in `finally`.
+        String cacheDir = grailsApplication.config.jummp.model.cache.dir
+        File testCacheDir = new File(cacheDir, "CACHEINVALIDATIONTEST")
+        try {
+            authenticateAsAdmin()
+            // Built via vcsService.importModel()/updateModel() directly, and Revision saved by
+            // hand, rather than via ModelService.uploadModelAsFile()/addRevisionAsFile(): both
+            // currently NPE (RevisionAdapter.toCommandObject() dereferences revision.format
+            // before either method has assigned it - see testUploadModel/testRetrieveModelFiles,
+            // which fail the same way on an unmodified development branch). That bug is
+            // unrelated to this fix, so this test routes around it instead of masking it.
+            ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
+            User admin = User.findByUsername("admin")
+            Model model = new Model(vcsIdentifier: "cache-invalidation-test/",
+                submissionId: "CACHEINVALIDATIONTEST")
+            assertTrue(new File("target/vcs/git", model.vcsIdentifier).mkdirs())
+
+            // convertRFTCToRF() must run against each file while it still exists in the
+            // exchange directory - vcsService.importModel()/updateModel() consumes it into
+            // the VCS working copy, exactly as ModelService.uploadModelAsList()/
+            // addRevisionAsList() are careful to order it themselves.
+            File mainFile = new File("target/vcs/exchange/cache-test-main.xml")
+            FileUtils.touch(mainFile)
+            mainFile.setText("main\n")
+            def mainRf1 = new RepositoryFileTransportCommand(path: mainFile.absolutePath,
+                description: "", mainFile: true)
+            Revision revision1 = new Revision(model: model, revisionNumber: 1,
+                owner: admin, minorRevision: false, name: "", description: "", comment: "Revision 1",
+                uploadDate: new Date(), format: format)
+            modelService.repositoryFileService.convertRFTCToRF([mainRf1], revision1).each {
+                revision1.addToRepoFiles(it)
+            }
+            revision1.vcsId = modelService.vcsService.importModel(model, [mainFile])
+            model.addToRevisions(revision1)
+            assertNotNull(model.save(flush: true))
+
+            // revision 2 adds extra.txt and leaves the main file untouched (same content,
+            // not even recommitted to VCS - only recreated in the exchange directory so
+            // convertRFTCToRF() below has something to validate), so revision 1 and
+            // revision 2 agree on the main file's content exactly - that matters below.
+            mainFile.setText("main\n")
+            File extraFile = new File("target/vcs/exchange/cache-test-extra.txt")
+            FileUtils.touch(extraFile)
+            extraFile.setText("only exists because of revision 2\n")
+            def mainRf2 = new RepositoryFileTransportCommand(path: mainFile.absolutePath,
+                description: "", mainFile: true)
+            def extraRf2 = new RepositoryFileTransportCommand(path: extraFile.absolutePath,
+                description: "extra", mainFile: false)
+            Revision revision2 = new Revision(model: model, revisionNumber: 2,
+                owner: admin, minorRevision: true, name: "", description: "", comment: "Revision 2",
+                uploadDate: new Date(), format: format)
+            modelService.repositoryFileService.convertRFTCToRF([mainRf2, extraRf2], revision2).each {
+                revision2.addToRepoFiles(it)
+            }
+            revision2.vcsId = modelService.vcsService.updateModel(model, [extraFile], null, "Revision 2")
+            model.addToRevisions(revision2)
+            assertNotNull(model.save(flush: true))
+
+            // revision 3 only appends to the main file and resubmits extra.txt with identical
+            // content. Its own diff from revision 2 - the only thing cherry-pick replays -
+            // therefore only ever touches the main file, and does so as a clean append onto
+            // content revision 1 already has verbatim (revision 2 never touched it), so
+            // replaying it onto revision 1 later can't conflict. extra.txt only exists in
+            // revision 3's tree because revision 2 put it there first, not because of
+            // anything revision 3 itself changed - it must be recreated in the exchange
+            // directory here regardless, since updateModel() consumed revision 2's copy.
+            mainFile.setText("main\nline2\n")
+            extraFile.setText("only exists because of revision 2\n")
+            def mainRf3 = new RepositoryFileTransportCommand(path: mainFile.absolutePath,
+                description: "", mainFile: true)
+            def extraRf3 = new RepositoryFileTransportCommand(path: extraFile.absolutePath,
+                description: "extra", mainFile: false)
+            Revision revision3 = new Revision(model: model, revisionNumber: 3,
+                owner: admin, minorRevision: false, name: "", description: "", comment: "Revision 3",
+                uploadDate: new Date(), format: format)
+            modelService.repositoryFileService.convertRFTCToRF([mainRf3, extraRf3], revision3).each {
+                revision3.addToRepoFiles(it)
+            }
+            revision3.vcsId = modelService.vcsService.updateModel(model, [mainFile], null, "Revision 3")
+            model.addToRevisions(revision3)
+            assertNotNull(model.save(flush: true))
+
+            // Populate revision 3's cache directly while extra.txt is still genuinely there,
+            // rather than via retrieveModelFiles()'s normal cache-miss path: a first-ever
+            // miss falls through to RepositoryFileService.get()'s FileNotFoundException
+            // handling, which calls ModelService.getModel() purely to enrich an error
+            // message - and that cascades into ModelHistoryService.addModelToHistory()'s
+            // PROPAGATION_REQUIRES_NEW transaction, which can't see this test's model row
+            // since it isn't committed outside this test's own transaction. Real usage never
+            // hits that edge case (a model is always already committed by the time anyone
+            // can view its Files tab), so this works around the test-only artifact directly.
+            assertTrue(modelService.repositoryFileService.updateModelRevisionCache(revision3))
+            List<RepositoryFileTransportCommand> beforeDelete = modelService.retrieveModelFiles(revision3)
+            assertEquals(2, beforeDelete.size())
+            assertTrue(beforeDelete*.filename.contains("cache-test-extra.txt"))
+
+            // deleting revision 2 (mid-history, minor) cherry-pick-replays revision 3's own
+            // commit - whose diff only ever touched the main file - onto revision 1, so
+            // extra.txt (only ever introduced by the commit just excised) is gone from
+            // revision 3's true content from this point on
+            assertTrue(modelService.deleteRevision(revision2))
+            revision3.refresh()
+
+            // the remap loop in deleteRevision must have invalidated revision 3's now-stale
+            // cache directory outright
+            File revision3CacheDir = new File(testCacheDir, "3")
+            assertFalse(revision3CacheDir.exists())
+
+            // repopulating it now must reflect the corrected, post-deletion VCS content -
+            // called directly rather than via retrieveModelFiles(), which would otherwise
+            // hit the same ModelHistoryService/getModel() test-only artifact noted above on
+            // this, its own first-ever cache miss for revision 3 after the invalidation
+            assertTrue(modelService.repositoryFileService.updateModelRevisionCache(revision3))
+            assertFalse(new File(revision3CacheDir, "cache-test-extra.txt").exists())
+            assertTrue(new File(revision3CacheDir, "cache-test-main.xml").exists())
+        } finally {
+            testCacheDir.deleteDir()
+        }
+    }
+
+    @Test
     void testGrantReadAccess() {
         // create a model with some revisions
         Model model = new Model(vcsIdentifier: "test.xml", submissionId: "model12345")
