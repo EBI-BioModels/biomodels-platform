@@ -41,7 +41,13 @@ abstract class RunScriptHelper implements InitializingBean {
 
     def ctx
 
-    static String ADMIN_USERNAME = System.getenv("ADMIN_USERNAME")
+    // Defaults to "administrator" right here, rather than leaving this null and relying on
+    // afterPropertiesSet() to backfill it: that only runs once Spring constructs a bean, which
+    // is too late for adminAuth's own static initializer below - a null ADMIN_USERNAME there
+    // has no static type, so Groovy can't tell whether to call createTokenForUser(String) or
+    // createTokenForUser(User) and blows up with "Ambiguous method overloading" instead of
+    // ever reaching the intended default.
+    static String ADMIN_USERNAME = System.getenv("ADMIN_USERNAME") ?: "administrator"
 
     // auth token for admin account; used by worker threads to publish models
     static Authentication adminAuth = createTokenForUser(ADMIN_USERNAME)
