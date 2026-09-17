@@ -89,8 +89,8 @@ class LoginController extends CommonController {
             return
         }
 
-        String previousURL = request.getHeader("referer")
-        String j_previousURL = request.getHeader("referer")
+        String previousURL = (params.previousURL as String) ?: request.getHeader("referer")
+        String j_previousURL = previousURL
         String view = 'auth'
         String postUrl = "${request.contextPath}${config.apf.filterProcessesUrl}"
         Map mModel = [postUrl: postUrl, previousURL: previousURL,
@@ -118,8 +118,10 @@ class LoginController extends CommonController {
     def full() {
         def config = SpringSecurityUtils.securityConfig
         def postUrl = "${serverURL}${config.apf.filterProcessesUrl}"
+        String j_previousURL = (params.previousURL as String) ?: request.getHeader("referer")
         render view: 'auth', params: params,
-            model: [hasCookie: authenticationTrustResolver.isRememberMe(SCH.context?.authentication), postUrl: postUrl]
+            model: [hasCookie: authenticationTrustResolver.isRememberMe(SCH.context?.authentication), postUrl: postUrl,
+                j_previousURL: j_previousURL]
     }
 
     /**

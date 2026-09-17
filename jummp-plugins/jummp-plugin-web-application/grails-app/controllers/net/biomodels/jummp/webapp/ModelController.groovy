@@ -71,6 +71,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import javax.servlet.http.HttpServletResponse
+import java.net.URLEncoder
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
@@ -226,7 +227,10 @@ has been accessed!""")
                 }
                 publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_VIEW, "Accessing the model: ${rev.identifier()}")
                 if (isPrivateModel) {
-                    render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
+                    String previousURL = "${serverURL}/${rev.model.submissionId}"
+                    String loginUrl = "${serverURL}/login/auth?previousURL=${URLEncoder.encode(previousURL, 'UTF-8')}"
+                    render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description,
+                        loginUrl: loginUrl])
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
                     RTC revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)

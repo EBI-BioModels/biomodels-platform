@@ -45,5 +45,8 @@
 <body>
     <h2>${id}</h2>
     <p>${description}</p>
+    <g:if test="${loginUrl}">
+        <p>This model is private. <a href="${loginUrl}">Log in</a> if you have access to view it.</p>
+    </g:if>
 </body>
 </html>
