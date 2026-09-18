@@ -181,8 +181,8 @@
                     <%
                         def id = model?.publicationId ?: model?.submissionId
                         def modelUrl = createLink(controller: 'model', id: id, action: 'show')
-                        if ("search" == actionName) {
-                            modelUrl = model?.searchableLink
+                        if ("search" == actionName && model?.searchableLink) {
+                            modelUrl = model.searchableLink
                         }
                         def description = model?.description ?: ""
                         int maxNumChar = 255
