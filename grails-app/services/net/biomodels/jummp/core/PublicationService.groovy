@@ -25,6 +25,7 @@
 package net.biomodels.jummp.core
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
@@ -43,6 +44,7 @@ import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.security.acls.domain.BasePermission
 import org.springframework.validation.ObjectError
 
 import java.util.regex.Matcher
@@ -68,10 +70,36 @@ class PublicationService implements IPublicationService, InitializingBean {
     def doiService
     def pubMedService
     def messageSource
+    def aclUtilService
+    def springSecurityService
 
     @Override
     void afterPropertiesSet() throws Exception {
         log.info("Finished the bean initialisation")
+    }
+
+    /**
+     * Whether the current user is a curator or admin, i.e. is allowed to manage any publication
+     * through the standalone publication editor regardless of which model(s) it belongs to.
+     */
+    boolean isCurationStaff() {
+        SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN,ROLE_CURATOR")
+    }
+
+    /**
+     * Whether the current user may edit the given publication: curators/admins always can,
+     * otherwise the user must have write access to at least one Model the publication belongs to.
+     */
+    boolean canManagePublication(Publication publication) {
+        if (!publication) {
+            return false
+        }
+        if (isCurationStaff()) {
+            return true
+        }
+        Model.findAllByPublication(publication).any { Model model ->
+            aclUtilService.hasPermission(springSecurityService.authentication, model, BasePermission.WRITE)
+        }
     }
 
     List<PubTC> getAll() {

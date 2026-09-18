@@ -19,11 +19,13 @@ class PublicationController implements GrailsConfigurationAware {
     String style
     String serverUrl
 
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def index() {
         List<PubTC> publications = publicationService.getAll()
         [publications: publications, title: "List of all publications | BioModels", style: style, serverUrl: serverUrl]
     }
 
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def add(Publication publication) {
         PubTC pubTC = publicationService.createPTCWithMinimalInformation("PubMed ID", null, null)
         pubTC.id = -1 // assign it a dummy value to avoid exceptions
@@ -44,6 +46,11 @@ class PublicationController implements GrailsConfigurationAware {
         if (!publication) {
             logger.error("Publication (with id: ${publication?.id}) cannot be found in the database.")
             showError404()
+            return
+        }
+        if (!publicationService.canManagePublication(publication)) {
+            forward(controller: "errors", action: "error403")
+            return
         }
         PubTC pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
         [publication: pubCmd, authorListContainerSize: 4, title: "Edit the publication ${pubCmd.id} | BioModels",
@@ -66,10 +73,20 @@ class PublicationController implements GrailsConfigurationAware {
      * @return HTML codes to display in the publication add and edit view
      */
     def fetchPublicationFromPubMedAndRenderPublicationForm() {
+        String operation = params.get("operation")
+        if (operation == "edit" && params.containsKey("id")) {
+            Publication existing = Publication.get(params.long("id"))
+            if (!publicationService.canManagePublication(existing)) {
+                forward(controller: "errors", action: "error403")
+                return
+            }
+        } else if (!publicationService.isCurationStaff()) {
+            forward(controller: "errors", action: "error403")
+            return
+        }
         String pubLinkProvider = params.get("pubLinkProvider")
         String pubLink = params.get("pubLink")
         Map data = publicationService.doVerifyPubLinkAndFetchData(pubLinkProvider, pubLink)
-        String operation = params.get("operation")
 
         if (data["comesFromDB"] && operation == "add") {
             data["message"] = "The publication has been reloaded from our system!"
@@ -91,6 +108,12 @@ class PublicationController implements GrailsConfigurationAware {
     }
 
     def save(PubTC pubCmd) {
+        Publication existing = (pubCmd?.id && pubCmd.id > 0) ? Publication.get(pubCmd.id) : null
+        boolean permitted = existing ? publicationService.canManagePublication(existing) : publicationService.isCurationStaff()
+        if (!permitted) {
+            forward(controller: "errors", action: "error403")
+            return
+        }
         Map result = [:]
         String message = ""
         Integer status

@@ -82,6 +82,26 @@
         }
     }
 
+    /**
+     * jQuery's errorThrown is only populated for actual HTTP error responses (e.g. "Not Found");
+     * for network-level failures where no response was received at all (server down, connection
+     * refused/reset, ERR_EMPTY_RESPONSE) it is an empty string, so building a message from it
+     * alone produces a blank toastr. Fall back to a message based on jqXHR.status/textStatus.
+     */
+    function buildAjaxErrorMessage(jqXHR, textStatus, errorThrown) {
+        if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
+            return jqXHR.responseJSON.message;
+        }
+        if (errorThrown) {
+            return jqXHR.status + " " + errorThrown;
+        }
+        if (jqXHR.status === 0) {
+            return "Could not reach the server. Please check your connection and try again.";
+        }
+        return jqXHR.status + " " + (textStatus || "error") +
+            ": the server did not return a response. Please try again later.";
+    }
+
     function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
         verifyPublicationSource(pubLinkProvider, pubLink);
         clearErrorMessages();
@@ -130,7 +150,7 @@
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                let errMsg = JSON.parse(JSON.stringify(errorThrown));
+                let errMsg = buildAjaxErrorMessage(jqXHR, textStatus, errorThrown);
                 console.log("inside error " + errMsg);
                 console.log(textStatus);
                 toastr.clear();
@@ -178,7 +198,7 @@
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                let errMsg = JSON.parse(JSON.stringify(errorThrown));
+                let errMsg = buildAjaxErrorMessage(jqXHR, textStatus, errorThrown);
                 console.log("inside error " + errMsg);
                 toastr.clear();
                 toastr.error(errMsg);
@@ -293,7 +313,7 @@
                 changesMade = res["changesMade"];
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                const msg = JSON.parse(JSON.stringify(errorThrown));
+                const msg = buildAjaxErrorMessage(jqXHR, textStatus, errorThrown);
                 console.log("msg: " + msg);
                 console.log("textStatus: " + textStatus);
                 collectErrors(errorMessages, msg);
