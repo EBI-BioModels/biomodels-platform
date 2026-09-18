@@ -78,8 +78,10 @@ class SearchServiceTests extends IntegrationSpec {
         int facetCount = 10
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": facetCount]
         String query = "health"
+        String domain = "biomodels"
+        SortOrder sortOrder = new SortOrder()
         when:
-        SearchResponse response = searchService.searchModels(query, paginationCriteria)
+        SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
         then:
         response.results.isEmpty()
         response.facets.isEmpty()
@@ -123,8 +125,10 @@ class SearchServiceTests extends IntegrationSpec {
         int facetCount = 10
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": facetCount]
         String query = "health"
+        String domain = "biomodels"
+        SortOrder sortOrder = new SortOrder()
         when:
-        SearchResponse response = searchService.searchModels(query, paginationCriteria)
+        SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
         then:
         !response.results.isEmpty()
         !response.facets.isEmpty()
