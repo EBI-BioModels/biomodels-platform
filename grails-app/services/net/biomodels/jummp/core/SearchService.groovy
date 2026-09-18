@@ -26,7 +26,6 @@ package net.biomodels.jummp.core
 
 import grails.async.Promise
 import grails.plugin.springsecurity.annotation.Secured
-import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
@@ -88,27 +87,18 @@ class SearchService implements InitializingBean {
      * Dependency injection of grailsApplication
      */
     def redisService
+    /**
+     * Dependency injection of the Spring-managed OmicsDI search strategy bean
+     * (only present when jummp.search.strategy is "omicsdi", see resources.groovy).
+     */
+    def omicsdiBasedSearch
+    /**
+     * Dependency injection of the Spring-managed Solr search strategy bean
+     * (only present when jummp.search.strategy is "solr", see resources.groovy).
+     */
+    def solrBasedSearch
 
     ModelSearchStrategy strategy
-
-    SearchService() {
-        loadSearchStrategy()
-    }
-
-    private void loadSearchStrategy() {
-        String strategySetting = Holders.grailsApplication.config.jummp.search.strategy
-        if (!strategySetting) {
-            LOGGER.error "Cannot load the setting model search strategy."
-            strategySetting = "solr"
-            LOGGER.error "... using the default value: ${strategySetting}"
-        }
-        strategy = strategySetting.equalsIgnoreCase("omicsdi") ? new OmicsdiBasedSearch() : new SolrBasedSearch()
-        //setSearchStrategy("omicsdi") // For testing immediately without changing .jummp.properties
-    }
-
-    private void setSearchStrategy(String strategy) {
-        this.strategy = strategy.equalsIgnoreCase("omicsdi") ? new OmicsdiBasedSearch() : new SolrBasedSearch()
-    }
 
     /**
      * Clears the index. Handle with care.
@@ -426,6 +416,10 @@ class SearchService implements InitializingBean {
 
     @Override
     void afterPropertiesSet() throws Exception {
+        strategy = omicsdiBasedSearch ?: solrBasedSearch
+        if (!strategy) {
+            LOGGER.error("No model search strategy bean was wired in; check the jummp.search.strategy config.")
+        }
         LOGGER.info("Finished the bean initialisation")
     }
 }
