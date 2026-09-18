@@ -31,6 +31,7 @@
 package net.biomodels.jummp.core
 
 import grails.plugin.cache.Cacheable
+import groovy.transform.PackageScope
 import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
@@ -59,7 +60,7 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
 
     def configurationService
 
-    final String PUBMED_API_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search/query="
+    final String PUBMED_API_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search?query="
 
     /**
      * Downloads the XML describing the PubMed resource and parses the Publication information.
@@ -72,6 +73,9 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
         // default PubMed
         final queryString = "${PUBMED_API_URL}ext_id:${id}%20src:med&resulttype=core"
         def slurper = lookupPublicationDataInPubMed(queryString)
+        if (!slurper) {
+            return null
+        }
 
         PLPTC linkCommand = createLinkProviderInstance()
         PubTC.fromPubMed(linkCommand, id, slurper)
@@ -95,6 +99,9 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
                 queryString = "${PUBMED_API_URL}doi:${id}%20&resulttype=core"
         }
         def slurper = lookupPublicationDataInPubMed(queryString)
+        if (!slurper) {
+            return null
+        }
 
         PLPTC linkCommand = createLinkProviderInstance(linkType)
         PubTC.fromPubMed(linkCommand, id, slurper)
@@ -127,7 +134,11 @@ class PubMedService extends AbstractPubDataFetchStrategy implements Initializing
         linkCommand
     }
 
-    private GPathResult lookupPublicationDataInPubMed(String strURL) throws JummpException {
+    // @PackageScope (not private) so tests can stub it via metaClass - a bare method with no
+    // modifier is public in Groovy (unlike fields), and a genuinely private method's internal
+    // self-calls compile to a direct JVM invokespecial that bypasses the MetaClass entirely.
+    @PackageScope
+    GPathResult lookupPublicationDataInPubMed(String strURL) throws JummpException {
         URL url
         try {
             url = new URL(strURL)

@@ -24,6 +24,7 @@ package net.biomodels.jummp.core
 import grails.test.runtime.FreshRuntime
 import grails.test.spock.IntegrationSpec
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PTC
+import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import spock.lang.Unroll
 
 @FreshRuntime
@@ -63,5 +64,35 @@ class PubMedServiceSpec extends IntegrationSpec {
         "29843739" | 6          | "Pereira B"         | "Carneiro S"
         "28625987" | 8          | "Guarnieri MT"      | "Beckham GT"
         "31079267" | 11         | "Shimizu K"         | "Kikkawa F"
+    }
+
+    def "fetchPublicationData(id) degrades gracefully instead of NPEing when the EuropePMC lookup fails"() {
+        given: "the underlying EuropePMC lookup fails (e.g. malformed URL, timeout, non-2xx response)"
+        pubMedService.metaClass.lookupPublicationDataInPubMed = { String url -> null }
+
+        when: "fetching publication data"
+        PTC ptc = pubMedService.fetchPublicationData("00000000")
+
+        then: "null is returned instead of throwing"
+        null == ptc
+        noExceptionThrown()
+
+        cleanup:
+        pubMedService.metaClass = null
+    }
+
+    def "fetchPublicationData(id, linkType) degrades gracefully instead of NPEing when the EuropePMC lookup fails"() {
+        given: "the underlying EuropePMC lookup fails (e.g. malformed URL, timeout, non-2xx response)"
+        pubMedService.metaClass.lookupPublicationDataInPubMed = { String url -> null }
+
+        when: "fetching publication data via the PubLP.LinkType overload"
+        PTC ptc = pubMedService.fetchPublicationData("00000000", PubLP.LinkType.PUBMED)
+
+        then: "null is returned instead of throwing"
+        null == ptc
+        noExceptionThrown()
+
+        cleanup:
+        pubMedService.metaClass = null
     }
 }
