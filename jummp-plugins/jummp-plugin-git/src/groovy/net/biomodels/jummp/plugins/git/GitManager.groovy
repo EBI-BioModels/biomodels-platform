@@ -704,11 +704,13 @@ has not been initialised any VCS yet."""
      *
      * In git there is no difference between initial import and update of a file.
      * This method contains the merged implementation for both import and update.
-     * It locks the model directory, initialises if necessary
-     * copies the files, does git add, git commit and finally a push
+     * It locks the model directory, initialises if necessary,
+     * moves the files in (source files are not preserved - this is faster than
+     * copying), does git add, git commit and finally a push
      *
      * @param modelDirectory The model directory
-     * @param files The files to copy into the directory
+     * @param files The files to move into the directory. Callers must not rely on these
+     *        File objects still existing at their original path afterwards.
      * @param deleted The files that will be deleted
      * @param commitMessage The commit message
      * @return A String A string representing the commit hash of the recently created revision

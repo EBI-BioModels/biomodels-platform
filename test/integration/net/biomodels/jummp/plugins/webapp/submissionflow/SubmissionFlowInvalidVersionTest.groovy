@@ -53,7 +53,7 @@ public class SubmissionFlowInvalidVersionTest extends SubmissionFlowTestBase {
     @Test
     void testSubmitInvalidSbml() {
         grailsApplication.config.jummp.plugins.sbml.validation = true
-        testSetup()
+        setupSubmissionFlow()
         getToUploadPage()
         signalEvent("Upload")
         assertFlowState("uploadFiles")

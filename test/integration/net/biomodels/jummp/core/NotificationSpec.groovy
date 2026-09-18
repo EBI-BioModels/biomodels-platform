@@ -52,7 +52,7 @@ to have this with the files. Best Matthias König"""
             }
             assertNotNull(user)
             Notification notification = new Notification(title: title, body: body,
-                dateCreated: dateCreated, notificationType: type, user: user)
+                dateCreated: dateCreated, notificationType: type, sender: user)
         expect:
             notification.validate()
     }

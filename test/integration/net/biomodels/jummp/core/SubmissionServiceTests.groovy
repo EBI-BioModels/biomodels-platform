@@ -95,7 +95,7 @@ class SubmissionServiceTests extends JummpIntegrationTest {
         assertTrue new File("target/vcs/exchange/").mkdirs()
         fileSystemService.root = root
         String containerPath = root.absolutePath + "/aaa/"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         GitManagerFactory gitService = new GitManagerFactory()
         gitService.grailsApplication = grailsApplication
         grailsApplication.config.jummp.plugins.git.enabled = true

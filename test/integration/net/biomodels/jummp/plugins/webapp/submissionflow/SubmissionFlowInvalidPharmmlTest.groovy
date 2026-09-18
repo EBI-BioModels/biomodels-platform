@@ -50,7 +50,7 @@ class SubmissionFlowInvalidPharmmlTest extends SubmissionFlowTestBase {
 
     @Test
     void testSubmitInvalidPharmml() {
-        testSetup()
+        setupSubmissionFlow()
         getToUploadPage()
         signalEvent("Upload")
         assertFlowState("uploadFiles")

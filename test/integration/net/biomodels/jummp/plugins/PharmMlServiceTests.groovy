@@ -140,7 +140,7 @@ class PharmMlServiceTests extends JummpIntegrationTest {
         fileSystemService.root = new File("target/pharmml/git/").getCanonicalFile()
         fileSystemService.root.mkdirs()
         String containerPath = fileSystemService.root.absolutePath + "/aaa/"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         modelService.vcsService.modelContainerRoot = fileSystemService.root
         GitManagerFactory gitService = new GitManagerFactory()
         gitService.grailsApplication = grailsApplication

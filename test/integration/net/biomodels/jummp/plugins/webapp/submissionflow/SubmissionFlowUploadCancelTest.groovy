@@ -52,7 +52,7 @@ public class SubmissionFlowUploadCancelTest extends SubmissionFlowTestBase {
 
     @Test
     void testUploadCancel() {
-    	testSetup();
+    	setupSubmissionFlow();
         getToUploadPage()
         clickCancelEndFlow()
     }

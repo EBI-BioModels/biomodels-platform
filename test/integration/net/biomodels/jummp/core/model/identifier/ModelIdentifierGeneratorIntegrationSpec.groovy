@@ -26,6 +26,7 @@ import grails.test.spock.IntegrationSpec
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
+import net.biomodels.jummp.utils.redis.RedisService
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 
 class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
@@ -114,7 +115,7 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
     @DirtiesRuntime
     void 'should cope with multiple types of id generators'() {
         given: 'the redis calls are bypassed without knock-on effects on model id generation'
-        redisService.doRedisGet = { key ->
+        RedisService.metaClass.static.doRedisGet = { String key ->
             println "doRedisGet $key"
             key
         }

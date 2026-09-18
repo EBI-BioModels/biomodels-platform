@@ -1229,6 +1229,7 @@ an annotation to SBML document.""")
             // then decide which changes have been made
             List existingFiles = files
             workingMemory.put("existingFiles", existingFiles as JSON)
+            workingMemory.put("existingFilesList", existingFiles)
             sessionFactory.currentSession.clear()
         }
 
@@ -1237,7 +1238,7 @@ an annotation to SBML document.""")
                 workingMemory.put("removeFromVCS", new LinkedList<RFTC>())
             }
             def removeFromVcs = (Collection<RFTC>) workingMemory.get("removeFromVCS")
-            def existing = workingMemory.get("existing_files") as List<RFTC>
+            def existing = workingMemory.get("existingFilesList") as List<RFTC>
             filesToDelete.each { RFTC candidate ->
                 if (existing.find { RFTC r ->
                     new File(r.path).getName() == new File(candidate.path).getName()

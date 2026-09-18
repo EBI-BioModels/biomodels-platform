@@ -79,7 +79,7 @@ class SubmissionFlowTestBase extends WebFlowTestCase {
         modelService.vcsService.vcsManager.exchangeDirectory = new File("target/vcs/exchange")
     }
     
-    void testSetup(String modelID = null) {
+    void setupSubmissionFlow(String modelID = null) {
         super.setUp()
         mockRequest = new MockMultipartHttpServletRequest()
         if (modelID) {
@@ -104,7 +104,7 @@ class SubmissionFlowTestBase extends WebFlowTestCase {
                         String format,
                         String mname,
                         String[] descriptionStrings) {
-        testSetup(null)
+        setupSubmissionFlow(null)
         getToUploadPage()
         signalEvent("Upload")
         assertFlowState("uploadFiles")

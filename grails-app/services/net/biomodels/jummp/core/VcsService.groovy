@@ -78,7 +78,7 @@ class VcsService implements GrailsConfigurationAware, InitializingBean {
 
     /**
     * Updates a Model file previously imported to the VCS.
-    * Copies @p file into the working copy of the VCS and updates the existing file in the
+    * Moves @p file into the working copy of the VCS and updates the existing file in the
     * VCS and the remote location of the VCS.
     * Use this method if the file had been imported previously.
     * @param model The Model representing the file in the VCS.
@@ -114,7 +114,7 @@ class VcsService implements GrailsConfigurationAware, InitializingBean {
     }
     /**
      * Imports a new Model file into the VCS.
-     * Copies @p file into the working copy of the VCS and performs an initial import.
+     * Moves @p file into the working copy of the VCS and performs an initial import.
      * Use this method if the file has not been imported previously.
      * @param model The Model representing the new file in the VCS
      * @param file The file to import
@@ -136,7 +136,7 @@ class VcsService implements GrailsConfigurationAware, InitializingBean {
 
     /**
      * Imports a new Model file into the VCS.
-     * Copies @p file into the working copy of the VCS and performs an initial import.
+     * Moves @p file into the working copy of the VCS and performs an initial import.
      * Use this method if the file has not been imported previously.
      * @param model The Model representing the new file in the VCS
      * @param file The file to import

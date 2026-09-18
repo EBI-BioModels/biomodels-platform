@@ -68,9 +68,10 @@ public class SubmissionFlowUpdateTest extends SubmissionFlowTestBase {
         importFile.append("Test\n")
         def rf = new RepositoryFileTransportCommand(path: importFile.absolutePath, description: "",
                 mainFile: true)
+        authenticateAsTestUser()
         Model uploadedModel = modelService.uploadModelAsFile(rf, meta)
         assertTrue(uploadedModel.validate())
-    	testSetup(uploadedModel.submissionId)
+    	setupSubmissionFlow(uploadedModel.submissionId)
         assertFlowState("uploadFiles")
         File newFile = new File("jummp-plugins/jummp-plugin-pharmml/test/files/0.2.1/example1.xml")
         Map<File,String> additionalFiles = getRandomAdditionalFiles(10)

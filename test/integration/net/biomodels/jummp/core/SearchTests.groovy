@@ -148,7 +148,7 @@ class SearchTests extends JummpIntegrationTest {
         def container = new File("target/vcs/git/ggg/")
         container.mkdirs()
         new File("target/vcs/exchange/").mkdirs()
-        fileSystemService.currentModelContainer = container.getCanonicalPath()
+        fileSystemService.currentModelContainer.set(container.getCanonicalPath())
         fileSystemService.root = container.getParentFile()
         modelService.vcsService.modelContainerRoot = fileSystemService.root
         createUserAndRoles()

@@ -1167,14 +1167,22 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 description: modelFileFormatService.extractDescription(modelFiles, format),
                 comment: meta.comment,
                 uploadDate: new Date())
+        revision.format = format
         RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+        // the revision isn't persisted yet, so RevisionTC.getFiles() cannot resolve its files
+        // from the database - supply them directly from the not-yet-persisted repoFiles.
+        revisionTC.files = repoFiles
 
         // keep a list of RFs closely, as we may need to discard all of them
         List<RepositoryFile> domainObjects =
             repositoryFileService.convertRFTCToRF(repoFiles, revision)
-        String formatVersion = modelFileFormatService.getFormatVersion(revisionTC)
-        revision.format = ModelFormat.findByIdentifierAndFormatVersion(meta.format.identifier, formatVersion)
-        assert formatVersion != null && revision.format != null
+        if (valid) {
+            // only the wildcard-version format resolved above can be trusted for invalid
+            // content - attempting to extract a precise formatVersion from it would fail.
+            String formatVersion = modelFileFormatService.getFormatVersion(revisionTC)
+            revision.format = ModelFormat.findByIdentifierAndFormatVersion(meta.format.identifier, formatVersion)
+            assert formatVersion != null && revision.format != null
+        }
         try {
             revision.vcsId = vcsService.importModel(model, modelFiles)
         } catch (VcsException e) {
@@ -1230,7 +1238,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             stopWatch.stop()
 
             // broadcast event
-            def event = new ModelCreatedEvent(this, new ModelAdapter(model: model).toCommandObject(), modelFiles)
+            def event = new ModelCreatedEvent(this, new ModelAdapter(model: model, latest: revision).toCommandObject(), modelFiles)
             grailsApplication.mainContext.publishEvent(event)
         } else {
             // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
@@ -1339,11 +1347,19 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                         description: modelFileFormatService.extractDescription(modelFiles, format), comment: comment,
                         uploadDate: new Date(), owner: currentUser,
                 minorRevision: false, validated:valid)
+        revision.format = format
         RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+        // the revision isn't persisted yet, so RevisionTC.getFiles() cannot resolve its files
+        // from the database - supply them directly from the not-yet-persisted repoFiles.
+        revisionTC.files = repoFiles
 
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
-        String formatVersion = modelFileFormatService.getFormatVersion(revisionTC)
-        revision.format = ModelFormat.findByIdentifierAndFormatVersion(format.identifier, formatVersion)
+        if (valid) {
+            // only the format resolved above can be trusted for invalid content - attempting
+            // to extract a precise formatVersion from it would fail.
+            String formatVersion = modelFileFormatService.getFormatVersion(revisionTC)
+            revision.format = ModelFormat.findByIdentifierAndFormatVersion(format.identifier, formatVersion)
+        }
 
         // save the new model in the database
         try {
