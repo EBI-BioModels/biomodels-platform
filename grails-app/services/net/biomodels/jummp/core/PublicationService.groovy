@@ -131,7 +131,8 @@ class PublicationService implements IPublicationService, InitializingBean {
         if (type == PLP.LinkType.PUBMED || type == PLP.LinkType.DOI) {
             pubTC = pubMedService.fetchPublicationData(link, type)
             log.debug("The publication details of ${link} fetched from EuropePMC look ${pubTC?.dump()}")
-            if (type == PLP.LinkType.DOI && pubTC?.isEmpty()) {
+            // a null result means EuropePMC could not be reached or answered with an error
+            if (type == PLP.LinkType.DOI && (pubTC == null || pubTC.isEmpty())) {
                 // fallback to DoiService if the entry hasn't indexed in PubMed centre yet
                 try {
                     pubTC = doiService.fetchPublicationData(link)
@@ -139,6 +140,8 @@ class PublicationService implements IPublicationService, InitializingBean {
                 } catch (JummpException je) {
                     log.error("""An errors occurred when fetching the publication metadata of \
 ${linkTypeAsString}:${link} due to ${je.message}""")
+                    // do not hand back the empty EuropePMC record as if it were a real publication
+                    pubTC = null
                 }
             }
         }

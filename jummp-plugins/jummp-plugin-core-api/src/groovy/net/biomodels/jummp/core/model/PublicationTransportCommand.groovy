@@ -219,6 +219,13 @@ class PublicationTransportCommand implements Serializable {
             setFieldIfItExists("issue", result.journalInfo.issue, false)
             setFieldIfItExists("journal", result.journalInfo.journal.title, false)
         }
+        // preprints (e.g. bioRxiv) have no journalInfo: the publisher then plays the journal's role
+        if (!journal) {
+            setFieldIfItExists("journal", result.bookOrReportDetails.publisher, false)
+        }
+        if (year == null) {
+            setFieldIfItExists("year", result.pubYear, true)
+        }
     }
 
     boolean isEmpty() {
