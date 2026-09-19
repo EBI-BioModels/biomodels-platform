@@ -491,7 +491,9 @@ grails.plugin.springsecurity.filterChain.chainMap = [
     '/images/**': 'none',
     '/js/**': 'none',
     '/fonts/**': 'none',
-    '/**': 'JOINED_FILTERS,-restTokenValidationFilter,-restExceptionTranslationFilter'                                                                           // Traditional chain
+    // Traditional chain. Remember-me is off (the login form has no such option): the cookie is issued at the password
+    // step, before the OTP, so honouring it would let a password alone through 2FA on the public pages.
+    '/**': 'JOINED_FILTERS,-restTokenValidationFilter,-restExceptionTranslationFilter,-rememberMeAuthenticationFilter'
 ]
 grails.plugin.springsecurity.useSecurityEventListener = true
 

@@ -29,6 +29,8 @@ A mandatory security rollout went live **04 May 2026**, announced to all users b
 | Compromised Password Monitoring | Cross-checks passwords against known breach databases            |
 | Updated Password Standards      | Stricter complexity and history rules                            |
 
+**A session waiting for its OTP is anonymous.** After the password check the session already holds the full login, and `session.enabled2FA` stays set until the OTP is verified. `TwoFactorAwareSecurityContextRepository` (the `securityContextRepository` bean in `resources.groovy`) hands such a session an empty context on every request except `/auth/**`, the login POST and the logout, and never saves over the stored login. Do not rely on `VerifyOtpFilters` or the taglib for this: the filter deliberately lets public actions through, and the taglib only hides the header. If a new endpoint has to work with the real user during verification, put it under `/auth/`. Remember-me is switched off (`-rememberMeAuthenticationFilter` on the `/**` chain in `Config.groovy`): its cookie is issued at the password step, so honouring it would bypass the OTP on public pages.
+
 Email templates for this campaign are in `logs/context/` (`email_template.txt`, `email_template.html`). The HTML template uses UF/LSM brand colours: orange `#ED6B21` (accent) and deep navy `#072C55` (header/headings). Use these colours for any future user-facing HTML emails.
 
 ## Email Conventions
