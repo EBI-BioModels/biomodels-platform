@@ -77,7 +77,11 @@ abstract class RunScriptHelper implements InitializingBean {
      */
     static UsernamePasswordAuthenticationToken createTokenForUser(String username) {
         assert username : "Username required but not defined"
-        createTokenForUser(User.findByUsername(username))
+        User u = User.findByUsername(username)
+        // Do not hand a missing user on to createTokenForUser(User): a null argument cannot be told apart from
+        // the String overload, so Groovy fails with "Ambiguous method overloading" instead of saying why.
+        assert u : "No user found with username '${username}'"
+        createTokenForUser(u)
     }
 
     /**
