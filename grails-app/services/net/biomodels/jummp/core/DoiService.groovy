@@ -25,6 +25,8 @@
 package net.biomodels.jummp.core
 
 import grails.plugin.cache.Cacheable
+import groovy.json.JsonSlurper
+import groovy.transform.PackageScope
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
@@ -37,26 +39,33 @@ import org.springframework.beans.factory.InitializingBean
 /**
  * @short Singleton-scoped facade for fetching publication metadata via DOI.
  *
- * This service provides means of looking up the metadata of publications via DOI.
+ * This service provides means of looking up the metadata of publications via DOI. It asks doi.org for the
+ * CSL-JSON representation of the record. Unlike BibTeX, whose layout differs between registration agencies
+ * (Crossref emits one line, DataCite one field per line) and has changed over time, CSL-JSON has the same
+ * structure whichever agency registered the DOI.
  *
  * @author <a href="mailto:tungnguyenvn@pm.me">tungnguyenvn@pm.me</a>
  * @date   2021-01-17
- * @update 2025-10-14
+ * @update 2026-09-19
  */
 class DoiService extends AbstractPubDataFetchStrategy implements InitializingBean {
     static transactional = false
     private static final Logger logger = LoggerFactory.getLogger(DoiService.class)
+    private static final String CSL_JSON_MEDIA_TYPE = "application/vnd.citationstyles.csl+json"
+    private static final String NOT_AVAILABLE = "N/A"
+    private static final String BARE_ORCID_PATTERN = /^\d{4}-\d{4}-\d{4}-\d{3}(\d|X)$/
 
     @Override
     PubTC fetchPublicationData(final String doi) throws JummpException {
-        Map fetchedData = lookupPublicationDataFromDOI(doi)
-        PubTC pubTC = buildPubTCFromRawData(fetchedData)
-        if (pubTC.validate()) {
-            return PubTC.fromDOI(pubTC)
-        } else {
-            logger.error("The DOI ${doi}: cannot pull all required information! Errors: ${pubTC.errors.toString()}")
+        PubTC pubTC = buildPubTCFromCslJson(doi, lookupPublicationDataFromDOI(doi))
+        if (!pubTC) {
             return null
         }
+        if (pubTC.validate()) {
+            return PubTC.fromDOI(pubTC)
+        }
+        logger.error("The DOI ${doi}: cannot pull all required information! Errors: ${pubTC.errors.toString()}")
+        return null
     }
 
     @Cacheable("doiLinkProviderInstance")
@@ -69,122 +78,110 @@ class DoiService extends AbstractPubDataFetchStrategy implements InitializingBea
         linkCommand
     }
 
-    private PubTC buildPubTCFromRawData(final Map rawData) {
-        String doi = rawData["doi"]
-        String rawPubDetails = rawData["pubDetails"]
-        if (!rawPubDetails) {
-            logger.debug("The raw details of the publication record ${rawData.get('doi')} cannot be empty.")
+    /**
+     * Turns the CSL-JSON record of a DOI into a publication.
+     *
+     * @param doi the DOI that was looked up
+     * @param rawJson the response body from doi.org
+     * @return the publication, or null if the response is not a CSL-JSON record with a title, e.g. because
+     * the DOI or its registration agency is unknown and doi.org answered with an HTML error page.
+     */
+    // @PackageScope (not private) so tests can call it and stub its collaborators via metaClass
+    @PackageScope
+    PubTC buildPubTCFromCslJson(final String doi, final String rawJson) {
+        if (!rawJson?.trim()) {
+            logger.debug("The raw details of the publication record ${doi} cannot be empty.")
             return null
         }
-        char at = '@'
-        if (rawPubDetails.charAt(0) != at) {
+        def csl
+        try {
+            csl = new JsonSlurper().parseText(rawJson)
+        } catch (Exception ignored) {
             logger.debug("DOI ${doi} Not Found")
             return null
         }
-        String left = rawPubDetails.substring(rawPubDetails.indexOf(",") + 1)
-        left = left?.substring(0, left?.length() - 1)
-        String need = left?.substring(0, left.lastIndexOf("}"))
-        List<String> parts = need?.tokenize("\n")
-        // parts[0].replace("\n", "")
-        PLPTC linkProvider = createLinkProviderInstance()
-        PubTC pubTC = new PubTC(linkProvider: linkProvider, link: rawData["doi"])
-        Map pubMap = [:]
-        for (String p : parts) {
-            // p looks like
-            // "title = {Physiologically based pharmacokinetic (PBPK) model of glimepiride},"
-            List items = p.tokenize("=")
-            String attr = items[0].trim()
-            String value = items[1].replaceAll(/[{}]/, "").trim()
-            // remove the comma at the end of the value
-            value = value.endsWith(",") ? value[0..-2] : value
-            pubMap.put(attr, value)
+        String title = csl instanceof Map ? firstText(csl["title"]) : null
+        if (!title) {
+            logger.debug("DOI ${doi} has no title in its CSL-JSON record")
+            return null
         }
-        if (!pubMap?.isEmpty()) {
-            pubTC.link = pubMap.get("doi")
-            pubTC.title = pubMap.get("title") ?: "N/A"
-            pubTC.journal = pubMap.get("journal") ?: (pubMap.get("publisher") ?: "N/A")
-            pubTC.authors = parseAuthorsFromRawText(pubMap.get("author") as String) as List
-            pubTC.volume = pubMap.get("volume") ?: "N/A"
-            pubTC.issue = pubMap.get("number") ?: "N/A"
-            pubTC.pages = pubMap.get("pages") ?: "N/A"
-            pubTC.year = Integer.parseInt(pubMap.get("year") as String) ?: new Date().format("yyyy").toInteger()
-            pubTC.month = inferFromMonthName(pubMap.get("month") as String) ?: new Date().format("mm").toInteger()
-            pubTC.affiliation = pubMap.get("affiliation") ?: "N/A"
-            pubTC.synopsis = pubMap.get("synopsis") ?: "N/A"
-            // Currently, the two attributes below are missing due to the limitations of this approach
-            /*pubTC.affiliation
-            pubTC.synopsis*/
-        }
+
+        PubTC pubTC = new PubTC(linkProvider: createLinkProviderInstance(), link: doi)
+        pubTC.title = title
+        // preprints have no container-title, in which case the publisher (e.g. openRxiv, arXiv) is the best fit
+        pubTC.journal = firstText(csl["container-title"]) ?: firstText(csl["publisher"]) ?: NOT_AVAILABLE
+        pubTC.volume = firstText(csl["volume"]) ?: NOT_AVAILABLE
+        pubTC.issue = firstText(csl["issue"]) ?: NOT_AVAILABLE
+        pubTC.pages = firstText(csl["page"]) ?: NOT_AVAILABLE
+        // the two attributes below are not extracted from the record yet
+        pubTC.affiliation = NOT_AVAILABLE
+        pubTC.synopsis = NOT_AVAILABLE
+        applyPublicationDate(pubTC, csl["issued"])
+        pubTC.authors = parseAuthors(csl["author"])
         return pubTC
     }
 
-    private static Map lookupPublicationDataFromDOI(final String doi) {
+    // @PackageScope (not private) so tests can stub it via metaClass - see PubMedService.lookupPublicationDataInPubMed
+    @PackageScope
+    String lookupPublicationDataFromDOI(final String doi) {
         // this method works without specifying proxy in the curl command
         // because we had given the proxy arguments to JVM
-        Map result = ["doi": doi]
-        String url = "https://dx.doi.org/$doi"
-        String[] cmd = ["curl", "-LH", "Accept: application/x-bibtex", url]
-        String txt = cmd.execute().text
-        result.put("pubDetails", txt)
-        result
+        String acceptHeader = "Accept: " + CSL_JSON_MEDIA_TYPE
+        String url = "https://dx.doi.org/" + doi
+        String[] cmd = ["curl", "-sL", "-m", "20", "-H", acceptHeader, url]
+        return cmd.execute().text
     }
 
-    private static List<PersonTC> parseAuthorsFromRawText(final String rawText) {
+    /**
+     * CSL-JSON stores some values as a string on one record and as a list on another, e.g. the
+     * container-title of a preprint is an empty list.
+     */
+    private static String firstText(final def value) {
+        def first = value instanceof Collection ? (value ? value.first() : null) : value
+        first?.toString()?.trim() ?: null
+    }
+
+    private static void applyPublicationDate(final PubTC pubTC, final def issued) {
+        def dateParts = issued instanceof Map ? issued["date-parts"] : null
+        List parts = dateParts instanceof List && dateParts && dateParts[0] instanceof List ? dateParts[0] : []
+        if (parts.size() > 0 && parts[0] != null) {
+            pubTC.year = parts[0] as Integer
+        }
+        if (parts.size() > 1 && parts[1] != null) {
+            pubTC.month = parts[1] as String
+        }
+        if (parts.size() > 2 && parts[2] != null) {
+            pubTC.day = parts[2] as Integer
+        }
+    }
+
+    private static List<PersonTC> parseAuthors(final def rawAuthors) {
         List<PersonTC> authors = new ArrayList<>()
-        if (rawText) {
-            String[] authorSet = rawText.trim().split(" and ")
-            if (authorSet?.size()) {
-                for (String authorName : authorSet) {
-                    PersonTC author = new PersonTC()
-                    author.userRealName = authorName
-                    authors.add(author)
-                }
+        for (def rawAuthor : (rawAuthors instanceof Collection ? rawAuthors : [])) {
+            if (!(rawAuthor instanceof Map)) {
+                continue
             }
+            // an organisation is recorded under "literal" (or "name") instead of given/family
+            String name = [firstText(rawAuthor["given"]), firstText(rawAuthor["family"])].findAll { it }.join(" ")
+            name = name ?: (firstText(rawAuthor["literal"]) ?: firstText(rawAuthor["name"]))
+            if (!name) {
+                continue
+            }
+            PersonTC author = new PersonTC(userRealName: name)
+            // Person.orcid only accepts the bare identifier, while CSL-JSON carries the full https://orcid.org/ URL
+            String orcid = firstText(rawAuthor["ORCID"])?.replaceFirst(/^https?:\/\/orcid\.org\//, "")
+            if (orcid ==~ BARE_ORCID_PATTERN) {
+                author.orcid = orcid
+            }
+            def affiliations = rawAuthor["affiliation"]
+            String institution = affiliations instanceof Collection ?
+                affiliations.collect { it instanceof Map ? firstText(it["name"]) : firstText(it) }.findAll { it }.join("; ") : null
+            if (institution) {
+                author.institution = institution
+            }
+            authors.add(author)
         }
         return authors
-    }
-
-    private static String inferFromMonthName(final String name) {
-        int retVal = 0
-        switch (name) {
-            case "jan":
-                retVal = 1
-                break
-            case "feb":
-                retVal = 2
-                break
-            case "mar":
-                retVal = 3
-                break
-            case "apr":
-                retVal = 4
-                break
-            case "may":
-                retVal = 5
-                break
-            case "jun":
-                retVal = 6
-                break
-            case "jul":
-                retVal = 7
-                break
-            case "aug":
-                retVal = 8
-                break
-            case "sep":
-                retVal = 9
-                break
-            case "oct":
-                retVal = 10
-                break
-            case "nov":
-                retVal = 11
-                break
-            case "dec":
-                retVal = 12
-                break
-        }
-        retVal as String
     }
 
     @Override

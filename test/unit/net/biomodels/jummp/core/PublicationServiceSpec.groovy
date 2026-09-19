@@ -23,8 +23,10 @@ package net.biomodels.jummp.core
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Publication
+import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import spock.lang.Specification
 
 /**
@@ -128,5 +130,95 @@ class PublicationServiceSpec extends Specification {
 
         expect:
         !service.canManagePublication(publication)
+    }
+
+    /**
+     * JBM-655: the DOI is looked up in EuropePMC first and only the DoiService can resolve what EuropePMC
+     * does not index (arXiv, or a journal it does not cover). The stubs count their calls so that each test
+     * can also say which source was not supposed to be asked.
+     */
+    private Map stubPublicationSources(PubTC fromEuropePmc, def fromDoiService) {
+        Map calls = [europePmc: 0, doiService: 0]
+        service.pubMedService = [fetchPublicationData: { String id, PLP.LinkType type ->
+            calls.europePmc++
+            fromEuropePmc
+        }]
+        service.doiService = [fetchPublicationData: { String doi ->
+            calls.doiService++
+            if (fromDoiService instanceof Throwable) {
+                throw fromDoiService
+            }
+            fromDoiService
+        }]
+        calls
+    }
+
+    private static PubTC publication(String title, String journal) {
+        new PubTC(title: title, journal: journal)
+    }
+
+    void "a DOI unknown to EuropePMC is resolved through the DoiService"() {
+        given: "EuropePMC answers with a record without any details, as it does for a DOI it does not index"
+        PubTC fromDoi = publication("Self-Supervised Graph Transformer", "arXiv")
+        Map calls = stubPublicationSources(new PubTC(), fromDoi)
+
+        when:
+        PubTC result = service.fetchPublicationData(PLP.LinkType.DOI.label, "10.48550/arXiv.2007.02835")
+
+        then:
+        result.is(fromDoi)
+        calls == [europePmc: 1, doiService: 1]
+    }
+
+    void "the DoiService is also asked when EuropePMC could not be reached"() {
+        given:
+        PubTC fromDoi = publication("A paper", "A journal")
+        Map calls = stubPublicationSources(null, fromDoi)
+
+        when:
+        PubTC result = service.fetchPublicationData(PLP.LinkType.DOI.label, "10.1/x")
+
+        then:
+        result.is(fromDoi)
+        calls.doiService == 1
+    }
+
+    void "the DoiService is not asked when EuropePMC has the record"() {
+        given:
+        PubTC fromEuropePmc = publication("A paper", "A journal")
+        Map calls = stubPublicationSources(fromEuropePmc, publication("other", "other"))
+
+        when:
+        PubTC result = service.fetchPublicationData(PLP.LinkType.DOI.label, "10.1/x")
+
+        then:
+        result.is(fromEuropePmc)
+        calls == [europePmc: 1, doiService: 0]
+    }
+
+    void "a DOI known to neither source gives null, not an empty publication"() {
+        given:
+        Map calls = stubPublicationSources(new PubTC(), null)
+
+        expect:
+        service.fetchPublicationData(PLP.LinkType.DOI.label, "10.1/x") == null
+        calls.doiService == 1
+    }
+
+    void "a failing DoiService gives null, not the empty EuropePMC record"() {
+        given:
+        stubPublicationSources(new PubTC(), new JummpException("doi.org is unreachable", new IOException()))
+
+        expect:
+        service.fetchPublicationData(PLP.LinkType.DOI.label, "10.1/x") == null
+    }
+
+    void "a PubMed ID never falls back to the DoiService"() {
+        given:
+        Map calls = stubPublicationSources(new PubTC(), publication("other", "other"))
+
+        expect:
+        service.fetchPublicationData(PLP.LinkType.PUBMED.label, "12345") != null
+        calls == [europePmc: 1, doiService: 0]
     }
 }

@@ -71,6 +71,58 @@ class PublicationTransportCommandSpec extends Specification {
         cmd.errors.getFieldErrors("authors").size() == 1
     }
 
+    def "test extractManuscriptInfoFromPubMed takes the publisher and year of a preprint that has no journalInfo"() {
+        given: "the shape of the EuropePMC record for the bioRxiv preprint 10.1101/2024.03.15.585236 (JBM-655)"
+        def slurper = new XmlSlurper().parseText("""<responseWrapper><resultList><result>
+<id>PPR822903</id><source>PPR</source>
+<title>Curating models from BioModels</title>
+<pubYear>2024</pubYear>
+<bookOrReportDetails><publisher>bioRxiv</publisher><yearOfPublication>2024</yearOfPublication></bookOrReportDetails>
+</result></resultList></responseWrapper>""")
+        def cmd = new PublicationTransportCommand()
+
+        when:
+        cmd.extractManuscriptInfoFromPubMed(slurper)
+
+        then:
+        cmd.title == "Curating models from BioModels"
+        cmd.journal == "bioRxiv"
+        cmd.year == 2024
+        !cmd.isEmpty()
+    }
+
+    def "test extractManuscriptInfoFromPubMed prefers the journal of journalInfo over the publisher"() {
+        given:
+        def slurper = new XmlSlurper().parseText("""<responseWrapper><resultList><result>
+<title>A paper</title><pubYear>2020</pubYear>
+<journalInfo><yearOfPublication>2019</yearOfPublication><journal><title>Bioinformatics</title></journal></journalInfo>
+<bookOrReportDetails><publisher>Some Publisher</publisher></bookOrReportDetails>
+</result></resultList></responseWrapper>""")
+        def cmd = new PublicationTransportCommand()
+
+        when:
+        cmd.extractManuscriptInfoFromPubMed(slurper)
+
+        then:
+        cmd.journal == "Bioinformatics"
+        cmd.year == 2019
+    }
+
+    def "test extractManuscriptInfoFromPubMed leaves an empty result empty so that the DOI fallback kicks in"() {
+        given: "EuropePMC answers a DOI it does not index with zero hits"
+        def slurper = new XmlSlurper().parseText(
+            "<responseWrapper><hitCount>0</hitCount><resultList/></responseWrapper>")
+        def cmd = new PublicationTransportCommand()
+
+        when:
+        cmd.extractManuscriptInfoFromPubMed(slurper)
+
+        then:
+        cmd.isEmpty()
+        cmd.journal == null
+        cmd.year == null
+    }
+
     /**
      * @param authors each entry is the full name extractAuthorsFromPubMed() is expected to
      *        reconstruct, e.g. "Smith J" (or "" for an intentionally blank/invalid author).
