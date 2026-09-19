@@ -27,7 +27,6 @@ package net.biomodels.jummp.core
 import grails.transaction.Transactional
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
-import groovy.time.TimeCategory
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.security.IAuthService
@@ -43,6 +42,19 @@ import java.text.SimpleDateFormat
 @Transactional
 class AuthService implements IAuthService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthService.class)
+    /** How long a one-time passcode can be used after it was issued. */
+    static final long OTP_VALIDITY_MILLIS = 15 * 60 * 1000L
+
+    /**
+     * Tells whether a one-time passcode issued at the given time can still be used.
+     *
+     * <p>The elapsed time is compared as a whole. Looking only at the minutes and seconds of a TimeCategory duration
+     * ignores its hours and days, which made a code valid again for the first 15 minutes of every hour after it was
+     * issued (JBM-790).</p>
+     */
+    static boolean isOtpValid(final Date issuedDate, final Date now = new Date()) {
+        return issuedDate != null && now.time - issuedDate.time < OTP_VALIDITY_MILLIS
+    }
     def grailsApplication
     def redisService
     def userService
@@ -172,13 +184,7 @@ further support"""
         final String realName = USER.person.userRealName
         final String toEmail = USER.email
         if (auth) {
-            boolean valid
-            use(TimeCategory) {
-                def duration = new Date() - auth.issuedDate
-                // valid if the issued date is not over 15 minutes
-                valid = duration.minutes*60 + duration.seconds < 15*60
-            }
-            if (valid) {
+            if (isOtpValid(auth.issuedDate)) {
                 LOGGER.info("Reused OTP for username: $username; address: $remoteAddress; session: $sessionId")
                 final String existingOtp = auth.otp
                 Thread.start { emailOTP(realName, toEmail, existingOtp) }
@@ -207,21 +213,29 @@ further support"""
         }
         TFA first = results?.first()
         if (first) {
-            boolean valid = false
-            use(TimeCategory) {
-                def duration = new Date() - first.issuedDate
-                // println "Days: ${duration.days}, Hours: ${duration.hours}, etc."
-                // valid if the issued date is not over 15 minutes
-                valid = duration.minutes*60 + duration.seconds < 15*60
-            }
+            boolean valid = isOtpValid(first.issuedDate)
             if (!valid) {
-                // make it expired because it has already been used. Should we?
                 return [matched: valid, cause: "OTP expired. You can request a new one."]
             }
+            consume(first)
             return [matched: valid]
         } else {
             LOGGER.debug("No OTP match for user: $username at session: $sessionId")
             return [matched: false, cause: "OTP doesn't exist. Check it in your email again."]
+        }
+    }
+
+    /**
+     * Makes a code that has just been accepted unusable, so that it can be entered only once, as the OTP form tells
+     * the user.
+     *
+     * <p>The row is kept and only expired. {@link #is2FAEnabled} decides that a user has 2FA on from the rows that
+     * exist, so deleting it could turn their 2FA off.</p>
+     */
+    private void consume(final TFA code) {
+        code.issuedDate = new Date(System.currentTimeMillis() - OTP_VALIDITY_MILLIS)
+        if (!code.save(flush: true)) {
+            LOGGER.error("Cannot expire the verification code that has just been used: ${code.errors}")
         }
     }
 
