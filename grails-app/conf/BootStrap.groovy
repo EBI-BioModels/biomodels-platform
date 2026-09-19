@@ -32,6 +32,7 @@
 import grails.plugin.springsecurity.acl.AclSid
 import grails.plugins.rest.client.RestBuilder
 import grails.util.Environment
+import groovy.sql.Sql
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -58,6 +59,19 @@ class BootStrap {
     def modelFileFormatService
     def idGeneratorRegistryFactoryBean
     def subscribeClientService
+    def dataSource
+
+    /**
+     * The test database is built by Hibernate from the domain classes because databaseMigrations cannot be used there
+     * (see DataSource.groovy), so columns that a migration widened keep Hibernate's default size in the tests. Mirror
+     * those migrations here so that the tests see the schema a migrated database has.
+     */
+    void doMatchTestSchemaToMigrations() {
+        if (Environment.getCurrent() == Environment.TEST) {
+            // grails-app/migrations/20240605_widenPersonInstitution.groovy
+            new Sql(dataSource).execute("ALTER TABLE person ALTER COLUMN institution VARCHAR(1024)")
+        }
+    }
 
     void doInitialiseSomeUsersAndRoles() {
         if (Environment.getCurrent() != Environment.TEST) {
@@ -229,6 +243,7 @@ class BootStrap {
 
         def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
         RevisionTransportCommand.context = ctx
+        doMatchTestSchemaToMigrations()
         doInitialiseModelFormatAndRelated()
         registerDefaultModelElementTypes()
         doAddValidationMethods2DomainClass()
