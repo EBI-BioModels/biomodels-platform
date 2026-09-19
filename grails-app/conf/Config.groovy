@@ -140,6 +140,21 @@ beans {
 grails.cache.config.provider.name = "jummpCacheManager"
 grails.cache.ehcache.cacheManagerName = "jummpCacheManager"
 
+// Every script run in an interactive `grails>` session builds a new application context in the same JVM
+// and never closes the previous one, so its ehcache CacheManager stays registered in ehcache's static map.
+// The cache plugin then rebuilds its manager from generated XML named after `provider.name`, which the
+// two settings above never reach (grails.cache.config must be a closure, not a ConfigObject), so it is
+// always registered as 'grails-cache-ehcache' and the second script fails with "Another CacheManager with
+// same name ... already exists". Give each development context its own name, the same way the Spring
+// Security ACL cache does. Production is left as is: it has a single context per JVM.
+environments {
+    development {
+        def uniqueCacheManagerName = "jummpCacheManager-${System.currentTimeMillis()}".toString()
+        grails.cache.ehcache.cacheManagerName = uniqueCacheManagerName
+        grails.cache.config = { provider { name uniqueCacheManagerName } }
+    }
+}
+
 // set per-environment serverURL stem for creating absolute links
 environments {
     production {

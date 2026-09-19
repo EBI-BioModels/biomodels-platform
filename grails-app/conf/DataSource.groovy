@@ -67,6 +67,11 @@ try {
     if (protocol == 'mysql') {
         String unicodeOpts = "useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=CONVERT_TO_NULL"
         unicodeOpts += "&serverTimezone=GMT&useSSL=false&allowPublicKeyRetrieval=true"
+        // Connector/J 8 no longer treats a null catalog as the current database (5.x did). Liquibase 2.0.5
+        // (database-migration 1.4.1) calls DatabaseMetaData.getTables(null, ...), which 8.0.11 turns into
+        // invalid SQL ("WHERE HAVING TABLE_TYPE IN ...") and later 8.0.x turn into a scan of every database
+        // on the server, so dbm-gorm-diff & co. either crash or diff against the wrong schemas.
+        unicodeOpts += "&nullCatalogMeansCurrent=true"
         dbProps.setProperty("jummp.database.url",
             "jdbc:${protocol}://${server}:${port}/${database}?${unicodeOpts}")
     }
