@@ -206,6 +206,11 @@ has been accessed!""")
                 forward(controller: 'errors', action: 'error404')
                 return
             }
+            if (isRequestedRevisionUnavailable(model)) {
+                LOGGER.warn("${params.id}.${params.revisionId} was deleted or never existed: " + e.message)
+                doShowRenderUnavailableRevision(model)
+                return
+            }
             LOGGER.warn("You are trying to retrieve a private model: " + e.message)
             isPrivateModel = true
             doShowPreparePrivateRevision(model, rev, myList)
@@ -227,10 +232,12 @@ has been accessed!""")
                 }
                 publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_VIEW, "Accessing the model: ${rev.identifier()}")
                 if (isPrivateModel) {
-                    String previousURL = "${serverURL}/${rev.model.submissionId}"
-                    String loginUrl = "${serverURL}/login/auth?previousURL=${URLEncoder.encode(previousURL, 'UTF-8')}"
-                    render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description,
-                        loginUrl: loginUrl])
+                    Map viewModel = [id: rev.model.submissionId, description: rev.description]
+                    if (!springSecurityService.isLoggedIn()) {
+                        String previousURL = "${serverURL}/${rev.model.submissionId}"
+                        viewModel.loginUrl = "${serverURL}/login/auth?previousURL=${URLEncoder.encode(previousURL, 'UTF-8')}"
+                    }
+                    render(view: "showBasicView", model: viewModel)
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
                     RTC revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
@@ -274,6 +281,31 @@ has been accessed!""")
     private void allowAccessHTMLViaBrowser(final String userAgent, final String format = null) {
         if (format && format?.toLowerCase() == "html" && !WSF.isUserAgentSupported(userAgent)) {
             render(view: '/errors/error415', model: [code: 415])
+        }
+    }
+
+    /**
+     * ModelService throws the same AccessDeniedException for a revision that was deleted, one that never
+     * existed and one the user simply cannot read, so the cause has to be worked out here.
+     */
+    private boolean isRequestedRevisionUnavailable(final Model model) {
+        if (!params.revisionId) {
+            return false
+        }
+        Revision revision = Revision.findByModelAndRevisionNumber(model, params.int("revisionId"))
+        return !revision || revision.deleted
+    }
+
+    private void doShowRenderUnavailableRevision(final Model model) {
+        withFormat {
+            html {
+                render(view: "showBasicView", status: 404, model: [
+                    id: model.publicationId ?: model.submissionId,
+                    revisionId: params.revisionId,
+                    unavailable: true
+                ])
+            }
+            '*' { forward(controller: 'errors', action: 'error404') }
         }
     }
 

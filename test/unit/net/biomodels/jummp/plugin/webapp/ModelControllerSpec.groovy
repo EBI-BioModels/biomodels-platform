@@ -8,14 +8,17 @@ import net.biomodels.jummp.core.ModelDelegateService
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PermissionTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.utils.redis.RedisService
 import net.biomodels.jummp.webapp.ModelController
+import org.springframework.security.access.AccessDeniedException
 import spock.lang.Specification
+import spock.lang.Unroll
 
 @TestFor(ModelController)
 @TestMixin(FiltersUnitTestMixin)
-@Mock([Revision])
+@Mock([Model, Revision])
 class ModelControllerSpec extends Specification {
     // JBM-705 added a mandatory redisService lookup to CommonController.setConfiguration(), which
     // runs as part of every controller bean's initialisation (not just when an action touches
@@ -123,5 +126,36 @@ class ModelControllerSpec extends Specification {
 
         then: "the id param is encoded"
         params.id == "&lt;em&gt;MODEL12345&lt;/em&gt;"
+    }
+
+    @Unroll
+    void "show reports revision #revisionId of a model as unavailable, not private"() {
+        given: "a model whose revision 1 is live and revision 2 was deleted"
+        Model bioModel = new Model(submissionId: "MODEL2609130001")
+        bioModel.save(validate: false, flush: true)
+        new Revision(model: bioModel, revisionNumber: 1, deleted: false).save(validate: false, flush: true)
+        new Revision(model: bioModel, revisionNumber: 2, deleted: true).save(validate: false, flush: true)
+
+        and: "the service denies access, as it does for deleted, missing and unreadable revisions alike"
+        def mds = mockFor(ModelDelegateService)
+        mds.demand.getRevisionFromParams() { String id, String rev -> throw new AccessDeniedException("denied") }
+        controller.modelDelegateService = mds.createMock()
+
+        when: "a browser (which sends Accept: text/html) requests that revision"
+        response.format = "html"
+        params.id = "MODEL2609130001"
+        params.revisionId = revisionId
+        controller.show()
+
+        then:
+        response.forwardedUrl == null
+        view == "/model/showBasicView"
+        model.unavailable
+        model.id == "MODEL2609130001"
+        model.revisionId == revisionId
+        response.status == 404
+
+        where:
+        revisionId << ["2", "3"]
     }
 }

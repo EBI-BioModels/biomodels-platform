@@ -44,9 +44,19 @@
 
 <body>
     <h2>${id}</h2>
-    <p>${description}</p>
-    <g:if test="${loginUrl}">
-        <p>This model is private. <a href="${loginUrl}">Log in</a> if you have access to view it.</p>
+    <g:if test="${unavailable}">
+        <p><g:message code="net.biomodels.jummp.core.model.show.MessageForUnavailableRevision"
+                      args="${[id, revisionId]}"/></p>
+        <p><g:link uri="/${id}">View the latest revision of ${id}</g:link></p>
     </g:if>
+    <g:else>
+        <p>${description}</p>
+        <g:if test="${loginUrl}">
+            <p>This model is private. <a href="${loginUrl}">Log in</a> if you have access to view it.</p>
+        </g:if>
+        <g:else>
+            <p><g:message code="net.biomodels.jummp.core.model.show.MessageForPrivateModelNoAccess"/></p>
+        </g:else>
+    </g:else>
 </body>
 </html>
