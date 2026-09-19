@@ -216,6 +216,9 @@ environments {
         // disable registration mail sending
         jummp.security.registration.email.send = false
         jummp.security.resetPassword.email.send = false
+        // MailingService.send() is the one place all outgoing mail goes through: tests must never dispatch mail
+        // through whatever Brevo/smtp2go/SMTP credentials the developer has configured
+        jummp.security.mailer.enabled = false
     }
 }
 
@@ -976,6 +979,22 @@ if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
     jummp.redis.timeout = 3600 // the default timeout
 }
 
+// The logical database (SELECT index) on the Redis server. The tests are given one of their own, otherwise they
+// run against the same keys as an application that shares the server: they consume real model identifiers
+// (e.g. MODEL2609180001 -> MODEL2609180148) and overwrite its cached data. 15 is the last database of a default
+// Redis installation, which has 16 (0-15). What the tests leave there is kept between runs: `redis-cli -n 15 flushdb`
+// resets it.
+if (!(jummpConfig.jummp.redis.database instanceof ConfigObject)) {
+    jummp.redis.database = jummpConfig.jummp.redis.database as int
+} else {
+    jummp.redis.database = 0 // the default database
+}
+environments {
+    test {
+        jummp.redis.database = 15
+    }
+}
+
 /**
  * SPRING SESSION CONFIGURATION
  * Notes: reuse Redis Server properties above
@@ -993,6 +1012,8 @@ springsession.maxInactiveIntervalInSeconds = jummp.springsession.maxInactiveInte
 springsession.redis.connectionFactory.hostName = jummp.redis.host
 springsession.redis.connectionFactory.port = jummp.redis.port       // Redis server connection timeout
 springsession.redis.connectionFactory.timeout = jummp.redis.timeout
+// keep the sessions on the same logical database as everything else, i.e. not on database 0 in the tests
+springsession.redis.connectionFactory.dbIndex = jummp.redis.database
 // This is crucial to make sure flash messages to be displayed
 // See: https://github.com/jeetmp3/spring-session/issues/5
 springsession.allow.persist.mutable = true

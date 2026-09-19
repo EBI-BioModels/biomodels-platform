@@ -74,7 +74,21 @@ class MailingService {
         ]).toString()
     }
 
+    /**
+     * Whether outgoing mail may be dispatched. It is unless jummp.security.mailer.enabled is set to false, which the
+     * test environment does so that no test can send mail through the real Brevo/smtp2go/SMTP account.
+     */
+    boolean isMailingEnabled() {
+        def enabled = grailsApplication.config.jummp.security.mailer.enabled
+        // an unset key reads as an empty ConfigObject rather than null
+        return enabled == null || enabled instanceof ConfigObject || Boolean.parseBoolean(enabled.toString())
+    }
+
     void send(Map params) {
+        if (!isMailingEnabled()) {
+            LOGGER.info("Not sending '${params.subject}' to '${params.to}': outgoing mail is disabled")
+            return
+        }
         String toAddr      = EmailUtils.extractEmail(params.to as String)
         if (!toAddr || !(toAddr ==~ EmailUtils.VALID_EMAIL)) {
             LOGGER.warn("Skipping email — invalid recipient address: '${params.to}'")

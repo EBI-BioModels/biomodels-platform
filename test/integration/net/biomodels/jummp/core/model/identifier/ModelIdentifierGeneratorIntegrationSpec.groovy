@@ -26,6 +26,7 @@ import grails.test.spock.IntegrationSpec
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
+import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.utils.redis.RedisService
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 
@@ -38,7 +39,36 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
     final String y = new Date().format('yyyy')
     def ymd = new Date().format('yyMMdd')
 
+    // The keys Redis holds for a generator type are shared by every generator of that type, so the generators of this
+    // spec have types of their own: with the ones of the real generators ("submission", "publication") the seed values
+    // below would replace the identifiers those generators, and the application under test, continue from.
+    static final String SUBMISSION_TYPE  = "jbm776Submission"
+    static final String PUBLICATION_TYPE = "jbm776Publication"
+    static final String FOO_TYPE         = "jbm776Foo"
+    static final String BAR_TYPE         = "jbm776Bar"
+
+    /**
+     * generate() continues from the identifier held in Redis under KeyCollection.getLastUsedIdValueKey(type), and from
+     * the count under getLastUsedIdCountKey(type), where "0000" means the counter has just been reset.
+     * getDefaultIdentifier() is no substitute here because the initializers below always supply a most recent
+     * identifier. The tests work on a Redis database of their own (JBM-776), so seed both keys there, every time,
+     * instead of relying on whatever another application or an earlier run left behind.
+     */
+    private static void seedLastUsedIdentifiers(final String year) {
+        assert RedisService.REDIS_SRV_DATABASE != 0 :
+            "Refusing to write model identifiers to Redis database 0, which an application may be using"
+        [
+            (SUBMISSION_TYPE) : ["MODEL1203044321", "4321"],
+            (PUBLICATION_TYPE): ["PUBL1234554321", "1234554321"],
+            (BAR_TYPE)        : ["YEARLY${year}123456".toString(), "123456"]
+        ].each { type, lastUsed ->
+            RedisService.doRedisSet(KeyCollection.getLastUsedIdValueKey(type), lastUsed[0])
+            RedisService.doRedisSet(KeyCollection.getLastUsedIdCountKey(type), lastUsed[1])
+        }
+    }
+
     def setup() {
+        seedLastUsedIdentifiers(y)
         ctx = grailsApplication.mainContext as GrailsApplicationContext
 
         // reset bean definitions and state relating to model id generation
@@ -98,11 +128,11 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
             barIdInitializer(DummyModelIdentifierInitializer, "YEARLY${y}123456")
 
             submissionIdGenerator(ModelIdentifierGeneratorFactoryBean, subCfg,
-                'submissionIdInitializer', false, 'submission')
+                'submissionIdInitializer', false, SUBMISSION_TYPE)
             publicationIdGenerator(ModelIdentifierGeneratorFactoryBean, pubCfg,
-                'publicationIdInitializer', true, 'publication')
-            fooIdGenerator(ModelIdentifierGeneratorFactoryBean, null, 'fooIdInitializer', false, 'foo')
-            barIdGenerator(ModelIdentifierGeneratorFactoryBean, barCfg, 'barIdInitializer', true, 'bar')
+                'publicationIdInitializer', true, PUBLICATION_TYPE)
+            fooIdGenerator(ModelIdentifierGeneratorFactoryBean, null, 'fooIdInitializer', false, FOO_TYPE)
+            barIdGenerator(ModelIdentifierGeneratorFactoryBean, barCfg, 'barIdInitializer', true, BAR_TYPE)
         }
         bb.beanDefinitions.each { name, beanDef ->
             ctx.registerBeanDefinition(name, beanDef)
@@ -132,7 +162,7 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
         then:
         submissionIdGenerator.generate() == "MODEL${ymd}0001"
         !submissionIdGenerator.regex
-        submissionFactory.generatorType  == 'submission'
+        submissionFactory.generatorType  == SUBMISSION_TYPE
         !submissionFactory.shouldComputeRegex
 
         publicationIdGenerator.generate() == "PUBL1234554322"

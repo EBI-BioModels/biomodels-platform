@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core
 
+import groovy.transform.PackageScope
 import net.biomodels.jummp.core.miriam.IMiriamService
 import org.springframework.beans.factory.InitializingBean
 import org.apache.commons.logging.Log
@@ -96,7 +97,7 @@ class MiriamService implements IMiriamService, InitializingBean {
         def out = new BufferedOutputStream(new FileOutputStream(registryExport))
         // default left shift only works for text streams
         try {
-            out << new URL(url).openStream()
+            out << openRegistryExport(url)
         } catch (IOException e) {
             log.error("Cannot update identifiers.org registry: ${e.message}", e)
         } finally {
@@ -105,5 +106,15 @@ class MiriamService implements IMiriamService, InitializingBean {
         if (IS_INFO_ENABLED) {
             log.info "Finished updating the identifiers.org registry export."
         }
+    }
+
+    /**
+     * Opens the stream the registry export is downloaded from. This is the only place that reaches the network, so
+     * that tests can stub it and never depend on (or hammer) the identifiers.org registry.
+     */
+    // @PackageScope (not private) so tests can stub it via metaClass - see PubMedService.lookupPublicationDataInPubMed
+    @PackageScope
+    InputStream openRegistryExport(final String url) throws IOException {
+        return new URL(url).openStream()
     }
 }

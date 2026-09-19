@@ -47,6 +47,8 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
     static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
     static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
+    /** The logical database (SELECT index) every connection of the pool works on; 0 unless configured. */
+    static int REDIS_SRV_DATABASE
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
     static String EBI_SEARCH_RESTFUL_WS_URL
@@ -73,6 +75,7 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         REDIS_SRV_HOST = co.jummp.redis.host
         REDIS_SRV_PORT = co.jummp.redis.port as int
         REDIS_SRV_TIMEOUT = co.jummp.redis.timeout as int
+        REDIS_SRV_DATABASE = databaseIndexFrom(co)
         BM_SVR_URL = co.grails.serverURL
         CLASSIFIER_SVR_URL = co.jummp.classification.endpoint
         EBI_SEARCH_RESTFUL_WS_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest"
@@ -85,12 +88,25 @@ class RedisService implements GrailsConfigurationAware, DisposableBean {
         config.setJmxEnabled(true)
         config.setMaxTotal(50)
         config.setMaxIdle(50)
-        jedisPool = new JedisPool(config, REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        jedisPool = new JedisPool(config, REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT, (String) null,
+            REDIS_SRV_DATABASE)
         if (jedisPool) {
             LOGGER.debug("Jedis Pool has been initialised successfully")
         } else {
             // Grails Runtime throws BeanCreationException preventing from starting the application
         }
+    }
+
+    /**
+     * Reads jummp.redis.database, which selects the logical database of the Redis server the application works on.
+     * The test environment sets it to a database of its own, see Config.groovy.
+     *
+     * @return the configured index, or 0 (Redis' default) if none is configured
+     */
+    static int databaseIndexFrom(final ConfigObject co) {
+        def configured = co.jummp.redis.database
+        // an unset key reads as an empty ConfigObject rather than null
+        configured == null || configured instanceof ConfigObject ? 0 : configured as int
     }
 
     // TODO: rename doRedisHGet, Set for hget, hset; doRedisHMGet, Set for hmget, hmset,

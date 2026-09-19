@@ -65,14 +65,27 @@ class MiriamServiceTests {
     @After
     void tearDown() {
         FileUtils.deleteDirectory(wd)
+        // drop the stub of the registry download so that it does not outlive this test
+        GroovySystem.metaClassRegistry.removeMetaClass(MiriamService)
+        miriamService.metaClass = null
     }
 
     @Test
     void testUpdateMiriamResourcesSecurity() {
+        // JBM-776: the registry download is stubbed - a test must neither depend on identifiers.org nor download
+        // the whole registry export from it every time it runs
+        final String exportContent = "<miriam><resource>test</resource></miriam>"
+        String requestedUrl = null
+        miriamService.metaClass.openRegistryExport = { String u ->
+            requestedUrl = u
+            new ByteArrayInputStream(exportContent.getBytes("UTF-8"))
+        }
         String url = "http://www.ebi.ac.uk/miriam/main/export/xml/"
         assertFalse exportFile.exists()
         miriamService.updateMiriamResources(url)
+        assertEquals url, requestedUrl
         assertTrue exportFile.exists()
         assertTrue(exportFile.size() > 0)
+        assertEquals exportContent, exportFile.text
     }
 }
