@@ -35,20 +35,122 @@
 package net.biomodels.jummp.security
 
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler
+import net.biomodels.jummp.utils.redis.RedisService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
- * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
+ * JBM-789: after a verified OTP the user has to land where a login without 2FA lands, on the model page they came
+ * for or on the default target. The application runs at the root of the host on production but under /biomodels in
+ * development, so the redirect must not contain a fixed path.
  */
 @TestFor(AuthController)
 class AuthControllerSpec extends Specification {
+    private static final String TARGET_KEY = BioModelsAuthSuccessHandler.POST_LOGIN_TARGET_URL
+
+    /** CommonController looks the bean up when it is created; the real one would connect to a Redis server. */
+    static class NoRedisService extends RedisService {
+        @Override
+        void setConfiguration(ConfigObject co) {}
+
+        @Override
+        void destroy() {}
+    }
+
+    /* CommonController.setConfiguration reads these and looks the bean up while the controller is being created,
+     * which the mixin does before setup() runs. */
+    static doWithConfig = { c ->
+        c.grails.serverURL = "https://www.biomodels.org"
+        c.jummp.branding.style = "biomodels"
+        c.jummp.context.help.root = "https://www.biomodels.org/help"
+        c.jummp.model.ftp.location = ""
+    }
+    static doWithSpring = {
+        redisService(NoRedisService)
+    }
 
     def setup() {
+        controller.userService = [currentUser: [username: "curator"]]
+        controller.authService = [doVerifyOTP: { String username, String otp, String sessionId ->
+            otp == "123456" ? [matched: true] : [matched: false, cause: "OTP mismatch. Try again or request a new one."]
+        }]
+        session.setAttribute("enabled2FA", true)
     }
 
-    def cleanup() {
+    private void submit(String otp) {
+        request.method = "POST"
+        request.json = [otp: otp, deviceInfo: "", isTrustDeviceChecked: "false"]
+        controller.verifyOTP()
     }
 
-    void "test something"() {
+    @Unroll
+    void "a verified OTP on context path '#contextPath' without a kept target ends on #expected"() {
+        given:
+        request.contextPath = contextPath
+
+        when:
+        submit("123456")
+
+        then:
+        response.json.matched
+        response.json.postUrl == expected
+        !response.json.postUrl.contains("/biomodels/user")
+
+        where:
+        contextPath  || expected
+        ""           || "/"                  // production
+        "/biomodels" || "/biomodels/"        // development
+    }
+
+    void "a verified OTP sends the user to the model page kept at login"() {
+        given:
+        session.setAttribute(TARGET_KEY, "https://www.biomodels.org/MODEL2609010001")
+
+        when:
+        submit("123456")
+
+        then:
+        response.json.postUrl == "https://www.biomodels.org/MODEL2609010001"
+    }
+
+    void "the default landing page follows the configured default target of a login"() {
+        given:
+        grailsApplication.config.grails.plugin.springsecurity.successHandler.defaultTargetUrl = "/models"
+        request.contextPath = "/biomodels"
+
+        when:
+        submit("123456")
+
+        then:
+        response.json.postUrl == "/biomodels/models"
+    }
+
+    void "a verified OTP ends the pending 2FA state and forgets the kept target"() {
+        given:
+        session.setAttribute("pendingEnrollment", true)
+        session.setAttribute(TARGET_KEY, "/")
+
+        when:
+        submit("123456")
+
+        then:
+        session.getAttribute("enabled2FA") == null
+        session.getAttribute("pendingEnrollment") == null
+        session.getAttribute(TARGET_KEY) == null
+    }
+
+    void "a wrong OTP leaves the session pending and keeps the target"() {
+        given:
+        session.setAttribute(TARGET_KEY, "/")
+
+        when:
+        submit("000000")
+
+        then:
+        !response.json.matched
+        response.json.cause == "OTP mismatch. Try again or request a new one."
+        session.getAttribute("enabled2FA")
+        session.getAttribute(TARGET_KEY) == "/"
     }
 }

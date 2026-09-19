@@ -22,6 +22,8 @@ package net.biomodels.jummp.plugins.security
 
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.web.RedirectStrategy
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -117,5 +119,78 @@ class BioModelsAuthSuccessHandlerSpec extends Specification {
 
         where:
         previousUrl << [null, "https://evil.example/MODEL2609010001"]
+    }
+
+    @Unroll
+    void "browserUrl(#contextPath, #target) is #expected"() {
+        expect:
+        BioModelsAuthSuccessHandler.browserUrl(contextPath, target) == expected
+
+        where:
+        contextPath  | target                        || expected
+        ""           | "/"                           || "/"                  // production: the app is at the root
+        "/biomodels" | "/"                           || "/biomodels/"        // development
+        null         | "/"                           || "/"
+        ""           | "/user"                       || "/user"
+        "/biomodels" | "/user"                       || "/biomodels/user"
+        "/biomodels" | "user"                        || "/biomodels/user"
+        "/biomodels" | null                          || "/biomodels/"
+        "/biomodels" | "https://www.biomodels.org/" || "https://www.biomodels.org/"
+    }
+
+    @Unroll
+    void "after the OTP a login on #serverURL with context path '#contextPath' ends on #expected"() {
+        given:
+        def request = requestWith(previousUrl)
+        request.contextPath = contextPath
+
+        expect:
+        handlerFor(serverURL).destinationAfterLogin(request) == expected
+
+        where:
+        serverURL | contextPath  | previousUrl                                     || expected
+        PROD      | ""           | null                                            || "/"
+        PROD      | ""           | "https://www.biomodels.org/MODEL2609010001"     || "https://www.biomodels.org/MODEL2609010001"
+        PROD      | ""           | "https://evil.example/MODEL2609010001"          || "/"
+        DEV       | "/biomodels" | null                                            || "/biomodels/"
+        DEV       | "/biomodels" | "/biomodels/MODEL2609010001"                    || "/biomodels/MODEL2609010001"
+    }
+
+    void "a redirect target supplied with the login request is not followed after the OTP"() {
+        given:
+        def request = requestWith(null)
+        request.addParameter("spring-security-redirect", "https://evil.example/")
+
+        expect:
+        handlerFor(PROD).destinationAfterLogin(request) == "/"
+    }
+
+    @Unroll
+    void "the 2FA step keeps #expected for after the OTP and sends the user to #twoFaUrl"() {
+        given:
+        def handler = handlerFor(PROD)
+        handler.userService = [isAllowedMigrationAWS: { String username -> null }]
+        handler.authService = [doGenerateOTP: { String username, String address, String sessionId -> "123456" }]
+        handler.redirectStrategy = Mock(RedirectStrategy)
+        def request = requestWith(previousUrl)
+        request.session.setAttribute("enabled2FA", true)
+        if (pendingEnrollment) {
+            request.session.setAttribute("pendingEnrollment", true)
+        }
+        def authentication = new UsernamePasswordAuthenticationToken([username: "curator"], "n/a")
+        authentication.details = [remoteAddress: "127.0.0.1", sessionId: "S1"]
+
+        when:
+        handler.handle(request, new MockHttpServletResponse(), authentication)
+
+        then:
+        1 * handler.redirectStrategy.sendRedirect(_, _, twoFaUrl)
+        request.session.getAttribute(BioModelsAuthSuccessHandler.POST_LOGIN_TARGET_URL) == expected
+
+        where:
+        previousUrl                                 | pendingEnrollment || twoFaUrl                         | expected
+        null                                        | false             || "/auth/two-factor-authentication" | "/"
+        "https://www.biomodels.org/MODEL2609010001" | false             || "/auth/two-factor-authentication" | "https://www.biomodels.org/MODEL2609010001"
+        null                                        | true              || "/auth/enroll-two-factor"         | "/"
     }
 }

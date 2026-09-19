@@ -53,7 +53,10 @@ class BioModelsAuthSuccessHandler extends AAASH {
     def userService
     def authService
 
-    /** Session key holding the validated model URL the user wanted, while they complete the 2FA step. */
+    /**
+     * Session key holding the URL, ready for the browser, that the user is sent to once they complete the 2FA step:
+     * the model page they wanted, else the default target of a login.
+     */
     static final String POST_LOGIN_TARGET_URL = "postLoginTargetUrl"
 
     // an identifier such as MODEL2609010001 or BIOMD0000000272, optionally followed by a revision or an extension
@@ -68,6 +71,29 @@ class BioModelsAuthSuccessHandler extends AAASH {
             preURL = super.determineTargetUrl(request, response)
         }
         return preURL
+    }
+
+    /**
+     * Returns where a login without 2FA would end, as a URL the browser can request as it is: the model page the user
+     * was trying to reach, otherwise the default target of the login (which is relative to the context path).
+     *
+     * <p>A target supplied with the request (e.g. spring-security-redirect) is deliberately not honoured here, as the
+     * URL is kept in the session and followed after the OTP; that would make the second step an open redirect.</p>
+     */
+    String destinationAfterLogin(HttpServletRequest request) {
+        return validatedPreviousUrl(request) ?: browserUrl(request.contextPath, defaultTargetUrl)
+    }
+
+    /**
+     * Turns a target that is relative to the application, e.g. "/", into the URL a browser has to request, by
+     * adding the context path (empty on production, /biomodels in development). An absolute URL is left as it is.
+     */
+    static String browserUrl(final String contextPath, final String target) {
+        String path = target ?: "/"
+        if (path ==~ /(?i)^[a-z][a-z0-9+.-]*:.*/) {
+            return path
+        }
+        return (contextPath ?: "") + (path.startsWith("/") ? path : "/" + path)
     }
 
     /**
@@ -161,10 +187,7 @@ class BioModelsAuthSuccessHandler extends AAASH {
                     ? "/auth/enroll-two-factor"
                     : "/auth/two-factor-authentication"
             // the OTP form finishes with a fetch() call, so keep the destination until it is verified
-            String modelUrl = validatedPreviousUrl(request)
-            if (modelUrl) {
-                session.setAttribute(POST_LOGIN_TARGET_URL, modelUrl)
-            }
+            session.setAttribute(POST_LOGIN_TARGET_URL, destinationAfterLogin(request))
             redirectStrategy.sendRedirect(request, response, twoFaUrl)
             return
         } else if (response.isCommitted()) {

@@ -156,7 +156,7 @@ class AuthController extends CommonController {
             Map m = authService.doVerifyOTP(currentUser.username, otp, session.id)
             matched = m["matched"]
             cause = m["cause"]
-            postURL = session.getAttribute(BioModelsAuthSuccessHandler.POST_LOGIN_TARGET_URL) ?: "/biomodels/user"
+            postURL = session.getAttribute(BioModelsAuthSuccessHandler.POST_LOGIN_TARGET_URL) ?: defaultLandingUrl()
         }
         if (matched) {
             session.removeAttribute("enabled2FA")
@@ -180,6 +180,15 @@ class AuthController extends CommonController {
         String sessionId = session.id
         authService.doGenerateOTP(username, address, sessionId)
         render([status: 200, message: "A verification code has been sent to your registered email address."] as JSON)
+    }
+
+    /**
+     * Where a login without 2FA ends, for a session that has no destination of its own. The application runs under
+     * /biomodels in development but at the root of the host on production, so the path cannot be written down here.
+     */
+    private String defaultLandingUrl() {
+        String target = grailsApplication.config.grails.plugin.springsecurity.successHandler.defaultTargetUrl ?: "/"
+        return BioModelsAuthSuccessHandler.browserUrl(request.contextPath, target)
     }
 
     private static Map toMapDeviceInfo(final String deviceInfo) {
