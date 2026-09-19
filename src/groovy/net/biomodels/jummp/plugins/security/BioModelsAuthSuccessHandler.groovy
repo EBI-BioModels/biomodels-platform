@@ -53,17 +53,63 @@ class BioModelsAuthSuccessHandler extends AAASH {
     def userService
     def authService
 
+    /** Session key holding the validated model URL the user wanted, while they complete the 2FA step. */
+    static final String POST_LOGIN_TARGET_URL = "postLoginTargetUrl"
+
+    // an identifier such as MODEL2609010001 or BIOMD0000000272, optionally followed by a revision or an extension
+    private static final String MODEL_PATH_REGEX = /^\/(?:MODEL|BIOMD)\d{10}(?:\.\w+)?\/?$/
+
     @Override
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response) {
-        String preURL = request.getParameter("j_previousURL")
-        boolean isUnpublishedModel = preURL?.indexOf("/biomodels/MODEL") >= 0
-        if (isUnpublishedModel) {
-            String username = request.getParameter("username")
-            LOGGER.debug("The user [${username}] has logged in to access this unpublished model $preURL.")
+        String preURL = validatedPreviousUrl(request)
+        if (preURL) {
+            LOGGER.debug("The user has logged in to access the model page $preURL.")
         } else {
             preURL = super.determineTargetUrl(request, response)
         }
         return preURL
+    }
+
+    /**
+     * Returns the model page the user was trying to reach before logging in, or null if there is none.
+     *
+     * <p>The candidate comes from a form field, so it is only honoured when it points at a model page of this
+     * very application (as configured in grails.serverURL). Anything else, e.g. another host, would turn the login
+     * into an open redirect.</p>
+     */
+    String validatedPreviousUrl(HttpServletRequest request) {
+        String candidate = request.getParameter("j_previousURL")?.trim()
+        if (!candidate) {
+            return null
+        }
+        URI serverUri
+        URI candidateUri
+        try {
+            serverUri = new URI(grailsApplication.config.grails.serverURL as String)
+            candidateUri = new URI(candidate)
+        } catch (URISyntaxException | NullPointerException ignored) {
+            return null
+        }
+        if (candidateUri.host != null) {
+            boolean sameHost = candidateUri.host.equalsIgnoreCase(serverUri.host)
+            boolean sameScheme = candidateUri.scheme in ["http", "https"]
+            if (!sameHost || !sameScheme || effectivePort(candidateUri) != effectivePort(serverUri)) {
+                return null
+            }
+        } else if (candidateUri.scheme != null || candidateUri.rawAuthority != null) {
+            return null
+        }
+        String basePath = (serverUri.path ?: "").replaceAll("/+\$", "")
+        String path = candidateUri.path ?: ""
+        if (!path.startsWith(basePath)) {
+            return null
+        }
+        return (path.substring(basePath.length()) ==~ MODEL_PATH_REGEX) ? candidate : null
+    }
+
+    /** The port, with the default ones of http and https treated as one, since a proxy may terminate TLS. */
+    private static int effectivePort(URI uri) {
+        return (uri.port in [-1, 80, 443]) ? -1 : uri.port
     }
 
     @Override
@@ -114,6 +160,11 @@ class BioModelsAuthSuccessHandler extends AAASH {
             String twoFaUrl = session.getAttribute("pendingEnrollment")
                     ? "/auth/enroll-two-factor"
                     : "/auth/two-factor-authentication"
+            // the OTP form finishes with a fetch() call, so keep the destination until it is verified
+            String modelUrl = validatedPreviousUrl(request)
+            if (modelUrl) {
+                session.setAttribute(POST_LOGIN_TARGET_URL, modelUrl)
+            }
             redirectStrategy.sendRedirect(request, response, twoFaUrl)
             return
         } else if (response.isCommitted()) {

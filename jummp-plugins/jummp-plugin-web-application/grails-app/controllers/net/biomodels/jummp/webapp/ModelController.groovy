@@ -211,7 +211,6 @@ has been accessed!""")
                 doShowRenderUnavailableRevision(model)
                 return
             }
-            LOGGER.warn("You are trying to retrieve a private model: " + e.message)
             isPrivateModel = true
             doShowPreparePrivateRevision(model, rev, myList)
             rev = myList.first() as RTC

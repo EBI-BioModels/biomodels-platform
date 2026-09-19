@@ -33,6 +33,7 @@ package net.biomodels.jummp.security
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
 import net.biomodels.jummp.CommonController
+import net.biomodels.jummp.plugins.security.BioModelsAuthFailureHandler
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.annotation.Secured
@@ -146,11 +147,18 @@ class LoginController extends CommonController {
             }
         }
         LOGGER.debug("${msg} --- Login payload: ${params}: ${session}")
+        String previousURL = session.getAttribute(BioModelsAuthFailureHandler.FAILED_LOGIN_PREVIOUS_URL)
+        session.removeAttribute(BioModelsAuthFailureHandler.FAILED_LOGIN_PREVIOUS_URL)
         if (request.getHeader('X-Requested-With') == 'XMLHttpRequest') {
             render([error: msg] as JSON)
         } else {
             flash.flashMessage = msg
-            redirect action: 'auth', params: params
+            Map redirectParams = new HashMap(params)
+            if (previousURL) {
+                // auth() prefers this over the Referer header, which here is the login page itself
+                redirectParams.previousURL = previousURL
+            }
+            redirect action: 'auth', params: redirectParams
         }
     }
 

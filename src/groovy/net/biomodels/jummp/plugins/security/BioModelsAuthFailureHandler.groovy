@@ -16,6 +16,9 @@ import javax.servlet.http.HttpServletResponse
  */
 class BioModelsAuthFailureHandler extends AAAFH {
     private static final Logger LOGGER = LoggerFactory.getLogger(AAAFH.class)
+
+    /** Session key holding the j_previousURL of a failed login, until LoginController.authfail() hands it back. */
+    static final String FAILED_LOGIN_PREVIOUS_URL = "failedLoginPreviousURL"
     def userService
     def loginAttemptCacheService
 
@@ -42,11 +45,25 @@ class BioModelsAuthFailureHandler extends AAAFH {
              exception = new BadCredentialsException(warningMessage)
         }
 
+        rememberPreviousUrl(request)
         if (SpringSecurityUtils.isAjax(request)) {
             saveException(request, exception)
             getRedirectStrategy().sendRedirect(request, response, ajaxAuthenticationFailureUrl)
         } else {
             super.onAuthenticationFailure(request, response, exception)
+        }
+    }
+
+    /**
+     * Keeps the page the user wanted across the redirects back to the login form. The failure url is fixed, so
+     * j_previousURL would be lost, and the Referer header of the redirected login page is the login page itself.
+     * The value is not trusted here: {@link BioModelsAuthSuccessHandler#validatedPreviousUrl} checks it after
+     * the next successful login.
+     */
+    void rememberPreviousUrl(HttpServletRequest request) {
+        String previousURL = request.getParameter("j_previousURL")?.trim()
+        if (previousURL) {
+            request.getSession().setAttribute(FAILED_LOGIN_PREVIOUS_URL, previousURL)
         }
     }
 }

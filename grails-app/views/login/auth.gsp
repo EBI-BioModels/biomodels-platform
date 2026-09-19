@@ -73,7 +73,6 @@
         <g:render template="/usermanagement/common-scripts"/>
 
         <script type='text/javascript'>
-            const referrer = document.referrer;
             const loginInput = $("#loginForm input");
             const loginForm = $("#loginForm");
             const loginUsername = $("#username");
@@ -99,12 +98,6 @@
             const loginSubmit = $("#btnLogIn");
             loginSubmit.on("click", function() {
                 submitLogin();
-            });
-            $(document).ready(function() {
-                if (referrer.indexOf("biomodels/MODEL") > 0) {
-                    const previousURL = $("#j_previousURL");
-                    previousURL.val(referrer);
-                }
             });
             loginPassword.on("focus", function() {
                 clearNotification();

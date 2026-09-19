@@ -25,6 +25,7 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.CommonController
+import net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler
 import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -155,12 +156,13 @@ class AuthController extends CommonController {
             Map m = authService.doVerifyOTP(currentUser.username, otp, session.id)
             matched = m["matched"]
             cause = m["cause"]
-            postURL = "/biomodels/user"
+            postURL = session.getAttribute(BioModelsAuthSuccessHandler.POST_LOGIN_TARGET_URL) ?: "/biomodels/user"
         }
         if (matched) {
             session.removeAttribute("enabled2FA")
             session.removeAttribute("pendingEnrollment")
             session.removeAttribute("showEnrollmentNotice")
+            session.removeAttribute(BioModelsAuthSuccessHandler.POST_LOGIN_TARGET_URL)
             String deviceInfo = request.getJSON()["deviceInfo"].decodeHTML()
             if (deviceInfo) {
                 boolean isTrustDeviceChecked = request.getJSON()["isTrustDeviceChecked"].decodeHTML().toBoolean()
