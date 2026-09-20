@@ -504,6 +504,50 @@ class SubmissionControllerValidationSpec extends Specification {
         response.json.currentValidation
     }
 
+    void "the last validation tells the submitter that a link provider is not known: #linkProvider"() {
+        given: "the service refuses the provider with an IllegalArgumentException, as it did (JBM-801)"
+        List<String> asked = []
+        wizardController([])
+        controller.publicationService = [buildPublicationFromJSONData: { String json ->
+            asked << json
+            throw new IllegalArgumentException("No Publication Provider with label Bogus found.")
+        }]
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt", "A model", publication)
+
+        when:
+        controller.doLastValidateSubmissionData()
+
+        then: "a message, and no server error"
+        asked == [publication]
+        response.status == 200
+        !response.json.currentValidation
+        !response.json.isPublicationValid
+        response.json.areModelFilesValid
+        response.json.errMsg.trim() == 'The publication provider "Bogus" is not recognised.'
+
+        where:
+        linkProvider                 | publication
+        "a label"                    | '{"link": "28713420", "linkProvider": "Bogus"}'
+        "the type of an object"      | '{"link": "28713420", "linkProvider": {"linkType": "Bogus"}}'
+    }
+
+    void "the last validation tells the submitter that the publication cannot be read"() {
+        given:
+        wizardController([])
+        controller.publicationService = publicationServiceNotAsked()
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt", "A model", '{"link": ')
+
+        when:
+        controller.doLastValidateSubmissionData()
+
+        then:
+        response.status == 200
+        !response.json.currentValidation
+        response.json.errMsg.trim() == SubmissionController.PUBLICATION_UNREADABLE
+    }
+
     void "the publication that the service builds is the publication of the submission"() {
         given:
         List<Map> completed = []
@@ -535,6 +579,27 @@ class SubmissionControllerValidationSpec extends Specification {
         then:
         completed.size() == 1
         completed[0].ModelTC.publication == null
+    }
+
+    void "the completion does not complete a submission whose publication was left out"() {
+        given: "a publication that cannot be built would be left out of the submission, which is not what was sent"
+        List<Map> completed = []
+        wizardController(completed)
+        controller.publicationService = [buildPublicationFromJSONData: { String json ->
+            throw new IllegalArgumentException("No Publication Provider with label Bogus found.")
+        }]
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt", "A model", '{"link": "28713420", "linkProvider": "Bogus"}')
+
+        when:
+        controller.completeSubmission()
+
+        then:
+        response.status == 200
+        completed.isEmpty()
+        response.json.status == "Failure"
+        response.json.message ==
+            "<div style='color: red'>The publication provider &quot;Bogus&quot; is not recognised.</div>"
     }
 
     // ------------------------------------------------------------------------ processUploadFiles

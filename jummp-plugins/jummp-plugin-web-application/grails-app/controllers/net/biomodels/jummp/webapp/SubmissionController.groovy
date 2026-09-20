@@ -46,6 +46,7 @@ import net.biomodels.jummp.utils.CollectionHelper
 import net.biomodels.jummp.utils.FileHelper
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
+import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.json.JSONObject
 import org.slf4j.Logger
@@ -56,6 +57,7 @@ import org.springframework.beans.factory.InitializingBean
 class SubmissionController extends CommonController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
     static final String FILE_DESCRIPTION_MISSING = "The file needs a description"
+    static final String PUBLICATION_UNREADABLE = "The publication details cannot be read."
     static final String FILE_NAME_INVALID = "The file name is invalid (use only letters, digits, spaces, dots, " +
         "hyphens, plus signs and underscores, and end it with a file extension)"
     def fileSystemService
@@ -100,10 +102,11 @@ class SubmissionController extends CommonController implements InitializingBean 
      * Says why a submission that has been validated cannot be completed, or null when it can be.
      *
      * A publication that is not valid does not stop it: the submission wizard does not stop for it either, and the API
-     * only gets the publication's accession, so its submitter cannot fix the details.
+     * only gets the publication's accession, so its submitter cannot fix the details. A publication that could not be
+     * built at all does, because it would be left out of the submission (JBM-801).
      */
     private String reasonToRefuse(Map validation) {
-        if (validation.areModelFilesValid && validation.areMetadataValid) {
+        if (validation.areModelFilesValid && validation.areMetadataValid && !validation.publicationError) {
             if (!validation.isPublicationValid) {
                 logger.warn("Submitting although the publication is not valid: ${validation.errMsg}")
             }
@@ -284,6 +287,7 @@ class SubmissionController extends CommonController implements InitializingBean 
         result.put("areModelFilesValid", areModelFilesValid)
         result.put("areMetadataValid", areMetadataValid)
         result.put("isPublicationValid", isPublicationValid)
+        result.put("publicationError", working.get("publicationError"))
         boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
         result.put("currentValidation", currentValidation)
         String strResult = toString(result)
@@ -344,6 +348,12 @@ class SubmissionController extends CommonController implements InitializingBean 
     private boolean doValidatePublication(Map working, List<String> messages) {
         MTC model = working.get("ModelTC") as MTC
         String errMsg = ""
+        // the publication that could not be built is not in the model, and the submitter is told why (JBM-801)
+        String publicationError = working.get("publicationError")
+        if (publicationError) {
+            messages[2] = publicationError + "\n"
+            return false
+        }
         if (!model.publication) {
             return true
         } else {
@@ -719,7 +729,7 @@ data type and accession from the URI.""")
         rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
 
         // populate publication details
-        populatePublication(params.publication?.decodeHTML() as String, model)
+        populatePublication(params.publication?.decodeHTML() as String, model, working)
 
         // populate the data on the revision
         String revisionComments = params.revisionComments?.decodeHTML() as String
@@ -780,16 +790,29 @@ data type and accession from the URI.""")
      *
      * What says that there is no publication leaves the model as it is: nothing, "", null, an empty object, and details
      * that do not say which link provider they are from, as the page has when the publication that was guessed from the
-     * model file could not be fetched.
+     * model file could not be fetched. A publication that cannot be read, or whose provider is not known, is left out
+     * and the validation reports it: it is a message for the submitter and not a server error.
      */
-    private void populatePublication(String paramPublication, MTC model) {
-        def details = paramPublication ? JSON.parse(paramPublication) : null
+    private void populatePublication(String paramPublication, MTC model, Map working) {
+        def details
+        try {
+            details = paramPublication ? JSON.parse(paramPublication) : null
+        } catch (ConverterException e) {
+            logger.error("Cannot read the publication details ${paramPublication}: ${e.message}")
+            working.put("publicationError", PUBLICATION_UNREADABLE)
+            return
+        }
         String provider = details instanceof Map ? linkProviderOf(details as Map) : ""
         if (!provider) {
             return
         }
-        Map publicationData = publicationService.buildPublicationFromJSONData(paramPublication)
-        model.publication = publicationData["publication"]
+        try {
+            Map publicationData = publicationService.buildPublicationFromJSONData(paramPublication)
+            model.publication = publicationData["publication"]
+        } catch (IllegalArgumentException e) {
+            logger.error("Cannot build the publication of the link provider ${provider}: ${e.message}")
+            working.put("publicationError", "The publication provider \"$provider\" is not recognised.")
+        }
     }
 
     /**
