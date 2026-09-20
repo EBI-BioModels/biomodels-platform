@@ -53,30 +53,79 @@ class SubmissionControllerValidationSpec extends Specification {
     // ------------------------------------------------------------------------ doValidateUploadedFiles
 
     void "the files are valid when each one exists and has content"() {
+        given:
+        List<String> messages = ["", "", ""]
+
         when:
-        boolean valid = controller.doValidateUploadedFiles([repository_files: [fileWith("a.xml", "<a/>"), fileWith("b.txt", "b")]])
+        boolean valid = controller.doValidateUploadedFiles(
+            [repository_files: [fileWith("a.xml", "<a/>"), fileWith("b.txt", "b")]], messages)
 
         then:
         valid
-        controller.validationMessages[0] == ""
+        messages[0] == ""
     }
 
     void "a missing file makes the files invalid and is named"() {
+        given:
+        List<String> messages = ["", "", ""]
+
         when:
-        boolean valid = controller.doValidateUploadedFiles([repository_files: [fileWith("a.xml", "<a/>"), fileWith("never.txt", null)]])
+        boolean valid = controller.doValidateUploadedFiles(
+            [repository_files: [fileWith("a.xml", "<a/>"), fileWith("never.txt", null)]], messages)
 
         then:
         !valid
-        controller.validationMessages[0] == "never.txt: Not found or not exist or empty.\n"
+        messages[0] == "never.txt: Not found or not exist or empty.\n"
     }
 
     void "an empty file makes the files invalid and is named"() {
+        given:
+        List<String> messages = ["", "", ""]
+
         when:
-        boolean valid = controller.doValidateUploadedFiles([repository_files: [fileWith("empty.txt", ""), fileWith("a.xml", "<a/>")]])
+        boolean valid = controller.doValidateUploadedFiles(
+            [repository_files: [fileWith("empty.txt", ""), fileWith("a.xml", "<a/>")]], messages)
 
         then:
         !valid
-        controller.validationMessages[0] == "empty.txt: Not found or not exist or empty.\n"
+        messages[0] == "empty.txt: Not found or not exist or empty.\n"
+    }
+
+    void "a directory makes the files invalid, even one with something in it, and is named"() {
+        given: "a directory has a length, like a file"
+        File folder = new File(dir, "a-folder")
+        assert folder.mkdirs()
+        new File(folder, "inside.txt").text = "not empty"
+        List<String> messages = ["", "", ""]
+
+        when:
+        boolean valid = controller.doValidateUploadedFiles(
+            [repository_files: [new RFTC(path: folder.path, mainFile: true), fileWith("a.xml", "<a/>")]], messages)
+
+        then:
+        folder.length() > 0
+        !valid
+        messages[0] == "a-folder: The model file cannot be a directory.\n"
+    }
+
+    void "the messages of a validation are those of that validation"() {
+        given: "a model with a publication that is not valid, and one without a publication"
+        MTC withPublication = new MTC(name: "A model", publication: new net.biomodels.jummp.core.model.PublicationTransportCommand())
+        MTC withoutPublication = new MTC(name: "A model")
+        Closure working = { MTC model, List<RFTC> files ->
+            [repository_files: files, ModelTC: model, modelling_approach: "Other", submitterInfo: "[u, e]",
+             submissionFolder: "a-folder", RevisionTC: new RTC(model: model, format: new MFTC(identifier: "UNKNOWN"))]
+        }
+
+        when:
+        Map first = controller.doValidateSubmissionData(working(withPublication, [fileWith("a.xml", "<a/>")]))
+        Map second = controller.doValidateSubmissionData(working(withoutPublication, [fileWith("b.xml", "<b/>")]))
+
+        then:
+        first.errMsg.trim() == "Publication record is invalid."
+        !first.isPublicationValid
+        second.errMsg == ""
+        second.currentValidation
     }
 
     // ------------------------------------------------------------------------ makeSubmission
@@ -143,6 +192,7 @@ class SubmissionControllerValidationSpec extends Specification {
         answer.status == 400
         answer.message == "never.txt: Not found or not exist or empty."
         !completed
+        controller.validSubmissionDataMap.isEmpty()
     }
 
     void "a submission with an empty file is answered with a 400 and is not completed"() {
@@ -158,13 +208,33 @@ class SubmissionControllerValidationSpec extends Specification {
         answer.status == 400
         answer.message == "empty.txt: Not found or not exist or empty."
         !completed
+        controller.validSubmissionDataMap.isEmpty()
     }
 
-    void "a submission with valid files goes on to be completed"() {
-        given: "a service that stops the submission where it is completed, and a controller that copes with the failure"
+    void "a submission whose file is a directory is answered with a 400 and is not completed"() {
+        given:
+        File folder = new File(dir, "a-folder")
+        assert folder.mkdirs()
+        new File(folder, "inside.txt").text = "not empty"
         boolean completed = false
+        Map service = [buildFromJSONFile: builds([new RFTC(path: folder.path, mainFile: true)]),
+                       handleSubmission : { Map working -> completed = true; [] as HashSet }]
+
+        when:
+        Map answer = create(service)
+
+        then:
+        answer.status == 400
+        answer.message == "a-folder: The model file cannot be a directory."
+        !completed
+        controller.validSubmissionDataMap.isEmpty()
+    }
+
+    void "a submission with valid files goes on to be completed, as it was built, and nothing is left pending"() {
+        given: "a service that stops the submission where it is completed, and a controller that copes with the failure"
+        Map completed = null
         Map service = [buildFromJSONFile: builds([fileWith("model.xml", "<sbml/>")]),
-                       handleSubmission : { Map working -> completed = true; throw new IllegalStateException("stop here") },
+                       handleSubmission : { Map working -> completed = working; throw new IllegalStateException("stop here") },
                        cleanup          : { Map working -> }]
         controller.EXCH_DIR = dir.absolutePath
         controller.mailingService = [send: { Map mail -> }]
@@ -174,8 +244,11 @@ class SubmissionControllerValidationSpec extends Specification {
         Map answer = create(service)
 
         then:
-        completed
+        completed != null
+        completed.containsKey("RevisionTC")
+        completed.repository_files*.path == [new File(dir, "model.xml").path]
         answer.status == "Failure"
+        controller.validSubmissionDataMap.isEmpty()
     }
 
     // ------------------------------------------------------------------------ processUploadFiles

@@ -209,6 +209,53 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     }
 
     @Test
+    void testCreateWithADirectoryAsAFileIsRefused() {
+        // a directory has a length, so it passed the check of the files
+        String folder = stage(["mainFile.txt": "the main file"])
+        File directory = new File(new File(exchange, folder), "a-directory")
+        assertTrue directory.mkdirs()
+        new File(directory, "inside.txt").text = "not empty"
+
+        Map result = call("create", metadata([
+            name: "A directory", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]],
+                    additional: [[name: "a-directory", description: "a directory"]]]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("a-directory: The model file cannot be a directory.", result.message)
+        assertEquals(0, Model.count())
+        assertFalse(result.containsKey("ticketID"))
+    }
+
+    @Test
+    void testARefusedSubmissionLeavesNothingToBeCompletedLater() {
+        // the web wizard completes what it kept from its last validation, in a controller that every request shares
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = call("create", metadata([
+            name: "A file is missing", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]],
+                    additional: [[name: "addFile.txt", description: "never uploaded"]]]]), folder)
+
+        assertEquals(400, result.status)
+        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
+        assertTrue(shared.validSubmissionDataMap.isEmpty())
+    }
+
+    @Test
+    void testASubmissionThatIsCompletedLeavesNothingPendingEither() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = call("create", metadata([
+            name: "A model", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]], additional: []]]), folder)
+
+        assertEquals("Success", result.status)
+        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
+        assertTrue(shared.validSubmissionDataMap.isEmpty())
+    }
+
+    @Test
     void testUpdateWithAFileThatWasNeverUploadedIsRefused() {
         String modelId = createModel()
         String folder = stage(["addFile.txt": "the second additional file"])
@@ -250,6 +297,9 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
 
         assertTrue(result.areModelFilesValid)
         assertTrue(result.currentValidation)
+        // it keeps what it validated, for the request that completes the submission
+        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
+        assertEquals(["mainFile.txt"], shared.validSubmissionDataMap.repository_files.collect { new File(it.path).name })
     }
 
     @Test
