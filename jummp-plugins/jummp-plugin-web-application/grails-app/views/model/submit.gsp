@@ -92,7 +92,8 @@
                 modelFile: JSON.stringify(modelFile),
                 additionalFiles: JSON.stringify(additionalFiles),
                 modelInfo: JSON.stringify(modelInfo),
-                publication: JSON.stringify(publication),
+                // no publication is {}: after a lookup that found nothing the page has null, which is not a publication
+                publication: JSON.stringify(publication || {}),
                 revisionComments: revisionComments,
                 modelId: modelId,
                 latestModelName: latestModelName,

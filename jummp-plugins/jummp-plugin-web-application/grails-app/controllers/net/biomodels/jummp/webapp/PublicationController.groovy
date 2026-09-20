@@ -185,15 +185,15 @@ class PublicationController implements GrailsConfigurationAware {
 
 
     def renderPublicationDetails() {
-        if (params.pubDetails.decodeHTML() == "\"\"" ||
-            params.pubDetails.decodeHTML() == "{}" ||
-            params.pubDetails == null) {
+        // the page sends null when it has no publication (JBM-801), and nothing at all is not a server error either
+        String details = params.pubDetails?.decodeHTML()
+        if (!details || details in ["\"\"", "{}", "null"]) {
             render("No publication provided")
         } else {
             // this action is often called to display the publication which has been validated
             // so we don't need to handle exception
             PubTC tempPTC = new PubTC()//pubContext.publication
-            def pubDetails = new JsonSlurper().parseText(params.pubDetails.decodeHTML() as String)
+            def pubDetails = new JsonSlurper().parseText(details)
             bindData(tempPTC, pubDetails, [exclude: ['authors']])
             publicationService.assembleAuthors(tempPTC, pubDetails.authors)
             render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])
