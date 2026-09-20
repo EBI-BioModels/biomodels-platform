@@ -6,7 +6,6 @@ import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.model.ModelAudit
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
-import net.biomodels.jummp.plugins.configuration.VcsCommand
 import org.junit.*
 
 /**
@@ -175,6 +174,10 @@ class SubmissionApiRouteTests extends SubmissionRouteTestBase {
         assertEquals([], submissionService.validateFile(real))
         assertTrue(submissionService.validateFile(new File(exchange, "missing.xml")).contains("File does not exist"))
         assertTrue(submissionService.validateFile(exchange).contains("The model file cannot be a directory"))
+        // the web wizard shows these at once, when a file is uploaded
+        File empty = new File(exchange, "empty.xml")
+        empty.text = ""
+        assertEquals(["The file is empty"], submissionService.validateFile(empty))
     }
 
     @Test
@@ -351,23 +354,6 @@ class SubmissionApiRouteTests extends SubmissionRouteTestBase {
             initials.put("modelId", modelId)
         }
         initials
-    }
-
-    /**
-     * Runs a block with the FileSystemService using the exchange directory of the test. It gets the directory from
-     * ConfigurationService, which reads the properties file, so it uses the developer's real one whatever the test has
-     * put in the configuration.
-     */
-    private def withExchangeDirectoryOfTheFileSystemService(Closure body) {
-        def original = fileSystemService.configurationService
-        fileSystemService.configurationService = [loadVcsConfiguration: { ->
-            new VcsCommand(vcs: "git", workingDirectory: "target/vcs/git", exchangeDirectory: exchange.path)
-        }]
-        try {
-            return body()
-        } finally {
-            fileSystemService.configurationService = original
-        }
     }
 
     @Test

@@ -146,6 +146,7 @@
 <script type="text/javascript">
     const duplicateFilesMsg = "The file names in your submission should not be identical. " +
         "Please double-check the recently uploaded files having the name: ";
+    const invalidFileNameMsg = "The file name is invalid (use only letters, digits, dots, hyphens and underscores).";
     $(function () {
         /*
          * For the sake keeping the code clean and the examples simple this file
@@ -246,20 +247,9 @@
         }).get();
     }
 
-    // check acceptable characters for the file names
-    function checkAcceptableCharactersForFileNames() {
-        let uploadedFiles = retrieveUploadedFiles();
-        let messages = [];
-        uploadedFiles.forEach((filename) => {
-            let isValid = checkAcceptableCharactersForFileName(filename);
-            if (!isValid) {
-                let msg = "Please make sure the file name \'" + filename +
-                    "\' only containing alphanumeric characters, hyphens and underscores. " +
-                    "It should be followed by a proper file extension.";
-                messages.push(msg);
-            }
-        });
-        return messages;
+    // the names of the files that break the rule of the acceptable characters
+    function retrieveFileNamesBreakingTheRule() {
+        return retrieveUploadedFiles().filter((filename) => !checkAcceptableCharactersForFileName(filename));
     }
 
     function checkIdenticalFileNames() {
@@ -283,9 +273,10 @@
         errorMessages = [];
         currentValidation = false;
         const ids = buildUploadedFilesMap();
+        // a name that breaks the rule is not said in a message of its own: it goes in the line of its file, with the
+        // other problems of that file, when the files have been checked
+        const invalidNames = retrieveFileNamesBreakingTheRule();
         let messages = checkIdenticalFileNames();
-        let acceptableFileNames = checkAcceptableCharactersForFileNames();
-        messages.push(...acceptableFileNames);
         handleErrorMessages(messages);
         let msg = "";
         if (!currentValidation) {
@@ -328,11 +319,20 @@
                 let data = response["filesMap"];
                 let msg = "";
                 if (data.length) {
-                    const haveAllDescriptions = data.filter(e => e.description === "").length === 0;
-                    if (!haveAllDescriptions) {
-                        msg = "Please check the file description text boxes. They are not allowed empty.";
-                        errorMessages.push(msg);
-                    }
+                    // what is wrong with each file, on one line that starts with the name of the file: the file is
+                    // empty, its description is not filled in, its name is invalid
+                    $.each(data, function (i, f) {
+                        let summary = f["validateFileSummary"] || "";
+                        if (invalidNames.includes(f["filename"]) && !f["validateFileName"]) {
+                            // the server accepts more characters in a name than this page does
+                            summary = (summary + " " + invalidFileNameMsg).trim();
+                        }
+                        if (summary) {
+                            errorMessages.push(boldFileName(f["filename"]) + ": " + summary);
+                        }
+                    });
+                    const haveAllDescriptions = data.filter(f => f["validateFileDescription"] &&
+                        f["validateFileDescription"].length > 0).length === 0;
                     const hasOneModelFile = data.filter(e => e.isModelFile).length === 1;
                     let modelFileWithNoErrors = true;
                     let allFileNamesValid = true;
@@ -354,16 +354,15 @@
                             guessedPublicationAccession = modelFile["detectedModelFormat"]["accession"]
 
                             modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 && modelFile["validSyntax"]
-                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
                             if (!modelFile["validSyntax"]) {
                                 consolidateErrorMessages(modelFile["filename"], modelFile["validateSyntaxErrors"]);
                             } else if (modelFile["validateSyntaxErrors"].length !== 0)  {
                                 toastr.clear();
                                 toastr.warning(modelFile["validateSyntaxErrors"])
                             }
-                            // check the model file name for the invalid characters
-                            let hasError = consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
-                            let isModelMainFileNameValid = !hasError;
+                            // the name of the model file has to be valid
+                            let isModelMainFileNameValid = !(modelFile["validateFileName"] &&
+                                modelFile["validateFileName"].length > 0);
 
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
@@ -373,10 +372,10 @@
                                 modelFileWithNoErrors = additionalFiles.filter(f =>
                                     f["validateFileErrors"].length > 0).length === 0;
                                 $.each(additionalFiles, function (i, f) {
-                                    consolidateErrorMessages(f["filename"], f["validateFileErrors"]);
-                                    // check each additional file name for the invalid characters
-                                    let hasError = consolidateErrorMessages(f["filename"], f["validateFileName"]);
-                                    if (hasError) { areAdditionalFileNamesValid = false; }
+                                    // the name of each additional file has to be valid
+                                    if (f["validateFileName"] && f["validateFileName"].length > 0) {
+                                        areAdditionalFileNamesValid = false;
+                                    }
                                 });
                             }
                             // update the validation of all file names
@@ -385,7 +384,8 @@
                             modelInfo = modelFile["detectedModelInfo"];
                         }
                     }
-                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors && allFileNamesValid;
+                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors &&
+                        allFileNamesValid && invalidNames.length === 0;
                 } else {
                     currentValidation = false;
                     errorMessages.push("A submission must have at least only one main model file.")
@@ -422,11 +422,23 @@
         }
     }
 
+    /**
+     * The name of a file in bold, for the messages that are shown as html, such as the ones of the notification box.
+     * It is defined here, with the code that uses it, and not in helpers.js: a browser that has an old copy of that file
+     * cached would lack it, and the messages would not be shown.
+     *
+     * @param filename  A String denoting the file name, which is escaped
+     * @returns {string}    The html of the name in bold
+     */
+    function boldFileName(filename) {
+        return "<strong>" + $("<div>").text(filename).html() + "</strong>";
+    }
+
     function consolidateErrorMessages(filename, messages) {
         if (typeof messages === "undefined") { return false; }
         if (messages.length > 0) {
             $.each(messages, function (id, msg) {
-                errorMessages.push(filename + ": " + msg);
+                errorMessages.push(boldFileName(filename) + ": " + msg);
             });
             return true;
         }

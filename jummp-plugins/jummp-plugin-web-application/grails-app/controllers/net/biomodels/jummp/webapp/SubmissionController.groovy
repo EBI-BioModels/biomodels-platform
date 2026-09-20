@@ -55,6 +55,9 @@ import org.springframework.beans.factory.InitializingBean
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SubmissionController extends CommonController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
+    static final String FILE_DESCRIPTION_MISSING = "The file needs a description"
+    static final String FILE_NAME_INVALID = "The file name is invalid (use only letters, digits, spaces, dots, " +
+        "hyphens, plus signs and underscores, and end it with a file extension)"
     def fileSystemService
     def grailsApplication
     def groovyPageRenderer
@@ -68,8 +71,9 @@ class SubmissionController extends CommonController implements InitializingBean 
     def submissionService
 
     private String EXCH_DIR
-    List validationMessages = new ArrayList<String>(3)
-    // Using the following map to store the valid submission data before submitting the submission
+    // The web wizard validates the submission data in one request and completes the submission in the next one, so it
+    // keeps the data here. The controller is a singleton, so this is shared by every request: the API's create and update
+    // do not use it, they complete the submission they have built (JBM-798).
     Map<String, Object> validSubmissionDataMap = new HashMap<>()
 
     void afterPropertiesSet() throws Exception {
@@ -77,17 +81,15 @@ class SubmissionController extends CommonController implements InitializingBean 
     }
 
     def completeSubmission() {
-        Map result = doCompleteSubmission()
+        Map result = doCompleteSubmission(validSubmissionDataMap)
         render(result as JSON)
     }
 
-    private Map doCompleteSubmission() {
+    private Map doCompleteSubmission(Map working) {
         String message = ""
         String status = "Success"
-        Map working
         try {
             /* The following statements aim at saving the new submission or updates */
-            working = validSubmissionDataMap
             HashSet<String> result = submissionService.handleSubmission(working)
 
             /* Below is used for post processing submission and rendering the result to the callee */
@@ -172,9 +174,22 @@ class SubmissionController extends CommonController implements InitializingBean 
         Map uploadedFiles = new HashMap()
         for (JSONElement e : filesMap) {
             e["submissionFolder"] = submissionFolder
-            e["validateFileErrors"] = validateFile(e)
+            List fileErrors = validateFile(e)
+            e["validateFileErrors"] = fileErrors
+            // each file says what is wrong with it in the same way: empty, no description, invalid name. The upload
+            // step puts the name of the file in front of every message.
+            def description = e["description"]
+            boolean hasDescription = description instanceof CharSequence && description.toString().trim()
+            e["validateFileDescription"] = hasDescription ? [] : [FILE_DESCRIPTION_MISSING]
             uploadedFiles.put(e["filename"], e["originalFilesize"])
-            if (e["isModelFile"]) {
+            if (e["isModelFile"] && fileErrors) {
+                // A file that is missing, empty or a directory has nothing to detect, and reading an empty xml file
+                // fails in the detection of its format (JBM-798). Send what the upload step reads, and its errors.
+                e["detectedModelFormat"] = [:]
+                e["validSyntax"] = false
+                e["validateSyntaxErrors"] = []
+                e["detectedModelInfo"] = [:]
+            } else if (e["isModelFile"]) {
                 // Presumably the submission has a single (main) model file
                 Map detectedModelFormat = detectModelFormat(e)
                 e["detectedModelFormat"] = detectedModelFormat
@@ -186,12 +201,10 @@ class SubmissionController extends CommonController implements InitializingBean 
             }
             // check for the valid file name
             if (!FileHelper.isFileNameAcceptable(e["filename"] as String)) {
-                String warningMessage = """\
-Please make sure the file name '${e["filename"]}' only containing alphanumeric characters, spaces, \
-hyphens, plus signs and underscores. It should also have a proper file extension.
-"""
-                e["validateFileName"] = [warningMessage] as List<String>
+                e["validateFileName"] = [FILE_NAME_INVALID] as List<String>
             }
+            // one line for the file, which the upload step shows with the name of the file in front of it
+            e["validateFileSummary"] = sentences(fileErrors + e["validateFileDescription"] + (e["validateFileName"] ?: []))
         }
         // Determines which files are added and removed
         HashSet<String> changesMade = new ArrayList<String>()
@@ -199,6 +212,14 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             changesMade = inferChangesMadeOnModelFiles(uploadedFiles)
         }
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
+    }
+
+    /** Joins messages into sentences: "The file is empty. The file needs a description." */
+    static String sentences(List<String> messages) {
+        messages.collect { String message ->
+            String trimmed = message.trim()
+            trimmed ==~ /.*[.!?]$/ ? trimmed : trimmed + "."
+        }.join(" ")
     }
 
     def doLastValidateSubmissionData() {
@@ -210,20 +231,23 @@ hyphens, plus signs and underscores. It should also have a proper file extension
          */
         Map working = rebuildSubmissionData()
         Map result = doValidateSubmissionData(working)
+        validSubmissionDataMap = working
 
         render(result as JSON)
     }
 
     private Map doValidateSubmissionData(Map working) {
         String errMsg
+        // what each check found: this method is not the only one running, and it must not see what another request found
+        List<String> messages = ["", "", ""]
 
         // 1. Check the uploaded files
-        boolean areModelFilesValid = doValidateUploadedFiles(working)
+        boolean areModelFilesValid = doValidateUploadedFiles(working, messages)
         // 2. Check the model metadata provided/updated
-        boolean areMetadataValid = doValidateModelInfo(working)
+        boolean areMetadataValid = doValidateModelInfo(working, messages)
         // 3. Check the publication details
-        boolean isPublicationValid = doValidatePublication(working)
-        errMsg = validationMessages.findAll { it }.join("\n")
+        boolean isPublicationValid = doValidatePublication(working, messages)
+        errMsg = messages.findAll { it }.join("\n")
         Map<String, Object> result = new HashMap<>()
         String submitterInfo = working.get("submitterInfo")
         result.put("submitterInfo", submitterInfo)
@@ -238,26 +262,30 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         String strResult = toString(result)
         logger.debug("The result of verifying the submission data: \n$strResult")
         println("The result of verifying the submission data: \n$strResult")
-        validSubmissionDataMap = working
         result
     }
 
-    private boolean doValidateUploadedFiles(Map working) {
+    private boolean doValidateUploadedFiles(Map working, List<String> messages) {
         List<RFTC> rftcList = working.get("repository_files")
         String errFileMsg = ""
-        Map existedFiles = [:]
+        boolean valid = true
         for (RFTC rftc : rftcList) {
             File file = new File(rftc.path)
-            existedFiles.put(rftc.path, file?.exists())
-            if (!file?.exists() || !file?.length() || file?.length() <= 0) {
+            // a file that is missing or empty makes the files invalid (JBM-798; only the missing one did before), and
+            // so does a directory, which has a length too
+            if (file.isDirectory()) {
+                errFileMsg += "${file.name}: The model file cannot be a directory.\n"
+                valid = false
+            } else if (!file.exists() || file.length() <= 0) {
                 errFileMsg += "${file.name}: Not found or not exist or empty.\n"
+                valid = false
             }
         }
-        validationMessages[0] = errFileMsg
-        existedFiles.findAll { !it.value }?.isEmpty()
+        messages[0] = errFileMsg
+        valid
     }
 
-    private boolean doValidateModelInfo(Map working) {
+    private boolean doValidateModelInfo(Map working, List<String> messages) {
         RTC revision = working.get("RevisionTC") as RTC
         String errMsg = ""
         // 1. Condition 1: model format is not null
@@ -275,11 +303,11 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         if (!mnCond) {
             errMsg += "Model name is empty or blank.\n"
         }
-        validationMessages[1] = errMsg
+        messages[1] = errMsg
         mfCond && maCond && mnCond
     }
 
-    private boolean doValidatePublication(Map working) {
+    private boolean doValidatePublication(Map working, List<String> messages) {
         MTC model = working.get("ModelTC") as MTC
         String errMsg = ""
         if (!model.publication) {
@@ -289,7 +317,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             if (!r) {
                 errMsg += "Publication record is invalid.\n"
             }
-            validationMessages[2] = errMsg
+            messages[2] = errMsg
             return r
         }
     }
@@ -369,8 +397,22 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             map = [message: reason, status: 400]
         }
         if (map == null) {
-            doValidateSubmissionData(working)
-            map = doCompleteSubmission()
+            Map validation = doValidateSubmissionData(working)
+            if (validation.areModelFilesValid && validation.areMetadataValid) {
+                if (!validation.isPublicationValid) {
+                    // the web wizard does not stop for it either, and the API only gets the publication's accession,
+                    // so its submitter cannot fix the details
+                    logger.warn("Submitting although the publication is not valid: ${validation.errMsg}")
+                }
+                // the submission that was built, not validSubmissionDataMap, which other requests share
+                map = doCompleteSubmission(working)
+            } else {
+                // as in the web wizard, where the submitter cannot go on either. Completing it would fail as a server
+                // error and mail the admin for a file that was never uploaded (JBM-798)
+                String reason = (validation.errMsg as String).trim()
+                logger.error("Refusing the submission: $reason")
+                map = [message: reason, status: 400]
+            }
         }
 
         withFormat {

@@ -3,6 +3,7 @@ package net.biomodels.jummp.webapp
 import static org.junit.Assert.*
 import grails.converters.JSON
 import grails.util.GrailsWebUtil
+import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.SubmissionRouteTestBase
 import net.biomodels.jummp.model.Model
 import org.junit.*
@@ -23,6 +24,9 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     private Map call(String action, String metadata, String folder = null) {
         GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
         SubmissionController controller = grailsApplication.mainContext.getBean(SubmissionController.name)
+        // the controller reads the exchange directory once, when it is created, and it is the developer's real one in a
+        // test. It writes there, to buggy/<folder>, when a submission fails.
+        controller.EXCH_DIR = exchange.absolutePath
         controller.request.method = "POST"
         controller.request.content = metadata.getBytes("UTF-8")
         if (folder) {
@@ -153,5 +157,284 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertEquals(400, result.status)
         assertFalse(result.message.toString().isEmpty())
         assertEquals(0, Model.count())
+    }
+
+    // ------------------------------------------------------------------ what the validation of the files refuses
+    // JBM-798: the controller validates the files before it completes a submission, as the web wizard does. A file that
+    // is missing and a file that is empty both make the files invalid.
+
+    @Test
+    void testCreateWithAFileThatWasNeverUploadedIsRefused() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = call("create", metadata([
+            name: "A file is missing", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]],
+                    additional: [[name: "addFile.txt", description: "never uploaded"]]]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("addFile.txt: Not found or not exist or empty.", result.message)
+        assertEquals(0, Model.count())
+        // it is the submitter's mistake and not a bug: no ticket, no copy of the folder for the developers
+        assertFalse(result.containsKey("ticketID"))
+        assertFalse(new File(exchange, "buggy/$folder").exists())
+    }
+
+    @Test
+    void testCreateWithAnEmptyFileIsRefused() {
+        String folder = stage(["mainFile.txt": ""])
+
+        Map result = call("create", metadata([
+            name: "An empty file", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]], additional: []]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("mainFile.txt: Not found or not exist or empty.", result.message)
+        assertEquals(0, Model.count())
+    }
+
+    @Test
+    void testUpdateWithAnEmptyAdditionalFileIsRefused() {
+        String modelId = createModel()
+        String folder = stage(["mainFile.txt": "the second main file", "addFile.txt": ""])
+
+        Map result = call("update", metadata([
+            submissionId: modelId, name: "A model to update", description: "It has two files", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]],
+                    additional: [[name: "addFile.txt", description: "the additional file"]]]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("addFile.txt: Not found or not exist or empty.", result.message)
+        assertEquals(1, modelService.getLatestRevision(modelService.getModel(modelId)).revisionNumber)
+    }
+
+    @Test
+    void testCreateWithADirectoryAsAFileIsRefused() {
+        // a directory has a length, so it passed the check of the files
+        String folder = stage(["mainFile.txt": "the main file"])
+        File directory = new File(new File(exchange, folder), "a-directory")
+        assertTrue directory.mkdirs()
+        new File(directory, "inside.txt").text = "not empty"
+
+        Map result = call("create", metadata([
+            name: "A directory", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]],
+                    additional: [[name: "a-directory", description: "a directory"]]]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("a-directory: The model file cannot be a directory.", result.message)
+        assertEquals(0, Model.count())
+        assertFalse(result.containsKey("ticketID"))
+    }
+
+    @Test
+    void testARefusedSubmissionLeavesNothingToBeCompletedLater() {
+        // the web wizard completes what it kept from its last validation, in a controller that every request shares
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = call("create", metadata([
+            name: "A file is missing", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]],
+                    additional: [[name: "addFile.txt", description: "never uploaded"]]]]), folder)
+
+        assertEquals(400, result.status)
+        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
+        assertTrue(shared.validSubmissionDataMap.isEmpty())
+    }
+
+    @Test
+    void testASubmissionThatIsCompletedLeavesNothingPendingEither() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = call("create", metadata([
+            name: "A model", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]], additional: []]]), folder)
+
+        assertEquals("Success", result.status)
+        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
+        assertTrue(shared.validSubmissionDataMap.isEmpty())
+    }
+
+    @Test
+    void testUpdateWithAFileThatWasNeverUploadedIsRefused() {
+        String modelId = createModel()
+        String folder = stage(["addFile.txt": "the second additional file"])
+
+        Map result = call("update", metadata([
+            submissionId: modelId, name: "A model to update", description: "It has two files", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "never uploaded"]],
+                    additional: [[name: "addFile.txt", description: "the additional file"]]]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("mainFile.txt: Not found or not exist or empty.", result.message)
+        // the model is as it was
+        assertEquals(1, modelService.getLatestRevision(modelService.getModel(modelId)).revisionNumber)
+    }
+
+    // -------------------------------------------------------------- the last validation of the web wizard
+
+    /** What the wizard's Submit button sends to doLastValidateSubmissionData for a new model. Returns what it renders. */
+    private Map validateLastStepOfWizard(String folder, String filename) {
+        GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
+        SubmissionController controller = grailsApplication.mainContext.getBean(SubmissionController.name)
+        controller.EXCH_DIR = exchange.absolutePath
+        controller.request.method = "POST"
+        controller.params.putAll([
+            submitterInfo: "[testuser, test@test.com]", submissionFolder: folder,
+            modelFile: '{"submissionFolder": "' + folder + '", "filename": "' + filename + '", "description": "the model"}',
+            additionalFiles: "[]", isUpdate: "false", isAmend: "false", isMinorRevision: "false",
+            isMetadataSubmission: "false", modelInfo: '{"detectedName": "A model", "detectedDescription": "It has a file"}',
+            publication: '""', revisionComments: "", latestContributorRole: "Modeller"])
+        controller.doLastValidateSubmissionData()
+        JSON.parse(controller.response.contentAsString) as Map
+    }
+
+    @Test
+    void testTheWizardAcceptsAModelFile() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = validateLastStepOfWizard(folder, "mainFile.txt")
+
+        assertTrue(result.areModelFilesValid)
+        assertTrue(result.currentValidation)
+        // it keeps what it validated, for the request that completes the submission
+        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
+        assertEquals(["mainFile.txt"], shared.validSubmissionDataMap.repository_files.collect { new File(it.path).name })
+    }
+
+    @Test
+    void testTheWizardDoesNotAcceptAnEmptyModelFile() {
+        String folder = stage(["mainFile.txt": ""])
+
+        Map result = validateLastStepOfWizard(folder, "mainFile.txt")
+
+        assertFalse(result.areModelFilesValid)
+        assertFalse(result.currentValidation)
+        assertEquals("mainFile.txt: Not found or not exist or empty.", result.errMsg.toString().trim())
+    }
+
+    @Test
+    void testTheWizardDoesNotAcceptAMissingModelFile() {
+        String folder = stage([:])
+
+        Map result = validateLastStepOfWizard(folder, "mainFile.txt")
+
+        assertFalse(result.areModelFilesValid)
+        assertFalse(result.currentValidation)
+    }
+
+    // ------------------------------------------------------------------- the upload step of the web wizard
+
+    /** What the upload step sends to processUploadFiles for a new model, with the files. Returns what it renders. */
+    private Map uploadFiles(String folder, List<Map> uploads) {
+        GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
+        SubmissionController controller = grailsApplication.mainContext.getBean(SubmissionController.name)
+        controller.EXCH_DIR = exchange.absolutePath
+        controller.request.method = "POST"
+        controller.params.putAll([submissionFolder: folder, isUpdate: "false",
+                                  uploadingFiles  : new JsonBuilder(uploads).toString()])
+        // FileSystemService.retrieve looks in the exchange directory of the properties file, the developer's own
+        withExchangeDirectoryOfTheFileSystemService { controller.processUploadFiles() }
+        JSON.parse(controller.response.contentAsString) as Map
+    }
+
+    private static Map upload(String filename, boolean isModelFile, String description = "the file") {
+        [id: "uploader-$filename".toString(), filename: filename, description: description, isModelFile: isModelFile,
+         originalFilesize: "0"]
+    }
+
+    /** What the upload step sends for one model file. Returns what processUploadFiles renders. */
+    private Map uploadModelFile(String folder, String filename) {
+        uploadFiles(folder, [upload(filename, true, "the model file")])
+    }
+
+    @Test
+    void testUploadingAnEmptyXmlFileReportsItAndDetectsNothing() {
+        // the detection of the format cannot read an empty xml file: it threw a SAXParseException, and the wizard
+        // got a 500 and no message
+        String folder = stage(["model-empty.xml": ""])
+
+        Map result = uploadModelFile(folder, "model-empty.xml")
+
+        Map file = result.filesMap.first()
+        assertEquals(["The file is empty"], file.validateFileErrors)
+        assertFalse(file.validSyntax)
+        assertEquals([], file.validateSyntaxErrors)
+        // what the upload step reads is there, and empty
+        assertEquals([:], file.detectedModelFormat)
+        assertEquals([:], file.detectedModelInfo)
+    }
+
+    @Test
+    void testUploadingAFileThatIsNotThereReportsIt() {
+        String folder = stage([:])
+
+        Map result = uploadModelFile(folder, "never.xml")
+
+        assertEquals(["File does not exist"], result.filesMap.first().validateFileErrors)
+    }
+
+    @Test
+    void testUploadingAModelFileDetectsItsFormat() {
+        String folder = stage(["model.txt": "what is this?"])
+
+        Map result = uploadModelFile(folder, "model.txt")
+
+        Map file = result.filesMap.first()
+        assertEquals([], file.validateFileErrors)
+        assertEquals("UNKNOWN", file.detectedModelFormat.identifier)
+        assertNotNull(file.detectedModelInfo)
+    }
+
+    @Test
+    void testEveryFileSaysWhatIsWrongWithIt() {
+        // an empty model file and an empty additional file, each without a description and with an invalid name, and
+        // a model file that is fine: each problem is said on its own, for the file that has it
+        String folder = stage(["model-empty.xml": "", "data (1).txt": "", "fine.txt": "some content"])
+
+        Map result = uploadFiles(folder, [upload("model-empty.xml", true, ""), upload("data (1).txt", false, ""),
+                                          upload("fine.txt", false, "notes")])
+
+        Map empty = result.filesMap.find { it.filename == "model-empty.xml" }
+        assertEquals(["The file is empty"], empty.validateFileErrors)
+        assertEquals(["The file needs a description"], empty.validateFileDescription)
+        assertNull(empty.validateFileName)
+        Map data = result.filesMap.find { it.filename == "data (1).txt" }
+        assertEquals(["The file is empty"], data.validateFileErrors)
+        assertEquals(["The file needs a description"], data.validateFileDescription)
+        assertEquals([SubmissionController.FILE_NAME_INVALID], data.validateFileName)
+        Map fine = result.filesMap.find { it.filename == "fine.txt" }
+        assertEquals([], fine.validateFileErrors)
+        assertEquals([], fine.validateFileDescription)
+        assertNull(fine.validateFileName)
+        // and the upload step shows one line for each file, with the name of the file in front of it
+        assertEquals("The file is empty. The file needs a description.", empty.validateFileSummary)
+        assertEquals("The file is empty. The file needs a description. " +
+            SubmissionController.FILE_NAME_INVALID + ".", data.validateFileSummary)
+        assertEquals("", fine.validateFileSummary)
+    }
+
+    @Test
+    void testTheProblemsOfAFileAreSaidInOneLine() {
+        // a model file that has no description, and an empty additional file that has none either
+        String folder = stage(["Zhou2024_Updated-model.m": "a model", "model-empty.xml": ""])
+
+        Map result = uploadFiles(folder, [upload("Zhou2024_Updated-model.m", true, ""),
+                                          upload("model-empty.xml", false, "")])
+
+        assertEquals(["The file needs a description.",
+                      "The file is empty. The file needs a description."],
+            result.filesMap*.validateFileSummary)
+    }
+
+    @Test
+    void testAModelFileWithoutADescriptionIsStillDetected() {
+        String folder = stage(["model.txt": "what is this?"])
+
+        Map result = uploadFiles(folder, [upload("model.txt", true, "")])
+
+        Map file = result.filesMap.first()
+        assertEquals(["The file needs a description"], file.validateFileDescription)
+        assertEquals("UNKNOWN", file.detectedModelFormat.identifier)
     }
 }
