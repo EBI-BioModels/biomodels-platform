@@ -3,6 +3,7 @@ package net.biomodels.jummp.webapp
 import static org.junit.Assert.*
 import grails.converters.JSON
 import grails.util.GrailsWebUtil
+import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.SubmissionRouteTestBase
 import net.biomodels.jummp.model.Model
 import org.junit.*
@@ -270,5 +271,60 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
 
         assertFalse(result.areModelFilesValid)
         assertFalse(result.currentValidation)
+    }
+
+    // ------------------------------------------------------------------- the upload step of the web wizard
+
+    /** What the upload step sends to processUploadFiles for a new model, with one model file. Returns what it renders. */
+    private Map uploadModelFile(String folder, String filename) {
+        GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
+        SubmissionController controller = grailsApplication.mainContext.getBean(SubmissionController.name)
+        controller.EXCH_DIR = exchange.absolutePath
+        controller.request.method = "POST"
+        controller.params.putAll([
+            submissionFolder: folder, isUpdate: "false",
+            uploadingFiles  : new JsonBuilder([[id: "uploader1", filename: filename, description: "the model file",
+                                                isModelFile: true, originalFilesize: "0"]]).toString()])
+        // FileSystemService.retrieve looks in the exchange directory of the properties file, the developer's own
+        withExchangeDirectoryOfTheFileSystemService { controller.processUploadFiles() }
+        JSON.parse(controller.response.contentAsString) as Map
+    }
+
+    @Test
+    void testUploadingAnEmptyXmlFileReportsItAndDetectsNothing() {
+        // the detection of the format cannot read an empty xml file: it threw a SAXParseException, and the wizard
+        // got a 500 and no message
+        String folder = stage(["model-empty.xml": ""])
+
+        Map result = uploadModelFile(folder, "model-empty.xml")
+
+        Map file = result.filesMap.first()
+        assertEquals(["The file model-empty.xml is empty"], file.validateFileErrors)
+        assertFalse(file.validSyntax)
+        assertEquals([], file.validateSyntaxErrors)
+        // what the upload step reads is there, and empty
+        assertEquals([:], file.detectedModelFormat)
+        assertEquals([:], file.detectedModelInfo)
+    }
+
+    @Test
+    void testUploadingAFileThatIsNotThereReportsIt() {
+        String folder = stage([:])
+
+        Map result = uploadModelFile(folder, "never.xml")
+
+        assertEquals(["File does not exist"], result.filesMap.first().validateFileErrors)
+    }
+
+    @Test
+    void testUploadingAModelFileDetectsItsFormat() {
+        String folder = stage(["model.txt": "what is this?"])
+
+        Map result = uploadModelFile(folder, "model.txt")
+
+        Map file = result.filesMap.first()
+        assertEquals([], file.validateFileErrors)
+        assertEquals("UNKNOWN", file.detectedModelFormat.identifier)
+        assertNotNull(file.detectedModelInfo)
     }
 }

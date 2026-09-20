@@ -34,6 +34,8 @@ class SubmissionControllerValidationSpec extends Specification {
 
     void setup() {
         dir = File.createTempDir("submission-controller", "")
+        // the parameters of the upload step are html-encoded
+        mockCodec(org.codehaus.groovy.grails.plugins.codecs.HTMLCodec)
     }
 
     void cleanup() {
@@ -174,5 +176,60 @@ class SubmissionControllerValidationSpec extends Specification {
         then:
         completed
         answer.status == "Failure"
+    }
+
+    // ------------------------------------------------------------------------ processUploadFiles
+
+    /** What the upload step sends to processUploadFiles for a new model, with one model file. */
+    private Map uploadModelFile(List<String> fileErrors, Closure inferModelFormat) {
+        String uploads = '[{"id": "uploader1", "filename": "model-empty.xml", "description": "the model", ' +
+            '"isModelFile": true, "originalFilesize": "0"}]'
+        controller.EXCH_DIR = dir.absolutePath
+        controller.fileSystemService = [retrieve: { def json -> new File(dir, json["filename"] as String) }]
+        controller.submissionService = [validateFile  : { File f -> fileErrors },
+                                        validateSyntax: { File f, String format, List errors -> true },
+                                        detectModelInfo: { File f, String format -> [name: "A model"] }]
+        controller.modelFileFormatService = [inferModelFormat: inferModelFormat,
+                                             getPublicationAnnotations: { RTC revision -> [] }]
+        params.submissionFolder = "a-submission-folder"
+        params.uploadingFiles = uploads
+        params.isUpdate = "false"
+        controller.processUploadFiles()
+        response.json as Map
+    }
+
+    void "a model file with errors is reported and nothing is detected in it"() {
+        given: "the detection of the format fails on an empty xml file, as it did (SAXParseException)"
+        boolean detected = false
+        Closure inferModelFormat = { List files -> detected = true; throw new org.xml.sax.SAXParseException("Premature end of file.", null) }
+
+        when:
+        Map answer = uploadModelFile(["The file model-empty.xml is empty"], inferModelFormat)
+
+        then:
+        !detected
+        Map file = answer.filesMap.first()
+        file.validateFileErrors == ["The file model-empty.xml is empty"]
+        file.validSyntax == false
+        file.validateSyntaxErrors == []
+        file.detectedModelFormat == [:]
+        file.detectedModelInfo == [:]
+    }
+
+    void "a model file without errors has its format, syntax and information detected"() {
+        given:
+        boolean detected = false
+        Closure inferModelFormat = { List files -> detected = true; new MFTC(id: 1, identifier: "UNKNOWN", name: "Unknown") }
+
+        when:
+        Map answer = uploadModelFile([], inferModelFormat)
+
+        then:
+        detected
+        Map file = answer.filesMap.first()
+        file.validateFileErrors == []
+        file.detectedModelFormat.identifier == "UNKNOWN"
+        file.validSyntax == true
+        file.detectedModelInfo.name == "A model"
     }
 }

@@ -6,6 +6,7 @@ import grails.test.mixin.integration.IntegrationTestMixin
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.plugins.configuration.VcsCommand
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.io.FileUtils
 import org.junit.*
@@ -91,5 +92,22 @@ abstract class SubmissionRouteTestBase extends JummpIntegrationTest {
 
     protected static String metadata(Map fields) {
         new JsonBuilder(fields).toString()
+    }
+
+    /**
+     * Runs a block with the FileSystemService using the exchange directory of the test. It gets the directory from
+     * ConfigurationService, which reads the properties file, so it uses the developer's real one whatever the test has
+     * put in the configuration.
+     */
+    protected def withExchangeDirectoryOfTheFileSystemService(Closure body) {
+        def original = fileSystemService.configurationService
+        fileSystemService.configurationService = [loadVcsConfiguration: { ->
+            new VcsCommand(vcs: "git", workingDirectory: "target/vcs/git", exchangeDirectory: exchange.path)
+        }]
+        try {
+            return body()
+        } finally {
+            fileSystemService.configurationService = original
+        }
     }
 }

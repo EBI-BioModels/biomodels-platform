@@ -172,9 +172,17 @@ class SubmissionController extends CommonController implements InitializingBean 
         Map uploadedFiles = new HashMap()
         for (JSONElement e : filesMap) {
             e["submissionFolder"] = submissionFolder
-            e["validateFileErrors"] = validateFile(e)
+            List fileErrors = validateFile(e)
+            e["validateFileErrors"] = fileErrors
             uploadedFiles.put(e["filename"], e["originalFilesize"])
-            if (e["isModelFile"]) {
+            if (e["isModelFile"] && fileErrors) {
+                // A file that is missing, empty or a directory has nothing to detect, and reading an empty xml file
+                // fails in the detection of its format (JBM-798). Send what the upload step reads, and its errors.
+                e["detectedModelFormat"] = [:]
+                e["validSyntax"] = false
+                e["validateSyntaxErrors"] = []
+                e["detectedModelInfo"] = [:]
+            } else if (e["isModelFile"]) {
                 // Presumably the submission has a single (main) model file
                 Map detectedModelFormat = detectModelFormat(e)
                 e["detectedModelFormat"] = detectedModelFormat
