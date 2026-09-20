@@ -28,13 +28,13 @@ class SubmissionServiceValidateFileSpec extends Specification {
         service.validateFile(file) == []
     }
 
-    void "an empty file is reported by name"() {
+    void "an empty file is reported"() {
         given:
         File file = new File(dir, "empty.xml")
         file.text = ""
 
         expect:
-        service.validateFile(file) == ["The file empty.xml is empty"]
+        service.validateFile(file) == ["The file is empty"]
     }
 
     void "a file that does not exist is not called empty"() {

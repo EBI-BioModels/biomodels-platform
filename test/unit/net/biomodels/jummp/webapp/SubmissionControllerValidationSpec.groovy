@@ -204,12 +204,12 @@ class SubmissionControllerValidationSpec extends Specification {
         Closure inferModelFormat = { List files -> detected = true; throw new org.xml.sax.SAXParseException("Premature end of file.", null) }
 
         when:
-        Map answer = uploadModelFile(["The file model-empty.xml is empty"], inferModelFormat)
+        Map answer = uploadModelFile(["The file is empty"], inferModelFormat)
 
         then:
         !detected
         Map file = answer.filesMap.first()
-        file.validateFileErrors == ["The file model-empty.xml is empty"]
+        file.validateFileErrors == ["The file is empty"]
         file.validSyntax == false
         file.validateSyntaxErrors == []
         file.detectedModelFormat == [:]

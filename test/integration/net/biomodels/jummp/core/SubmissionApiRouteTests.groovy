@@ -177,7 +177,7 @@ class SubmissionApiRouteTests extends SubmissionRouteTestBase {
         // the web wizard shows these at once, when a file is uploaded
         File empty = new File(exchange, "empty.xml")
         empty.text = ""
-        assertEquals(["The file empty.xml is empty"], submissionService.validateFile(empty))
+        assertEquals(["The file is empty"], submissionService.validateFile(empty))
     }
 
     @Test

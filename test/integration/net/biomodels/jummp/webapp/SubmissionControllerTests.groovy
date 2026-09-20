@@ -299,7 +299,7 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         Map result = uploadModelFile(folder, "model-empty.xml")
 
         Map file = result.filesMap.first()
-        assertEquals(["The file model-empty.xml is empty"], file.validateFileErrors)
+        assertEquals(["The file is empty"], file.validateFileErrors)
         assertFalse(file.validSyntax)
         assertEquals([], file.validateSyntaxErrors)
         // what the upload step reads is there, and empty
