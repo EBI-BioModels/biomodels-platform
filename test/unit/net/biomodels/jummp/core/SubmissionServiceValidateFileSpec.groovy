@@ -4,8 +4,8 @@ import grails.test.mixin.TestFor
 import spock.lang.Specification
 
 /**
- * Covers JBM-798: SubmissionService.validateFile is what the web wizard's upload step calls for every file it gets, and
- * it shows the messages to the submitter.
+ * Covers JBM-798: SubmissionService.validateFile is what the submission wizard's upload step calls for every file it
+ * gets, and it shows the messages to the submitter.
  */
 @TestFor(SubmissionService)
 class SubmissionServiceValidateFileSpec extends Specification {

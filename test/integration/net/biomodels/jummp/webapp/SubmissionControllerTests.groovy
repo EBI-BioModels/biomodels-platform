@@ -160,8 +160,8 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     }
 
     // ------------------------------------------------------------------ what the validation of the files refuses
-    // JBM-798: the controller validates the files before it completes a submission, as the web wizard does. A file that
-    // is missing and a file that is empty both make the files invalid.
+    // JBM-798: the controller validates the files before it completes a submission, as the submission wizard does. A
+    // file that is missing and a file that is empty both make the files invalid.
 
     @Test
     void testCreateWithAFileThatWasNeverUploadedIsRefused() {
@@ -228,34 +228,6 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     }
 
     @Test
-    void testARefusedSubmissionLeavesNothingToBeCompletedLater() {
-        // the web wizard completes what it kept from its last validation, in a controller that every request shares
-        String folder = stage(["mainFile.txt": "the main file"])
-
-        Map result = call("create", metadata([
-            name: "A file is missing", format: format("UNKNOWN"),
-            files: [main: [[name: "mainFile.txt", description: "the main file"]],
-                    additional: [[name: "addFile.txt", description: "never uploaded"]]]]), folder)
-
-        assertEquals(400, result.status)
-        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
-        assertTrue(shared.validSubmissionDataMap.isEmpty())
-    }
-
-    @Test
-    void testASubmissionThatIsCompletedLeavesNothingPendingEither() {
-        String folder = stage(["mainFile.txt": "the main file"])
-
-        Map result = call("create", metadata([
-            name: "A model", format: format("UNKNOWN"),
-            files: [main: [[name: "mainFile.txt", description: "the main file"]], additional: []]]), folder)
-
-        assertEquals("Success", result.status)
-        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
-        assertTrue(shared.validSubmissionDataMap.isEmpty())
-    }
-
-    @Test
     void testUpdateWithAFileThatWasNeverUploadedIsRefused() {
         String modelId = createModel()
         String folder = stage(["addFile.txt": "the second additional file"])
@@ -271,10 +243,14 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertEquals(1, modelService.getLatestRevision(modelService.getModel(modelId)).revisionNumber)
     }
 
-    // -------------------------------------------------------------- the last validation of the web wizard
+    // ---------------------------------------- the last validation and the completion of the submission wizard (JBM-802)
 
-    /** What the wizard's Submit button sends to doLastValidateSubmissionData for a new model. Returns what it renders. */
-    private Map validateLastStepOfWizard(String folder, String filename) {
+    /**
+     * What the wizard's Submit button sends to doLastValidateSubmissionData and what its last step sends to
+     * completeSubmission: the same data, for a new model, or for the update of a model. Returns what the action renders.
+     */
+    private Map wizard(String action, String folder, String filename, String name = "A model",
+                       Map extra = [:], String additional = "[]") {
         GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
         SubmissionController controller = grailsApplication.mainContext.getBean(SubmissionController.name)
         controller.EXCH_DIR = exchange.absolutePath
@@ -282,11 +258,25 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         controller.params.putAll([
             submitterInfo: "[testuser, test@test.com]", submissionFolder: folder,
             modelFile: '{"submissionFolder": "' + folder + '", "filename": "' + filename + '", "description": "the model"}',
-            additionalFiles: "[]", isUpdate: "false", isAmend: "false", isMinorRevision: "false",
-            isMetadataSubmission: "false", modelInfo: '{"detectedName": "A model", "detectedDescription": "It has a file"}',
+            additionalFiles: additional, isUpdate: "false", isAmend: "false", isMinorRevision: "false",
+            isMetadataSubmission: "false", modelInfo: '{"detectedName": "' + name + '", "detectedDescription": "It has a file"}',
             publication: '""', revisionComments: "", latestContributorRole: "Modeller"])
-        controller.doLastValidateSubmissionData()
+        controller.params.putAll(extra)
+        controller."$action"()
         JSON.parse(controller.response.contentAsString) as Map
+    }
+
+    private Map validateLastStepOfWizard(String folder, String filename, String name = "A model") {
+        wizard("doLastValidateSubmissionData", folder, filename, name)
+    }
+
+    private Map completeInWizard(String folder, String filename, String name = "A model") {
+        wizard("completeSubmission", folder, filename, name)
+    }
+
+    private String mainFileOf(String modelId) {
+        modelService.retrieveFiles(modelService.getLatestRevision(modelService.getModel(modelId)))
+            .find { it.name == "mainFile.txt" }.text
     }
 
     @Test
@@ -297,9 +287,133 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
 
         assertTrue(result.areModelFilesValid)
         assertTrue(result.currentValidation)
-        // it keeps what it validated, for the request that completes the submission
-        SubmissionController shared = grailsApplication.mainContext.getBean(SubmissionController.name)
-        assertEquals(["mainFile.txt"], shared.validSubmissionDataMap.repository_files.collect { new File(it.path).name })
+        // it only validates: the model is created by the request that completes the submission
+        assertEquals(0, Model.count())
+    }
+
+    @Test
+    void testTheWizardCompletesTheSubmissionThatItWasSent() {
+        String first = stage(["mainFile.txt": "the first main file"])
+        String second = stage(["mainFile.txt": "the second main file"])
+        // two users are on the last step. The second validates after the first, and the first completes after that:
+        // a controller that kept the data of the last validation would complete the submission of the second user
+        assertTrue(validateLastStepOfWizard(first, "mainFile.txt", "The first model").currentValidation)
+        assertTrue(validateLastStepOfWizard(second, "mainFile.txt", "The second model").currentValidation)
+
+        Map result = completeInWizard(first, "mainFile.txt", "The first model")
+
+        assertEquals("Success", result.status)
+        assertEquals(1, Model.count())
+        String modelId = result.modelIdentifier
+        assertEquals("The first model", modelService.getLatestRevision(modelService.getModel(modelId)).name)
+        assertEquals("the first main file", mainFileOf(modelId))
+        // the other submission is where its submitter left it
+        assertTrue(new File(new File(exchange, second), "mainFile.txt").exists())
+    }
+
+    @Test
+    void testTheWizardCompletesASubmissionThatNoRequestValidatedBefore() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = completeInWizard(folder, "mainFile.txt", "A model nobody validated")
+
+        assertEquals("Success", result.status)
+        assertEquals("the main file", mainFileOf(result.modelIdentifier))
+    }
+
+    @Test
+    void testTheWizardDoesNotCompleteASubmissionThatIsNotValid() {
+        String valid = stage(["mainFile.txt": "the main file"])
+        String empty = stage(["mainFile.txt": ""])
+        // the last validation of somebody else, which a completion that reads it from the controller would complete
+        assertTrue(validateLastStepOfWizard(valid, "mainFile.txt").currentValidation)
+
+        Map result = completeInWizard(empty, "mainFile.txt")
+
+        assertEquals("Failure", result.status)
+        assertTrue(result.message.toString().contains("mainFile.txt: Not found or not exist or empty."))
+        assertEquals(0, Model.count())
+        assertFalse(result.containsKey("ticketID"))
+    }
+
+    @Test
+    void testTheWizardDoesNotCompleteASubmissionWhoseFileIsMissing() {
+        String folder = stage([:])
+
+        Map result = completeInWizard(folder, "mainFile.txt")
+
+        assertEquals("Failure", result.status)
+        assertEquals(0, Model.count())
+    }
+
+    @Test
+    void testTheRefusalOfTheWizardIsSafeToShowAsHtml() {
+        // the page puts the message in the document as it is
+        String folder = stage(["a<b>.txt": ""])
+
+        Map result = completeInWizard(folder, "a<b>.txt")
+
+        assertEquals("Failure", result.status)
+        assertFalse(result.message.toString().contains("<b>"))
+        assertTrue(result.message.toString().contains("a&lt;b&gt;.txt"))
+    }
+
+    /**
+     * The last validation and the completion refuse a submission whose main file cannot be read, with the message of
+     * the files. The detection of the format of an xml file throws on such a file, which was a server error (JBM-802).
+     */
+    private void assertTheWizardRefuses(String folder, String filename, String message) {
+        Map validation = wizard("doLastValidateSubmissionData", folder, filename)
+        assertFalse(validation.currentValidation)
+        assertEquals(message, validation.errMsg.toString().trim())
+
+        Map result = wizard("completeSubmission", folder, filename)
+        assertEquals("Failure", result.status)
+        assertEquals("<div style='color: red'>$message</div>".toString(), result.message)
+        assertEquals(0, Model.count())
+    }
+
+    @Test
+    void testTheWizardRefusesAnXmlFileThatIsMissing() {
+        String folder = stage([:])
+
+        assertTheWizardRefuses(folder, "never.xml", "never.xml: Not found or not exist or empty.")
+    }
+
+    @Test
+    void testTheWizardRefusesAnXmlFileThatIsEmpty() {
+        String folder = stage(["empty.xml": ""])
+
+        assertTheWizardRefuses(folder, "empty.xml", "empty.xml: Not found or not exist or empty.")
+    }
+
+    @Test
+    void testTheWizardRefusesADirectory() {
+        String folder = stage([:])
+        File directory = new File(new File(exchange, folder), "a-directory.xml")
+        assertTrue directory.mkdirs()
+        new File(directory, "inside.xml").text = "<a/>"
+
+        assertTheWizardRefuses(folder, "a-directory.xml", "a-directory.xml: The model file cannot be a directory.")
+    }
+
+    @Test
+    void testTheWizardCompletesTheUpdateThatItWasSent() {
+        String modelId = createModel()
+        String update = stage(["mainFile.txt": "the updated main file", "addFile.txt": "the first additional file"])
+        // the data of an update that the wizard sends: the model, what it was and what the submitter changed
+        Map extra = [isUpdate: "true", modelId: modelId, latestModelName: "A model to update",
+                     "changesMade[]": ["The main file was changed"]]
+        String additional = '[{"submissionFolder": "' + update + '", "filename": "addFile.txt", "description": "more"}]'
+        Map validation = wizard("doLastValidateSubmissionData", update, "mainFile.txt", "A model to update", extra, additional)
+        assertTrue(validation.currentValidation)
+
+        Map result = wizard("completeSubmission", update, "mainFile.txt", "A model to update", extra, additional)
+
+        assertEquals("Success", result.status)
+        assertEquals(modelId, result.modelIdentifier)
+        assertEquals(2, modelService.getLatestRevision(modelService.getModel(modelId)).revisionNumber)
+        assertEquals("the updated main file", mainFileOf(modelId))
     }
 
     @Test
@@ -323,7 +437,7 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertFalse(result.currentValidation)
     }
 
-    // ------------------------------------------------------------------- the upload step of the web wizard
+    // ------------------------------------------------------------ the upload step of the submission wizard
 
     /** What the upload step sends to processUploadFiles for a new model, with the files. Returns what it renders. */
     private Map uploadFiles(String folder, List<Map> uploads) {
