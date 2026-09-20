@@ -312,12 +312,19 @@ class SubmissionController extends CommonController implements InitializingBean 
         valid
     }
 
+    /** Tells whether the file of a submission is there, is a file and has something in it. */
+    private static boolean hasContent(RFTC rftc) {
+        File file = new File(rftc.path)
+        file.isFile() && file.length() > 0
+    }
+
     private boolean doValidateModelInfo(Map working, List<String> messages) {
         RTC revision = working.get("RevisionTC") as RTC
         String errMsg = ""
         // 1. Condition 1: model format is not null
         boolean mfCond = revision.format
-        if (!mfCond) {
+        // the format is not detected from a file that cannot be read, and the message about the files says why
+        if (!mfCond && !messages[0]) {
             errMsg += "Model format is missing.\n"
         }
         // 2. Condition 2: model approach is not null
@@ -665,8 +672,11 @@ data type and accession from the URI.""")
         List<RFTC> rftcList = new ArrayList<RFTC>()
         rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
             params.additionalFiles.decodeHTML() as String, working)
-        // 2. Rebuild the model format
-        MFTC format = modelFileFormatService.inferModelFormat(rftcList)
+        // 2. Rebuild the model format. A file that is missing, empty or a directory has nothing to detect, and the
+        // detection fails on it with an exception: the request would be a server error instead of a refusal. The
+        // validation of the files names it, and asks for no format from what cannot be read (JBM-802).
+        boolean canBeRead = rftcList.every { RFTC rftc -> hasContent(rftc) }
+        MFTC format = canBeRead ? modelFileFormatService.inferModelFormat(rftcList) : null
         working.put("model_format", format)
 
         boolean isUpdate = params.boolean("isUpdate")

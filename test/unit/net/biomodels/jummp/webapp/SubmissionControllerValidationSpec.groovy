@@ -267,10 +267,17 @@ class SubmissionControllerValidationSpec extends Specification {
             publication: '""', revisionComments: "", latestContributorRole: "Modeller"])
     }
 
-    /** A controller whose service completes nothing: it keeps the data that it is given and stops there. */
-    private void wizardController(List<Map> completed) {
+    private static Closure detectsUnknownFormat() {
+        { List files -> new MFTC(identifier: "UNKNOWN", name: "Unknown") }
+    }
+
+    /**
+     * A controller whose service completes nothing: it keeps the data that it is given and stops there. The detection
+     * of the format finds a format unless it is given another closure.
+     */
+    private void wizardController(List<Map> completed, Closure inferModelFormat = detectsUnknownFormat()) {
         controller.EXCH_DIR = dir.absolutePath
-        controller.modelFileFormatService = [inferModelFormat: { List files -> new MFTC(identifier: "UNKNOWN", name: "Unknown") }]
+        controller.modelFileFormatService = [inferModelFormat: inferModelFormat]
         controller.submissionService = [handleSubmission: { Map working -> completed << working; throw new IllegalStateException("stop here") },
                                         cleanup         : { Map working -> }]
         controller.mailingService = [send: { Map mail -> }]
@@ -365,6 +372,84 @@ class SubmissionControllerValidationSpec extends Specification {
         then:
         completed.isEmpty()
         response.json.message == "<div style='color: red'>a&lt;b&gt;.txt: Not found or not exist or empty.</div>"
+    }
+
+    /** What the detection of the format does with a file that cannot be read: it fails, as Tika does. */
+    private static Closure detectionThatFails() {
+        { List files -> throw new FileNotFoundException("The file cannot be probed: ${files*.path}") }
+    }
+
+    /** Puts what cannot be read in the submission folder: nothing, an empty file or a directory. */
+    private void putUnreadable(String folder, String name, String text, boolean isDirectory) {
+        File file = new File(new File(dir, folder), name)
+        file.parentFile.mkdirs()
+        if (isDirectory) {
+            assert file.mkdirs()
+            new File(file, "inside.xml").text = "<a/>"
+        } else if (text != null) {
+            file.text = text
+        }
+    }
+
+    void "the completion refuses a file that cannot be read without detecting its format: #name"() {
+        given: "the detection of the format fails on such a file, as it did (JBM-802)"
+        List<Map> completed = []
+        wizardController(completed, detectionThatFails())
+        putUnreadable("a-folder", name, text, isDirectory)
+        wizardSends("a-folder", name)
+
+        when:
+        controller.completeSubmission()
+
+        then: "a refusal that names the file, and not a server error"
+        response.status == 200
+        completed.isEmpty()
+        response.json.status == "Failure"
+        response.json.message == "<div style='color: red'>$message</div>"
+
+        where:
+        name          | text | isDirectory | message
+        "never.xml"   | null | false       | "never.xml: Not found or not exist or empty."
+        "empty.xml"   | ""   | false       | "empty.xml: Not found or not exist or empty."
+        "a-directory" | null | true        | "a-directory: The model file cannot be a directory."
+    }
+
+    void "the last validation names a file that cannot be read and asks for no format: #name"() {
+        given:
+        List<Map> completed = []
+        wizardController(completed, detectionThatFails())
+        putUnreadable("a-folder", name, text, isDirectory)
+        wizardSends("a-folder", name)
+
+        when:
+        controller.doLastValidateSubmissionData()
+
+        then: "the message of the files says why, and there is no message about the format"
+        response.status == 200
+        !response.json.currentValidation
+        !response.json.areModelFilesValid
+        response.json.errMsg.trim() == message
+
+        where:
+        name          | text | isDirectory | message
+        "never.xml"   | null | false       | "never.xml: Not found or not exist or empty."
+        "empty.xml"   | ""   | false       | "empty.xml: Not found or not exist or empty."
+        "a-directory" | null | true        | "a-directory: The model file cannot be a directory."
+    }
+
+    void "the last validation still asks for a format when the files can be read and none is detected"() {
+        given:
+        wizardController([], { List files -> null })
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt")
+
+        when:
+        controller.doLastValidateSubmissionData()
+
+        then:
+        response.json.areModelFilesValid
+        !response.json.areMetadataValid
+        response.json.errMsg.trim() == "Model format is missing."
     }
 
     // ------------------------------------------------------------------------ processUploadFiles
