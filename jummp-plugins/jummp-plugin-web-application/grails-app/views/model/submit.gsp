@@ -78,6 +78,36 @@
         var guessedPublicationAccession = "";
         var isMetadataSubmission = "${isMetadataSubmission}";
 
+        /**
+         * What the server needs to rebuild the submission: the last validation and the completion send the same data,
+         * because the server keeps nothing between the two requests (JBM-802).
+         */
+        function submissionParameters() {
+            return {
+                submitterInfo: submitterInfo,
+                isUpdate: isUpdate,
+                isAmend: isAmend,
+                isMinorRevision: isMinorRevision,
+                isMetadataSubmission: isMetadataSubmission,
+                modelFile: JSON.stringify(modelFile),
+                additionalFiles: JSON.stringify(additionalFiles),
+                modelInfo: JSON.stringify(modelInfo),
+                publication: JSON.stringify(publication),
+                revisionComments: revisionComments,
+                modelId: modelId,
+                latestModelName: latestModelName,
+                latestModelFormat: latestModelFormat,
+                latestModelFormatNameAndVersion: latestModelFormatNameAndVersion,
+                latestReadmeSubmission: latestReadmeSubmission,
+                latestModellingApproach: latestModellingApproach,
+                latestOtherInfo: latestOtherInfo,
+                latestContributorRole: latestContributorRole,
+                // changesMade is a Set, which jQuery does not send: the server reads it as a list
+                changesMade: [...changesMade],
+                submissionFolder: submissionFolder
+            };
+        }
+
         toastr.options = {
             // How long the toast will display without user interaction
             "timeOut": 7000,

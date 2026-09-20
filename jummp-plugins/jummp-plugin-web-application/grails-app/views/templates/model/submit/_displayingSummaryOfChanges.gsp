@@ -242,33 +242,7 @@
         return $.ajax({
             url: "${createLink(controller: "submission", action: "doLastValidateSubmissionData")}",
             type: "POST",
-            data: {
-                submitterInfo: submitterInfo,
-                isUpdate: isUpdate,
-                isAmend: isAmend,
-                isMinorRevision: isMinorRevision,
-                isMetadataSubmission: isMetadataSubmission,
-                modelFile: JSON.stringify(modelFile),
-                additionalFiles: JSON.stringify(additionalFiles),
-                modelInfo: JSON.stringify(modelInfo),
-                publication: JSON.stringify(publication),
-                revisionComments: revisionComments,
-                modelId: modelId,
-                latestModelName: latestModelName,
-                latestModelFormat: latestModelFormat,
-                latestModelFormatNameAndVersion: latestModelFormatNameAndVersion,
-                latestReadmeSubmission: latestReadmeSubmission,
-                latestModellingApproach: latestModellingApproach,
-                latestOtherInfo:latestOtherInfo,
-                latestContributorRole: latestContributorRole,
-                /**
-                 * changesMade is a Set object. It is put here to pass to the server side as a list
-                 * because it is one of the members of the params object. So, [...changesMade] is to
-                 * convert a Set object to a List one.
-                 */
-                changesMade: [...changesMade],
-                submissionFolder: "${submissionFolder}"
-            },
+            data: submissionParameters(),
             beforeSend: function () {
                 msg = "Doing the final verification of  your submission data...";
                 console.log(msg);
