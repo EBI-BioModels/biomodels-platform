@@ -175,6 +175,10 @@ class SubmissionApiRouteTests extends SubmissionRouteTestBase {
         assertEquals([], submissionService.validateFile(real))
         assertTrue(submissionService.validateFile(new File(exchange, "missing.xml")).contains("File does not exist"))
         assertTrue(submissionService.validateFile(exchange).contains("The model file cannot be a directory"))
+        // the web wizard shows these at once, when a file is uploaded
+        File empty = new File(exchange, "empty.xml")
+        empty.text = ""
+        assertEquals(["The file is empty"], submissionService.validateFile(empty))
     }
 
     @Test

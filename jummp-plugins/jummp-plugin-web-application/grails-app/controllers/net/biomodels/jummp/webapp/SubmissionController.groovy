@@ -245,16 +245,17 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     private boolean doValidateUploadedFiles(Map working) {
         List<RFTC> rftcList = working.get("repository_files")
         String errFileMsg = ""
-        Map existedFiles = [:]
+        boolean valid = true
         for (RFTC rftc : rftcList) {
             File file = new File(rftc.path)
-            existedFiles.put(rftc.path, file?.exists())
-            if (!file?.exists() || !file?.length() || file?.length() <= 0) {
+            // a file that is missing or empty makes the files invalid (JBM-798; only the missing one did before)
+            if (!file.exists() || file.length() <= 0) {
                 errFileMsg += "${file.name}: Not found or not exist or empty.\n"
+                valid = false
             }
         }
         validationMessages[0] = errFileMsg
-        existedFiles.findAll { !it.value }?.isEmpty()
+        valid
     }
 
     private boolean doValidateModelInfo(Map working) {
@@ -371,10 +372,10 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         if (map == null) {
             Map validation = doValidateSubmissionData(working)
             if (validation.areModelFilesValid && validation.areMetadataValid) {
-                if (validation.errMsg) {
-                    // an empty file or a publication that is not valid does not stop the web wizard either, and the
-                    // API only gets the publication's accession, so its submitter cannot fix the details
-                    logger.warn("Submitting although: ${validation.errMsg}")
+                if (!validation.isPublicationValid) {
+                    // the web wizard does not stop for it either, and the API only gets the publication's accession,
+                    // so its submitter cannot fix the details
+                    logger.warn("Submitting although the publication is not valid: ${validation.errMsg}")
                 }
                 map = doCompleteSubmission()
             } else {

@@ -949,6 +949,9 @@ an annotation to SBML document.""")
             if (file.isDirectory()) {
                 errors.add("The model file cannot be a directory")
             }
+            if (file.isFile() && file.length() == 0) {
+                errors.add("The file is empty")
+            }
             return errors
         }
 

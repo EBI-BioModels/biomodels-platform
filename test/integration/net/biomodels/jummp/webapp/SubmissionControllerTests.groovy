@@ -159,9 +159,8 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     }
 
     // ------------------------------------------------------------------ what the validation of the files refuses
-    // JBM-798: the controller validates the files before it completes a submission, as the web wizard does. Like the
-    // wizard it goes on with an empty file: doValidateUploadedFiles words it in a message, but only a missing file makes
-    // the files invalid.
+    // JBM-798: the controller validates the files before it completes a submission, as the web wizard does. A file that
+    // is missing and a file that is empty both make the files invalid.
 
     @Test
     void testCreateWithAFileThatWasNeverUploadedIsRefused() {
@@ -181,6 +180,34 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     }
 
     @Test
+    void testCreateWithAnEmptyFileIsRefused() {
+        String folder = stage(["mainFile.txt": ""])
+
+        Map result = call("create", metadata([
+            name: "An empty file", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]], additional: []]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("mainFile.txt: Not found or not exist or empty.", result.message)
+        assertEquals(0, Model.count())
+    }
+
+    @Test
+    void testUpdateWithAnEmptyAdditionalFileIsRefused() {
+        String modelId = createModel()
+        String folder = stage(["mainFile.txt": "the second main file", "addFile.txt": ""])
+
+        Map result = call("update", metadata([
+            submissionId: modelId, name: "A model to update", description: "It has two files", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]],
+                    additional: [[name: "addFile.txt", description: "the additional file"]]]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("addFile.txt: Not found or not exist or empty.", result.message)
+        assertEquals(1, modelService.getLatestRevision(modelService.getModel(modelId)).revisionNumber)
+    }
+
+    @Test
     void testUpdateWithAFileThatWasNeverUploadedIsRefused() {
         String modelId = createModel()
         String folder = stage(["addFile.txt": "the second additional file"])
@@ -194,5 +221,54 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertEquals("mainFile.txt: Not found or not exist or empty.", result.message)
         // the model is as it was
         assertEquals(1, modelService.getLatestRevision(modelService.getModel(modelId)).revisionNumber)
+    }
+
+    // -------------------------------------------------------------- the last validation of the web wizard
+
+    /** What the wizard's Submit button sends to doLastValidateSubmissionData for a new model. Returns what it renders. */
+    private Map validateLastStepOfWizard(String folder, String filename) {
+        GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
+        SubmissionController controller = grailsApplication.mainContext.getBean(SubmissionController.name)
+        controller.EXCH_DIR = exchange.absolutePath
+        controller.request.method = "POST"
+        controller.params.putAll([
+            submitterInfo: "[testuser, test@test.com]", submissionFolder: folder,
+            modelFile: '{"submissionFolder": "' + folder + '", "filename": "' + filename + '", "description": "the model"}',
+            additionalFiles: "[]", isUpdate: "false", isAmend: "false", isMinorRevision: "false",
+            isMetadataSubmission: "false", modelInfo: '{"detectedName": "A model", "detectedDescription": "It has a file"}',
+            publication: '""', revisionComments: "", latestContributorRole: "Modeller"])
+        controller.doLastValidateSubmissionData()
+        JSON.parse(controller.response.contentAsString) as Map
+    }
+
+    @Test
+    void testTheWizardAcceptsAModelFile() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = validateLastStepOfWizard(folder, "mainFile.txt")
+
+        assertTrue(result.areModelFilesValid)
+        assertTrue(result.currentValidation)
+    }
+
+    @Test
+    void testTheWizardDoesNotAcceptAnEmptyModelFile() {
+        String folder = stage(["mainFile.txt": ""])
+
+        Map result = validateLastStepOfWizard(folder, "mainFile.txt")
+
+        assertFalse(result.areModelFilesValid)
+        assertFalse(result.currentValidation)
+        assertEquals("mainFile.txt: Not found or not exist or empty.", result.errMsg.toString().trim())
+    }
+
+    @Test
+    void testTheWizardDoesNotAcceptAMissingModelFile() {
+        String folder = stage([:])
+
+        Map result = validateLastStepOfWizard(folder, "mainFile.txt")
+
+        assertFalse(result.areModelFilesValid)
+        assertFalse(result.currentValidation)
     }
 }
