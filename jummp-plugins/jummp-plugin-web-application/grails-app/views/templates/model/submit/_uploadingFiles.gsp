@@ -253,8 +253,8 @@
         uploadedFiles.forEach((filename) => {
             let isValid = checkAcceptableCharactersForFileName(filename);
             if (!isValid) {
-                messages.push(filename + ": The file name is invalid (use only letters, digits, dots, hyphens " +
-                    "and underscores).");
+                messages.push(boldFileName(filename) + ": The file name is invalid (use only letters, digits, dots, " +
+                    "hyphens and underscores).");
             }
         });
         return messages;
@@ -330,7 +330,7 @@
                     // empty, its description is not filled in, its name is invalid
                     $.each(data, function (i, f) {
                         if (f["validateFileSummary"]) {
-                            errorMessages.push(f["filename"] + ": " + f["validateFileSummary"]);
+                            errorMessages.push(boldFileName(f["filename"]) + ": " + f["validateFileSummary"]);
                         }
                     });
                     const haveAllDescriptions = data.filter(f => f["validateFileDescription"] &&
@@ -423,11 +423,23 @@
         }
     }
 
+    /**
+     * The name of a file in bold, for the messages that are shown as html, such as the ones of the notification box.
+     * It is defined here, with the code that uses it, and not in helpers.js: a browser that has an old copy of that file
+     * cached would lack it, and the messages would not be shown.
+     *
+     * @param filename  A String denoting the file name, which is escaped
+     * @returns {string}    The html of the name in bold
+     */
+    function boldFileName(filename) {
+        return "<strong>" + $("<div>").text(filename).html() + "</strong>";
+    }
+
     function consolidateErrorMessages(filename, messages) {
         if (typeof messages === "undefined") { return false; }
         if (messages.length > 0) {
             $.each(messages, function (id, msg) {
-                errorMessages.push(filename + ": " + msg);
+                errorMessages.push(boldFileName(filename) + ": " + msg);
             });
             return true;
         }
