@@ -3,6 +3,7 @@ package net.biomodels.jummp.webapp
 import grails.test.mixin.TestFor
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.utils.redis.RedisService
@@ -257,14 +258,14 @@ class SubmissionControllerValidationSpec extends Specification {
     }
 
     /** What the wizard sends to doLastValidateSubmissionData and to completeSubmission for a new model. */
-    private void wizardSends(String folder, String filename, String modelName = "A model") {
+    private void wizardSends(String folder, String filename, String modelName = "A model", String publication = '""') {
         params.clear()
         params.putAll([
             submitterInfo: "[testuser, test@test.com]", submissionFolder: folder,
             modelFile: '{"submissionFolder": "' + folder + '", "filename": "' + filename + '", "description": "the model"}',
             additionalFiles: "[]", isUpdate: "false", isAmend: "false", isMinorRevision: "false",
             isMetadataSubmission: "false", modelInfo: '{"detectedName": "' + modelName + '"}',
-            publication: '""', revisionComments: "", latestContributorRole: "Modeller"])
+            publication: publication, revisionComments: "", latestContributorRole: "Modeller"])
     }
 
     private static Closure detectsUnknownFormat() {
@@ -450,6 +451,90 @@ class SubmissionControllerValidationSpec extends Specification {
         response.json.areModelFilesValid
         !response.json.areMetadataValid
         response.json.errMsg.trim() == "Model format is missing."
+    }
+
+    // ---------------------------------------------------------------- the publication of the wizard, JBM-801
+
+    /** A publication service that must not be asked to build anything. */
+    private static Map publicationServiceNotAsked() {
+        [buildPublicationFromJSONData: { String json -> throw new AssertionError("The service built $json") }]
+    }
+
+    void "the last validation takes #description as no publication and does not ask the service"() {
+        given:
+        wizardController([])
+        controller.publicationService = publicationServiceNotAsked()
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt", "A model", publication)
+
+        when:
+        controller.doLastValidateSubmissionData()
+
+        then: "there is no error for the submitter, and no server error"
+        response.status == 200
+        response.json.currentValidation
+        response.json.isPublicationValid
+        response.json.publicationError == null
+
+        where:
+        description                                 | publication
+        "null (a lookup that found nothing)"        | "null"
+        "an empty string"                           | '""'
+        "an empty object"                           | "{}"
+        "an empty array"                            | "[]"
+        "details without a link provider"           | '{"link": "28713420", "title": "A title"}'
+        "details with an empty link provider"       | '{"link": "28713420", "linkProvider": ""}'
+        "details with an empty link type"           | '{"link": "28713420", "linkProvider": {"linkType": ""}}'
+        "details with a link provider that is null" | '{"link": "28713420", "linkProvider": null}'
+    }
+
+    void "the last validation takes a publication that was not sent as no publication"() {
+        given:
+        wizardController([])
+        controller.publicationService = publicationServiceNotAsked()
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt")
+        params.remove("publication")
+
+        when:
+        controller.doLastValidateSubmissionData()
+
+        then:
+        response.status == 200
+        response.json.currentValidation
+    }
+
+    void "the publication that the service builds is the publication of the submission"() {
+        given:
+        List<Map> completed = []
+        PublicationTransportCommand built = new PublicationTransportCommand(link: "28713420", title: "A title")
+        wizardController(completed)
+        controller.publicationService = [buildPublicationFromJSONData: { String json -> [publication: built] }]
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt", "A model", '{"link": "28713420", "linkProvider": "PubMed ID"}')
+
+        when:
+        controller.completeSubmission()
+
+        then: "the completion goes on with it (it stops in the service, which is a stub)"
+        completed.size() == 1
+        completed[0].ModelTC.publication.is(built)
+    }
+
+    void "the completion takes null as no publication and completes the submission"() {
+        given:
+        List<Map> completed = []
+        wizardController(completed)
+        controller.publicationService = publicationServiceNotAsked()
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt", "A model", "null")
+
+        when:
+        controller.completeSubmission()
+
+        then:
+        completed.size() == 1
+        completed[0].ModelTC.publication == null
     }
 
     // ------------------------------------------------------------------------ processUploadFiles

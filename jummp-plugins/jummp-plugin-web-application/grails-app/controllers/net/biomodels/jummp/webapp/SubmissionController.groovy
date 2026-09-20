@@ -719,9 +719,7 @@ data type and accession from the URI.""")
         rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
 
         // populate publication details
-        if (params.publication?.decodeHTML() != "\"\"" && params.publication.decodeHTML() != "{}") {
-            populatePublication(params.publication?.decodeHTML(), model)
-        }
+        populatePublication(params.publication?.decodeHTML() as String, model)
 
         // populate the data on the revision
         String revisionComments = params.revisionComments?.decodeHTML() as String
@@ -777,13 +775,31 @@ data type and accession from the URI.""")
         working.put("readme_submission", readme)
     }
 
-    private void populatePublication(def paramPublication, MTC model) {
-        if (paramPublication != "{}" && paramPublication) {
-            Map publicationData = publicationService.buildPublicationFromJSONData(paramPublication)
-            model.publication = publicationData["publication"]
-        } else {
-            model.publication = null
+    /**
+     * Builds the publication of the submission from what the page sends (JBM-801).
+     *
+     * What says that there is no publication leaves the model as it is: nothing, "", null, an empty object, and details
+     * that do not say which link provider they are from, as the page has when the publication that was guessed from the
+     * model file could not be fetched.
+     */
+    private void populatePublication(String paramPublication, MTC model) {
+        def details = paramPublication ? JSON.parse(paramPublication) : null
+        String provider = details instanceof Map ? linkProviderOf(details as Map) : ""
+        if (!provider) {
+            return
         }
+        Map publicationData = publicationService.buildPublicationFromJSONData(paramPublication)
+        model.publication = publicationData["publication"]
+    }
+
+    /**
+     * The label of the link provider that the details of a publication say they are from, or an empty string. The
+     * JSONObject of Grails throws for a key that it does not have, instead of answering null.
+     */
+    private static String linkProviderOf(Map details) {
+        def provider = details.containsKey("linkProvider") ? details.get("linkProvider") : null
+        def label = provider instanceof Map && provider.containsKey("linkType") ? provider.get("linkType") : provider
+        label instanceof CharSequence ? label.toString().trim() : ""
     }
 
     private void populateDataRevision(RTC revision, MTC model, Map working,
