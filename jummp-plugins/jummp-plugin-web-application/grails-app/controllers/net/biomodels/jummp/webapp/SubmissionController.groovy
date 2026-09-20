@@ -362,17 +362,15 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         try {
             submissionService.buildFromJSONFile(metadata, working)
         } catch (Exception e) {
-            logger.error e.getMessage()
-        } finally {
-            def files = working["repository_files"] as List
-            if (files.isEmpty()) {
-                String msg = "Cannot find the model files. The submission process has to be terminated!"
-                logger.error(msg)
-                map = [message: msg, status: 400]
-            } else {
-                doValidateSubmissionData(working)
-                map = doCompleteSubmission()
-            }
+            // when the service knows why it refuses the submission it says so in the working memory, and it has not
+            // put the repository files there yet (JBM-796)
+            String reason = (working["cause"] ?: e.message ?: "The submission cannot be built from the metadata.") as String
+            logger.error("Refusing the submission: $reason")
+            map = [message: reason, status: 400]
+        }
+        if (map == null) {
+            doValidateSubmissionData(working)
+            map = doCompleteSubmission()
         }
 
         withFormat {

@@ -105,23 +105,20 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
 
     // ---------------------------------------------------------------------------------- what is rejected
 
-    // JBM-796: makeSubmission reads the repository files of the working memory in a finally block, and
-    // SubmissionService.buildFromJSONFile has not put them there when it rejects a submission, so the action throws a
-    // NullPointerException, which the API answers with a 500, instead of rendering the 400 that it is written to. The
-    // four tests below fail with it today.
+    // JBM-796: makeSubmission used to read the repository files of the working memory in a finally block, and
+    // SubmissionService.buildFromJSONFile has not put them there when it rejects a submission, so the action threw a
+    // NullPointerException, which the API answers with a 500, instead of rendering a 400 with the reason.
 
-    @Ignore("JBM-796: a rejected submission throws a NullPointerException")
     @Test
     void testCreateWithoutFilesIsRefused() {
         Map result = call("create", metadata([
             name: "No files", format: format("UNKNOWN"), files: [main: [], additional: []]]), stage([:]))
 
         assertEquals(400, result.status)
-        assertFalse(result.message.toString().isEmpty())
+        assertEquals("Cannot find the model files. The submission process has to be terminated!", result.message)
         assertEquals(0, Model.count())
     }
 
-    @Ignore("JBM-796: a rejected submission throws a NullPointerException")
     @Test
     void testCreateWithoutAModelNameIsRefused() {
         String folder = stage(["mainFile.txt": "a main file"])
@@ -131,11 +128,10 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
             files: [main: [[name: "mainFile.txt", description: "the main file"]], additional: []]]), folder)
 
         assertEquals(400, result.status)
-        assertFalse(result.message.toString().isEmpty())
+        assertEquals("Cannot leave the model name and format properties empty!", result.message)
         assertEquals(0, Model.count())
     }
 
-    @Ignore("JBM-796: a rejected submission throws a NullPointerException")
     @Test
     void testUpdateWithoutTheModelIdentifierIsRefused() {
         createModel()
@@ -146,11 +142,10 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
             files: [main: [[name: "mainFile.txt", description: "the main file"]], additional: []]]), folder)
 
         assertEquals(400, result.status)
-        assertFalse(result.message.toString().isEmpty())
+        assertEquals("The model identifier is missing.", result.message)
         assertEquals(1, Model.count())
     }
 
-    @Ignore("JBM-796: a rejected submission throws a NullPointerException")
     @Test
     void testCreateFromMetadataThatIsNotJsonIsRefused() {
         Map result = call("create", "this is not json", stage([:]))
