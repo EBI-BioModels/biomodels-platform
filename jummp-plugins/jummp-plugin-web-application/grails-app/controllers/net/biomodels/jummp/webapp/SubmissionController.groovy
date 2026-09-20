@@ -71,7 +71,7 @@ class SubmissionController extends CommonController implements InitializingBean 
     def submissionService
 
     private String EXCH_DIR
-    // The web wizard validates the submission data in one request and completes the submission in the next one, so it
+    // The submission wizard validates the submission data in one request and completes the submission in the next one, so it
     // keeps the data here. The controller is a singleton, so this is shared by every request: the API's create and update
     // do not use it, they complete the submission they have built (JBM-798).
     Map<String, Object> validSubmissionDataMap = new HashMap<>()
@@ -83,6 +83,23 @@ class SubmissionController extends CommonController implements InitializingBean 
     def completeSubmission() {
         Map result = doCompleteSubmission(validSubmissionDataMap)
         render(result as JSON)
+    }
+
+    /**
+     * Says why a submission that has been validated cannot be completed, or null when it can be.
+     *
+     * A publication that is not valid does not stop it: the submission wizard does not stop for it either, and the API
+     * only gets the publication's accession, so its submitter cannot fix the details.
+     */
+    private String reasonToRefuse(Map validation) {
+        if (validation.areModelFilesValid && validation.areMetadataValid) {
+            if (!validation.isPublicationValid) {
+                logger.warn("Submitting although the publication is not valid: ${validation.errMsg}")
+            }
+            return null
+        }
+        // Completing it would fail as a server error and mail the admin for a file that was never uploaded (JBM-798)
+        (validation.errMsg as String).trim()
     }
 
     private Map doCompleteSubmission(Map working) {
@@ -397,19 +414,12 @@ class SubmissionController extends CommonController implements InitializingBean 
             map = [message: reason, status: 400]
         }
         if (map == null) {
-            Map validation = doValidateSubmissionData(working)
-            if (validation.areModelFilesValid && validation.areMetadataValid) {
-                if (!validation.isPublicationValid) {
-                    // the web wizard does not stop for it either, and the API only gets the publication's accession,
-                    // so its submitter cannot fix the details
-                    logger.warn("Submitting although the publication is not valid: ${validation.errMsg}")
-                }
+            String reason = reasonToRefuse(doValidateSubmissionData(working))
+            if (reason == null) {
                 // the submission that was built, not validSubmissionDataMap, which other requests share
                 map = doCompleteSubmission(working)
             } else {
-                // as in the web wizard, where the submitter cannot go on either. Completing it would fail as a server
-                // error and mail the admin for a file that was never uploaded (JBM-798)
-                String reason = (validation.errMsg as String).trim()
+                // as in the submission wizard, where the submitter cannot go on either
                 logger.error("Refusing the submission: $reason")
                 map = [message: reason, status: 400]
             }
