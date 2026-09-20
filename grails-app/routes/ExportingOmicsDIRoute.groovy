@@ -32,7 +32,11 @@ class ExportingOmicsDIRoute extends RouteBuilder {
     // the named log4j appenders below - use a real logger so this shows up in jummp-debug.log.
     private static final Logger LOG = LoggerFactory.getLogger(ExportingOmicsDIRoute)
 
-    final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]} ${body[omicsdi]}'
+    // exec:java runs the indexer in its own JVM on the same host as Tomcat and MariaDB. Left
+    // uncapped it defaults to 1/4 of the machine's RAM, which contributed to the OOM-killer
+    // taking Tomcat down during the nightly export on 2026-09-19.
+    static final String INDEXER_MAX_HEAP = '3g'
+    final String JAR_ARGS = "-Xmx${INDEXER_MAX_HEAP} -jar " + '${body[jarPath]} ${body[jsonPath]} ${body[omicsdi]}'
     // exec:java has no timeout by default (ExecEndpoint.timeout defaults to Long.MAX_VALUE), so a
     // hung indexer jar would wedge this route's single seda consumer thread forever, silently
     // blocking every export request behind it. Fail loudly after 30 minutes instead.

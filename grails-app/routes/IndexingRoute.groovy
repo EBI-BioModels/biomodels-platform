@@ -27,7 +27,12 @@ import org.apache.camel.ShutdownRunningTask
 import org.apache.camel.builder.RouteBuilder
 
 class IndexingRoute extends RouteBuilder {
-    final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]}'
+    // Every message launches its own indexer JVM and up to 15 can run at once (concurrentConsumers
+    // below). Left uncapped each one defaults to 1/4 of the machine's RAM, which contributed to the
+    // OOM-killer taking Tomcat down on 2026-09-19 (JBM-797). One model's indexData.json is far
+    // smaller than a full OmicsDI export, so this is well below ExportingOmicsDIRoute's cap.
+    static final String INDEXER_MAX_HEAP = '1g'
+    final String JAR_ARGS = "-Xmx${INDEXER_MAX_HEAP} -jar " + '${body[jarPath]} ${body[jsonPath]}'
 
     @Override
     void configure() {
