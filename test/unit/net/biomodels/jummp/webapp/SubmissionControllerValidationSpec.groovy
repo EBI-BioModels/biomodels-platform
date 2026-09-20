@@ -192,7 +192,6 @@ class SubmissionControllerValidationSpec extends Specification {
         answer.status == 400
         answer.message == "never.txt: Not found or not exist or empty."
         !completed
-        controller.validSubmissionDataMap.isEmpty()
     }
 
     void "a submission with an empty file is answered with a 400 and is not completed"() {
@@ -208,7 +207,6 @@ class SubmissionControllerValidationSpec extends Specification {
         answer.status == 400
         answer.message == "empty.txt: Not found or not exist or empty."
         !completed
-        controller.validSubmissionDataMap.isEmpty()
     }
 
     void "a submission whose file is a directory is answered with a 400 and is not completed"() {
@@ -227,10 +225,9 @@ class SubmissionControllerValidationSpec extends Specification {
         answer.status == 400
         answer.message == "a-folder: The model file cannot be a directory."
         !completed
-        controller.validSubmissionDataMap.isEmpty()
     }
 
-    void "a submission with valid files goes on to be completed, as it was built, and nothing is left pending"() {
+    void "a submission with valid files goes on to be completed, as it was built"() {
         given: "a service that stops the submission where it is completed, and a controller that copes with the failure"
         Map completed = null
         Map service = [buildFromJSONFile: builds([fileWith("model.xml", "<sbml/>")]),
@@ -248,7 +245,80 @@ class SubmissionControllerValidationSpec extends Specification {
         completed.containsKey("RevisionTC")
         completed.repository_files*.path == [new File(dir, "model.xml").path]
         answer.status == "Failure"
-        controller.validSubmissionDataMap.isEmpty()
+    }
+
+    // ------------------------------------------------------------------------ the submission wizard, JBM-802
+
+    /** Puts a file in the submission folder of the exchange directory, like the upload step. */
+    private void putInFolder(String folder, String name, String text) {
+        File where = new File(dir, folder)
+        where.mkdirs()
+        new File(where, name).text = text
+    }
+
+    /** What the wizard sends to doLastValidateSubmissionData and to completeSubmission for a new model. */
+    private void wizardSends(String folder, String filename, String modelName = "A model") {
+        params.clear()
+        params.putAll([
+            submitterInfo: "[testuser, test@test.com]", submissionFolder: folder,
+            modelFile: '{"submissionFolder": "' + folder + '", "filename": "' + filename + '", "description": "the model"}',
+            additionalFiles: "[]", isUpdate: "false", isAmend: "false", isMinorRevision: "false",
+            isMetadataSubmission: "false", modelInfo: '{"detectedName": "' + modelName + '"}',
+            publication: '""', revisionComments: "", latestContributorRole: "Modeller"])
+    }
+
+    /** A controller whose service completes nothing: it keeps the data that it is given and stops there. */
+    private void wizardController(List<Map> completed) {
+        controller.EXCH_DIR = dir.absolutePath
+        controller.modelFileFormatService = [inferModelFormat: { List files -> new MFTC(identifier: "UNKNOWN", name: "Unknown") }]
+        controller.submissionService = [handleSubmission: { Map working -> completed << working; throw new IllegalStateException("stop here") },
+                                        cleanup         : { Map working -> }]
+        controller.mailingService = [send: { Map mail -> }]
+        controller.groovyPageRenderer = [render: { Map args -> "failed" }]
+    }
+
+    void "the completion completes the data that it was sent, not the data that the last validation kept"() {
+        given: "two submissions, and the last validation is the one of the second"
+        List<Map> completed = []
+        wizardController(completed)
+        putInFolder("first-folder", "first.txt", "the first file")
+        putInFolder("second-folder", "second.txt", "the second file")
+        wizardSends("first-folder", "first.txt", "The first model")
+        controller.doLastValidateSubmissionData()
+        response.reset()
+        wizardSends("second-folder", "second.txt", "The second model")
+        controller.doLastValidateSubmissionData()
+        response.reset()
+
+        when: "the first one is completed"
+        wizardSends("first-folder", "first.txt", "The first model")
+        controller.completeSubmission()
+
+        then:
+        completed.size() == 1
+        completed[0].repository_files*.path == [new File(new File(dir, "first-folder"), "first.txt").canonicalPath]
+        completed[0].submissionFolder == "first-folder"
+        completed[0].ModelTC.name == "The first model"
+    }
+
+    void "the completion does not complete a submission with an empty file, whatever was validated before"() {
+        given: "a valid submission that the last validation kept, and an empty file in the submission to be completed"
+        List<Map> completed = []
+        wizardController(completed)
+        putInFolder("valid-folder", "valid.txt", "the file")
+        putInFolder("empty-folder", "empty.txt", "")
+        wizardSends("valid-folder", "valid.txt")
+        controller.doLastValidateSubmissionData()
+        response.reset()
+
+        when:
+        wizardSends("empty-folder", "empty.txt")
+        controller.completeSubmission()
+
+        then:
+        completed.isEmpty()
+        response.json.status == "Failure"
+        response.json.message == "<div style='color: red'>empty.txt: Not found or not exist or empty.</div>"
     }
 
     // ------------------------------------------------------------------------ processUploadFiles
