@@ -38,6 +38,7 @@ import com.ctc.wstx.api.ReaderConfig
 import com.ctc.wstx.stax.WstxInputFactory
 import grails.test.mixin.TestMixin
 import grails.test.mixin.integration.IntegrationTestMixin
+import net.biomodels.jummp.core.VcsTestSupport
 import net.biomodels.jummp.core.JummpIntegrationTest
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
@@ -46,7 +47,6 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.plugins.git.GitManagerFactory
 import org.apache.commons.io.FileUtils
 import org.junit.After
 import org.junit.Before
@@ -246,20 +246,7 @@ class SbmlServiceTests extends JummpIntegrationTest {
     }
 
     private void setupVcs() {
-        fileSystemService.root = new File("target/sbml/git/").getCanonicalFile()
-        fileSystemService.root.mkdirs()
-        String containerPath = fileSystemService.root.absolutePath + "/sss/"
-        fileSystemService.currentModelContainer.set(containerPath)
-        modelService.vcsService.modelContainerRoot = fileSystemService.root
-        GitManagerFactory gitService = new GitManagerFactory()
-        gitService.grailsApplication = grailsApplication
-        grailsApplication.config.jummp.plugins.git.enabled = true
-        grailsApplication.config.jummp.vcs.workingDirectory = "target/sbml/git/"
-        File exchangeDir = new File("target/sbml/exchange/")
-        exchangeDir.mkdirs()
-        grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
-        modelService.vcsService.vcsManager = gitService.getInstance()
-        modelService.vcsService.vcsManager.exchangeDirectory = exchangeDir
+        VcsTestSupport.setupVcs(grailsApplication, modelService, fileSystemService, "target/sbml", "sss")
     }
 
     private File smallModel(String filename) {

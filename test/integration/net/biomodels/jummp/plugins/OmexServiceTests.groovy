@@ -36,13 +36,13 @@ package net.biomodels.jummp.plugins
 
 import grails.test.mixin.TestMixin
 import grails.test.mixin.integration.IntegrationTestMixin
+import net.biomodels.jummp.core.VcsTestSupport
 import net.biomodels.jummp.core.JummpIntegrationTest
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.plugins.git.GitManagerFactory
 import org.apache.commons.io.FileUtils
 import org.junit.After
 import org.junit.Before
@@ -107,20 +107,6 @@ class OmexServiceTests extends JummpIntegrationTest {
     }
 
     private void setupVcs() {
-        fileSystemService.root = new File("target/omex/git/").getCanonicalFile()
-        fileSystemService.root.mkdirs()
-        String containerPath = fileSystemService.root.absolutePath + "/ooo/"
-        fileSystemService.currentModelContainer.set(containerPath)
-        modelService.vcsService.modelContainerRoot = fileSystemService.root
-        GitManagerFactory gitService = new GitManagerFactory()
-        gitService.grailsApplication = grailsApplication
-        grailsApplication.config.jummp.plugins.git.enabled = true
-        grailsApplication.config.jummp.vcs.workingDirectory = "target/omex/git/"
-        File exchangeDir = new File("target/omex/exchange/")
-        exchangeDir.mkdirs()
-        grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
-        modelService.vcsService.vcsManager.exchangeDirectory = exchangeDir
-        modelService.vcsService.vcsManager = gitService.getInstance()
-        assertTrue modelService.vcsService.isValid()
+        VcsTestSupport.setupVcs(grailsApplication, modelService, fileSystemService, "target/omex", "ooo")
     }
 }

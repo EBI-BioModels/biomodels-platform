@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.plugins
 
+import net.biomodels.jummp.core.VcsTestSupport
 import net.biomodels.jummp.core.JummpIntegrationTest
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
@@ -43,11 +44,7 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.plugins.git.GitManagerFactory
 import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.junit.*
 import grails.test.mixin.TestMixin
 import grails.test.mixin.integration.IntegrationTestMixin
@@ -137,19 +134,6 @@ class PharmMlServiceTests extends JummpIntegrationTest {
     }
 
     private void setupVcs() {
-        fileSystemService.root = new File("target/pharmml/git/").getCanonicalFile()
-        fileSystemService.root.mkdirs()
-        String containerPath = fileSystemService.root.absolutePath + "/aaa/"
-        fileSystemService.currentModelContainer.set(containerPath)
-        modelService.vcsService.modelContainerRoot = fileSystemService.root
-        GitManagerFactory gitService = new GitManagerFactory()
-        gitService.grailsApplication = grailsApplication
-        grailsApplication.config.jummp.plugins.git.enabled = true
-        grailsApplication.config.jummp.vcs.workingDirectory = "target/pharmml/git/"
-        File exchangeDir = new File("target/pharmml/exchange/")
-        exchangeDir.mkdirs()
-        grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
-        modelService.vcsService.vcsManager = gitService.getInstance()
-        assertTrue modelService.vcsService.isValid()
+        VcsTestSupport.setupVcs(grailsApplication, modelService, fileSystemService, "target/pharmml", "aaa")
     }
 }

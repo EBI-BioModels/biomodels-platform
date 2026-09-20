@@ -41,7 +41,6 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.plugins.git.GitManagerFactory
 import org.apache.commons.io.FileUtils
 import org.junit.After
 import org.junit.Before
@@ -207,25 +206,8 @@ class ModelHistoryServiceTests extends JummpIntegrationTest {
         assertNull(modelHistoryService.lastAccessedModel().id)
     }
 
-    // TODO: remove this copy from JmsAdapterServiceTest
     private void setupVcs() {
-        File root = new File("target/vcs/git/hhh")
-        root.mkdirs()
-        String containerPath = root.absolutePath
-        modelService.fileSystemService.root = root.parentFile
-        File exchangeDir = new File("target/vcs/exchange")
-        exchangeDir.mkdirs()
-        assertTrue exchangeDir.exists()
-        grailsApplication.config.jummp.vcs.workingDirectory = root.parent
-        grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
-        modelService.fileSystemService.currentModelContainer.set(containerPath)
-        modelService.vcsService.modelContainerRoot = root.parentFile
-        GitManagerFactory gitService = new GitManagerFactory()
-        gitService.grailsApplication = grailsApplication
-        grailsApplication.config.jummp.plugins.git.enabled = true
-        modelService.vcsService.vcsManager = gitService.getInstance()
-        modelService.vcsService.vcsManager.exchangeDirectory = exchangeDir
-        assertTrue(modelService.vcsService.isValid())
+        VcsTestSupport.setupVcs(grailsApplication, modelService, modelService.fileSystemService, "target/vcs", "hhh")
     }
 
     /**
