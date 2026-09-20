@@ -369,8 +369,21 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             map = [message: reason, status: 400]
         }
         if (map == null) {
-            doValidateSubmissionData(working)
-            map = doCompleteSubmission()
+            Map validation = doValidateSubmissionData(working)
+            if (validation.areModelFilesValid && validation.areMetadataValid) {
+                if (validation.errMsg) {
+                    // an empty file or a publication that is not valid does not stop the web wizard either, and the
+                    // API only gets the publication's accession, so its submitter cannot fix the details
+                    logger.warn("Submitting although: ${validation.errMsg}")
+                }
+                map = doCompleteSubmission()
+            } else {
+                // as in the web wizard, where the submitter cannot go on either. Completing it would fail as a server
+                // error and mail the admin for a file that was never uploaded (JBM-798)
+                String reason = (validation.errMsg as String).trim()
+                logger.error("Refusing the submission: $reason")
+                map = [message: reason, status: 400]
+            }
         }
 
         withFormat {

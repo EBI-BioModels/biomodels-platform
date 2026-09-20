@@ -23,6 +23,9 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     private Map call(String action, String metadata, String folder = null) {
         GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
         SubmissionController controller = grailsApplication.mainContext.getBean(SubmissionController.name)
+        // the controller reads the exchange directory once, when it is created, and it is the developer's real one in a
+        // test. It writes there, to buggy/<folder>, when a submission fails.
+        controller.EXCH_DIR = exchange.absolutePath
         controller.request.method = "POST"
         controller.request.content = metadata.getBytes("UTF-8")
         if (folder) {
@@ -153,5 +156,43 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertEquals(400, result.status)
         assertFalse(result.message.toString().isEmpty())
         assertEquals(0, Model.count())
+    }
+
+    // ------------------------------------------------------------------ what the validation of the files refuses
+    // JBM-798: the controller validates the files before it completes a submission, as the web wizard does. Like the
+    // wizard it goes on with an empty file: doValidateUploadedFiles words it in a message, but only a missing file makes
+    // the files invalid.
+
+    @Test
+    void testCreateWithAFileThatWasNeverUploadedIsRefused() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = call("create", metadata([
+            name: "A file is missing", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "the main file"]],
+                    additional: [[name: "addFile.txt", description: "never uploaded"]]]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("addFile.txt: Not found or not exist or empty.", result.message)
+        assertEquals(0, Model.count())
+        // it is the submitter's mistake and not a bug: no ticket, no copy of the folder for the developers
+        assertFalse(result.containsKey("ticketID"))
+        assertFalse(new File(exchange, "buggy/$folder").exists())
+    }
+
+    @Test
+    void testUpdateWithAFileThatWasNeverUploadedIsRefused() {
+        String modelId = createModel()
+        String folder = stage(["addFile.txt": "the second additional file"])
+
+        Map result = call("update", metadata([
+            submissionId: modelId, name: "A model to update", description: "It has two files", format: format("UNKNOWN"),
+            files: [main: [[name: "mainFile.txt", description: "never uploaded"]],
+                    additional: [[name: "addFile.txt", description: "the additional file"]]]]), folder)
+
+        assertEquals(400, result.status)
+        assertEquals("mainFile.txt: Not found or not exist or empty.", result.message)
+        // the model is as it was
+        assertEquals(1, modelService.getLatestRevision(modelService.getModel(modelId)).revisionNumber)
     }
 }
