@@ -146,6 +146,7 @@
 <script type="text/javascript">
     const duplicateFilesMsg = "The file names in your submission should not be identical. " +
         "Please double-check the recently uploaded files having the name: ";
+    const invalidFileNameMsg = "The file name is invalid (use only letters, digits, dots, hyphens and underscores).";
     $(function () {
         /*
          * For the sake keeping the code clean and the examples simple this file
@@ -246,18 +247,9 @@
         }).get();
     }
 
-    // check acceptable characters for the file names
-    function checkAcceptableCharactersForFileNames() {
-        let uploadedFiles = retrieveUploadedFiles();
-        let messages = [];
-        uploadedFiles.forEach((filename) => {
-            let isValid = checkAcceptableCharactersForFileName(filename);
-            if (!isValid) {
-                messages.push(boldFileName(filename) + ": The file name is invalid (use only letters, digits, dots, " +
-                    "hyphens and underscores).");
-            }
-        });
-        return messages;
+    // the names of the files that break the rule of the acceptable characters
+    function retrieveFileNamesBreakingTheRule() {
+        return retrieveUploadedFiles().filter((filename) => !checkAcceptableCharactersForFileName(filename));
     }
 
     function checkIdenticalFileNames() {
@@ -281,9 +273,10 @@
         errorMessages = [];
         currentValidation = false;
         const ids = buildUploadedFilesMap();
+        // a name that breaks the rule is not said in a message of its own: it goes in the line of its file, with the
+        // other problems of that file, when the files have been checked
+        const invalidNames = retrieveFileNamesBreakingTheRule();
         let messages = checkIdenticalFileNames();
-        let acceptableFileNames = checkAcceptableCharactersForFileNames();
-        messages.push(...acceptableFileNames);
         handleErrorMessages(messages);
         let msg = "";
         if (!currentValidation) {
@@ -299,7 +292,7 @@
                     msg = "There have been internal errors when trying to upload your files.";
                     console.log(msg);
                     showNotification(msg);
-                    // toastr.error(msg);
+                    toastr.error(msg);
                 }
             });
         }
@@ -329,8 +322,13 @@
                     // what is wrong with each file, on one line that starts with the name of the file: the file is
                     // empty, its description is not filled in, its name is invalid
                     $.each(data, function (i, f) {
-                        if (f["validateFileSummary"]) {
-                            errorMessages.push(boldFileName(f["filename"]) + ": " + f["validateFileSummary"]);
+                        let summary = f["validateFileSummary"] || "";
+                        if (invalidNames.includes(f["filename"]) && !f["validateFileName"]) {
+                            // the server accepts more characters in a name than this page does
+                            summary = (summary + " " + invalidFileNameMsg).trim();
+                        }
+                        if (summary) {
+                            errorMessages.push(boldFileName(f["filename"]) + ": " + summary);
                         }
                     });
                     const haveAllDescriptions = data.filter(f => f["validateFileDescription"] &&
@@ -386,7 +384,8 @@
                             modelInfo = modelFile["detectedModelInfo"];
                         }
                     }
-                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors && allFileNamesValid;
+                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors &&
+                        allFileNamesValid && invalidNames.length === 0;
                 } else {
                     currentValidation = false;
                     errorMessages.push("A submission must have at least only one main model file.")
