@@ -312,6 +312,16 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     }
 
     @Test
+    void testTheWizardCompletesASubmissionThatNoRequestValidatedBefore() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = completeInWizard(folder, "mainFile.txt", "A model nobody validated")
+
+        assertEquals("Success", result.status)
+        assertEquals("the main file", mainFileOf(result.modelIdentifier))
+    }
+
+    @Test
     void testTheWizardDoesNotCompleteASubmissionThatIsNotValid() {
         String valid = stage(["mainFile.txt": "the main file"])
         String empty = stage(["mainFile.txt": ""])
@@ -324,6 +334,47 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertTrue(result.message.toString().contains("mainFile.txt: Not found or not exist or empty."))
         assertEquals(0, Model.count())
         assertFalse(result.containsKey("ticketID"))
+    }
+
+    @Test
+    void testTheWizardDoesNotCompleteASubmissionWhoseFileIsMissing() {
+        String folder = stage([:])
+
+        Map result = completeInWizard(folder, "mainFile.txt")
+
+        assertEquals("Failure", result.status)
+        assertEquals(0, Model.count())
+    }
+
+    @Test
+    void testTheRefusalOfTheWizardIsSafeToShowAsHtml() {
+        // the page puts the message in the document as it is
+        String folder = stage(["a<b>.txt": ""])
+
+        Map result = completeInWizard(folder, "a<b>.txt")
+
+        assertEquals("Failure", result.status)
+        assertFalse(result.message.toString().contains("<b>"))
+        assertTrue(result.message.toString().contains("a&lt;b&gt;.txt"))
+    }
+
+    @Test
+    void testTheWizardCompletesTheUpdateThatItWasSent() {
+        String modelId = createModel()
+        String update = stage(["mainFile.txt": "the updated main file", "addFile.txt": "the first additional file"])
+        // the data of an update that the wizard sends: the model, what it was and what the submitter changed
+        Map extra = [isUpdate: "true", modelId: modelId, latestModelName: "A model to update",
+                     "changesMade[]": ["The main file was changed"]]
+        String additional = '[{"submissionFolder": "' + update + '", "filename": "addFile.txt", "description": "more"}]'
+        Map validation = wizard("doLastValidateSubmissionData", update, "mainFile.txt", "A model to update", extra, additional)
+        assertTrue(validation.currentValidation)
+
+        Map result = wizard("completeSubmission", update, "mainFile.txt", "A model to update", extra, additional)
+
+        assertEquals("Success", result.status)
+        assertEquals(modelId, result.modelIdentifier)
+        assertEquals(2, modelService.getLatestRevision(modelService.getModel(modelId)).revisionNumber)
+        assertEquals("the updated main file", mainFileOf(modelId))
     }
 
     @Test

@@ -301,6 +301,21 @@ class SubmissionControllerValidationSpec extends Specification {
         completed[0].ModelTC.name == "The first model"
     }
 
+    void "the completion completes what nothing validated before"() {
+        given:
+        List<Map> completed = []
+        wizardController(completed)
+        putInFolder("a-folder", "model.txt", "the model")
+        wizardSends("a-folder", "model.txt")
+
+        when:
+        controller.completeSubmission()
+
+        then:
+        completed.size() == 1
+        completed[0].repository_files*.path == [new File(new File(dir, "a-folder"), "model.txt").canonicalPath]
+    }
+
     void "the completion does not complete a submission with an empty file, whatever was validated before"() {
         given: "a valid submission that the last validation kept, and an empty file in the submission to be completed"
         List<Map> completed = []
@@ -319,6 +334,37 @@ class SubmissionControllerValidationSpec extends Specification {
         completed.isEmpty()
         response.json.status == "Failure"
         response.json.message == "<div style='color: red'>empty.txt: Not found or not exist or empty.</div>"
+    }
+
+    void "the completion does not complete a submission whose file is missing"() {
+        given:
+        List<Map> completed = []
+        wizardController(completed)
+        new File(dir, "a-folder").mkdirs()
+        wizardSends("a-folder", "never.txt")
+
+        when:
+        controller.completeSubmission()
+
+        then:
+        completed.isEmpty()
+        response.json.status == "Failure"
+        response.json.message.contains("never.txt: Not found or not exist or empty.")
+    }
+
+    void "the message of a refused completion is html, with the names of the files escaped"() {
+        given:
+        List<Map> completed = []
+        wizardController(completed)
+        putInFolder("a-folder", "a<b>.txt", "")
+        wizardSends("a-folder", "a<b>.txt")
+
+        when:
+        controller.completeSubmission()
+
+        then:
+        completed.isEmpty()
+        response.json.message == "<div style='color: red'>a&lt;b&gt;.txt: Not found or not exist or empty.</div>"
     }
 
     // ------------------------------------------------------------------------ processUploadFiles
