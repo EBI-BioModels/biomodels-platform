@@ -180,11 +180,14 @@ class SubmissionControllerValidationSpec extends Specification {
 
     // ------------------------------------------------------------------------ processUploadFiles
 
-    /** What the upload step sends to processUploadFiles for a new model. */
-    private Map uploadFiles(List<Map> uploads, List<String> fileErrors, Closure inferModelFormat) {
+    /**
+     * What the upload step sends to processUploadFiles for a new model. The errors that validateFile finds are the same
+     * for every file, or the result of a closure that gets the file.
+     */
+    private Map uploadFiles(List<Map> uploads, def fileErrors, Closure inferModelFormat) {
         controller.EXCH_DIR = dir.absolutePath
         controller.fileSystemService = [retrieve: { def json -> new File(dir, json["filename"] as String) }]
-        controller.submissionService = [validateFile  : { File f -> fileErrors },
+        controller.submissionService = [validateFile  : { File f -> fileErrors instanceof Closure ? fileErrors(f) : fileErrors },
                                         validateSyntax: { File f, String format, List errors -> true },
                                         detectModelInfo: { File f, String format -> [name: "A model"] }]
         controller.modelFileFormatService = [inferModelFormat: inferModelFormat,
@@ -249,8 +252,8 @@ class SubmissionControllerValidationSpec extends Specification {
                                   upload("b.txt", false, "   "), upload("c.txt", false, "notes")], [], UNKNOWN_FORMAT)
 
         then:
-        answer.filesMap*.validateFileDescription == [[], ["The file description is not filled in"],
-                                                     ["The file description is not filled in"], []]
+        answer.filesMap*.validateFileDescription == [[], ["The file needs a description"],
+                                                     ["The file needs a description"], []]
     }
 
     void "a model file without a description is still detected"() {
@@ -263,7 +266,7 @@ class SubmissionControllerValidationSpec extends Specification {
 
         then:
         detected
-        answer.filesMap.first().validateFileDescription == ["The file description is not filled in"]
+        answer.filesMap.first().validateFileDescription == ["The file needs a description"]
         answer.filesMap.first().detectedModelFormat.identifier == "UNKNOWN"
     }
 
@@ -285,7 +288,35 @@ class SubmissionControllerValidationSpec extends Specification {
         then:
         Map file = answer.filesMap.first()
         file.validateFileErrors == ["The file is empty"]
-        file.validateFileDescription == ["The file description is not filled in"]
+        file.validateFileDescription == ["The file needs a description"]
         file.validateFileName == [SubmissionController.FILE_NAME_INVALID]
+        file.validateFileSummary == "The file is empty. The file needs a description. " +
+            SubmissionController.FILE_NAME_INVALID + "."
+    }
+
+    void "the problems of a file are said in one line, and a file without problems has none"() {
+        given: "the file that is empty is model-empty.xml"
+        Closure validateFile = { File f -> f.name == "model-empty.xml" ? ["The file is empty"] : [] }
+
+        when:
+        Map answer = uploadFiles([upload("Zhou2024_Updated-model.m", true, ""), upload("model-empty.xml", false, ""),
+                                  upload("fine.txt", false, "notes")], validateFile, UNKNOWN_FORMAT)
+
+        then:
+        answer.filesMap*.validateFileSummary == ["The file needs a description.",
+                                                 "The file is empty. The file needs a description.", ""]
+    }
+
+    void "messages become sentences, once"() {
+        expect:
+        SubmissionController.sentences(messages) == sentence
+
+        where:
+        messages                                  | sentence
+        []                                        | ""
+        ["The file is empty"]                     | "The file is empty."
+        ["The file is empty."]                    | "The file is empty."
+        [" The file is empty ", "It has no name"] | "The file is empty. It has no name."
+        ["Is it empty?", "Too big!"]              | "Is it empty? Too big!"
     }
 }

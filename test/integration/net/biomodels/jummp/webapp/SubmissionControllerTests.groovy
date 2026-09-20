@@ -347,16 +347,34 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
 
         Map empty = result.filesMap.find { it.filename == "model-empty.xml" }
         assertEquals(["The file is empty"], empty.validateFileErrors)
-        assertEquals(["The file description is not filled in"], empty.validateFileDescription)
+        assertEquals(["The file needs a description"], empty.validateFileDescription)
         assertNull(empty.validateFileName)
         Map data = result.filesMap.find { it.filename == "data (1).txt" }
         assertEquals(["The file is empty"], data.validateFileErrors)
-        assertEquals(["The file description is not filled in"], data.validateFileDescription)
+        assertEquals(["The file needs a description"], data.validateFileDescription)
         assertEquals([SubmissionController.FILE_NAME_INVALID], data.validateFileName)
         Map fine = result.filesMap.find { it.filename == "fine.txt" }
         assertEquals([], fine.validateFileErrors)
         assertEquals([], fine.validateFileDescription)
         assertNull(fine.validateFileName)
+        // and the upload step shows one line for each file, with the name of the file in front of it
+        assertEquals("The file is empty. The file needs a description.", empty.validateFileSummary)
+        assertEquals("The file is empty. The file needs a description. " +
+            SubmissionController.FILE_NAME_INVALID + ".", data.validateFileSummary)
+        assertEquals("", fine.validateFileSummary)
+    }
+
+    @Test
+    void testTheProblemsOfAFileAreSaidInOneLine() {
+        // a model file that has no description, and an empty additional file that has none either
+        String folder = stage(["Zhou2024_Updated-model.m": "a model", "model-empty.xml": ""])
+
+        Map result = uploadFiles(folder, [upload("Zhou2024_Updated-model.m", true, ""),
+                                          upload("model-empty.xml", false, "")])
+
+        assertEquals(["The file needs a description.",
+                      "The file is empty. The file needs a description."],
+            result.filesMap*.validateFileSummary)
     }
 
     @Test
@@ -366,7 +384,7 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         Map result = uploadFiles(folder, [upload("model.txt", true, "")])
 
         Map file = result.filesMap.first()
-        assertEquals(["The file description is not filled in"], file.validateFileDescription)
+        assertEquals(["The file needs a description"], file.validateFileDescription)
         assertEquals("UNKNOWN", file.detectedModelFormat.identifier)
     }
 }

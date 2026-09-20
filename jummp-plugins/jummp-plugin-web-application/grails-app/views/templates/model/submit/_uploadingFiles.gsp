@@ -254,7 +254,7 @@
             let isValid = checkAcceptableCharactersForFileName(filename);
             if (!isValid) {
                 messages.push(filename + ": The file name is invalid (use only letters, digits, dots, hyphens " +
-                    "and underscores)");
+                    "and underscores).");
             }
         });
         return messages;
@@ -299,7 +299,7 @@
                     msg = "There have been internal errors when trying to upload your files.";
                     console.log(msg);
                     showNotification(msg);
-                    toastr.error(msg);
+                    // toastr.error(msg);
                 }
             });
         }
@@ -326,12 +326,12 @@
                 let data = response["filesMap"];
                 let msg = "";
                 if (data.length) {
-                    // what is wrong with each file, one message per problem and each with the name of the file:
-                    // the file is empty, its description is not filled in, its name is invalid
+                    // what is wrong with each file, on one line that starts with the name of the file: the file is
+                    // empty, its description is not filled in, its name is invalid
                     $.each(data, function (i, f) {
-                        consolidateErrorMessages(f["filename"], f["validateFileErrors"]);
-                        consolidateErrorMessages(f["filename"], f["validateFileDescription"]);
-                        consolidateErrorMessages(f["filename"], f["validateFileName"]);
+                        if (f["validateFileSummary"]) {
+                            errorMessages.push(f["filename"] + ": " + f["validateFileSummary"]);
+                        }
                     });
                     const haveAllDescriptions = data.filter(f => f["validateFileDescription"] &&
                         f["validateFileDescription"].length > 0).length === 0;

@@ -55,7 +55,7 @@ import org.springframework.beans.factory.InitializingBean
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SubmissionController extends CommonController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
-    static final String FILE_DESCRIPTION_MISSING = "The file description is not filled in"
+    static final String FILE_DESCRIPTION_MISSING = "The file needs a description"
     static final String FILE_NAME_INVALID = "The file name is invalid (use only letters, digits, spaces, dots, " +
         "hyphens, plus signs and underscores, and end it with a file extension)"
     def fileSystemService
@@ -204,6 +204,8 @@ class SubmissionController extends CommonController implements InitializingBean 
             if (!FileHelper.isFileNameAcceptable(e["filename"] as String)) {
                 e["validateFileName"] = [FILE_NAME_INVALID] as List<String>
             }
+            // one line for the file, which the upload step shows with the name of the file in front of it
+            e["validateFileSummary"] = sentences(fileErrors + e["validateFileDescription"] + (e["validateFileName"] ?: []))
         }
         // Determines which files are added and removed
         HashSet<String> changesMade = new ArrayList<String>()
@@ -211,6 +213,14 @@ class SubmissionController extends CommonController implements InitializingBean 
             changesMade = inferChangesMadeOnModelFiles(uploadedFiles)
         }
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
+    }
+
+    /** Joins messages into sentences: "The file is empty. The file needs a description." */
+    static String sentences(List<String> messages) {
+        messages.collect { String message ->
+            String trimmed = message.trim()
+            trimmed ==~ /.*[.!?]$/ ? trimmed : trimmed + "."
+        }.join(" ")
     }
 
     def doLastValidateSubmissionData() {
