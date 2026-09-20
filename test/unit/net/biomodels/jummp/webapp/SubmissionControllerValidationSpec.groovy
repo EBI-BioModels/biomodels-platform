@@ -10,7 +10,7 @@ import spock.lang.Specification
 
 /**
  * Covers JBM-796 and JBM-798: what SubmissionController does with the files of a submission and with a submission that
- * SubmissionService refuses, in the API's create action and in the last validation of the web wizard.
+ * SubmissionService refuses, in the API's create action and in the last validation of the submission wizard.
  *
  * SubmissionControllerSpec, which is in the web application plugin, is not run from the root of the project (the
  * inline plugins' test/unit directories are not scanned), so this spec is here, where it runs.

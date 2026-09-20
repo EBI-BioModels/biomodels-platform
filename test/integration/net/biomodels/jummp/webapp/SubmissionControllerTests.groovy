@@ -160,8 +160,8 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
     }
 
     // ------------------------------------------------------------------ what the validation of the files refuses
-    // JBM-798: the controller validates the files before it completes a submission, as the web wizard does. A file that
-    // is missing and a file that is empty both make the files invalid.
+    // JBM-798: the controller validates the files before it completes a submission, as the submission wizard does. A
+    // file that is missing and a file that is empty both make the files invalid.
 
     @Test
     void testCreateWithAFileThatWasNeverUploadedIsRefused() {
@@ -398,7 +398,7 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertFalse(result.currentValidation)
     }
 
-    // ------------------------------------------------------------------- the upload step of the web wizard
+    // ------------------------------------------------------------ the upload step of the submission wizard
 
     /** What the upload step sends to processUploadFiles for a new model, with the files. Returns what it renders. */
     private Map uploadFiles(String folder, List<Map> uploads) {

@@ -10,10 +10,10 @@ import org.junit.*
 
 /**
  * Covers JBM-793: the route a submission takes through SubmissionService when it comes in through
- * SubmissionController (the API's create and update actions, and the web wizard's validation), i.e.
+ * SubmissionController (the API's create and update actions, and the submission wizard's validation), i.e.
  * buildFromJSONFile, validateFile, validateSyntax, detectModelInfo, handleSubmission, processPostSubmission and cleanup,
- * and the initialise with which ModelController starts a submission in the web wizard. The old SubmissionServiceTests
- * drove another set of methods, the steps of the Webflow that JBM-527 deleted.
+ * and the initialise with which ModelController starts a submission in the submission wizard. The old
+ * SubmissionServiceTests drove another set of methods, the steps of the Webflow that JBM-527 deleted.
  *
  * SubmissionControllerTests does the same through the controller itself. See SubmissionRouteTestBase for how the files
  * of a test are staged.
@@ -174,7 +174,7 @@ class SubmissionApiRouteTests extends SubmissionRouteTestBase {
         assertEquals([], submissionService.validateFile(real))
         assertTrue(submissionService.validateFile(new File(exchange, "missing.xml")).contains("File does not exist"))
         assertTrue(submissionService.validateFile(exchange).contains("The model file cannot be a directory"))
-        // the web wizard shows these at once, when a file is uploaded
+        // the submission wizard shows these at once, when a file is uploaded
         File empty = new File(exchange, "empty.xml")
         empty.text = ""
         assertEquals(["The file is empty"], submissionService.validateFile(empty))
@@ -344,7 +344,7 @@ class SubmissionApiRouteTests extends SubmissionRouteTestBase {
         assertEquals(0, Model.count())
     }
 
-    // ---------------------------------------------------------------------- how the web wizard starts a submission
+    // --------------------------------------------------------------- how the submission wizard starts a submission
 
     /** What ModelController.initialiseSubmission gives SubmissionService.initialise. */
     private Map initials(boolean isUpdate, String modelId = null) {
