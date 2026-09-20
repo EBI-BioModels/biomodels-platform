@@ -6,6 +6,7 @@ import grails.util.GrailsWebUtil
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.SubmissionRouteTestBase
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.PublicationLinkProvider
 import org.junit.*
 
 /**
@@ -395,6 +396,89 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         new File(directory, "inside.xml").text = "<a/>"
 
         assertTheWizardRefuses(folder, "a-directory.xml", "a-directory.xml: The model file cannot be a directory.")
+    }
+
+    // ------------------------------------------------------------- the publication of the wizard (JBM-801)
+
+    /** The last validation of a submission with a file that is fine, with the publication that the page sends. */
+    private Map validateWithPublication(String publication) {
+        String folder = stage(["mainFile.txt": "the main file"])
+        wizard("doLastValidateSubmissionData", folder, "mainFile.txt", "A model", [publication: publication])
+    }
+
+    @Test
+    void testTheWizardTakesWhatSaysNoPublicationAsNoPublication() {
+        // null is what the page sends after a lookup that found nothing. The service was asked to build it and threw
+        // IllegalArgumentException("No Publication Provider with label  found"), which was a server error.
+        ["null", '""', "{}", "[]", '{"link": "28713420"}', '{"link": "28713420", "linkProvider": ""}',
+         '{"link": "28713420", "linkProvider": {"linkType": ""}}'].each { String publication ->
+            Map result = validateWithPublication(publication)
+
+            assertTrue(publication, result.currentValidation)
+            assertEquals(publication, "", result.errMsg.toString().trim())
+        }
+    }
+
+    @Test
+    void testTheWizardTellsThatALinkProviderIsNotKnown() {
+        String publication = '{"link": "28713420", "linkProvider": "Bogus"}'
+
+        Map result = validateWithPublication(publication)
+
+        assertFalse(result.currentValidation)
+        assertFalse(result.isPublicationValid)
+        assertTrue(result.areModelFilesValid)
+        assertEquals('The publication provider "Bogus" is not recognised.', result.errMsg.toString().trim())
+    }
+
+    @Test
+    void testTheWizardTellsThatAPublicationCannotBeRead() {
+        Map result = validateWithPublication('{"link": ')
+
+        assertFalse(result.currentValidation)
+        assertEquals(SubmissionController.PUBLICATION_UNREADABLE, result.errMsg.toString().trim())
+    }
+
+    @Test
+    void testTheWizardAsksTheServiceToBuildAPublicationWithAKnownProvider() {
+        // the publication service finds the provider among those of the database
+        if (!PublicationLinkProvider.findByLinkType(PublicationLinkProvider.LinkType.MANUAL_ENTRY)) {
+            new PublicationLinkProvider(linkType: PublicationLinkProvider.LinkType.MANUAL_ENTRY, pattern: ".*")
+                .save(flush: true, failOnError: true)
+        }
+        String publication = '{"link": "", "linkProvider": "Publication without link", "title": "A title", ' +
+            '"journal": "A journal", "affiliation": "An institution", "synopsis": "An abstract", "year": 2020, ' +
+            '"month": 8, "authors": [{"userRealName": "Nicola Mulberry", "institution": "", "orcid": ""}]}'
+
+        Map result = validateWithPublication(publication)
+
+        // it is built, and it is not the error of a provider that is not known
+        assertNull(result.publicationError)
+        assertFalse(result.errMsg.toString().contains("is not recognised"))
+    }
+
+    @Test
+    void testTheWizardCompletesASubmissionWhoseNullPublicationSaysThereIsNone() {
+        String folder = stage(["mainFile.txt": "the main file"])
+
+        Map result = wizard("completeSubmission", folder, "mainFile.txt", "A model", [publication: "null"])
+
+        assertEquals("Success", result.status)
+        assertEquals(1, Model.count())
+    }
+
+    @Test
+    void testTheWizardDoesNotCompleteASubmissionWhoseLinkProviderIsNotKnown() {
+        // the publication that cannot be built would be left out of the model, which is not what the page sent
+        String folder = stage(["mainFile.txt": "the main file"])
+        String publication = '{"link": "28713420", "linkProvider": "Bogus"}'
+
+        Map result = wizard("completeSubmission", folder, "mainFile.txt", "A model", [publication: publication])
+
+        assertEquals("Failure", result.status)
+        assertEquals("<div style='color: red'>The publication provider &quot;Bogus&quot; is not recognised.</div>",
+            result.message.toString())
+        assertEquals(0, Model.count())
     }
 
     @Test
