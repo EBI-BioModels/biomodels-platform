@@ -950,7 +950,7 @@ an annotation to SBML document.""")
                 errors.add("The model file cannot be a directory")
             }
             if (file.isFile() && file.length() == 0) {
-                errors.add("The file is empty")
+                errors.add("The file ${file.name} is empty".toString())
             }
             return errors
         }
