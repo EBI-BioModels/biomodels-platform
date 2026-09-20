@@ -55,6 +55,9 @@ import org.springframework.beans.factory.InitializingBean
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SubmissionController extends CommonController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
+    static final String FILE_DESCRIPTION_MISSING = "The file description is not filled in"
+    static final String FILE_NAME_INVALID = "The file name is invalid (use only letters, digits, spaces, dots, " +
+        "hyphens, plus signs and underscores, and end it with a file extension)"
     def fileSystemService
     def grailsApplication
     def groovyPageRenderer
@@ -174,6 +177,11 @@ class SubmissionController extends CommonController implements InitializingBean 
             e["submissionFolder"] = submissionFolder
             List fileErrors = validateFile(e)
             e["validateFileErrors"] = fileErrors
+            // each file says what is wrong with it in the same way: empty, no description, invalid name. The upload
+            // step puts the name of the file in front of every message.
+            def description = e["description"]
+            boolean hasDescription = description instanceof CharSequence && description.toString().trim()
+            e["validateFileDescription"] = hasDescription ? [] : [FILE_DESCRIPTION_MISSING]
             uploadedFiles.put(e["filename"], e["originalFilesize"])
             if (e["isModelFile"] && fileErrors) {
                 // A file that is missing, empty or a directory has nothing to detect, and reading an empty xml file
@@ -194,11 +202,7 @@ class SubmissionController extends CommonController implements InitializingBean 
             }
             // check for the valid file name
             if (!FileHelper.isFileNameAcceptable(e["filename"] as String)) {
-                String warningMessage = """\
-Please make sure the file name '${e["filename"]}' only containing alphanumeric characters, spaces, \
-hyphens, plus signs and underscores. It should also have a proper file extension.
-"""
-                e["validateFileName"] = [warningMessage] as List<String>
+                e["validateFileName"] = [FILE_NAME_INVALID] as List<String>
             }
         }
         // Determines which files are added and removed

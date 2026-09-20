@@ -275,19 +275,27 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
 
     // ------------------------------------------------------------------- the upload step of the web wizard
 
-    /** What the upload step sends to processUploadFiles for a new model, with one model file. Returns what it renders. */
-    private Map uploadModelFile(String folder, String filename) {
+    /** What the upload step sends to processUploadFiles for a new model, with the files. Returns what it renders. */
+    private Map uploadFiles(String folder, List<Map> uploads) {
         GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
         SubmissionController controller = grailsApplication.mainContext.getBean(SubmissionController.name)
         controller.EXCH_DIR = exchange.absolutePath
         controller.request.method = "POST"
-        controller.params.putAll([
-            submissionFolder: folder, isUpdate: "false",
-            uploadingFiles  : new JsonBuilder([[id: "uploader1", filename: filename, description: "the model file",
-                                                isModelFile: true, originalFilesize: "0"]]).toString()])
+        controller.params.putAll([submissionFolder: folder, isUpdate: "false",
+                                  uploadingFiles  : new JsonBuilder(uploads).toString()])
         // FileSystemService.retrieve looks in the exchange directory of the properties file, the developer's own
         withExchangeDirectoryOfTheFileSystemService { controller.processUploadFiles() }
         JSON.parse(controller.response.contentAsString) as Map
+    }
+
+    private static Map upload(String filename, boolean isModelFile, String description = "the file") {
+        [id: "uploader-$filename".toString(), filename: filename, description: description, isModelFile: isModelFile,
+         originalFilesize: "0"]
+    }
+
+    /** What the upload step sends for one model file. Returns what processUploadFiles renders. */
+    private Map uploadModelFile(String folder, String filename) {
+        uploadFiles(folder, [upload(filename, true, "the model file")])
     }
 
     @Test
@@ -326,5 +334,39 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertEquals([], file.validateFileErrors)
         assertEquals("UNKNOWN", file.detectedModelFormat.identifier)
         assertNotNull(file.detectedModelInfo)
+    }
+
+    @Test
+    void testEveryFileSaysWhatIsWrongWithIt() {
+        // an empty model file and an empty additional file, each without a description and with an invalid name, and
+        // a model file that is fine: each problem is said on its own, for the file that has it
+        String folder = stage(["model-empty.xml": "", "data (1).txt": "", "fine.txt": "some content"])
+
+        Map result = uploadFiles(folder, [upload("model-empty.xml", true, ""), upload("data (1).txt", false, ""),
+                                          upload("fine.txt", false, "notes")])
+
+        Map empty = result.filesMap.find { it.filename == "model-empty.xml" }
+        assertEquals(["The file is empty"], empty.validateFileErrors)
+        assertEquals(["The file description is not filled in"], empty.validateFileDescription)
+        assertNull(empty.validateFileName)
+        Map data = result.filesMap.find { it.filename == "data (1).txt" }
+        assertEquals(["The file is empty"], data.validateFileErrors)
+        assertEquals(["The file description is not filled in"], data.validateFileDescription)
+        assertEquals([SubmissionController.FILE_NAME_INVALID], data.validateFileName)
+        Map fine = result.filesMap.find { it.filename == "fine.txt" }
+        assertEquals([], fine.validateFileErrors)
+        assertEquals([], fine.validateFileDescription)
+        assertNull(fine.validateFileName)
+    }
+
+    @Test
+    void testAModelFileWithoutADescriptionIsStillDetected() {
+        String folder = stage(["model.txt": "what is this?"])
+
+        Map result = uploadFiles(folder, [upload("model.txt", true, "")])
+
+        Map file = result.filesMap.first()
+        assertEquals(["The file description is not filled in"], file.validateFileDescription)
+        assertEquals("UNKNOWN", file.detectedModelFormat.identifier)
     }
 }

@@ -253,10 +253,8 @@
         uploadedFiles.forEach((filename) => {
             let isValid = checkAcceptableCharactersForFileName(filename);
             if (!isValid) {
-                let msg = "Please make sure the file name \'" + filename +
-                    "\' only containing alphanumeric characters, hyphens and underscores. " +
-                    "It should be followed by a proper file extension.";
-                messages.push(msg);
+                messages.push(filename + ": The file name is invalid (use only letters, digits, dots, hyphens " +
+                    "and underscores)");
             }
         });
         return messages;
@@ -328,11 +326,15 @@
                 let data = response["filesMap"];
                 let msg = "";
                 if (data.length) {
-                    const haveAllDescriptions = data.filter(e => e.description === "").length === 0;
-                    if (!haveAllDescriptions) {
-                        msg = "Please check the file description text boxes. They are not allowed empty.";
-                        errorMessages.push(msg);
-                    }
+                    // what is wrong with each file, one message per problem and each with the name of the file:
+                    // the file is empty, its description is not filled in, its name is invalid
+                    $.each(data, function (i, f) {
+                        consolidateErrorMessages(f["filename"], f["validateFileErrors"]);
+                        consolidateErrorMessages(f["filename"], f["validateFileDescription"]);
+                        consolidateErrorMessages(f["filename"], f["validateFileName"]);
+                    });
+                    const haveAllDescriptions = data.filter(f => f["validateFileDescription"] &&
+                        f["validateFileDescription"].length > 0).length === 0;
                     const hasOneModelFile = data.filter(e => e.isModelFile).length === 1;
                     let modelFileWithNoErrors = true;
                     let allFileNamesValid = true;
@@ -354,16 +356,15 @@
                             guessedPublicationAccession = modelFile["detectedModelFormat"]["accession"]
 
                             modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 && modelFile["validSyntax"]
-                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
                             if (!modelFile["validSyntax"]) {
                                 consolidateErrorMessages(modelFile["filename"], modelFile["validateSyntaxErrors"]);
                             } else if (modelFile["validateSyntaxErrors"].length !== 0)  {
                                 toastr.clear();
                                 toastr.warning(modelFile["validateSyntaxErrors"])
                             }
-                            // check the model file name for the invalid characters
-                            let hasError = consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
-                            let isModelMainFileNameValid = !hasError;
+                            // the name of the model file has to be valid
+                            let isModelMainFileNameValid = !(modelFile["validateFileName"] &&
+                                modelFile["validateFileName"].length > 0);
 
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
@@ -373,10 +374,10 @@
                                 modelFileWithNoErrors = additionalFiles.filter(f =>
                                     f["validateFileErrors"].length > 0).length === 0;
                                 $.each(additionalFiles, function (i, f) {
-                                    consolidateErrorMessages(f["filename"], f["validateFileErrors"]);
-                                    // check each additional file name for the invalid characters
-                                    let hasError = consolidateErrorMessages(f["filename"], f["validateFileName"]);
-                                    if (hasError) { areAdditionalFileNamesValid = false; }
+                                    // the name of each additional file has to be valid
+                                    if (f["validateFileName"] && f["validateFileName"].length > 0) {
+                                        areAdditionalFileNamesValid = false;
+                                    }
                                 });
                             }
                             // update the validation of all file names

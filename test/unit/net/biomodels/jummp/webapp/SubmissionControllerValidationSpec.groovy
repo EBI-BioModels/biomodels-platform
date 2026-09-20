@@ -180,10 +180,8 @@ class SubmissionControllerValidationSpec extends Specification {
 
     // ------------------------------------------------------------------------ processUploadFiles
 
-    /** What the upload step sends to processUploadFiles for a new model, with one model file. */
-    private Map uploadModelFile(List<String> fileErrors, Closure inferModelFormat) {
-        String uploads = '[{"id": "uploader1", "filename": "model-empty.xml", "description": "the model", ' +
-            '"isModelFile": true, "originalFilesize": "0"}]'
+    /** What the upload step sends to processUploadFiles for a new model. */
+    private Map uploadFiles(List<Map> uploads, List<String> fileErrors, Closure inferModelFormat) {
         controller.EXCH_DIR = dir.absolutePath
         controller.fileSystemService = [retrieve: { def json -> new File(dir, json["filename"] as String) }]
         controller.submissionService = [validateFile  : { File f -> fileErrors },
@@ -192,10 +190,20 @@ class SubmissionControllerValidationSpec extends Specification {
         controller.modelFileFormatService = [inferModelFormat: inferModelFormat,
                                              getPublicationAnnotations: { RTC revision -> [] }]
         params.submissionFolder = "a-submission-folder"
-        params.uploadingFiles = uploads
+        params.uploadingFiles = new groovy.json.JsonBuilder(uploads).toString()
         params.isUpdate = "false"
         controller.processUploadFiles()
         response.json as Map
+    }
+
+    private static Map upload(String filename, boolean isModelFile, String description = "the file") {
+        [id: "uploader-$filename".toString(), filename: filename, description: description, isModelFile: isModelFile,
+         originalFilesize: "0"]
+    }
+
+    /** A model file, model-empty.xml, as the upload step sends it. */
+    private Map uploadModelFile(List<String> fileErrors, Closure inferModelFormat) {
+        uploadFiles([upload("model-empty.xml", true, "the model")], fileErrors, inferModelFormat)
     }
 
     void "a model file with errors is reported and nothing is detected in it"() {
@@ -231,5 +239,53 @@ class SubmissionControllerValidationSpec extends Specification {
         file.detectedModelFormat.identifier == "UNKNOWN"
         file.validSyntax == true
         file.detectedModelInfo.name == "A model"
+    }
+
+    private static final Closure UNKNOWN_FORMAT = { List files -> new MFTC(id: 1, identifier: "UNKNOWN", name: "Unknown") }
+
+    void "each file without a description says so, and one with a description does not"() {
+        when:
+        Map answer = uploadFiles([upload("model.txt", true, "the model"), upload("a.txt", false, ""),
+                                  upload("b.txt", false, "   "), upload("c.txt", false, "notes")], [], UNKNOWN_FORMAT)
+
+        then:
+        answer.filesMap*.validateFileDescription == [[], ["The file description is not filled in"],
+                                                     ["The file description is not filled in"], []]
+    }
+
+    void "a model file without a description is still detected"() {
+        given:
+        boolean detected = false
+        Closure inferModelFormat = { List files -> detected = true; new MFTC(id: 1, identifier: "UNKNOWN", name: "Unknown") }
+
+        when:
+        Map answer = uploadFiles([upload("model.txt", true, "")], [], inferModelFormat)
+
+        then:
+        detected
+        answer.filesMap.first().validateFileDescription == ["The file description is not filled in"]
+        answer.filesMap.first().detectedModelFormat.identifier == "UNKNOWN"
+    }
+
+    void "a file with an invalid name says so, and one with a valid name does not"() {
+        when:
+        Map answer = uploadFiles([upload("model.txt", true), upload("data (1).txt", false), upload("no-extension", false),
+                                  upload("my data-1+2_3.txt", false)], [], UNKNOWN_FORMAT)
+
+        then:
+        answer.filesMap*.validateFileName == [null, [SubmissionController.FILE_NAME_INVALID],
+                                              [SubmissionController.FILE_NAME_INVALID], null]
+        SubmissionController.FILE_NAME_INVALID.startsWith("The file name is invalid")
+    }
+
+    void "a file that is empty, without a description and with an invalid name has each problem said on its own"() {
+        when:
+        Map answer = uploadFiles([upload("data (1).txt", false, "")], ["The file is empty"], UNKNOWN_FORMAT)
+
+        then:
+        Map file = answer.filesMap.first()
+        file.validateFileErrors == ["The file is empty"]
+        file.validateFileDescription == ["The file description is not filled in"]
+        file.validateFileName == [SubmissionController.FILE_NAME_INVALID]
     }
 }
