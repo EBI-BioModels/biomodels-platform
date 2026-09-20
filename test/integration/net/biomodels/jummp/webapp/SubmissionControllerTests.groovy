@@ -358,6 +358,45 @@ class SubmissionControllerTests extends SubmissionRouteTestBase {
         assertTrue(result.message.toString().contains("a&lt;b&gt;.txt"))
     }
 
+    /**
+     * The last validation and the completion refuse a submission whose main file cannot be read, with the message of
+     * the files. The detection of the format of an xml file throws on such a file, which was a server error (JBM-802).
+     */
+    private void assertTheWizardRefuses(String folder, String filename, String message) {
+        Map validation = wizard("doLastValidateSubmissionData", folder, filename)
+        assertFalse(validation.currentValidation)
+        assertEquals(message, validation.errMsg.toString().trim())
+
+        Map result = wizard("completeSubmission", folder, filename)
+        assertEquals("Failure", result.status)
+        assertEquals("<div style='color: red'>$message</div>".toString(), result.message)
+        assertEquals(0, Model.count())
+    }
+
+    @Test
+    void testTheWizardRefusesAnXmlFileThatIsMissing() {
+        String folder = stage([:])
+
+        assertTheWizardRefuses(folder, "never.xml", "never.xml: Not found or not exist or empty.")
+    }
+
+    @Test
+    void testTheWizardRefusesAnXmlFileThatIsEmpty() {
+        String folder = stage(["empty.xml": ""])
+
+        assertTheWizardRefuses(folder, "empty.xml", "empty.xml: Not found or not exist or empty.")
+    }
+
+    @Test
+    void testTheWizardRefusesADirectory() {
+        String folder = stage([:])
+        File directory = new File(new File(exchange, folder), "a-directory.xml")
+        assertTrue directory.mkdirs()
+        new File(directory, "inside.xml").text = "<a/>"
+
+        assertTheWizardRefuses(folder, "a-directory.xml", "a-directory.xml: The model file cannot be a directory.")
+    }
+
     @Test
     void testTheWizardCompletesTheUpdateThatItWasSent() {
         String modelId = createModel()
