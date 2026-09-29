@@ -140,6 +140,17 @@ beans {
 grails.cache.config.provider.name = "jummpCacheManager"
 grails.cache.ehcache.cacheManagerName = "jummpCacheManager"
 
+// JBM-805: when a cache is sized by memory, ehcache walks the whole object graph of every entry it stores and,
+// by default, keeps going through up to 1000 levels of references. An entry that reaches the model data once
+// pulled tens of millions of strings into that walk and exhausted the heap. Stop measuring an entry after 100
+// levels of references. (The development block below has to repeat this, since it replaces grails.cache.config.)
+grails.cache.config = {
+    sizeOfPolicy {
+        maxDepth 100
+        maxDepthExceededBehavior 'abort'
+    }
+}
+
 // Every script run in an interactive `grails>` session builds a new application context in the same JVM
 // and never closes the previous one, so its ehcache CacheManager stays registered in ehcache's static map.
 // The cache plugin then rebuilds its manager from generated XML named after `provider.name`, which the
@@ -151,7 +162,13 @@ environments {
     development {
         def uniqueCacheManagerName = "jummpCacheManager-${System.currentTimeMillis()}".toString()
         grails.cache.ehcache.cacheManagerName = uniqueCacheManagerName
-        grails.cache.config = { provider { name uniqueCacheManagerName } }
+        grails.cache.config = {
+            provider { name uniqueCacheManagerName }
+            sizeOfPolicy {
+                maxDepth 100
+                maxDepthExceededBehavior 'abort'
+            }
+        }
     }
 }
 
