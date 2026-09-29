@@ -24,6 +24,8 @@
 
 package net.biomodels.jummp.search
 
+import groovy.transform.EqualsAndHashCode
+
 /**
  * This class provides means of sorting searching results.
  *
@@ -31,7 +33,10 @@ package net.biomodels.jummp.search
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @date   12/06/2017
  */
-class SortOrder {
+@EqualsAndHashCode
+class SortOrder implements Serializable {
+    private static final long serialVersionUID = 1L
+
     String field
 
     enum SortDirection {ASC, DESC}
