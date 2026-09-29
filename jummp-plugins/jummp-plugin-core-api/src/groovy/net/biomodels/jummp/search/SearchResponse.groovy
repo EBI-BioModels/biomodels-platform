@@ -33,7 +33,9 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @date   27/10/2016
  */
-class SearchResponse {
+class SearchResponse implements Serializable {
+    private static final long serialVersionUID = 1L
+
     /**
      * the set of models/entries matching what are looking for
      * Using ArrayList to reserve the inserting order of Model Transport Command in the results list

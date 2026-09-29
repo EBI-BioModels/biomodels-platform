@@ -45,7 +45,8 @@ import net.biomodels.jummp.qcinfo.QcInfo
  */
 class ModelTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
-    def grailsApplication = Holders.grailsApplication
+    // not Serializable: skipped when the search results cache is written to disk, see url()
+    transient def grailsApplication = Holders.grailsApplication
     /**
      * The model id.
      */
@@ -137,7 +138,8 @@ class ModelTransportCommand implements Serializable {
 
     String url() {
         final String modelId = publicationId ?: submissionId
-        grailsApplication.config.grails.serverURL + "/" + modelId
+        // grailsApplication is null after deserialization
+        (grailsApplication ?: Holders.grailsApplication).config.grails.serverURL + "/" + modelId
     }
 
     /* this property will be populated in OmicsDiBasedSearch, getting from EBI Search */
