@@ -42,6 +42,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 
+import java.security.MessageDigest
+
 /**
  * Simple script to create a reviewer account for a set of models.
  *
@@ -56,6 +58,7 @@ import org.springframework.beans.factory.InitializingBean
 
 class ReviewerAccountService extends UserService implements InitializingBean {
     static private final Logger LOGGER = LoggerFactory.getLogger(ReviewerAccountService.class)
+    static private final int REVIEWER_DIGEST_LENGTH = 12
     def ms = Holders.grailsApplication.mainContext.modelService
     def sss = Holders.grailsApplication.mainContext.springSecurityService
 
@@ -141,20 +144,23 @@ class ReviewerAccountService extends UserService implements InitializingBean {
         return message
     }
 
+    /**
+     * Derives the username of the reviewer account that covers the given models.
+     *
+     * The name is a digest of the sorted, de-duplicated identifiers, whatever their number: it does not
+     * depend on the order of the input, differs for every distinct set of models (unlike encoding only
+     * the first and last identifier) and does not disclose the identifiers of unpublished models.
+     */
     String formatReviewerAccountName(List<String> modelIDs) {
-        final String prefix = "reviewerFor"
-        StringBuilder result = new StringBuilder(prefix)
         if (!modelIDs) throw new IllegalArgumentException()
 
-        result.append modelIDs.first()
-        if (modelIDs.size() > 1) {
-            result.append('-').append(modelIDs.last())
-        }
-        result.toString()
+        List<String> ids = modelIDs.unique(false).sort(false)
+        byte[] digest = MessageDigest.getInstance('SHA-256').digest(ids.join(',').getBytes('UTF-8'))
+        "reviewer-${digest.encodeHex().toString().take(REVIEWER_DIGEST_LENGTH)}"
     }
 
     private static List<String> parseCommaSeparatedModelIdList(String ids) {
-        ids?.split(',')?.collect { it?.trim() }
+        ids?.split(',')?.collect { it?.trim() }?.findAll { it }?.unique()?.sort()
     }
 
     @Override
