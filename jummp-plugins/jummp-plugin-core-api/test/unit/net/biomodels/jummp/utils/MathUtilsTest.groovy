@@ -22,10 +22,40 @@ package net.biomodels.jummp.utils
 
 import org.junit.Test
 
+import static org.junit.Assert.assertEquals
 import static org.junit.Assert.assertFalse
+import static org.junit.Assert.assertNotEquals
 import static org.junit.Assert.assertTrue
 
 class MathUtilsTest {
+
+    // --- generatePassword ---
+
+    @Test
+    void testGeneratePassword_hasRequestedLengthAndUsesOnlyTheAlphabet() {
+        String alphabet = "abc123"
+        String password = MathUtils.generatePassword(alphabet, 200)
+        assertEquals(200, password.length())
+        assertTrue("only characters of the alphabet are used", password.every { alphabet.contains(it) })
+    }
+
+    @Test
+    void testGeneratePassword_zeroLengthGivesEmptyString() {
+        assertEquals("", MathUtils.generatePassword("abc", 0))
+    }
+
+    @Test
+    void testGeneratePassword_usesTheWholeAlphabet() {
+        String alphabet = "0123456789"
+        Set<String> seen = MathUtils.generatePassword(alphabet, 1000).toList() as Set
+        assertEquals(alphabet.toList() as Set, seen)
+    }
+
+    @Test
+    void testGeneratePassword_consecutivePasswordsDiffer() {
+        String alphabet = (('A'..'Z') + ('a'..'z') + ('0'..'9')).join()
+        assertNotEquals(MathUtils.generatePassword(alphabet, 32), MathUtils.generatePassword(alphabet, 32))
+    }
 
     // --- validUsername ---
 

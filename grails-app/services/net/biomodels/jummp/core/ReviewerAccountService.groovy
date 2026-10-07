@@ -59,6 +59,11 @@ import java.security.MessageDigest
 class ReviewerAccountService extends UserService implements InitializingBean {
     static private final Logger LOGGER = LoggerFactory.getLogger(ReviewerAccountService.class)
     static private final int REVIEWER_DIGEST_LENGTH = 12
+    static private final int REVIEWER_PASSWORD_LENGTH = 16
+    // no look-alike characters (0/O, 1/l/I) as the password is copied from an email, and no
+    // characters that are special in HTML since it is embedded in the instructions email
+    static private final String REVIEWER_PASSWORD_ALPHABET =
+        (('A'..'Z') + ('a'..'z') + ('0'..'9')).join().replaceAll('[0OIl1o]', '') + '!#$%*+-=?@^_'
     def ms = Holders.grailsApplication.mainContext.modelService
     def sss = Holders.grailsApplication.mainContext.springSecurityService
 
@@ -96,7 +101,7 @@ class ReviewerAccountService extends UserService implements InitializingBean {
         // TODO ensure there is no other reviewer account for these models?
         String accountName = formatReviewerAccountName(modelIDs)
         User reviewer = User.findByUsername(accountName)
-        String password = MathUtils.generatePassword((('A'..'Z')+('0'..'9')).join(), 6)
+        String password = generateReviewerPassword()
         if (!reviewer) {
             reviewer = createReviewerUser(accountName, password)
             LOGGER.debug("A reviewer account [${reviewer.dump()}] has been created for the model(s): ${commaSeparatedModels}.")
@@ -110,6 +115,17 @@ class ReviewerAccountService extends UserService implements InitializingBean {
         }
 
         new ReviewerAccountInfo(sharedModels: models, password: password, user: reviewer)
+    }
+
+    /**
+     * Generates a password that meets the strength rules users are held to when they change theirs.
+     */
+    String generateReviewerPassword() {
+        String result
+        final String strongest = MathUtils.PWD_HARD_LEVEL.X_HARD.label
+        while (MathUtils.checkPasswordStrength(result = MathUtils.generatePassword(
+                REVIEWER_PASSWORD_ALPHABET, REVIEWER_PASSWORD_LENGTH)) != strongest) { }
+        result
     }
 
     String createAccountAndInstructions(final String modelsToReview, final String serverURL) {

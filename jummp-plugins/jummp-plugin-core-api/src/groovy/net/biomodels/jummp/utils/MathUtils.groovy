@@ -30,6 +30,7 @@
 
 package net.biomodels.jummp.utils
 
+import java.security.SecureRandom
 import java.util.concurrent.ThreadLocalRandom
 
 /**
@@ -57,10 +58,14 @@ class MathUtils {
         return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom()
+
+    /**
+     * Picks {@code n} characters of {@code alphabet} using a cryptographically secure source of
+     * randomness: the result is used for passwords and one-time codes, so it must not be predictable.
+     */
     static final String generatePassword(String alphabet, int n) {
-        new Random().with {
-            (1..n).collect { alphabet[ nextInt( alphabet.length() ) ] }.join()
-        }
+        (0..<n).collect { alphabet[SECURE_RANDOM.nextInt(alphabet.length())] }.join()
     }
 
     static boolean isPositiveNumber(String value) {
