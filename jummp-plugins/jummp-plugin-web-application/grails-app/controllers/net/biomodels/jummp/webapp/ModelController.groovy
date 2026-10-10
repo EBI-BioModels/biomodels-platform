@@ -149,7 +149,9 @@ class ModelController extends CommonController {
                 request.lastHistory = historyItem
                 return true
             } else {
-                LOGGER.error "Ignoring invalid request for $actionUri with params $params."
+                // an unknown identifier is a client error (answered with a 404), not a server fault
+                LOGGER.warn "Ignoring request for $actionUri: no model matches id " +
+                    "'${modelIdParam?.take(64)}' (revisionId '${revisionIdParam?.take(64)}')."
                 forward(controller: "errors", action: "error404")
                 return false
             }
