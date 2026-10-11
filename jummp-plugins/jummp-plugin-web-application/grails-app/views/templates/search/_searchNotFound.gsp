@@ -4,14 +4,20 @@
              width="50%"
              class="float-center"></div>
     <div class="small-12 medium-10 large-10 columns">
-        <h3 style="border-bottom: 2px solid #007c82;">Sorry, we couldn't find any matches.</h3>
-        <p>You might need to:</p>
-        <ul>
-            <g:if test="${action == "search"}">
-                <li>Check the syntax of your query.</li>
-                <li><a href="${g.createLink(controller: "login", action: "auth")}">Log in</a> with your username
-                and password if you're trying to access an unpublished model.</li></g:if>
-                <li><a onclick="window.history.back()">Go back to the previous page.</a></li></ul>
+        <g:if test="${params.searchUnavailable}">
+            <h3 style="border-bottom: 2px solid #007c82;">Search is temporarily unavailable.</h3>
+            <p>The search server did not answer in time. Please try again in a few minutes.</p>
+        </g:if>
+        <g:else>
+            <h3 style="border-bottom: 2px solid #007c82;">Sorry, we couldn't find any matches.</h3>
+            <p>You might need to:</p>
+            <ul>
+                <g:if test="${action == "search"}">
+                    <li>Check the syntax of your query.</li>
+                    <li><a href="${g.createLink(controller: "login", action: "auth")}">Log in</a> with your username
+                    and password if you're trying to access an unpublished model.</li></g:if>
+                    <li><a onclick="window.history.back()">Go back to the previous page.</a></li></ul>
+        </g:else>
         <script>
             $('#local-search-box').val("${params.query.encodeAsHTML()}");
             $('#clearsearch').hide();

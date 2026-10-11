@@ -22,6 +22,7 @@ class SearchControllerCacheSpec extends Specification {
         List<Map> searches = []
         List<Map> cacheWrites = []
         int cacheReads = 0
+        Exception failure
 
         Map retrieveCachedSearchAllResult(String domain) {
             cacheReads++
@@ -30,6 +31,9 @@ class SearchControllerCacheSpec extends Specification {
 
         SearchResponse searchModels(String query, String domain, def sortOrder, Map<String, Integer> pc) {
             searches << [query: query, domain: domain, pagination: pc]
+            if (failure) {
+                throw failure
+            }
             new SearchResponse(results: models(pc.length), totalCount: 2700)
         }
 
@@ -159,5 +163,53 @@ class SearchControllerCacheSpec extends Specification {
         stub.cacheReads == 0
         stub.cacheWrites.isEmpty()
         stub.searches*.query == ["glucose"]
+    }
+
+    void "an unavailable search server gives an empty page with a notice, and nothing is cached"() {
+        given:
+        stub.failure = new SearchUnavailableException("EBI Search did not answer in time", null)
+
+        when:
+        Map result = search(query: "*:*")
+
+        then:
+        params.searchUnavailable
+        result.models.isEmpty()
+        result.matches == 0
+        stub.cacheWrites.isEmpty()
+        response.status == 200
+    }
+
+    void "an unavailable search server is reported for other queries too"() {
+        given:
+        stub.failure = new SearchUnavailableException("EBI Search failed with status 502", null)
+
+        when:
+        Map result = search(query: "glucose")
+
+        then:
+        params.searchUnavailable
+        result.models.isEmpty()
+    }
+
+    void "a search that works does not carry the notice"() {
+        when:
+        search(query: "glucose")
+
+        then:
+        !params.searchUnavailable
+    }
+
+    void "clients that are not browsers get a 503 when the search server is unavailable"() {
+        given:
+        stub.failure = new SearchUnavailableException("EBI Search did not answer in time", null)
+        response.format = "json"
+
+        when:
+        params.putAll([search_block_form: "glucose", query: "glucose", controller: "Search"])
+        controller.search()
+
+        then:
+        response.status == 503
     }
 }

@@ -40,6 +40,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.SearchResponse
+import net.biomodels.jummp.search.SearchUnavailableException
 import net.biomodels.jummp.search.SortOrder
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
@@ -229,7 +230,8 @@ under the format: ${response.format}"""
         if (response.format == "html") {
             return results
         }
-        respond new SearchResults(results)
+        // clients other than the browser cannot read the notice that the page shows
+        respond new SearchResults(results), params.searchUnavailable ? [status: 503] : [:]
     }
 
     @Secured(['ROLE_ADMIN'])
@@ -378,8 +380,10 @@ under the format: ${response.format}"""
                         "facetCount": 1000]
                 Map fresh = doSearch(query, domain, cachePage, offset, length, sortOrder, sortBy,
                         sortDirection)
-                searchService.cacheSearchAllResult([totalCount: fresh["matches"], models: fresh["models"],
-                        facets: fresh["facets"], facetStats: fresh["facetStats"]], domain)
+                if (!params.searchUnavailable) {
+                    searchService.cacheSearchAllResult([totalCount: fresh["matches"], models: fresh["models"],
+                            facets: fresh["facets"], facetStats: fresh["facetStats"]], domain)
+                }
                 fresh["models"] = (fresh["models"] as List).take(length)
                 results.putAll(fresh)
             }
@@ -399,12 +403,18 @@ under the format: ${response.format}"""
         List<Facet> facets = []
         String facetStats = ""
         if (query?.trim()) {
-            SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
-            Map extractedSearchModels = searchService.extractSearchModels(response, domain)
-            totalCount = extractedSearchModels["totalCount"] as Integer
-            models = extractedSearchModels["models"] as List<MTC>
-            facets = extractedSearchModels["facets"] as List<Facet>
-            facetStats = extractedSearchModels["facetStats"]
+            try {
+                SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
+                Map extractedSearchModels = searchService.extractSearchModels(response, domain)
+                totalCount = extractedSearchModels["totalCount"] as Integer
+                models = extractedSearchModels["models"] as List<MTC>
+                facets = extractedSearchModels["facets"] as List<Facet>
+                facetStats = extractedSearchModels["facetStats"]
+            } catch (SearchUnavailableException e) {
+                LOGGER.warn("The search for query ${query} failed: ${e.message}")
+                // read by the templates, see searchNotFound
+                params.searchUnavailable = true
+            }
             /**
              * By default, the query was encoded as HTML due to security vulnerability until here.
              * After using encoded query into search modules, we should decode it into the original

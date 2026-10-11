@@ -257,10 +257,8 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
             int facetCount = paginationCriteria['facetCount']
             result = datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
         } catch (HttpServerErrorException e) {
-            LOGGER.debug("""There was a problem obtaining search result from EBI search server. \
-The root cause is ${e.toString()}""")
-            LOGGER.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
-            result = null
+            LOGGER.warn("EBI Search failed with status ${e.statusCode.value()}: ${e.message}")
+            throw new SearchUnavailableException("EBI Search failed with status ${e.statusCode.value()}", e)
         } catch (HttpClientErrorException e) {
             LOGGER.error("There was a problem searching models from BioModels ${e.toString()}")
             if (e.statusCode.value() == 400) {
@@ -270,9 +268,10 @@ The root cause is ${e.toString()}""")
         } catch (ResourceAccessException e) {
             // thrown for connect/read timeouts and refused connections
             LOGGER.warn("EBI Search did not answer in time for query ${query}: ${e.message}")
-            result = null
-        } catch (UnknownHostException ignored ) {
-            result = null
+            throw new SearchUnavailableException("EBI Search did not answer in time", e)
+        } catch (UnknownHostException e) {
+            LOGGER.warn("Cannot find the EBI Search server: ${e.message}")
+            throw new SearchUnavailableException("Cannot find the EBI Search server", e)
         }
         List<Facet> facets = []
         int totalCount
