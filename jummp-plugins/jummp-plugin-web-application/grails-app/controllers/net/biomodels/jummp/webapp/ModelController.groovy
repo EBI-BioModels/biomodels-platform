@@ -1099,7 +1099,7 @@ Please contact the developers team for support!"""])
             /*LOGGER.info """${revision.modelIdentifier()}: download omex => use case 2 and 4: public - regardless of
 its size"""
 */
-            serveModelAsCombineArchiveForPublished(revision)
+            serveModelAsCombineArchiveForPublished(revision, files, resp)
         } else {
             /*LOGGER.info "${revision.modelIdentifier()}: download omex => use case 1 and 3: private - considering its
  size to serve instantly or later"*/
@@ -1125,73 +1125,104 @@ its size"""
         }
     }
 
-    private void serveModelAsCombineArchiveForPublished(RTC revision) {
-        String[] parts = defineMrPathAndFileNameForOmex(revision)
-        String filePath = parts[1]
-        // Use case 2 and 4: Revision is public regardless of its size
+    /**
+     * Serves the OMEX of a published revision, trying in turn:
+     * 1. the FTP mirror, when it is configured and reachable;
+     * 2. the download service, when it is reachable;
+     * 3. an archive created on the fly, when the model is small enough.
+     */
+    private void serveModelAsCombineArchiveForPublished(RTC revision, List<RFTC> files, def resp) {
+        String filePath = defineMrPathAndFileNameForOmex(revision)[1]
         if (deployTarget == "local") {
             serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
+            return
+        }
+        String ftpUrl = reachableFtpUrl(revision, filePath)
+        if (ftpUrl) {
+            LOGGER.info("Downloading COMBINE Archive (OMEX) file from EBI FTP: ${ftpUrl}")
+            redirect(url: ftpUrl)
+        } else if (isDownloadServiceReachable()) {
+            serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
+        } else if (isSmallSubmission(files)) {
+            LOGGER.warn("${revision.modelIdentifier()}: neither the FTP mirror nor the download service is " +
+                "available, creating the OMEX on the fly.")
+            serveModelAsCombineArchiveInstantly(revision, files, resp)
         } else {
-            String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
-            String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/$filePath"
-            if (JummpHttpService.isReachable(url)) {
-                LOGGER.info("Downloading COMBINE Archive (OMEX) file from EBI FTP: ${url}")
-                redirect(url: url)
-            } else {
-                // fallback
-                serveModelAsCombineArchiveWithCheckingAndFileService(revision, filePath)
-            }
+            LOGGER.error("${revision.modelIdentifier()}: no way to serve the large OMEX file right now.")
+            forward(controller: "errors", action: "error413")
         }
     }
 
+    /**
+     * @return the URL of the given path on the FTP mirror, or null when the mirror is not configured or
+     * does not currently serve that path.
+     */
+    private String reachableFtpUrl(RTC revision, String relativePath) {
+        if (!PUBLIC_FTP_REPO) {
+            return null
+        }
+        String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
+        String url = "${PUBLIC_FTP_REPO}/${modelParentFolder}/${relativePath}"
+        JummpHttpService.isReachable(url) ? url : null
+    }
+
+    /**
+     * @return the base URL of the download service without trailing slashes, or null when it is not configured
+     */
+    private String downloadServiceUrl() {
+        // unset, the setting is an empty ConfigObject rather than null
+        def serviceUrl = grailsApplication.config.jummp.model.download.server
+        serviceUrl ? serviceUrl.toString().replaceAll('/+$', '') : null
+    }
+
+    /**
+     * The download service answers 200 on /healthcheck; its base URL is not a mapped endpoint (404).
+     */
+    private boolean isDownloadServiceReachable() {
+        String serviceUrl = downloadServiceUrl()
+        serviceUrl && JummpHttpService.isReachable("${serviceUrl}/healthcheck".toString())
+    }
+
+    private static boolean isSmallSubmission(List<RFTC> files) {
+        long totalSize = files.sum(0L) { it.size } as long
+        totalSize < BioModels.MAX_FILE_SIZE
+    }
+
     private void serveModelAsCombineArchiveInstantly(RTC revision, List<RFTC> files, def resp) {
-        long time = System.nanoTime()
+        long start = System.nanoTime()
         final String modelId = revision.model.submissionId
-        final Integer revisionId = revision.revisionNumber
-        String omexFileName = omexService.createCombineArchive(files, modelId, revisionId, false)
+        String omexFileName = omexService.createCombineArchive(files, modelId, revision.revisionNumber, false)
         File omexFile = new File(omexFileName)
-        String name = omexFile.name
         resp.setContentType("application/zip")
-        resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
-        ByteArrayInputStream stream = null
+        resp.setHeader("Content-disposition", "attachment;filename=\"${omexFile.name}\"")
         try {
-            stream = new ByteArrayInputStream(omexFile.readBytes())
-            resp.outputStream << stream
+            omexFile.withInputStream { InputStream input -> resp.outputStream << input }
         } catch (IOException ioE) {
             LOGGER.error("The client might have aborted their download request.", ioE)
         } finally {
-            LOGGER.info("Downloading COMBINEArchive instantly: $omexFile")
-            if (omexFile.delete()) {
-                LOGGER.info("The temporary file was deleted successfully.")
-            } else {
-                LOGGER.info("Cannot delete the temporary file.")
-            }
-            if (stream) {
-                stream.close()
+            if (!omexFile.delete()) {
+                LOGGER.warn("Cannot delete the temporary file ${omexFile}.")
             }
         }
-        time = (long) ((System.nanoTime() - time) / 1_000_000.0)
-        long seconds = (long) (time / 1_000)
-        long HH = (long) (seconds / 3600)
-        long MM = (long) ((seconds % 3600) / 60)
-        long SS = seconds % 60
-        String timeInHHMMSS = String.format("%02d:%02d:%02d", HH, MM, SS)
-        LOGGER.info("It took ${time}ms ~ ${timeInHHMMSS} to generate the OMEX file $omexFileName.")
+        long millis = (long) ((System.nanoTime() - start) / 1_000_000L)
+        long seconds = (long) (millis / 1_000)
+        String hhmmss = String.format("%02d:%02d:%02d", (long) (seconds / 3600), (long) ((seconds % 3600) / 60),
+            seconds % 60)
+        LOGGER.info("It took ${millis}ms ~ ${hhmmss} to generate and serve the OMEX file ${omexFile.name}.")
     }
 
     private void serveModelAsCombineArchiveWithCheckingAndFileService(final RTC revision, final String filePath) {
         final String MODEL_CACHE = grailsApplication.config.jummp.model.cache.dir
         File omexFile = new File(MODEL_CACHE, filePath)
-        String DOWNLOAD_SERVICE_URL = grailsApplication.config.jummp.model.download.server
-        String url = "${DOWNLOAD_SERVICE_URL}/get-files/$filePath"
+        String url = "${downloadServiceUrl()}/get-files/$filePath"
         if (!omexFile.exists()) {
             Map result = doGenerateOmex(revision.model.submissionId, revision.revisionNumber, true, true) as Map
             String omexLocation = result.get("location")
             String curator = grailsApplication.config.jummp.model.curators.mailinglist
             if (omexLocation) {
-                if (revision.state == ModelState.PUBLISHED && EBI_BM_FTP_REPO) {
-                    String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
-                    url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/$filePath"
+                if (revision.state == ModelState.PUBLISHED) {
+                    // only advertise the FTP mirror when it can actually serve the file
+                    url = reachableFtpUrl(revision, filePath) ?: url
                 }
                 String msg = """<p>Your file is being prepared. Because of its large size, it's taking a moment to \
 generate.</p><p>It will be available to download at the following link very soon: \
@@ -1199,13 +1230,16 @@ generate.</p><p>It will be available to download at the following link very soon
 <p>Please be patient and check the link after a few seconds. If the file is still unavailable or you encounter any \
 download issues after 15 minutes, please don't hesitate to <a href='mailto:${curator}'>contact</a> our support \
 team.<p>Thank you for your patience!</p>"""
-                //LOGGER.info(msg)
+                LOGGER.info("""${revision.modelIdentifier()}: the OMEX file ${filePath} is being generated, the \
+user will download it from ${url}""")
                 render(view: "download/inform", model: [message: msg])
             } else {
+                LOGGER.warn("${revision.modelIdentifier()}: cannot generate the OMEX file ${filePath}.")
                 forward(controller: "errors", action: "error413")
             }
         } else {
-            //LOGGER.info("Downloading COMBINE Archive (OMEX) file from the model cache directory: ${filePath}")
+            // Downloading COMBINE Archive (.omex) file from the model revision cache directory
+            LOGGER.info("${revision.modelIdentifier()}: downloading the OMEX file from: ${url}")
             redirect(url: url)
         }
     }
@@ -1228,17 +1262,14 @@ team.<p>Thank you for your patience!</p>"""
 
     private void serveModelAsFileForPublished(RTC revision, RFTC rf, String fileName, def resp,
                                               boolean inline, boolean preview = false) {
-        String modelParentFolder = modelDelegateService.getRevisionsState(revision.modelIdentifier()).vcsId
-        String[] parts = defineMrPathAndFileNameForOmex(revision)
-        String mrPath = parts[2]
-        String url = "${EBI_BM_FTP_REPO}/${modelParentFolder}/${mrPath}/${fileName}"
-        if (JummpHttpService.isReachable(url)) {
-            //LOGGER.info("Downloading from FTP: ${url}")
-            redirect(url: url)
-        } else {
-            // fallback
-            serveModelAsFileInstantly(rf, resp, inline, preview)
+        String mrPath = defineMrPathAndFileNameForOmex(revision)[2]
+        String ftpUrl = reachableFtpUrl(revision, "${mrPath}/${fileName}")
+        if (ftpUrl) {
+            redirect(url: ftpUrl)
+            return
         }
+        // no usable FTP mirror: the download service only serves OMEX archives, so serve the file from disk
+        serveModelAsFileInstantly(rf, resp, inline, preview)
     }
 
     private void serveModelAsFileForPrivate(RFTC rf, def resp, boolean inline, boolean preview = false) {
@@ -1256,39 +1287,31 @@ team.<p>Thank you for your patience!</p>"""
     private void serveModelAsFileInstantly(RFTC rf, def resp, boolean inline, boolean preview = false) {
         File file = new File(rf.path)
         resp.setContentType(rf.mimeType)
-        final String INLINE = inline ? "inline" : "attachment"
-        final String F_NAME = URLEncoder.encode(file.name, "UTF-8")
+        final String disposition = inline ? "inline" : "attachment"
+        final String encodedName = URLEncoder.encode(file.name, "UTF-8")
         resp.setCharacterEncoding("UTF-8")
-        resp.setHeader("Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
-        byte[] fileData = null
-        int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
-        ByteArrayInputStream stream = null
+        resp.setHeader("Content-Disposition", "${disposition};filename=\"${encodedName}\"")
         try {
             if (file.length() > BioModels.MAX_FILE_SIZE) {
-                String warnMsg = "File ${file.name} is too large to be served now."
-                LOGGER.debug(warnMsg)
-                println(warnMsg)
-                stream = new ByteArrayInputStream("BIG_FILE".bytes)
-            } else {
-                fileData = file.readBytes()
-
-                if (!preview || previewSize > fileData.length) {
-                    stream = new ByteArrayInputStream(fileData)
+                LOGGER.debug("File ${file.name} is too large to be served now.")
+                resp.outputStream << "BIG_FILE".bytes
+                return
+            }
+            int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
+            file.withInputStream { InputStream input ->
+                if (preview && previewSize < file.length()) {
+                    byte[] head = new byte[previewSize]
+                    int read = input.read(head)
+                    if (read > 0) {
+                        resp.outputStream.write(head, 0, read)
+                    }
                 } else {
-                    fileData = file.readBytes()
-                    stream = new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+                    resp.outputStream << input
                 }
             }
-            resp.outputStream << stream
+            LOGGER.info("Downloading file instantly: ${file.absolutePath}")
         } catch (IOException ioE) {
             LOGGER.error("The client might have cancelled downloading the file ${file.name}.", ioE)
-        } finally {
-            LOGGER.info("Downloading file instantly: ${file?.absolutePath}")
-            if (stream != null) {
-                LOGGER.debug("InputStream of the file ${file.name} has been flushed and closed.")
-                stream.close()
-            }
-            Arrays.fill(fileData, (byte) 0)
         }
     }
 
@@ -1339,7 +1362,7 @@ team.<p>Thank you for your patience!</p>"""
             if (params.containsKey("id")) {
                 String modelId = params.id
                 String revisionId = params.revisionId
-                String fileName = params.filename.decodeHTML()
+                String fileName = params.filename?.decodeHTML()
                 if (Environment.isWarDeployed() && fileName != null) {
                     fileName = handleDlSpecialCharacters(fileName)
                 }
@@ -1350,10 +1373,10 @@ team.<p>Thank you for your patience!</p>"""
                 } else {
                     RFTC requested = FILES.find {
                         !it.hidden && new File(it.path).getName() == fileName
-                    } as RFTC
+                    }
                     boolean inline = params.getBoolean("inline", false)
                     boolean preview = params.getBoolean("preview", false)
-                    if (requested.id != null) {
+                    if (requested?.id != null) {
                         serveModelAsFile(revision, requested, fileName, response, inline, preview)
                     } else {
                         response.status = HttpServletResponse.SC_BAD_REQUEST

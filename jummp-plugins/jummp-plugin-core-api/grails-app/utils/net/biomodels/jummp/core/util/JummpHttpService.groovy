@@ -145,15 +145,14 @@ class JummpHttpService implements InitializingBean {
             }
         } else {
             HttpURLConnection connection = null
-            LOGGER.info("Checking the URL: ${requestUrl}")
             try {
                 connection = establishConnection(requestUrl)
                 int code = connection.getResponseCode()
-                LOGGER.info("When checking the URL '${requestUrl}' and getting the code: $code")
+                LOGGER.info("Checking the URL ${requestUrl} and getting the code: $code")
                 result = code < 400
             } catch (Exception e) {
                 result = false
-                LOGGER.error("When checking the URL '${requestUrl}' and getting the errors ${e.toString()}")
+                LOGGER.error("Checking the URL ${requestUrl} and getting the errors ${e.toString()}")
             } finally {
                 if (connection) {
                     connection.disconnect()

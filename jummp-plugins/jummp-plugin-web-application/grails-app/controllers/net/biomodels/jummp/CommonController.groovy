@@ -41,8 +41,8 @@ class CommonController implements GrailsConfigurationAware {
     static String manualURL
     static String theme
     static String deployTarget
-    static String EBI_BM_FTP
-    static String EBI_BM_FTP_REPO
+    static String PUBLIC_FTP
+    static String PUBLIC_FTP_REPO
     static Map COMMON_PROPERTIES = [:]
 
     def grailsApplication
@@ -56,16 +56,16 @@ class CommonController implements GrailsConfigurationAware {
         manualURL = grailsApplication.config.jummp.context.help.root
         serverURL = grailsApplication.config.grails.serverURL
         deployTarget = "local"
-        EBI_BM_FTP = co.jummp.model.ftp.location
+        PUBLIC_FTP = co.jummp.model.ftp.location
 
         if (serverURL.contains("wwwdev.ebi.ac.uk/biomodels")) {
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
             deployTarget = "dev"
-            EBI_BM_FTP = BioModels.EBI_BMDEV_PUBLIC_FTP
+            PUBLIC_FTP = BioModels.DEV_PUBLIC_FTP
         } else if (Environment.current == Environment.PRODUCTION && serverURL.contains("www.ebi.ac.uk/biomodels")) {
             bmStaticAssetsURL = "${BioModels.BM_ROOT_URL}/static-assets"
             deployTarget = "prod"
-            EBI_BM_FTP = BioModels.EBI_BMPROD_PUBLIC_FTP
+            PUBLIC_FTP = BioModels.PROD_PUBLIC_FTP
         } else if (serverURL.contains("biomodels.org") ||
                 serverURL.contains("biomodels.net") ||
                 serverURL.contains("dmscambs.co.uk")) {
@@ -74,12 +74,12 @@ class CommonController implements GrailsConfigurationAware {
             deployTarget = "prod"
             // the following properties must be updated
             bmStaticAssetsURL = "$serverURL/static-assets"
-            // EBI_BM_FTP -- should be renamed to make it neutrally
+            // PUBLIC_FTP comes from jummp.model.ftp.location for this deployment
         } else {
             // local or dev target
             bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
         }
-        EBI_BM_FTP_REPO = EBI_BM_FTP ? WSF.addPath(new URI(EBI_BM_FTP), "repository").toString() : ""
+        PUBLIC_FTP_REPO = PUBLIC_FTP ? WSF.addPath(new URI(PUBLIC_FTP), "repository").toString() : ""
         theme = grailsApplication.config.jummp.branding.style
         if (!theme) theme = "default"
         COMMON_PROPERTIES = [
@@ -89,8 +89,8 @@ class CommonController implements GrailsConfigurationAware {
             "serverURL": serverURL,
             "theme": theme,
             "deployTarget": deployTarget,
-            "EBI_BM_FTP": EBI_BM_FTP,
-            "EBI_BM_FTP_REPO": EBI_BM_FTP_REPO
+            "PUBLIC_FTP": PUBLIC_FTP,
+            "PUBLIC_FTP_REPO": PUBLIC_FTP_REPO
         ]
     }
 
