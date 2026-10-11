@@ -194,6 +194,38 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     }
 
     /**
+     * Runs a request to EBI Search and decides what its failures mean for the caller.
+     *
+     * @param query the query being searched for, used in log messages
+     * @param request the call to EBI Search
+     * @return the result of the request, or null if EBI Search rejected the query (a 4xx answer)
+     * @throws SearchUnavailableException if EBI Search timed out, cannot be reached or answered with
+     *      a 5xx status. It is an exception, and not an empty result, so that the cache on
+     *      searchModels does not keep the failure.
+     */
+    static QueryResult executeSearchRequest(String query, Closure<QueryResult> request) {
+        try {
+            return request.call()
+        } catch (HttpServerErrorException e) {
+            LOGGER.warn("EBI Search failed with status ${e.statusCode.value()}: ${e.message}")
+            throw new SearchUnavailableException("EBI Search failed with status ${e.statusCode.value()}", e)
+        } catch (HttpClientErrorException e) {
+            LOGGER.error("There was a problem searching models from BioModels ${e.toString()}")
+            if (e.statusCode.value() == 400) {
+                LOGGER.error("The querying string might be wrong syntax or contains restricted characters.")
+            }
+            return null
+        } catch (ResourceAccessException e) {
+            // thrown for connect/read timeouts and refused connections
+            LOGGER.warn("EBI Search did not answer in time for query ${query}: ${e.message}")
+            throw new SearchUnavailableException("EBI Search did not answer in time", e)
+        } catch (UnknownHostException e) {
+            LOGGER.warn("Cannot find the EBI Search server: ${e.message}")
+            throw new SearchUnavailableException("Cannot find the EBI Search server", e)
+        }
+    }
+
+    /**
      * Stops a slow EBI Search server from holding a request thread until the load balancer gives up.
      *
      * The ddi-ebe-ws-dao client has no timeouts of its own. Both values can be overridden with the
@@ -250,28 +282,11 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
         String sort = sortField ? String.format("%s:%s", sortField, sortDir) : ""
         /* By default, we put the private models at the last pages if they are available */
         sort = sort ? "isprivate:ascending,$sort" : "isprivate:ascending"
-        QueryResult result
-        try {
-            int start = paginationCriteria['start']
-            int length = paginationCriteria['length']
-            int facetCount = paginationCriteria['facetCount']
-            result = datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
-        } catch (HttpServerErrorException e) {
-            LOGGER.warn("EBI Search failed with status ${e.statusCode.value()}: ${e.message}")
-            throw new SearchUnavailableException("EBI Search failed with status ${e.statusCode.value()}", e)
-        } catch (HttpClientErrorException e) {
-            LOGGER.error("There was a problem searching models from BioModels ${e.toString()}")
-            if (e.statusCode.value() == 400) {
-                LOGGER.error("The querying string might be wrong syntax or contains restricted characters.")
-            }
-            result = null
-        } catch (ResourceAccessException e) {
-            // thrown for connect/read timeouts and refused connections
-            LOGGER.warn("EBI Search did not answer in time for query ${query}: ${e.message}")
-            throw new SearchUnavailableException("EBI Search did not answer in time", e)
-        } catch (UnknownHostException e) {
-            LOGGER.warn("Cannot find the EBI Search server: ${e.message}")
-            throw new SearchUnavailableException("Cannot find the EBI Search server", e)
+        int start = paginationCriteria['start']
+        int length = paginationCriteria['length']
+        int facetCount = paginationCriteria['facetCount']
+        QueryResult result = executeSearchRequest(query) {
+            datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
         }
         List<Facet> facets = []
         int totalCount
