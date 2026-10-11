@@ -348,23 +348,40 @@ under the format: ${response.format}"""
         }
     }
 
+    /**
+     * Number of models held by the cached *:* result, see SearchService.refreshSearchAllCache().
+     */
+    private static final int CACHED_ALL_RESULT_SIZE = 20
+
     private Map searchCore(String query, String domain, String sortBy,
                            String sortDirection, int offset = 0, int length = 20) {
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         Map<String, Object> results = initSearchResults(query)
-        if (query == "*:*") {
+        // The cached *:* result is the first page of the default ordering. Anything else has to be
+        // fetched from EBI Search.
+        boolean servableFromCache = query == "*:*" && offset == 0 && length <= CACHED_ALL_RESULT_SIZE &&
+                sortBy == "relevance" && sortDirection == "desc"
+        if (servableFromCache) {
             Map cached = searchService.retrieveCachedSearchAllResult(domain)
             if (cached["models"]) {
                 LOGGER.info("Load the search result from the cached: query ${query}, domain ${domain}, offset $offset, length $length")
                 results.putAll([query : query, offset: offset, length: length,
-                        sortBy: sortBy, sortDirection: sortDirection, models: cached["models"],
+                        sortBy: sortBy, sortDirection: sortDirection,
+                        models: (cached["models"] as List).take(length),
                         facets: cached["facets"], facetStats: cached["facetStats"], matches: cached["matches"]
                 ])
             } else {
                 LOGGER.info("Hit EBI search due to the empty cached: query ${query}, domain ${domain}, offset $offset, length  $length")
-                results.putAll(doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy,
-                        sortDirection))
+                // fetch the whole cacheable page, so that the next visitors get the cached result
+                Map<String, Integer> cachePage = ["start": 0, "length": CACHED_ALL_RESULT_SIZE,
+                        "facetCount": 1000]
+                Map fresh = doSearch(query, domain, cachePage, offset, length, sortOrder, sortBy,
+                        sortDirection)
+                searchService.cacheSearchAllResult([totalCount: fresh["matches"], models: fresh["models"],
+                        facets: fresh["facets"], facetStats: fresh["facetStats"]], domain)
+                fresh["models"] = (fresh["models"] as List).take(length)
+                results.putAll(fresh)
             }
         } else {
             LOGGER.info("Hit the EBI Search due to searching for query ${query}, offset $offset, length $length")

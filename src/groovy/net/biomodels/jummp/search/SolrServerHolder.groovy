@@ -129,6 +129,9 @@ URL of Solr server not found. Please check the setting jummp.search.url in the c
 
         SOLR_CORE_URL = getSolrCoreUrl(SOLR_URL)
         solrClient = new HttpSolrClient(SOLR_CORE_URL)
+        // without these a Solr instance that stops answering holds the request thread forever
+        ((HttpSolrClient) solrClient).setConnectionTimeout(5000)
+        ((HttpSolrClient) solrClient).setSoTimeout(30000)
         if (IS_INFO_ENABLED) {
             log.info "Connected to Solr instance $SOLR_CORE_URL."
         }
