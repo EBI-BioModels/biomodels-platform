@@ -51,8 +51,11 @@ import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
+import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
+import org.springframework.web.client.ResourceAccessException
+import org.springframework.web.client.RestTemplate
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
@@ -88,6 +91,9 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
      * Flag indicating the logger's verbosity threshold.
      */
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd")
+
+    static final int DEFAULT_CONNECT_TIMEOUT_MS = 5000
+    static final int DEFAULT_READ_TIMEOUT_MS = 45000
 
     private final Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
     private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
@@ -187,6 +193,54 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
         }
     }
 
+    /**
+     * Runs a request to EBI Search and decides what its failures mean for the caller.
+     *
+     * @param query the query being searched for, used in log messages
+     * @param request the call to EBI Search
+     * @return the result of the request, or null if EBI Search rejected the query (a 4xx answer)
+     * @throws SearchUnavailableException if EBI Search timed out, cannot be reached or answered with
+     *      a 5xx status. It is an exception, and not an empty result, so that the cache on
+     *      searchModels does not keep the failure.
+     */
+    static QueryResult executeSearchRequest(String query, Closure<QueryResult> request) {
+        try {
+            return request.call()
+        } catch (HttpServerErrorException e) {
+            LOGGER.warn("EBI Search failed with status ${e.statusCode.value()}: ${e.message}")
+            throw new SearchUnavailableException("EBI Search failed with status ${e.statusCode.value()}", e)
+        } catch (HttpClientErrorException e) {
+            LOGGER.error("There was a problem searching models from BioModels ${e.toString()}")
+            if (e.statusCode.value() == 400) {
+                LOGGER.error("The querying string might be wrong syntax or contains restricted characters.")
+            }
+            return null
+        } catch (ResourceAccessException e) {
+            // thrown for connect/read timeouts and refused connections
+            LOGGER.warn("EBI Search did not answer in time for query ${query}: ${e.message}")
+            throw new SearchUnavailableException("EBI Search did not answer in time", e)
+        } catch (UnknownHostException e) {
+            LOGGER.warn("Cannot find the EBI Search server: ${e.message}")
+            throw new SearchUnavailableException("Cannot find the EBI Search server", e)
+        }
+    }
+
+    /**
+     * Stops a slow EBI Search server from holding a request thread until the load balancer gives up.
+     *
+     * The ddi-ebe-ws-dao client has no timeouts of its own. Both values can be overridden with the
+     * settings jummp.search.omicsdi.connectTimeoutMs and jummp.search.omicsdi.readTimeoutMs.
+     */
+    static void applyTimeouts(RestTemplate restTemplate, def omicsdiConfig) {
+        def factory = restTemplate.requestFactory
+        if (factory instanceof SimpleClientHttpRequestFactory) {
+            factory.connectTimeout = (omicsdiConfig?.connectTimeoutMs ?: DEFAULT_CONNECT_TIMEOUT_MS) as int
+            factory.readTimeout = (omicsdiConfig?.readTimeoutMs ?: DEFAULT_READ_TIMEOUT_MS) as int
+        } else {
+            LOGGER.warn("Cannot set timeouts on the EBI Search client, its request factory is ${factory?.class}")
+        }
+    }
+
     @NotTransactional
     @Cacheable("searchResults")
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
@@ -210,6 +264,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
         ebeyeWsConfig.setHttpProxyHost(proxyHost)
         ebeyeWsConfig.setHttpProxyPort(proxyPort)
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
+        applyTimeouts(datasetWsClient.restTemplate, grailsApplication?.config?.jummp?.search?.omicsdi)
         // parse raw query to OmicsDI API to avoid double encoding issues.
         final String rawQuery = query.decodeHTML()
         // escape special Lucene field separators in query string
@@ -227,25 +282,11 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
         String sort = sortField ? String.format("%s:%s", sortField, sortDir) : ""
         /* By default, we put the private models at the last pages if they are available */
         sort = sort ? "isprivate:ascending,$sort" : "isprivate:ascending"
-        QueryResult result
-        try {
-            int start = paginationCriteria['start']
-            int length = paginationCriteria['length']
-            int facetCount = paginationCriteria['facetCount']
-            result = datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
-        } catch (HttpServerErrorException e) {
-            LOGGER.debug("""There was a problem obtaining search result from EBI search server. \
-The root cause is ${e.toString()}""")
-            LOGGER.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
-            result = null
-        } catch (HttpClientErrorException e) {
-            LOGGER.error("There was a problem searching models from BioModels ${e.toString()}")
-            if (e.statusCode.value() == 400) {
-                LOGGER.error("The querying string might be wrong syntax or contains restricted characters.")
-            }
-            result = null
-        } catch (UnknownHostException ignored ) {
-            result = null
+        int start = paginationCriteria['start']
+        int length = paginationCriteria['length']
+        int facetCount = paginationCriteria['facetCount']
+        QueryResult result = executeSearchRequest(query) {
+            datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
         }
         List<Facet> facets = []
         int totalCount

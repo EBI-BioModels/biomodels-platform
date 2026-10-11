@@ -40,6 +40,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.SearchResponse
+import net.biomodels.jummp.search.SearchUnavailableException
 import net.biomodels.jummp.search.SortOrder
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
@@ -229,7 +230,8 @@ under the format: ${response.format}"""
         if (response.format == "html") {
             return results
         }
-        respond new SearchResults(results)
+        // clients other than the browser cannot read the notice that the page shows
+        respond new SearchResults(results), params.searchUnavailable ? [status: 503] : [:]
     }
 
     @Secured(['ROLE_ADMIN'])
@@ -348,23 +350,42 @@ under the format: ${response.format}"""
         }
     }
 
+    /**
+     * Number of models held by the cached *:* result, see SearchService.refreshSearchAllCache().
+     */
+    private static final int CACHED_ALL_RESULT_SIZE = 20
+
     private Map searchCore(String query, String domain, String sortBy,
                            String sortDirection, int offset = 0, int length = 20) {
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         Map<String, Object> results = initSearchResults(query)
-        if (query == "*:*") {
+        // The cached *:* result is the first page of the default ordering. Anything else has to be
+        // fetched from EBI Search.
+        boolean servableFromCache = query == "*:*" && offset == 0 && length <= CACHED_ALL_RESULT_SIZE &&
+                sortBy == "relevance" && sortDirection == "desc"
+        if (servableFromCache) {
             Map cached = searchService.retrieveCachedSearchAllResult(domain)
             if (cached["models"]) {
                 LOGGER.info("Load the search result from the cached: query ${query}, domain ${domain}, offset $offset, length $length")
                 results.putAll([query : query, offset: offset, length: length,
-                        sortBy: sortBy, sortDirection: sortDirection, models: cached["models"],
+                        sortBy: sortBy, sortDirection: sortDirection,
+                        models: (cached["models"] as List).take(length),
                         facets: cached["facets"], facetStats: cached["facetStats"], matches: cached["matches"]
                 ])
             } else {
                 LOGGER.info("Hit EBI search due to the empty cached: query ${query}, domain ${domain}, offset $offset, length  $length")
-                results.putAll(doSearch(query, domain, paginationCriteria, offset, length, sortOrder, sortBy,
-                        sortDirection))
+                // fetch the whole cacheable page, so that the next visitors get the cached result
+                Map<String, Integer> cachePage = ["start": 0, "length": CACHED_ALL_RESULT_SIZE,
+                        "facetCount": 1000]
+                Map fresh = doSearch(query, domain, cachePage, offset, length, sortOrder, sortBy,
+                        sortDirection)
+                if (!params.searchUnavailable) {
+                    searchService.cacheSearchAllResult([totalCount: fresh["matches"], models: fresh["models"],
+                            facets: fresh["facets"], facetStats: fresh["facetStats"]], domain)
+                }
+                fresh["models"] = (fresh["models"] as List).take(length)
+                results.putAll(fresh)
             }
         } else {
             LOGGER.info("Hit the EBI Search due to searching for query ${query}, offset $offset, length $length")
@@ -382,12 +403,18 @@ under the format: ${response.format}"""
         List<Facet> facets = []
         String facetStats = ""
         if (query?.trim()) {
-            SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
-            Map extractedSearchModels = searchService.extractSearchModels(response, domain)
-            totalCount = extractedSearchModels["totalCount"] as Integer
-            models = extractedSearchModels["models"] as List<MTC>
-            facets = extractedSearchModels["facets"] as List<Facet>
-            facetStats = extractedSearchModels["facetStats"]
+            try {
+                SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
+                Map extractedSearchModels = searchService.extractSearchModels(response, domain)
+                totalCount = extractedSearchModels["totalCount"] as Integer
+                models = extractedSearchModels["models"] as List<MTC>
+                facets = extractedSearchModels["facets"] as List<Facet>
+                facetStats = extractedSearchModels["facetStats"]
+            } catch (SearchUnavailableException e) {
+                LOGGER.warn("The search for query ${query} failed: ${e.message}")
+                // read by the templates, see searchNotFound
+                params.searchUnavailable = true
+            }
             /**
              * By default, the query was encoded as HTML due to security vulnerability until here.
              * After using encoded query into search modules, we should decode it into the original

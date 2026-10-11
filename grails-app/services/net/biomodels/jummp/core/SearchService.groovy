@@ -204,7 +204,7 @@ class SearchService implements InitializingBean {
             LOGGER.info("Refreshing *:* search cache for domain: ${domain}")
             try {
                 SearchResponse response = strategy.searchModels("*:*", domain, sortOrder, paginationCriteria)
-                extractSearchModels(response, domain)
+                cacheSearchAllResult(extractSearchModels(response, domain), domain)
                 LOGGER.info("Refreshed *:* search cache for domain: ${domain}")
             } catch (Exception e) {
                 LOGGER.error("Failed to refresh search cache for domain ${domain}: ${e.message}", e)
@@ -231,8 +231,6 @@ class SearchService implements InitializingBean {
         LOGGER.info("Found: ${results?.size() ?: 0} records, ${respondedFacets?.size() ?: 0} facets.")
         JsonBuilder builder = new JsonBuilder(facets)
         String facetStats = builder.toString()
-
-        doUpdateCachedSearchAll(totalCount, models, facets, facetStats, domain)
 
         [totalCount: totalCount, models: models, facets: facets, facetStats: facetStats]
     }
@@ -263,72 +261,53 @@ class SearchService implements InitializingBean {
         strategy.getSortFields()
     }
 
+    /**
+     * Reads the cached result of the *:* query for a domain.
+     *
+     * @return the map [matches, models, facets, facetStats], or an empty map on a cache miss.
+     *      A cached entry that cannot be decoded (e.g. written by an older version of the
+     *      application) is also treated as a miss.
+     */
     Map retrieveCachedSearchAllResult(String domain = "biomodels") {
         String cacheKey = "search-result:all:${domain}"
         if (!redisService || !redisService.exists(cacheKey)) {
             return [:]
         }
-        Map result = redisService.doRedisHGetAll(cacheKey)
-        Integer matches = result.get("totalCount") as Integer
-        String facetStats = result.get("facetStats")
-        List<ModelTransportCommand> models = convert2MTC(result.get("models"))
-        List<Facet> facets = convert2Facet(result.get("facets"))
-
-        [matches: matches, models: models, facets: facets, facetStats: facetStats]
+        try {
+            Map result = redisService.doRedisHGetAll(cacheKey)
+            Integer matches = result.get("totalCount") as Integer
+            String facetStats = result.get("facetStats")
+            List<ModelTransportCommand> models = SearchResultCodec.decodeModels(result.get("models"))
+            List<Facet> facets = SearchResultCodec.decodeFacets(result.get("facets"))
+            return [matches: matches, models: models, facets: facets, facetStats: facetStats]
+        } catch (Exception e) {
+            LOGGER.warn("Ignoring the unreadable cached search result for domain ${domain}: ${e.message}")
+            return [:]
+        }
     }
 
-    private void doUpdateCachedSearchAll(Integer totalCount, List<ModelTransportCommand> models,
-                                         List<Facet> facets, String facetStats, String domain = "biomodels") {
+    /**
+     * Stores the result of the *:* query, as returned by extractSearchModels, for a domain.
+     */
+    void cacheSearchAllResult(Map extracted, String domain = "biomodels") {
         if (!redisService) {
             LOGGER.warn("redisService unavailable, skipping cache update for domain: ${domain}")
             return
         }
+        List<ModelTransportCommand> models = extracted["models"] as List<ModelTransportCommand>
+        if (!models) {
+            // never replace a good entry with the empty result of a failed search
+            LOGGER.warn("Not caching an empty *:* search result for domain: ${domain}")
+            return
+        }
         String cacheKey = "search-result:all:${domain}"
-        Map<String, String> data = ["totalCount": Integer.toString(totalCount), facetStats: facetStats]
-
-        StringBuilder str = new StringBuilder()
-        for (ModelTC model : models) {
-            str.append strMTC(model)
-        }
-        data.put("models", str.toString())
-
-        str = new StringBuilder()
-        for (Facet facet : facets) {
-            str.append(strFacet(facet))
-        }
-        data.put("facets", str.toString())
-
+        Map<String, String> data = [
+            totalCount: Integer.toString(extracted["totalCount"] as Integer),
+            facetStats: extracted["facetStats"] as String,
+            models    : SearchResultCodec.encodeModels(models),
+            facets    : SearchResultCodec.encodeFacets(extracted["facets"] as List<Facet>)
+        ]
         redisService.doRedisHSet(cacheKey, data)
-    }
-
-    private static String strFacet(Facet facet) {
-        // TODO: correct me
-        facet.id + "|" + facet.label
-    }
-
-    private static String strMTC(ModelTC model) {
-        // TODO: correct me
-        model.id + "|" + model.name
-    }
-
-    private static Facet toFacet(final String input) {
-        // TODO: implement me
-        null
-    }
-
-    private static ModelTC toMTC(final String input) {
-        // TODO: implement me
-        null
-    }
-
-
-    private static List<ModelTC> convert2MTC(Object o) {
-        // TODO: implement me
-        null
-    }
-
-    private static List<Facet> convert2Facet(Object o) {
-        null
     }
 
     List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {
