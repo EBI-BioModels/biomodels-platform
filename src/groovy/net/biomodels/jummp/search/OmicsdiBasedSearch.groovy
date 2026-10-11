@@ -93,7 +93,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd")
 
     static final int DEFAULT_CONNECT_TIMEOUT_MS = 5000
-    static final int DEFAULT_READ_TIMEOUT_MS = 30000
+    static final int DEFAULT_READ_TIMEOUT_MS = 45000
 
     private final Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
     private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
