@@ -22,6 +22,12 @@ export const test = base.extend({
 });
 export { expect };
 
+/** Skips the running test when this server has no model with MODEL_ID (set E2E_MODEL_ID to one that exists). */
+export async function skipUnlessModelExists(page: Page) {
+  const response = await page.request.get(`${MODEL_ID}`);
+  base.skip(response.status() === 404, `${MODEL_ID} does not exist on this server`);
+}
+
 export const isMobile = () => base.info().project.name === 'mobile';
 
 /**

@@ -1,5 +1,5 @@
 
-import { expect, test, MODEL_ID, waitForFoundation, watchProblems } from './support';
+import { expect, test, MODEL_ID, skipUnlessModelExists, waitForFoundation, watchProblems } from './support';
 
 const PAGES: Array<[string, string, RegExp]> = [
   ['home', '', /BioModels/],
@@ -12,6 +12,7 @@ const PAGES: Array<[string, string, RegExp]> = [
 
 for (const [name, path, title] of PAGES) {
   test(`${name} page loads with Foundation and without errors`, async ({ page }) => {
+    if (path === MODEL_ID) await skipUnlessModelExists(page);
     const problems = watchProblems(page);
     const response = await page.goto(path);
     expect(response?.status()).toBe(200);

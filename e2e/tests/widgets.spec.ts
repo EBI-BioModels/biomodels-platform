@@ -1,5 +1,5 @@
 
-import { expect, test, isMobile, MODEL_ID, waitForFoundation, watchProblems } from './support';
+import { expect, test, isMobile, MODEL_ID, skipUnlessModelExists, waitForFoundation, watchProblems } from './support';
 
 test.describe('modals (Foundation reveal)', () => {
   const MODALS = [
@@ -93,6 +93,7 @@ test('home carousel moves to the slide that is picked', async ({ page }) => {
 
 test('model page tabs and file preview modal work', async ({ page }) => {
   const problems = watchProblems(page);
+  await skipUnlessModelExists(page);
   await page.goto(MODEL_ID);
   await waitForFoundation(page);
   const overview = page.locator('#btn-Overview');
