@@ -988,9 +988,7 @@ select:focus {
 .pagination {
   text-align: center;
 }
-.pagination .current,
-input:checked ~ .switch-paddle,
-.tabs.primary {
+.pagination .current {
   background: #007c82;
 }
 .pagination .disabled {
@@ -1018,8 +1016,17 @@ input:checked ~ .switch-paddle,
 .reveal {
   border: 1px solid #777;
 }
+@media print, screen and (max-width: 39.99875em) {
+  .reveal {
+    border: 0;
+  }
+}
 .switch-paddle {
   background: #777;
+}
+input:checked ~ .switch-paddle,
+.tabs.primary {
+  background: #007c82;
 }
 table {
   font-family: Helvetica, Arial, FreeSans, "Liberation Sans", sans-serif;
