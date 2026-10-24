@@ -7,7 +7,7 @@
 <script src="<g:resource dir="js/foundation" file="foundation-6.6.3.min.js"/>"></script>
 <script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/foundationExtendEBI.js"></script>
 <script type="text/JavaScript">$(document).foundation();</script>
-<script type="text/JavaScript">$(document).foundationExtendEBI();</script>
+<script type="text/JavaScript">if ($.fn.foundationExtendEBI) $(document).foundationExtendEBI();</script>
 
 <!-- customised scripts -->
 <g:javascript src="common.js"/>
