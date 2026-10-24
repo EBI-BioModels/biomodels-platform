@@ -455,7 +455,8 @@ function validateInputLength(element, minLength, maxLength, messageHolder) {
 /**
  * Foundation 6.6.3 opens every accordion item that starts as is-active in a single call, and that call only
  * sets aria-expanded on the first of them. Bring the other titles in line so that assistive technology is
- * told which panels are open (the FAQ and the dashboards start with several items open).
+ * told which panels are open (the FAQ and the dashboards start with several items open). This runs once, so it
+ * only covers accordions that are in the page when it loads, not ones inserted later.
  */
 $('[data-accordion] > .accordion-item.is-active > .accordion-title').attr({
     'aria-expanded': 'true',
