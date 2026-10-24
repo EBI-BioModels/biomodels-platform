@@ -85,6 +85,16 @@ cd jummp-plugins/jummp-plugin-<name> && ./grailsw test-app <FullyQualifiedTestCl
 
 Test reports go to `target/test-reports/`. Coverage reports use Cobertura.
 
+End-to-end UI tests (Playwright, public pages only) live in `e2e/` and run against a server that is already up:
+
+```bash
+./grailsw run-app                       # in one terminal
+cd e2e && npm install && npx playwright install chromium   # first time
+npm test                                # desktop and mobile viewports
+```
+
+See `e2e/README.md` for the settings (`E2E_BASE_URL`, `E2E_MODEL_ID`, `E2E_BLOCK`) and the limits.
+
 Dependencies are resolved via Maven (configured in `grails-app/conf/BuildConfig.groovy`). If a private Artifactory instance is available, set `JUMMP_ARTIFACTORY_URL` in the environment.
 
 ## Architecture
