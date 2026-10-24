@@ -4,7 +4,7 @@
 <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
 
 <!-- The Foundation theme JavaScript -->
-<script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/libraries/foundation-6/js/foundation.js"></script>
+<script src="<g:resource dir="js/foundation" file="foundation-6.6.3.min.js"/>"></script>
 <script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/foundationExtendEBI.js"></script>
 <script type="text/JavaScript">$(document).foundation();</script>
 <script type="text/JavaScript">$(document).foundationExtendEBI();</script>
