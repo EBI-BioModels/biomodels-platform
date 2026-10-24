@@ -2,7 +2,10 @@ import { expect, Page, test as base } from '@playwright/test';
 
 export const MODEL_ID = process.env.E2E_MODEL_ID || 'MODEL1801250002';
 
-/** Third-party hosts whose failures are not ours (embedded timelines, CDNs, analytics). */
+/**
+ * Third-party hosts whose failed requests are not ours (embedded timelines, CDNs, analytics). Script errors are not
+ * filtered by it: the EBI scripts are still ours to remove, so an error inside one of them must show up.
+ */
 const THIRD_PARTY = /twitter\.com|twimg\.com|d3js\.org|googletagmanager|google-analytics|jsdelivr|code\.jquery\.com|ebi\.emblstatic\.net/;
 
 /**
@@ -27,19 +30,14 @@ export const isMobile = () => base.info().project.name === 'mobile';
  */
 export function watchProblems(page: Page) {
   const problems: string[] = [];
-  let origin = '';
-  page.on('pageerror', (error) => {
-    const where = `${error.stack || ''} ${error.message}`;
-    if (!THIRD_PARTY.test(where)) problems.push(`script error: ${error.message}`);
-  });
+  const origin = new URL(base.info().project.use.baseURL!).origin;
+  page.on('pageerror', (error) => problems.push(`script error: ${error.message}`));
   page.on('requestfailed', (request) => {
-    if (!origin) origin = new URL(page.url() === 'about:blank' ? request.url() : page.url()).origin;
     if (request.url().startsWith(origin) && !THIRD_PARTY.test(request.url())) {
       problems.push(`request failed: ${request.url()} (${request.failure()?.errorText})`);
     }
   });
   page.on('response', (response) => {
-    if (!origin) origin = new URL(response.url()).origin;
     if (response.url().startsWith(origin) && response.status() >= 400 && !/favicon/.test(response.url())) {
       problems.push(`HTTP ${response.status()}: ${response.url()}`);
     }
