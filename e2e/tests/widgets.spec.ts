@@ -41,14 +41,23 @@ test.describe('modals (Foundation reveal)', () => {
   });
 });
 
-test('FAQ accordion items expand and collapse', async ({ page }) => {
+test('FAQ accordion items expand and collapse and report their state', async ({ page }) => {
   const problems = watchProblems(page);
   await page.goto('faq');
   await waitForFoundation(page);
-  // Not asserting aria-expanded: faq.gsp renders it as "false" for items that are open.
-  const item = page.locator('#faq-accordion > .accordion-item').nth(1);
+  const items = page.locator('#faq-accordion > .accordion-item');
+  const item = items.nth(1);
+  const title = item.locator('.accordion-title');
   const content = item.locator('.accordion-content');
-  const opening = (await item.getAttribute('class'))!.includes('is-active');
+
+  // Every title says what its panel is doing, including the items that start open.
+  const count = await items.count();
+  for (let i = 0; i < count; i++) {
+    const open = ((await items.nth(i).getAttribute('class')) || '').includes('is-active');
+    await expect(items.nth(i).locator('.accordion-title'), `item ${i}`).toHaveAttribute('aria-expanded', String(open));
+  }
+
+  const opening = ((await item.getAttribute('class')) || '').includes('is-active');
   const settle = async (open: boolean) => {
     if (open) {
       await expect(item).toHaveClass(/is-active/);
@@ -57,11 +66,12 @@ test('FAQ accordion items expand and collapse', async ({ page }) => {
       await expect(item).not.toHaveClass(/is-active/);
       await expect(content).toBeHidden();
     }
+    await expect(title).toHaveAttribute('aria-expanded', String(open));
   };
   await settle(opening);
-  await item.locator('.accordion-title').click();
+  await title.click();
   await settle(!opening);
-  await item.locator('.accordion-title').click();
+  await title.click();
   await settle(opening);
   problems.assertClean();
 });
