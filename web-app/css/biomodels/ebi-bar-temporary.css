@@ -1,0 +1,403 @@
+/* TEMPORARY: styles for the EBI black bar, global nav, global footer and ELIXIR/cookie banners injected by script.js. Delete together with script.js. */
+.cookie-banner {
+  position: fixed;
+  background-color: #222;
+  width: 100%;
+  padding: 1rem;
+  left: 0;
+  bottom: 0;
+  color: #eee;
+}
+.cookie-banner a,
+.cookie-banner a:hover {
+  color: #f8f8f8;
+}
+.cookie-banner .text {
+  margin-right: 2em;
+}
+nav ul#global-nav.menu li {
+  border-right: none;
+  display: inline-block;
+}
+body.no-global-search .masthead-black-bar ul#global-nav.menu li.search {
+  display: none;
+}
+.masthead-black-bar {
+  background-color: #222;
+  color: white;
+  transition: border-width 0.25s ease-in-out;
+  border-top: 0 solid #EEE;
+}
+.masthead-black-bar > .row {
+  opacity: 0;
+}
+body.ebi-black-bar-loaded .masthead-black-bar > .row {
+  opacity: unset;
+}
+.masthead-black-bar a,
+.masthead-black-bar a:hover {
+  color: white;
+}
+.masthead-black-bar a:focus {
+  box-shadow: 0 0 2px #f8f8f8;
+}
+.masthead-black-bar .global-masthead-interactive-banner {
+  height: 0;
+  overflow: hidden;
+  display: none;
+  background-color: #000;
+}
+.masthead-black-bar .global-masthead-interactive-banner.active {
+  display: block;
+  height: auto;
+  overflow: visible;
+}
+.masthead-black-bar .search-bar .close-button:hover,
+.masthead-black-bar .search-bar .close-button:focus {
+  color: #fff;
+}
+.masthead-black-bar .global-nav {
+  font-size: .9rem;
+}
+.masthead-black-bar .global-nav a,
+.masthead-black-bar .global-nav a:hover {
+  color: white;
+  border-bottom: none;
+}
+.masthead-black-bar .global-nav li a:hover,
+.masthead-black-bar .global-nav li a:active,
+.masthead-black-bar .global-nav li a:focus,
+.masthead-black-bar .global-nav li.active-trail a {
+  color: white;
+  border-bottom: none;
+  background-color: #000;
+}
+.masthead-black-bar .global-nav li.active a {
+  color: white;
+  border-bottom: none;
+  background-color: #000;
+  font-weight: 700;
+}
+.masthead-black-bar .global-nav li a:before {
+  font-family: 'EBI-Generic';
+  display: inline-block;
+  padding-right: .4rem;
+}
+.masthead-black-bar .global-nav li.home,
+.masthead-black-bar .global-nav li.services,
+.masthead-black-bar .global-nav li.research,
+.masthead-black-bar .global-nav li.training,
+.masthead-black-bar .global-nav li.about,
+.masthead-black-bar .global-nav li.embl,
+.masthead-black-bar .global-nav li.ebi,
+.masthead-black-bar .global-nav li.grenoble,
+.masthead-black-bar .global-nav li.hamburg,
+.masthead-black-bar .global-nav li.heidelberg,
+.masthead-black-bar .global-nav li.hinxton,
+.masthead-black-bar .global-nav li.rome,
+.masthead-black-bar .global-nav li.barcelona {
+  float: right;
+}
+.masthead-black-bar .global-nav li.home.hover,
+.masthead-black-bar .global-nav li.services.hover,
+.masthead-black-bar .global-nav li.research.hover,
+.masthead-black-bar .global-nav li.training.hover,
+.masthead-black-bar .global-nav li.about.hover,
+.masthead-black-bar .global-nav li.embl.hover,
+.masthead-black-bar .global-nav li.ebi.hover,
+.masthead-black-bar .global-nav li.grenoble.hover,
+.masthead-black-bar .global-nav li.hamburg.hover,
+.masthead-black-bar .global-nav li.heidelberg.hover,
+.masthead-black-bar .global-nav li.hinxton.hover,
+.masthead-black-bar .global-nav li.rome.hover,
+.masthead-black-bar .global-nav li.barcelona.hover {
+  float: none;
+}
+.masthead-black-bar .global-nav li.home.active,
+.masthead-black-bar .global-nav li.services.active,
+.masthead-black-bar .global-nav li.research.active,
+.masthead-black-bar .global-nav li.training.active,
+.masthead-black-bar .global-nav li.about.active,
+.masthead-black-bar .global-nav li.embl.active,
+.masthead-black-bar .global-nav li.ebi.active,
+.masthead-black-bar .global-nav li.grenoble.active,
+.masthead-black-bar .global-nav li.hamburg.active,
+.masthead-black-bar .global-nav li.heidelberg.active,
+.masthead-black-bar .global-nav li.hinxton.active,
+.masthead-black-bar .global-nav li.rome.active,
+.masthead-black-bar .global-nav li.barcelona.active {
+  float: left;
+}
+.masthead-black-bar .global-nav li.embl.hover a:before,
+.masthead-black-bar .global-nav li.grenoble.hover a:before,
+.masthead-black-bar .global-nav li.hamburg.hover a:before,
+.masthead-black-bar .global-nav li.heidelberg.hover a:before,
+.masthead-black-bar .global-nav li.hinxton.hover a:before,
+.masthead-black-bar .global-nav li.rome.hover a:before,
+.masthead-black-bar .global-nav li.barcelona.hover a:before {
+  content: "" !important;
+}
+.masthead-black-bar .global-nav li.where a:before {
+  content: '[';
+}
+.masthead-black-bar .global-nav li.home a:before,
+.masthead-black-bar .global-nav li.ebi a:before {
+  content: 'H';
+}
+.masthead-black-bar .global-nav li.services a:before {
+  content: '(';
+}
+.masthead-black-bar .global-nav li.research a:before {
+  content: ')';
+}
+.masthead-black-bar .global-nav li.training a:before {
+  content: 't';
+}
+.masthead-black-bar .global-nav li.about a:before {
+  content: 'i';
+}
+.masthead-black-bar .global-nav li.search a:before {
+  font-family: 'EBI-Functional';
+  content: '1';
+  padding-right: 0;
+}
+.masthead-black-bar .global-nav li.search .dropdown-pane {
+  width: 100%;
+  left: 0;
+  background: #222;
+  border: none;
+  margin-top: -2px;
+  color: #fff;
+}
+@media screen and (max-width: 39.9375em) {
+  .masthead-black-bar nav ul.menu {
+    text-align: right;
+  }
+  .masthead-black-bar nav ul.menu li {
+    float: none;
+    display: inline-block;
+  }
+  .masthead-black-bar nav ul.menu > li > a > img,
+  .masthead-black-bar nav ul.menu > li > a:before {
+    display: block;
+    margin: 0 auto 0.25rem;
+    font-size: 16px;
+  }
+  .masthead-black-bar nav ul.menu > li > a {
+    text-align: center;
+    font-size: 10px;
+    padding: .6rem .35rem;
+  }
+}
+.global-footer {
+  border-top: 5px solid #eee;
+  padding-top: 1.5rem;
+}
+.global-footer h5 {
+  margin-top: 1.25rem;
+  margin-bottom: 5px;
+}
+.global-footer .ebi-logo {
+  display: block;
+  height: 53px;
+  width: 89%;
+  background-image: url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/images/logos/EMBL-EBI/EMBL_EBI_Logo_black.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-left: -.25rem;
+  position: relative;
+  top: 8px;
+}
+.global-footer p {
+  margin: 0 0 5px 0;
+}
+.global-footer ul {
+  margin-left: 0;
+  font-size: 85%;
+  list-style: none;
+}
+.global-footer a {
+  color: #555;
+}
+.global-footer a:hover,
+.global-footer a:focus,
+.global-footer a:active {
+  color: #555;
+  border-bottom: 1px dashed #e4e4e4;
+}
+.ebi-footer-meta {
+  font-size: 85%;
+  margin-bottom: 9px;
+}
+a.ebi-background,
+.ebi-background,
+.ebi-background.button,
+.ebi-background.button:hover,
+.ebi-background.tag {
+  background: #007c82;
+}
+a.elixir-background,
+.elixir-background,
+.elixir-background.button,
+.elixir-background.button:hover,
+.elixir-background.tag {
+  background: #fb6a2a;
+}
+.label.ebi-color,
+.button.ebi-color,
+a.ebi-color,
+a:hover.ebi-color,
+.ebi-color,
+.ebi-color cite,
+.ebi-color a,
+.ebi-color a:hover,
+.ebi-color a:visited,
+.ebi-color h3,
+.ebi-color h4 {
+  color: #007c82;
+}
+.label.elixir-color,
+.button.elixir-color,
+a.elixir-color,
+a:hover.elixir-color,
+.elixir-color,
+.elixir-color cite,
+.elixir-color a,
+.elixir-color a:hover,
+.elixir-color a:visited,
+.elixir-color h3,
+.elixir-color h4 {
+  color: #fb6a2a;
+}
+.masthead-black-bar.peek {
+  border-top: 4px solid #EEE;
+}
+.masthead-black-bar li.embl-selector {
+  margin-left: 0.5rem;
+  border-left: 0.5px solid rgba(255, 255, 255, 0.5);
+  padding-left: 1.5rem;
+}
+.masthead-black-bar .embl-bar {
+  background-color: #eee;
+  color: #222;
+}
+.masthead-black-bar .embl-bar a {
+  color: #222;
+}
+.masthead-black-bar .embl-bar a:hover {
+  border-bottom: 1px solid #fff;
+}
+.masthead-black-bar .embl-bar .youarehere {
+  margin-left: -1.5rem;
+}
+.masthead-black-bar .dropdown-pane.embl-dropdown {
+  left: 0;
+  background-color: #222;
+  background-position: 100% 100%;
+  background-repeat: no-repeat;
+  color: #fff;
+  min-width: 30em;
+}
+.masthead-black-bar .dropdown-pane.embl-dropdown h6 {
+  color: white;
+  font-weight: 700;
+}
+.masthead-black-bar .dropdown-pane.embl-dropdown .button {
+  color: #007c82;
+  background: #fff;
+}
+.masthead-black-bar .dropdown-pane.embl-dropdown a {
+  border-bottom: 1px dashed #555;
+}
+.masthead-black-bar .dropdown-pane.embl-dropdown a:hover {
+  border-bottom: 1px solid #555;
+}
+@media screen and (max-width: 39.9375em) {
+  .masthead-black-bar .dropdown-pane.embl-dropdown {
+    display: none;
+    width: 0 !important;
+    overflow: hidden;
+  }
+}
+.masthead-black-bar .embl-selector .button,
+.masthead-black-bar .embl-selector .button:focus {
+  background: no-repeat 100% 50% url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/images/logos/EMBL/EMBL-white.svg");
+  padding-left: 2px;
+  background-size: 62px;
+  width: 63px;
+  padding-right: 17px;
+  line-height: 12px;
+}
+.masthead-black-bar .embl-selector .button.hover,
+.masthead-black-bar .embl-selector .button:hover {
+  background: no-repeat 100% 50% url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/images/logos/EMBL/EMBL-white.svg");
+  padding-left: 2px;
+  background-size: 62px;
+  width: 63px;
+  padding-right: 17px;
+  line-height: 12px;
+  cursor: s-resize;
+  background-color: transparent;
+}
+.masthead-black-bar .embl-selector .button[aria-expanded="false"]::after {
+  content: '';
+  display: block;
+  width: 0;
+  height: 0;
+  border: inset 4px;
+  border-color: #fff transparent transparent;
+  border-top-style: solid;
+  position: absolute;
+  top: 18px;
+  margin-left: 55px;
+}
+.masthead-black-bar .embl-selector.embl-ebi .button,
+.masthead-black-bar .embl-selector.embl-ebi .button.hover,
+.masthead-black-bar .embl-selector.embl-ebi .button:focus,
+.masthead-black-bar .embl-selector.embl-ebi .button:hover {
+  background: no-repeat 4px 50% url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/images/logos/EMBL-EBI/EMBL_EBI_Logo_white.svg");
+  padding-left: 95px;
+  background-size: 100px;
+}
+.masthead-black-bar .embl-selector.active {
+  background-color: #ddd;
+  padding-right: 1rem;
+}
+.masthead-black-bar .embl-selector.active .button,
+.masthead-black-bar .embl-selector.active .button.hover,
+.masthead-black-bar .embl-selector.active .button:focus,
+.masthead-black-bar .embl-selector.active .button:hover {
+  cursor: n-resize;
+  background-image: url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/images/logos/EMBL/EMBL-black.svg");
+}
+.masthead-black-bar .embl-selector.active.embl-ebi .button,
+.masthead-black-bar .embl-selector.active.embl-ebi .button.hover,
+.masthead-black-bar .embl-selector.active.embl-ebi .button:focus,
+.masthead-black-bar .embl-selector.active.embl-ebi .button:hover {
+  background-image: url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/images/logos/EMBL-EBI/EMBL_EBI_Logo_black.svg");
+}
+@media screen and (max-width: 53em) {
+  .masthead-black-bar li.embl-selector {
+    padding-left: .5rem;
+  }
+  .masthead-black-bar .embl-selector .button {
+    width: 0px;
+    padding-right: 1rem;
+    overflow: hidden;
+  }
+  .masthead-black-bar .embl-selector .button:after {
+    display: none;
+  }
+  .masthead-black-bar nav ul.menu li a {
+    padding-right: .35rem;
+    padding-left: .35rem;
+  }
+}
+@media print {
+  .global-footer {
+    display: none;
+  }
+  .masthead-black-bar nav a[href]:after {
+    content: " ";
+  }
+}
