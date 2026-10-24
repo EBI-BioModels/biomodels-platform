@@ -2199,3 +2199,16 @@ a.tag {
 .input-group-button {
   width: 1%;
 }
+
+/* ebi-global.css never styled Foundation's card classes, but stock Foundation 6.6.3 does. The submission
+   wizard (_uploadingFiles.gsp) uses card, card-header and card-section and was designed without those
+   styles, so keep them neutral. Delete this block to adopt Foundation's card look there. */
+.card {
+  margin-bottom: 0;
+  color: inherit;
+  background: transparent;
+  overflow: visible;
+}
+.card-section {
+  padding: 0;
+}
