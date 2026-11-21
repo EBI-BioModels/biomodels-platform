@@ -45,11 +45,12 @@ test('the acknowledgements card and page name Earlham and the Laboratory for Sys
   }
 });
 
-test('the acknowledgements page says the BioModels teams develop it and no longer credits the EBI-era teams', async ({ page }) => {
+test('the acknowledgements page says the BioModels teams develop it and credits the EBI-era teams as previous developers', async ({ page }) => {
   await page.goto('acknowledgements');
   await waitForFoundation(page);
   const body = page.locator('body');
   await expect(body).toContainText('BioModels is now developed and maintained by the BioModels developers and curators teams.');
-  await expect(body).not.toContainText('Molecular Networks team');
-  await expect(page.locator('img[alt="EMBL-EBI logo"], img[alt="SBML logo"]')).toHaveCount(0);
+  // The EBI-era teams stay, but as the previous developers.
+  await expect(body).toContainText(/Previously, BioModels was developed by the\s+Molecular Networks team.*SBML Team/s);
+  await expect(page.locator('img[alt="EMBL-EBI logo"], img[alt="SBML logo"]')).toHaveCount(2);
 });
