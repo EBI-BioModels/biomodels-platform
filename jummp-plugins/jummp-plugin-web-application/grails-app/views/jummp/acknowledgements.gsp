@@ -45,9 +45,8 @@
 
 <h2>Acknowledgements</h2>
 
-<p>BioModels is now developed and maintained by the BioModels developers and curators teams.</p>
-
-<p>Previously, BioModels was developed by the <a href="https://www.ebi.ac.uk/about/people/henning-hermjakob" title="Molecular Networks team">Molecular Networks team</a> (<a href="//www.ebi.ac.uk/" title="European Bioinformatics Institute">EMBL-EBI</a>, UK) and the <a href="http://www.sbml.org/" title="Systems Biology Markup Language (SBML)" class="external">SBML Team</a> (<a href="//www.caltech.edu/" title="California Institute of Technology">Caltech</a>, USA).</p>
+<p>BioModels is now developed and maintained by the BioModels developers and curators teams.
+Previously, BioModels was developed by the <a href="https://www.ebi.ac.uk/about/people/henning-hermjakob" title="Molecular Networks team">Molecular Networks team</a> (<a href="//www.ebi.ac.uk/" title="European Bioinformatics Institute">EMBL-EBI</a>, UK) and the <a href="http://www.sbml.org/" title="Systems Biology Markup Language (SBML)" class="external">SBML Team</a> (<a href="//www.caltech.edu/" title="California Institute of Technology">Caltech</a>, USA).</p>
 
 <div class="sponsors-logo">
   <a href="//www.ebi.ac.uk/" title="EMBL - European Bioinformatics Institute (EBI)"><img border="0" title="EMBL-EBI" alt="EMBL-EBI logo" src="${bmStaticAssetsURL}/images/EMBL_EBI_logo-small.png" style="vertical-align:middle;" /></a>
