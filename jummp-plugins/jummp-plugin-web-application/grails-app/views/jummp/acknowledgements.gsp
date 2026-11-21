@@ -45,18 +45,13 @@
 
 <h2>Acknowledgements</h2>
 
-BioModels is developed by the <a href="https://www.ebi.ac.uk/about/people/henning-hermjakob" title="Molecular Networks team">Molecular Networks team</a> (<a href="//www.ebi.ac.uk/" title="European Bioinformatics Institute">EMBL-EBI</a>, UK) and the <a href="http://www.sbml.org/" title="Systems Biology Markup Language (SBML)" class="external">SBML Team</a> (<a href="//www.caltech.edu/" title="California Institute of Technology">Caltech</a>, USA).
-
-<div class="sponsors-logo">
-  <a href="//www.ebi.ac.uk/" title="EMBL - European Bioinformatics Institute (EBI)"><img border="0" title="EMBL-EBI" alt="EMBL-EBI logo" src="${bmStaticAssetsURL}/images/EMBL_EBI_logo-small.png" style="vertical-align:middle;" /></a>
-  <a href="http://sbml.org/" title="SBML" style="padding-left:60px;"><img border="0" title="SBML" alt="SBML logo" src="${bmStaticAssetsURL}/icons/SBML.png" style="vertical-align:middle;" /></a>
-</div>
+BioModels is now developed and maintained by the BioModels developers and curators teams.
 
 
 <h3 class="underline">BioModels funders</h3>
 
 <p>
-  BioModels is funded and hosted by the <a href="https://www.earlham.ac.uk/" class="external">Earlham Institute</a>, Norwich, UK,
+  BioModels is now funded and hosted by the <a href="https://www.earlham.ac.uk/" class="external">Earlham Institute</a>, Norwich, UK,
 and the <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" class="external">Laboratory for Systems Medicine</a>,
 Department of Medicine, University of Florida, Gainesville, USA.
 </p>
@@ -69,7 +64,7 @@ Department of Medicine, University of Florida, Gainesville, USA.
 </div>
 
 <p>
-  Earlier support came from the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
+  Previously, BioModels was hosted by EMBL-EBI and supported by the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
 the <a href="http://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a> (Multimod, BB/N019482/1) and
 the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a>
     (<a href="http://transqst.org/" title="This project has received funding from the Innovative Medicines Initiative 2 Joint Undertaking under grant agreement No 116030. This Joint Undertaking receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.">TransQST, 116030</a>).
