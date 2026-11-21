@@ -33,6 +33,7 @@ test('the acknowledgements card and page name Earlham and the Laboratory for Sys
     await waitForFoundation(page);
     const scope = page.locator(area).first();
     await expect(scope).toContainText(wording);
+    await expect(scope).toContainText(/Previously, BioModels was hosted by EMBL-EBI/);
     const logo = scope.locator('img[alt="Earlham Institute logo"]');
     await expect(logo).toBeVisible();
     // The Earlham logo comes before the earlier funders' logos and links to Earlham.
@@ -42,4 +43,13 @@ test('the acknowledgements card and page name Earlham and the Laboratory for Sys
     await expect(logo.locator('xpath=ancestor::a[1]')).toHaveAttribute('href', 'https://www.earlham.ac.uk/');
     expect(await logo.evaluate((e: HTMLImageElement) => e.naturalWidth)).toBeGreaterThan(0);
   }
+});
+
+test('the acknowledgements page says the BioModels teams develop it and no longer credits the EBI-era teams', async ({ page }) => {
+  await page.goto('acknowledgements');
+  await waitForFoundation(page);
+  const body = page.locator('body');
+  await expect(body).toContainText('BioModels is now developed and maintained by the BioModels developers and curators teams.');
+  await expect(body).not.toContainText('Molecular Networks team');
+  await expect(page.locator('img[alt="EMBL-EBI logo"], img[alt="SBML logo"]')).toHaveCount(0);
 });
