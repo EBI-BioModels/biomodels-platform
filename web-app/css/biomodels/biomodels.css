@@ -551,3 +551,11 @@ a.external:hover, a.external:active {
     display: none;
   }
 }
+
+/* Logos in the Acknowledgements card on the home page. */
+#acknowledgements .acknowledgements-logo {
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  margin-bottom: 0.75rem;
+}

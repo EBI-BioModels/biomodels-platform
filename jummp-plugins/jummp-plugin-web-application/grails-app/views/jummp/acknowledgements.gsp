@@ -56,7 +56,20 @@ BioModels is developed by the <a href="https://www.ebi.ac.uk/about/people/hennin
 <h3 class="underline">BioModels funders</h3>
 
 <p>
-  BioModels is supported by the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
+  BioModels is funded and hosted by the <a href="https://www.earlham.ac.uk/" class="external">Earlham Institute</a>, Norwich, UK,
+and the <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" class="external">Laboratory for Systems Medicine</a>,
+Department of Medicine, University of Florida, Gainesville, USA.
+</p>
+
+<div class="sponsors-logo">
+  <a href="https://www.earlham.ac.uk/" title="Earlham Institute">
+      <img src="${request.contextPath}/images/biomodels/earlham_logo.png"
+           title="Earlham Institute"
+           alt="Earlham Institute logo" style="vertical-align: middle; width: 240px; max-width: 100%;" /></a>
+</div>
+
+<p>
+  Earlier support came from the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
 the <a href="http://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a> (Multimod, BB/N019482/1) and
 the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a>
     (<a href="http://transqst.org/" title="This project has received funding from the Innovative Medicines Initiative 2 Joint Undertaking under grant agreement No 116030. This Joint Undertaking receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.">TransQST, 116030</a>).
