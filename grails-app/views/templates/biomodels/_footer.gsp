@@ -35,57 +35,69 @@
         </div>
         <div class="clear"></div>
     </div>
-     <div id="elixir-banner" data-color="grey" data-name="This service"
-          data-description="BioModels is an ELIXIR Deposition Database"
-          data-more-information-link="//www.elixir-europe.org/platforms/data/elixir-deposition-databases"
-          data-use-basic-styles="true"></div>
-     <script defer="defer"
-             src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/elixirBanner.js"></script>
-%{--    <g:javascript src="hamburger-debug-script.js" async="async"/>--}%
-     <style>
-         .elixir-ribbon {
-             padding: 1rem 0;
-             /*background-color: rgb(79,138,156);*/
-             background-color: rgb(0, 124, 130);
-             /*background-color:#008080;*/
-             vertical-align: middle;
-         }
-
-         .elixir-ribbon,
-         .elixir-ribbon h5,
-         .elixir-ribbon a,
-         .elixir-ribbon a:active,
-         .elixir-ribbon a:visited,
-         .elixir-ribbon a:hover {
-             color: #fff;
-             text-decoration: none;
-         }
-         .elixir-ribbon a:hover {
-             opacity: .8;
-         }
-         .elixir-ribbon .readmore {
-             border-bottom: 1px dotted #fff;
-         }
-         .elixir-ribbon h5 {
-             margin: 0;
-         }
-         .elixir-ribbon .elixir-logo-kite {
-             background: 80% 58% url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.2/images/logos/assorted/elixir_kitemark-60px.png") no-repeat;
-             position: relative;
-             /*top: -5px;*/
-             /*margin: 0 1rem -.5rem 0;*/
-             margin-left: 1.25rem;
-             height: 60px;
-             width: 60px;
-             display: inline-block;
-             float: left;
-             background-size: 60px;
-             vertical-align: middle;
-         }
-         .elixir-ribbon .row {
-             margin: 0 !important;
-         }
-     </style>
+    %{-- ELIXIR Deposition Database banner (JBM-811: kept, but rendered here instead of by EBI's elixirBanner.js).
+         _embl-ebi-data-preservation-statement.gsp relies on the div.elixir-ribbon > div.row > div.column structure. --}%
+    <div id="elixir-banner">
+        <div id="elixir-ribbon" class="elixir-ribbon">
+            <div class="row">
+                <div class="column">
+                    <a href="//www.elixir-europe.org/platforms/data/elixir-deposition-databases">
+                        <div class="elixir-logo-kite"></div>
+                        <h5><span class="elixir-banner-name">This service</span> is part of the ELIXIR infrastructure</h5>
+                        <div id="elixir-banner-info">
+                            <small>
+                                <span class="elixir-banner-description">BioModels is an ELIXIR Deposition Database</span>
+                                <span class="readmore">Learn more &#8250;</span>
+                            </small>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+        .elixir-ribbon {
+            padding: 1rem 0;
+            background-color: rgb(0, 124, 130);
+            font-family: Helvetica, Arial, FreeSans, 'Liberation Sans', sans-serif;
+            clear: both;
+        }
+        .elixir-ribbon,
+        .elixir-ribbon h5,
+        .elixir-ribbon a,
+        .elixir-ribbon a:active,
+        .elixir-ribbon a:visited,
+        .elixir-ribbon a:hover {
+            color: #fff;
+            text-decoration: none;
+            border-bottom: none;
+        }
+        .elixir-ribbon a:hover {
+            opacity: .8;
+        }
+        .elixir-ribbon .readmore {
+            border-bottom: 1px dotted #fff;
+        }
+        .elixir-ribbon h5 {
+            margin: 0;
+            font-size: 1.3rem;
+            padding: 0;
+            display: inline-block;
+        }
+        .elixir-ribbon .elixir-logo-kite {
+            background: 80% 58% url("<g:resource dir="images/biomodels" file="elixir_kitemark-60px.png"/>") no-repeat;
+            position: relative;
+            margin-left: 1.25rem;
+            height: 60px;
+            width: 60px;
+            display: inline-block;
+            float: left;
+            background-size: 60px;
+        }
+        .elixir-ribbon .row {
+            margin: 0 !important;
+        }
+    </style>
     <!-- End optional local footer -->
 
     <div id="global-footer" class="global-footer">

@@ -25,7 +25,7 @@ Keep **Foundation 6** as the CSS framework and remove only the EMBL-EBI addition
 | EBI icon fonts (`icon icon-common icon-*`, `icon-functional`, `icon-fileformats`, `icon-socialmedia`) | Many views; CSS loaded in `_head.gsp:76` | About 25 distinct icon classes |
 | `script.js` injects the EBI black bar, global nav and global footer (`#masthead-black-bar`, `#global-nav-expanded`, `#ebi-footer-meta`) | `_loadjs.gsp:3`, `_header.gsp`, `_footer.gsp` | Layout skeleton |
 | `foundation.js` + `foundationExtendEBI.js`, started by `$(document).foundation()` | `_loadjs.gsp:7-10` | Powers reveal, accordion, orbit, dropdown-menu, sticky, toggler |
-| `elixirBanner.js` + ELIXIR kitemark image | `_footer.gsp:43,73` | Footer ribbon |
+| `elixirBanner.js` + ELIXIR kitemark image | `_footer.gsp` | Footer ribbon (kept, now rendered locally with a vendored kitemark, JBM-811) |
 | Masthead meta tags and background image | `_head.gsp:40-41` | Cosmetic |
 
 ## Usage counts (files)
@@ -110,8 +110,8 @@ EBI-only classes actually used in BioModels views (about 40): the structural one
 3. **Global EBI navigation and footer vanish (medium).** `#masthead-black-bar` and `#global-footer` are empty shells filled in by `script.js`. Removing it leaves empty containers and drops the EMBL-EBI links and footer legal text.
 
 4. **Compliance and branding content disappears (medium).**
-   - The ELIXIR Deposition Database banner goes with `elixirBanner.js`; decide whether to keep it.
-   - `_embl-ebi-data-preservation-statement.gsp` edits the `.elixir-ribbon` DOM that `elixirBanner.js` creates, so it silently does nothing without it.
+   - The ELIXIR Deposition Database banner is kept (JBM-811): `_footer.gsp` now renders it as static markup with a vendored kitemark, so `elixirBanner.js` is no longer loaded.
+   - `_embl-ebi-data-preservation-statement.gsp` edits the `.elixir-ribbon` DOM, which `_footer.gsp` now renders itself.
    - Footer and statement text will need rewriting for the University of Florida / LSM move.
 
 5. **Existing CSS overrides are tied to the framework (medium).**

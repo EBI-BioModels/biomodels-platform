@@ -59,3 +59,19 @@ test('Foundation grid and responsive utilities apply', async ({ page }) => {
   });
   expect(hidden).toBe(isMobile());
 });
+
+test('the ELIXIR banner is rendered locally, with its kitemark and the licensing links', async ({ page }) => {
+  const ebiRequests: string[] = [];
+  page.on('request', (r) => { if (/elixirBanner\.js/.test(r.url())) ebiRequests.push(r.url()); });
+  await page.goto('');
+  await waitForFoundation(page);
+  const ribbon = page.locator('#elixir-banner .elixir-ribbon');
+  await expect(ribbon).toBeVisible();
+  await expect(ribbon).toContainText('BioModels is an ELIXIR Deposition Database');
+  await expect(ribbon.locator('a[href*="elixir-deposition-databases"]')).toHaveCount(1);
+  // _embl-ebi-data-preservation-statement.gsp adds the licensing links to the ribbon.
+  await expect(ribbon.getByRole('link', { name: 'EMBL-EBI Data Preservation' })).toBeVisible();
+  const kite = await ribbon.locator('.elixir-logo-kite').evaluate((e) => getComputedStyle(e).backgroundImage);
+  expect(kite).toContain('/images/biomodels/elixir_kitemark-60px.png');
+  expect(ebiRequests).toEqual([]);
+});
