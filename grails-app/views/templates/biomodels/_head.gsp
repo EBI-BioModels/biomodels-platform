@@ -70,9 +70,7 @@ relevant mechanistic models in standard formats."/>
 <!-- CSS: implied media=all -->
 <!-- CSS concatenated and minified via ant build script -->
 <link rel="stylesheet" type="text/css" href="<g:resource dir="css/foundation" file="foundation-float-6.6.3.min.css"/>">
-<%-- Styles for the bar and footer injected by the EBI script.js. Delete with that script in JBM-812. --%>
-<link rel="stylesheet" type="text/css" href="<g:resource dir="css/biomodels" file="ebi-bar-temporary.css"/>">
-<%-- EBI edits on top of stock Foundation, kept so pages look the same. Loaded after the bar styles, as in ebi-global.css. Trimmed in JBM-815. --%>
+<%-- EBI edits on top of stock Foundation, kept so pages look the same. Trimmed in JBM-815. --%>
 <link rel="stylesheet" type="text/css" href="<g:resource dir="css/biomodels" file="ebi-ported.css"/>">
 <link rel="stylesheet" type="text/css"
       href="https://ebi.emblstatic.net/web_guidelines/EBI-Icon-fonts/v1.3/fonts.css"

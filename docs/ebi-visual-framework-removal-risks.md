@@ -108,10 +108,11 @@ EBI-only classes actually used in BioModels views (about 40): the structural one
    - If `foundation.js` is removed but the `$(document).foundation()` call stays, it throws. That may stop later inline scripts on the page.
 
 3. **Global EBI navigation and footer vanish (medium).** `#masthead-black-bar` and `#global-footer` are empty shells filled in by `script.js`. Removing it leaves empty containers and drops the EMBL-EBI links and footer legal text.
+   - Done in JBM-812: the bar and footer are hidden and `ebi-bar-temporary.css` is deleted. The two containers stay in the page, hidden, because `script.js` still runs for the EBI cookie banner until JBM-814 and misbehaves without them: its footer code retries every 500 ms and the black bar code throws. Delete the containers together with `script.js`. The footer now shows BioModels' own four columns (Browse, Submit and curate, Support, About) from `_footer.gsp`, with the same links as the main menu.
 
 4. **Compliance and branding content disappears (medium).**
    - The ELIXIR Deposition Database banner is kept (JBM-811): `_footer.gsp` now renders it as static markup with a vendored kitemark, so `elixirBanner.js` is no longer loaded.
-   - `_embl-ebi-data-preservation-statement.gsp` edits the `.elixir-ribbon` DOM, which `_footer.gsp` now renders itself.
+   - `_embl-ebi-data-preservation-statement.gsp` used to add EMBL-EBI Licencing and Data Preservation links to the ribbon. It is deleted (JBM-812), so the ribbon shows only the ELIXIR text.
    - Footer and statement text will need rewriting for the University of Florida / LSM move.
 
 5. **Existing CSS overrides are tied to the framework (medium).**

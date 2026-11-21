@@ -512,3 +512,42 @@ a.external:hover, a.external:active {
 .sidebar .element ul > li {
     font-size: 85%;
 }
+
+/* BioModels footer links (JBM-812). Text is a bit smaller than the main area (16px). */
+.biomodels-footer {
+  border-top: 5px solid #eee;
+  padding-top: 0.75rem;
+}
+.biomodels-footer h5 {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.biomodels-footer ul {
+  margin-left: 0;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  list-style: none;
+}
+.biomodels-footer a,
+.biomodels-footer a:visited {
+  color: #555;
+}
+.biomodels-footer a:hover,
+.biomodels-footer a:focus,
+.biomodels-footer a:active {
+  color: #555;
+  border-bottom: 1px dashed #e4e4e4;
+}
+.biomodels-footer-meta {
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem;
+}
+@media print {
+  .biomodels-footer {
+    display: none;
+  }
+}

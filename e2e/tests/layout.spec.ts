@@ -11,6 +11,12 @@ async function columnOf(page: Page, title: RegExp) {
   return box;
 }
 
+/** Wait until the EBI script.js has filled the bar and footer containers that the tests then expect to be hidden. */
+async function waitForEbiScript(page: Page) {
+  await page.waitForFunction(() => ['#masthead-black-bar', '#global-nav-expanded', '#ebi-footer-meta']
+    .every((selector) => (document.querySelector(selector)?.childElementCount ?? 0) > 0));
+}
+
 test('home page panels sit side by side on desktop and stack on mobile', async ({ page }) => {
   await page.goto('');
   await waitForFoundation(page);
@@ -60,7 +66,7 @@ test('Foundation grid and responsive utilities apply', async ({ page }) => {
   expect(hidden).toBe(isMobile());
 });
 
-test('the ELIXIR banner is rendered locally, with its kitemark and the licensing links', async ({ page }) => {
+test('the ELIXIR banner is rendered locally, with its kitemark and without EMBL-EBI links', async ({ page }) => {
   const ebiRequests: string[] = [];
   page.on('request', (r) => { if (/elixirBanner\.js/.test(r.url())) ebiRequests.push(r.url()); });
   await page.goto('');
@@ -69,9 +75,63 @@ test('the ELIXIR banner is rendered locally, with its kitemark and the licensing
   await expect(ribbon).toBeVisible();
   await expect(ribbon).toContainText('BioModels is an ELIXIR Deposition Database');
   await expect(ribbon.locator('a[href*="elixir-deposition-databases"]')).toHaveCount(1);
-  // _embl-ebi-data-preservation-statement.gsp adds the licensing links to the ribbon.
-  await expect(ribbon.getByRole('link', { name: 'EMBL-EBI Data Preservation' })).toBeVisible();
+  // The EMBL-EBI licensing and data preservation links that used to be added to the ribbon are gone.
+  await expect(ribbon.getByRole('link', { name: /EMBL-EBI/ })).toHaveCount(0);
+  await expect(ribbon.locator('a[href*="ebi.ac.uk"]')).toHaveCount(0);
   const kite = await ribbon.locator('.elixir-logo-kite').evaluate((e) => getComputedStyle(e).backgroundImage);
   expect(kite).toContain('/images/biomodels/elixir_kitemark-60px.png');
   expect(ebiRequests).toEqual([]);
+});
+
+test('the EMBL-EBI black bar and global footer are not shown, the local masthead is', async ({ page }) => {
+  await page.goto('');
+  await waitForFoundation(page);
+  // The EBI script.js still fills these (for its cookie banner): check only after it has, or "hidden" proves nothing.
+  await waitForEbiScript(page);
+  await expect(page.locator('#masthead-black-bar')).toBeHidden();
+  await expect(page.locator('#global-footer')).toBeHidden();
+  await expect(page.locator('#global-nav')).toBeHidden();
+  await expect(page.getByRole('link', { name: /^About us$/ }).filter({ visible: true })).toHaveCount(0);
+  await expect(page.locator('#masthead #localsearch')).toBeVisible();
+});
+
+test('the footer lists BioModels pages in columns and links nowhere to EMBL-EBI', async ({ page }) => {
+  await page.goto('');
+  await waitForFoundation(page);
+  await waitForEbiScript(page);
+  const footer = page.locator('#biomodels-footer');
+  await expect(footer).toBeVisible();
+  for (const heading of ['Browse', 'Submit and curate', 'Support', 'About']) {
+    await expect(footer.getByRole('heading', { name: heading })).toBeVisible();
+  }
+  for (const link of ['FAQs', 'Privacy Policy', 'Terms of Use', 'Contact us']) {
+    await expect(footer.getByRole('link', { name: link })).toBeVisible();
+  }
+  await expect(footer.locator('a[href*="ebi.ac.uk"]')).toHaveCount(0);
+  await expect(footer).toContainText(/Earlham Institute.*Laboratory for\s+Systems Medicine/s);
+  // Visited and unvisited links look the same, and the footer text is smaller than the main text.
+  const sizes = await page.evaluate(() => {
+    const px = (s: string) => parseFloat(getComputedStyle(document.querySelector(s)!).fontSize);
+    return { body: px('body'), heading: px('#biomodels-footer h5'), link: px('#biomodels-footer li a'),
+      meta: px('.biomodels-footer-meta') };
+  });
+  expect(await footer.locator('h5').first().evaluate((e) => getComputedStyle(e).textTransform)).toBe('uppercase');
+  expect(sizes.heading).toBeLessThan(sizes.body);
+  expect(sizes.link).toBeLessThan(sizes.body);
+  expect(sizes.meta).toBeLessThan(sizes.body);
+  // The four columns sit side by side on desktop and two by two on mobile.
+  const tops = await footer.locator('h5').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  expect(new Set(tops).size).toBe(isMobile() ? 2 : 1);
+});
+
+test('the EBI cookie banner still shows, fixed at the bottom of the window', async ({ page }) => {
+  await page.goto('');
+  await waitForFoundation(page);
+  // script.js adds the banner and styles it inline, so it must not depend on the deleted ebi-bar-temporary.css.
+  const banner = page.locator('#data-protection-banner');
+  await expect(banner).toBeVisible();
+  expect(await banner.evaluate((e) => getComputedStyle(e).position)).toBe('fixed');
+  const box = await banner.boundingBox();
+  const viewport = page.viewportSize()!;
+  expect(box!.y + box!.height).toBeGreaterThan(viewport.height - 2);
 });

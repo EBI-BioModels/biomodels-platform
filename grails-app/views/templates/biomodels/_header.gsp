@@ -24,9 +24,9 @@
 <div id="skip-to">
     <a href="#content">Skip to main content</a>
 </div>
-<header id="masthead-black-bar" class="clearfix masthead-black-bar">
-    <!-- EBML-EBI menu items will be rendered by the script in script.js -->
-</header>
+<%-- JBM-812: the EMBL-EBI black bar is not shown any more. The EBI script.js still runs, for its cookie banner (until
+     JBM-814), and writes the bar into this element, so the element stays but is hidden. Remove it together with script.js. --%>
+<header id="masthead-black-bar" style="display: none" aria-hidden="true"></header>
 
 <div data-sticky-container class="sticky-container">
     <!-- Suggested layout containers -->

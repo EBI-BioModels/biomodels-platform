@@ -35,8 +35,7 @@
         </div>
         <div class="clear"></div>
     </div>
-    %{-- ELIXIR Deposition Database banner (JBM-811: kept, but rendered here instead of by EBI's elixirBanner.js).
-         _embl-ebi-data-preservation-statement.gsp relies on the div.elixir-ribbon > div.row > div.column structure. --}%
+    %{-- ELIXIR Deposition Database banner (JBM-812: kept, but rendered here instead of by EBI's elixirBanner.js). --}%
     <div id="elixir-banner">
         <div id="elixir-ribbon" class="elixir-ribbon">
             <div class="row">
@@ -100,16 +99,69 @@
     </style>
     <!-- End optional local footer -->
 
-    <div id="global-footer" class="global-footer">
-        <nav id="global-nav-expanded" class="row global-nav-expanded">
-            <!-- Footer will be automatically inserted by footer.js -->
+    <%-- JBM-812: the EMBL-EBI global footer is not shown any more. script.js still fills these two elements (and retries
+         every 500 ms when they are missing), so they stay but are hidden. Remove them together with script.js. --%>
+    <div id="global-footer" style="display: none" aria-hidden="true">
+        <nav id="global-nav-expanded"></nav>
+        <section id="ebi-footer-meta"></section>
+    </div>
+
+    <%-- BioModels' own footer links. They repeat the main menu, so keep the two in step. --%>
+    <div id="biomodels-footer" class="biomodels-footer">
+        <nav class="row small-up-2 medium-up-4" aria-label="Footer">
+            <div class="column">
+                <h5>Browse</h5>
+                <ul class="no-bullet">
+                    <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">All models</a></li>
+                    <li><a href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Parameters Search</a></li>
+                    <li><g:link mapping="covid19">COVID-19</g:link></li>
+                    <li><g:link mapping="agedbrain">Neurodegeneration models</g:link></li>
+                    <li><g:link mapping="path2models">Path2Models models</g:link></li>
+                    <li><g:link mapping="reproducibility">Reproducibility</g:link></li>
+                </ul>
+            </div>
+            <div class="column">
+                <h5>Submit and curate</h5>
+                <ul class="no-bullet">
+                    <li><a href="${g.createLink(controller: 'model', action: 'submission-guidelines-and-agreement')}">Submit a model</a></li>
+                    <li><a href="${g.createLink(controller: 'curation', action: 'fbc')}">FBC curation</a></li>
+                    <li><a href="${createLink(controller: 'jummp', action: 'curatorZone')}">Curator's Zone</a></li>
+                    <li><a href="${createLink(controller: 'jummp', action: 'annotationTips')}">Annotation Guidelines</a></li>
+                    <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Developer's Zone</a></li>
+                </ul>
+            </div>
+            <div class="column">
+                <h5>Support</h5>
+                <ul class="no-bullet">
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQs</a></li>
+                    <li><a href="${grailsApplication.config.jummp.context.help.root}/manual.html" target="_blank" rel="noopener">User Manual</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
+                    <li><a href="//www.biomodels.org/tools/converters/" target="_blank" rel="noopener">Online converters</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'contactus')}">Contact us</a></li>
+                </ul>
+            </div>
+            <div class="column">
+                <h5>About</h5>
+                <ul class="no-bullet">
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'fetchNews')}">News</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'acknowledgements')}">Acknowledgements</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'curators')}">Curators</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'privacyPolicy')}">Privacy Policy</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
+                </ul>
+            </div>
         </nav>
-        <section id="ebi-footer-meta" class="row ebi-footer-meta">
-            <!-- Footer meta will be automatically inserted by footer.js -->
-        </section>
+        <div class="row">
+            <div class="columns small-12 biomodels-footer-meta">
+                BioModels is funded and hosted by the
+                <a href="https://www.earlham.ac.uk/" target="_blank" rel="noopener">Earlham Institute</a>, Norwich, UK, and the
+                <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" target="_blank" rel="noopener">Laboratory for
+                Systems Medicine</a>, Department of Medicine, University of Florida, Gainesville, USA.
+            </div>
+        </div>
     </div>
      <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
      <g:render template="/templates/biomodels/searchTips" />
-     <g:render template="/templates/biomodels/embl-ebi-data-preservation-statement" />
      <g:render template="/templates/biomodels/domainSwitcherExplanation" />
 </footer>
