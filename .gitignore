@@ -18,7 +18,6 @@ activemq-data/*
 ast-build/*
 build/*
 cobertura.ser
-documentation/*
 html/*
 latex/*
 output/*

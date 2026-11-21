@@ -4,13 +4,18 @@
 <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
 
 <!-- The Foundation theme JavaScript -->
-<script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/libraries/foundation-6/js/foundation.js"></script>
+<script src="<g:resource dir="js/foundation" file="foundation-6.6.3.min.js"/>"></script>
 <script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/foundationExtendEBI.js"></script>
 <script type="text/JavaScript">$(document).foundation();</script>
-<script type="text/JavaScript">$(document).foundationExtendEBI();</script>
+<script type="text/JavaScript">if ($.fn.foundationExtendEBI) $(document).foundationExtendEBI();</script>
 
 <!-- customised scripts -->
-<g:javascript src="common.js"/>
+<%-- The version in the URL changes with the file, so browsers fetch the new common.js after a deployment. --%>
+<%
+    def commonJsPath = application.getRealPath('/js/common.js')
+    def commonJsVersion = commonJsPath ? new File(commonJsPath).lastModified() : ''
+%>
+<script src="<g:resource dir="js" file="common.js"/>?v=${commonJsVersion}"></script>
 <!-- end scripts-->
 
 %{--
