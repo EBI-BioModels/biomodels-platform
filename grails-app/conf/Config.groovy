@@ -602,6 +602,11 @@ if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
     jummp.search.strategy = "solr"
 }
 
+// the EBI Search server used by the "omicsdi" strategy, https://www.ebi.ac.uk when it is not set
+if (!(jummpConfig.jummp.search.omicsdi.baseUrl instanceof ConfigObject)) {
+    jummp.search.omicsdi.baseUrl = jummpConfig.jummp.search.omicsdi.baseUrl
+}
+
 if (jummpConfig.jummp.model.curators.mailinglist) {
     jummp.model.curators.mailinglist = jummpConfig.jummp.model.curators.mailinglist
 }

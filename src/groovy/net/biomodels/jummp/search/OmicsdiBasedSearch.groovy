@@ -58,7 +58,6 @@ import org.springframework.web.client.ResourceAccessException
 import org.springframework.web.client.RestTemplate
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
-import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigProd
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Entry
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
@@ -245,9 +244,9 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 20]) {
         long startAt = System.currentTimeMillis()
-        AbstractEbeyeWsConfig ebeyeWsConfig
-        // wwwdev.ebi.ac.uk no longer holds the BioModels models, so every environment uses www.ebi.ac.uk
-        ebeyeWsConfig = new EbeyeWsConfigProd()
+        // wwwdev.ebi.ac.uk no longer holds the BioModels models, so the default is www.ebi.ac.uk in every environment
+        AbstractEbeyeWsConfig ebeyeWsConfig =
+                EbiSearchServer.configFor(grailsApplication?.config?.jummp?.search?.omicsdi?.baseUrl)
         /**
          * At the current settings, using HTTP PROXY to access the internet in the cloud based deployment.
          * Because of that, we need to tell ddi-ebe-ws-dao the information of HTTP PROXY
