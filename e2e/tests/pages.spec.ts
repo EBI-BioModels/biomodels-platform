@@ -41,7 +41,11 @@ test('the acknowledgements card and page name Earlham and the Laboratory for Sys
       .evaluateAll((els) => els.map((e) => e.getAttribute('alt')));
     expect(order).toEqual(['Earlham Institute logo', 'EMBL logo']);
     await expect(logo.locator('xpath=ancestor::a[1]')).toHaveAttribute('href', 'https://www.earlham.ac.uk/');
-    expect(await logo.evaluate((e: HTMLImageElement) => e.naturalWidth)).toBeGreaterThan(0);
+    // The block-level logo must stay inside its column, also on a narrow screen.
+    const box = await logo.boundingBox();
+    expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+    // The image may still be loading when it becomes visible, so poll instead of reading naturalWidth once.
+    await expect.poll(() => logo.evaluate((e: HTMLImageElement) => e.naturalWidth)).toBeGreaterThan(0);
   }
 });
 
