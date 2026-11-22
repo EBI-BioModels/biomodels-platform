@@ -132,7 +132,6 @@ beans = {
             configurationService = ref("configurationService")
             miriamService = ref("miriamService")
             aclUtilService = ref("aclUtilService")
-            ebeyeWsConfig("uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev")
         }
     }
 

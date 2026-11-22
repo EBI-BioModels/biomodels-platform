@@ -11,7 +11,7 @@ class ParameterSearchCommandSpec extends Specification {
     private static ParameterSearchCommand prepareCommandObject(Map bindingMap) {
         return new ParameterSearchCommand(bindingMap)
     }
-    static final String expectedUrlPrefix = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?fields=${ParameterSearchCommand.EBI_SEARCH_FIELDS_CSV}"
+    static final String expectedUrlPrefix = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?fields=${ParameterSearchCommand.EBI_SEARCH_FIELDS_CSV}"
     static final String expectedUrlSuffix = "&size=10&start=0&sort=&format=json"
 
     void "test ParameterSearchCommand Positively"() {
@@ -47,8 +47,8 @@ class ParameterSearchCommandSpec extends Specification {
         command.validate()
 
         and: "it should form correct url"
-        String expectedSearchUrl = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?fields=entity_RAW," +
-            "entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW,rate_original_RAW," +
+        String expectedSearchUrl = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?fields=entity_RAW," +
+            "entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,reactants_RAW,products_RAW,modifiers_RAW,model,organism,publication,rate_RAW,rate_original_RAW," +
             "parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links&query=E4P*+AND+is_curated%3Atrue&" +
             "size=10&start=0&sort=entity:ascending&format=json"
         String actualSearchUrl = command.getSearchUrl("json")
@@ -92,8 +92,8 @@ class ParameterSearchCommandSpec extends Specification {
         command.validate()
 
         and: "It should form correct url"
-        String expectedSearchUrl = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
-            "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication," +
+        String expectedSearchUrl = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
+            "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,reactants_RAW,products_RAW,modifiers_RAW,model,organism,publication," +
                 "rate_RAW,rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links" +
             "&query=GO%5C%3A0005892+AND+is_curated%3Atrue&size=10&start=0&sort=entity:ascending&format=json"
         String actualSearchUrl = command.getSearchUrl("json")

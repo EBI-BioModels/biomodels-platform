@@ -1,6 +1,5 @@
 package net.biomodels.jummp.deployment.biomodels.parameters
 
-import grails.util.Environment
 import grails.validation.Validateable
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -16,7 +15,6 @@ import java.util.regex.Pattern
 class ParameterSearchCommand {
     public static final String DEFAULT_QUERY = '*:*'
     public static final String BASE_URL_PARAMS = "fields=$EBI_SEARCH_FIELDS_CSV".toString()
-    public static final String EBI_SEARCH_DEV_BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
     public static final String EBI_SEARCH_BASE_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
     public static final String EBI_SEARCH_FIELDS_CSV = "entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,reactants_RAW,products_RAW,modifiers_RAW,model,organism,publication,rate_RAW,rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links"
     // catch queries like entity_accession_url:CHEBI:12345 or SBO:1234567, but not organism:Homo*
@@ -149,10 +147,7 @@ class ParameterSearchCommand {
 
     @CompileStatic
     static String getEbiSearchUrl() {
-        String base = EBI_SEARCH_BASE_URL
-        if (Environment.current != Environment.PRODUCTION) {
-            base = EBI_SEARCH_DEV_BASE_URL
-        }
-        return "$base?$BASE_URL_PARAMS"
+        // wwwdev.ebi.ac.uk answers with empty fields, so every environment uses www.ebi.ac.uk
+        return "$EBI_SEARCH_BASE_URL?$BASE_URL_PARAMS"
     }
 }
