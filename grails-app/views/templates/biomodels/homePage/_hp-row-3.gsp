@@ -101,12 +101,18 @@
     <div id="acknowledgements" class="widget-body-text">
         <dl>
             <dt  class="widget-body-text">
-                BioModels is supported by the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
-            the <a href="https://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a> (Multimod, BB/N019482/1) and
-            the <a href="https//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a>
+                BioModels is now funded and hosted by the <a href="https://www.earlham.ac.uk/" class="external">Earlham Institute</a>, Norwich, UK,
+                and the <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/" class="external">Laboratory for Systems Medicine</a>,
+                Department of Medicine, University of Florida, Gainesville, USA.
+                Previously, BioModels was hosted by EMBL-EBI and supported by the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
+                the <a href="https://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a> (Multimod, BB/N019482/1) and
+                the <a href="https://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a>
                 (<a href="https://transqst.org/" title="This project has received funding from the Innovative Medicines Initiative 2 Joint Undertaking under grant agreement No 116030. This Joint Undertaking receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.">TransQST, 116030</a>).
             </dt>
             <dd>
+                <a href="https://www.earlham.ac.uk/" title="Earlham Institute">
+                    <img src="<g:resource dir="images/biomodels" file="earlham_logo.png"/>" class="acknowledgements-logo"
+                         title="Earlham Institute" alt="Earlham Institute logo"/></a>
                 <a href="https://www.embl.org/">
                     <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/EMBL_logo_lo_res_0.jpg"
                          title="European Molecular Biology Laboratory (EMBL)" alt="EMBL logo" border="0"/></a>
