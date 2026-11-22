@@ -38,6 +38,7 @@ import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.healthcheck.HealthCheckUtil
 import net.biomodels.jummp.maintenance.Debugging
+import net.biomodels.jummp.search.EbiSearchServer
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.ContributionRole
@@ -235,7 +236,18 @@ class BootStrap {
         subscribeClientService.destroy()
     }
 
+    /**
+     * Refuses to start with a mistyped EBI Search server, instead of failing every search request later.
+     */
+    private void checkEbiSearchServer() {
+        if (grailsApplication.config.jummp.search.strategy == "omicsdi") {
+            def server = EbiSearchServer.configFor(grailsApplication.config.jummp?.search?.omicsdi?.baseUrl)
+            println "Searching models on the EBI Search server ${server.protocol}://${server.hostName}"
+        }
+    }
+
     def init = { servletContext ->
+        checkEbiSearchServer()
         HealthCheckUtil.registerObjectMarshaller()
         new Debugging().toggleDebuggingMode("false")
         def generatorRegistry = idGeneratorRegistryFactoryBean.object
