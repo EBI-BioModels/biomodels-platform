@@ -32,6 +32,9 @@ class EbiSearchServerSpec extends Specification {
         "https://www.ebi.ac.uk"          | "https"  | "www.ebi.ac.uk"
         "https://www.ebi.ac.uk/"         | "https"  | "www.ebi.ac.uk"
         " http://localhost:8000 "        | "http"   | "localhost:8000"
+        "http://search_server:8000"      | "http"   | "search_server:8000"
+        "http://[::1]:8000"              | "http"   | "[::1]:8000"
+        "http://127.0.0.1"               | "http"   | "127.0.0.1"
         "https://search.example.org"     | "https"  | "search.example.org"
     }
 
@@ -46,6 +49,19 @@ class EbiSearchServerSpec extends Specification {
 
         where:
         setting << ["www.ebi.ac.uk", "ftp://www.ebi.ac.uk", "https://www.ebi.ac.uk/ebisearch",
-                    "https://www.ebi.ac.uk?x=1", "https://", "https://bad host"]
+                    "https://www.ebi.ac.uk?x=1", "https://", "https://bad host",
+                    "http://host:abc", "http://:8000", "http://host:", "http://host:123456",
+                    "https://user:secret@host"]
+    }
+
+    void "a refused value that has credentials is not echoed in the message"() {
+        when:
+        EbiSearchServer.configFor("https://user:secret@host/ebisearch")
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        !e.message.contains("secret")
+        !e.message.contains("user")
+        e.message.contains("https://***@host/ebisearch")
     }
 }
