@@ -196,12 +196,16 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
      *
      * @param query the query being searched for, used in log messages
      * @param request the call to EBI Search
+     * @param retryAfterReadTimeout the call to make once more if the request timed out while waiting for the answer,
+     *      or null to give up at once. EBI Search answers either at once or very late, so a quick retry
+     *      often gets the fast answer.
      * @return the result of the request, or null if EBI Search rejected the query (a 4xx answer)
      * @throws SearchUnavailableException if EBI Search timed out, cannot be reached or answered with
      *      a 5xx status. It is an exception, and not an empty result, so that the cache on
      *      searchModels does not keep the failure.
      */
-    static QueryResult executeSearchRequest(String query, Closure<QueryResult> request) {
+    static QueryResult executeSearchRequest(String query, Closure<QueryResult> request,
+                                            Closure<QueryResult> retryAfterReadTimeout = null) {
         try {
             return request.call()
         } catch (HttpServerErrorException e) {
@@ -215,6 +219,11 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
             return null
         } catch (ResourceAccessException e) {
             // thrown for connect/read timeouts and refused connections
+            if (retryAfterReadTimeout && e.cause instanceof SocketTimeoutException) {
+                LOGGER.warn("EBI Search did not answer quickly for query ${query}, trying once more: ${e.message}")
+                // the retry is not retried again: its failures are reported like any other
+                return executeSearchRequest(query, retryAfterReadTimeout)
+            }
             LOGGER.warn("EBI Search did not answer in time for query ${query}: ${e.message}")
             throw new SearchUnavailableException("EBI Search did not answer in time", e)
         } catch (UnknownHostException e) {
@@ -236,6 +245,28 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
             factory.readTimeout = (omicsdiConfig?.readTimeoutMs ?: DEFAULT_READ_TIMEOUT_MS) as int
         } else {
             LOGGER.warn("Cannot set timeouts on the EBI Search client, its request factory is ${factory?.class}")
+        }
+    }
+
+    /**
+     * How long the first attempt waits for EBI Search before the search is tried once more. Setting
+     * jummp.search.omicsdi.firstAttemptTimeoutMs overrides it. A value that is not below the read timeout
+     * disables the retry.
+     */
+    static final int DEFAULT_FIRST_ATTEMPT_TIMEOUT_MS = 8000
+
+    static int firstAttemptTimeoutMs(def omicsdiConfig) {
+        (omicsdiConfig?.firstAttemptTimeoutMs ?: DEFAULT_FIRST_ATTEMPT_TIMEOUT_MS) as int
+    }
+
+    static int readTimeoutMs(def omicsdiConfig) {
+        (omicsdiConfig?.readTimeoutMs ?: DEFAULT_READ_TIMEOUT_MS) as int
+    }
+
+    static void applyReadTimeout(RestTemplate restTemplate, int readTimeoutMs) {
+        def factory = restTemplate.requestFactory
+        if (factory instanceof SimpleClientHttpRequestFactory) {
+            factory.readTimeout = readTimeoutMs
         }
     }
 
@@ -279,9 +310,22 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
         int start = paginationCriteria['start']
         int length = paginationCriteria['length']
         int facetCount = paginationCriteria['facetCount']
-        QueryResult result = executeSearchRequest(query) {
+        def omicsdiConfig = grailsApplication?.config?.jummp?.search?.omicsdi
+        int fullTimeout = readTimeoutMs(omicsdiConfig)
+        int firstTimeout = firstAttemptTimeoutMs(omicsdiConfig)
+        Closure<QueryResult> fetch = {
             datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
         }
+        Closure<QueryResult> firstAttempt = {
+            applyReadTimeout(datasetWsClient.restTemplate, firstTimeout)
+            fetch()
+        }
+        Closure<QueryResult> secondAttempt = {
+            applyReadTimeout(datasetWsClient.restTemplate, fullTimeout)
+            fetch()
+        }
+        QueryResult result = firstTimeout < fullTimeout ?
+                executeSearchRequest(query, firstAttempt, secondAttempt) : executeSearchRequest(query, fetch)
         List<Facet> facets = []
         int totalCount
         // convert all the returned entries to ModelTransportCommand objects
