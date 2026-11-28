@@ -59,11 +59,9 @@ class CommonController implements GrailsConfigurationAware {
         PUBLIC_FTP = co.jummp.model.ftp.location
 
         if (serverURL.contains("wwwdev.ebi.ac.uk/biomodels")) {
-            bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
             deployTarget = "dev"
             PUBLIC_FTP = BioModels.DEV_PUBLIC_FTP
         } else if (Environment.current == Environment.PRODUCTION && serverURL.contains("www.ebi.ac.uk/biomodels")) {
-            bmStaticAssetsURL = "${BioModels.BM_ROOT_URL}/static-assets"
             deployTarget = "prod"
             PUBLIC_FTP = BioModels.PROD_PUBLIC_FTP
         } else if (serverURL.contains("biomodels.org") ||
@@ -72,13 +70,9 @@ class CommonController implements GrailsConfigurationAware {
             // Presumably, biomodels.org and biomodels.net will be the official addresses after the migration
             // Before switching to these domains, we use dmscambs.co.uk temporarily
             deployTarget = "prod"
-            // the following properties must be updated
-            bmStaticAssetsURL = "$serverURL/static-assets"
             // PUBLIC_FTP comes from jummp.model.ftp.location for this deployment
-        } else {
-            // local or dev target
-            bmStaticAssetsURL = "${BioModels.BM_DEV_ROOT_URL}/static-assets"
         }
+        bmStaticAssetsURL = resolveStaticAssetsURL(co.jummp.web.staticAssets.server, serverURL)
         PUBLIC_FTP_REPO = PUBLIC_FTP ? WSF.addPath(new URI(PUBLIC_FTP), "repository").toString() : ""
         theme = grailsApplication.config.jummp.branding.style
         if (!theme) theme = "default"
@@ -92,6 +86,25 @@ class CommonController implements GrailsConfigurationAware {
             "PUBLIC_FTP": PUBLIC_FTP,
             "PUBLIC_FTP_REPO": PUBLIC_FTP_REPO
         ]
+    }
+
+    /**
+     * Works out where static assets (logos, icons, documents) are served from.
+     *
+     * @param configured the setting jummp.web.staticAssets.server, empty when it is not set
+     * @param serverURL the address of this application
+     * @return the base URL without a trailing slash
+     */
+    static String resolveStaticAssetsURL(def configured, String serverURL) {
+        String url = configured ? configured.toString().trim() : ""
+        if (!url) {
+            boolean ownsAssets = ["biomodels.org", "biomodels.net", "dmscambs.co.uk"].any {
+                serverURL.contains(it)
+            }
+            String root = ownsAssets ? serverURL : BioModels.BM_ROOT_URL
+            url = "${root.replaceAll('/+$', '')}/static-assets"
+        }
+        url.replaceAll('/+$', '')
     }
 
     protected handleRestApi(final Map resultMap) {

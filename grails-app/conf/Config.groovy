@@ -607,6 +607,11 @@ if (!(jummpConfig.jummp.search.omicsdi.baseUrl instanceof ConfigObject)) {
     jummp.search.omicsdi.baseUrl = jummpConfig.jummp.search.omicsdi.baseUrl
 }
 
+// where static assets are served from, e.g. an Apache or Nginx server; see docs/static-assets-settings.md
+if (!(jummpConfig.jummp.web.staticAssets.server instanceof ConfigObject)) {
+    jummp.web.staticAssets.server = jummpConfig.jummp.web.staticAssets.server
+}
+
 if (jummpConfig.jummp.model.curators.mailinglist) {
     jummp.model.curators.mailinglist = jummpConfig.jummp.model.curators.mailinglist
 }
