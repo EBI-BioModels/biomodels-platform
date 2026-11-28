@@ -64,7 +64,7 @@ Department of Medicine, University of Florida, Gainesville, USA.
 
 <div class="sponsors-logo">
   <a href="https://www.earlham.ac.uk/" title="Earlham Institute">
-      <img src="${request.contextPath}/images/biomodels/earlham_logo.png"
+      <img src="${bmStaticAssetsURL}/images/EARLHAM_logo.png"
            title="Earlham Institute"
            alt="Earlham Institute logo" style="vertical-align: middle; width: 240px; max-width: 100%;" /></a>
 </div>

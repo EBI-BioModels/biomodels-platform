@@ -115,7 +115,7 @@
             </dt>
             <dd>
                 <a href="https://www.earlham.ac.uk/" title="Earlham Institute">
-                    <img src="<g:resource dir="images/biomodels" file="earlham_logo.png"/>" class="acknowledgements-logo"
+                    <img src="${staticAssetsURL}/images/EARLHAM_logo.png" class="acknowledgements-logo"
                          title="Earlham Institute" alt="Earlham Institute logo"/></a>
                 <a href="https://www.embl.org/">
                     <img src="${staticAssetsURL}/images/EMBL_logo_lo_res_0.jpg"
