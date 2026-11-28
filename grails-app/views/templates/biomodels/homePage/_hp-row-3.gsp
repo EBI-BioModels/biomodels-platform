@@ -117,6 +117,12 @@
                 <a href="https://www.earlham.ac.uk/" title="Earlham Institute">
                     <img src="${staticAssetsURL}/images/EARLHAM_logo.png" class="acknowledgements-logo"
                          title="Earlham Institute" alt="Earlham Institute logo"/></a>
+                <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/"
+                   title="Laboratory for Systems Medicine, University of Florida">
+                    <img src="${staticAssetsURL}/images/UFL_LSM_logo.png"
+                         class="acknowledgements-logo acknowledgements-logo-wide"
+                         title="Laboratory for Systems Medicine, University of Florida"
+                         alt="University of Florida Laboratory for Systems Medicine logo"/></a>
                 <a href="https://www.embl.org/">
                     <img src="${staticAssetsURL}/images/EMBL_logo_lo_res_0.jpg"
                          title="European Molecular Biology Laboratory (EMBL)" alt="EMBL logo" border="0"/></a>

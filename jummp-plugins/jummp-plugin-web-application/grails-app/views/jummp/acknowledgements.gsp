@@ -67,6 +67,12 @@ Department of Medicine, University of Florida, Gainesville, USA.
       <img src="${bmStaticAssetsURL}/images/EARLHAM_logo.png"
            title="Earlham Institute"
            alt="Earlham Institute logo" style="vertical-align: middle; width: 240px; max-width: 100%;" /></a>
+  <a href="https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/"
+     title="Laboratory for Systems Medicine, University of Florida">
+      <img src="${bmStaticAssetsURL}/images/UFL_LSM_logo.png"
+           title="Laboratory for Systems Medicine, University of Florida"
+           alt="University of Florida Laboratory for Systems Medicine logo"
+           style="vertical-align: middle; width: 300px; max-width: 100%;" /></a>
 </div>
 
 <p>

@@ -26,7 +26,7 @@ for (const [name, path, title] of PAGES) {
   });
 }
 
-test('the acknowledgements card and page name Earlham and the Laboratory for Systems Medicine, with the Earlham logo first', async ({ page }) => {
+test('the acknowledgements card and page name Earlham and the Laboratory for Systems Medicine, with the Earlham and Florida logos first', async ({ page }) => {
   const wording = /funded and hosted by the\s+Earlham Institute.*Laboratory for\s+Systems Medicine/s;
   for (const [path, area] of [['', '#acknowledgements'], ['acknowledgements', 'body']] as const) {
     await page.goto(path);
@@ -36,16 +36,28 @@ test('the acknowledgements card and page name Earlham and the Laboratory for Sys
     await expect(scope).toContainText(/Previously, BioModels was hosted by EMBL-EBI/);
     const logo = scope.locator('img[alt="Earlham Institute logo"]');
     await expect(logo).toBeVisible();
-    // The Earlham logo comes before the earlier funders' logos and links to Earlham.
-    const order = await scope.locator('img[alt="Earlham Institute logo"], img[alt="EMBL logo"]')
+    const floridaAlt = 'University of Florida Laboratory for Systems Medicine logo';
+    const florida = scope.locator(`img[alt="${floridaAlt}"]`);
+    // The current hosts' logos come before the earlier funders' logos.
+    const order = await scope
+      .locator(`img[alt="Earlham Institute logo"], img[alt="${floridaAlt}"], img[alt="EMBL logo"]`)
       .evaluateAll((els) => els.map((e) => e.getAttribute('alt')));
-    expect(order).toEqual(['Earlham Institute logo', 'EMBL logo']);
+    expect(order).toEqual(['Earlham Institute logo', floridaAlt, 'EMBL logo']);
     await expect(logo.locator('xpath=ancestor::a[1]')).toHaveAttribute('href', 'https://www.earlham.ac.uk/');
-    // The block-level logo must stay inside its column, also on a narrow screen.
-    const box = await logo.boundingBox();
-    expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
-    // The image may still be loading when it becomes visible, so poll instead of reading naturalWidth once.
-    await expect.poll(() => logo.evaluate((e: HTMLImageElement) => e.naturalWidth)).toBeGreaterThan(0);
+    await expect(florida.locator('xpath=ancestor::a[1]'))
+      .toHaveAttribute('href', 'https://systemsmedicine.pulmonary.medicine.ufl.edu/biomodels/');
+    // Both logos look the same size: the Florida file is blank for 19% of its width.
+    const earlhamWidth = (await logo.boundingBox())!.width;
+    const floridaArtworkWidth = (await florida.boundingBox())!.width * 0.8075;
+    expect(Math.abs(floridaArtworkWidth - earlhamWidth) / earlhamWidth).toBeLessThan(0.05);
+    for (const image of [logo, florida]) {
+      await expect(image).toBeVisible();
+      // The image may still be loading when it becomes visible, so poll instead of reading naturalWidth once.
+      await expect.poll(() => image.evaluate((e: HTMLImageElement) => e.naturalWidth)).toBeGreaterThan(0);
+      // A logo must stay inside its column, also on a narrow screen.
+      const box = await image.boundingBox();
+      expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+    }
   }
 });
 

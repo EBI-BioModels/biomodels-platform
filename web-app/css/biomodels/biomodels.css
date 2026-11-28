@@ -555,7 +555,12 @@ a.external:hover, a.external:active {
 /* Logos in the Acknowledgements card on the home page. */
 #acknowledgements .acknowledgements-logo {
   display: block;
-  width: 180px;
+  width: 240px;
   max-width: 100%;
   margin-bottom: 0.75rem;
+}
+
+/* the University of Florida file has blank margins, so this width draws it as wide as the Earlham logo */
+#acknowledgements .acknowledgements-logo-wide {
+  width: 300px;
 }

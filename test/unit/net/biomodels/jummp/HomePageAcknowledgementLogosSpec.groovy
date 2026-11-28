@@ -9,7 +9,8 @@ import spock.lang.Unroll
 @TestMixin(GroovyPageUnitTestMixin)
 class HomePageAcknowledgementLogosSpec extends Specification {
     static final List<String> LOGOS =
-        ["EARLHAM_logo.png", "EMBL_logo_lo_res_0.jpg", "bbsrc_logo.png", "IMI_logo-small.png", "FP7_logo-small.png"]
+        ["EARLHAM_logo.png", "UFL_LSM_logo.png", "EMBL_logo_lo_res_0.jpg", "bbsrc_logo.png",
+         "IMI_logo-small.png", "FP7_logo-small.png"]
 
     String savedUrl
 
