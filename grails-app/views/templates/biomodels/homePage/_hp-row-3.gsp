@@ -1,3 +1,7 @@
+<%@ page import="net.biomodels.jummp.CommonController" %>
+%{-- "/" is rendered without a controller, so nothing puts bmStaticAssetsURL in the model here --}%
+<g:set var="staticAssetsURL" value="${CommonController.resolveStaticAssetsURL(
+    grailsApplication.config.jummp.web.staticAssets.server, grailsApplication.config.grails.serverURL)}"/>
 <div class="small-12 medium-12 large-4 columns">
     <div class="homepage_info_box">
         <h3>How to cite BioModels</h3>
@@ -114,16 +118,16 @@
                     <img src="<g:resource dir="images/biomodels" file="earlham_logo.png"/>" class="acknowledgements-logo"
                          title="Earlham Institute" alt="Earlham Institute logo"/></a>
                 <a href="https://www.embl.org/">
-                    <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/EMBL_logo_lo_res_0.jpg"
+                    <img src="${staticAssetsURL}/images/EMBL_logo_lo_res_0.jpg"
                          title="European Molecular Biology Laboratory (EMBL)" alt="EMBL logo" border="0"/></a>
                 <a href="http://www.bbsrc.ac.uk/" title="Biotechnology and Biological Sciences Research Council (BBSRC)">
-                    <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/bbsrc_logo.png"
+                    <img src="${staticAssetsURL}/images/bbsrc_logo.png"
                          title="Biotechnology and Biological Sciences Research Council (BBSRC)" alt="BBSRC logo" /></a>
                 <a href="https://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">
-                    <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/IMI_logo-small.png"
+                    <img src="${staticAssetsURL}/images/IMI_logo-small.png"
                          title="Innovative Medicines Initiative (IMI)" alt="IMI logo" /></a>
                 <a href="https://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)">
-                    <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/FP7_logo-small.png"
+                    <img src="${staticAssetsURL}/images/FP7_logo-small.png"
                          title="Seventh Framework Programme (FP7)" alt="FP7 logo" /></a>
             </dd>
         </dl>
