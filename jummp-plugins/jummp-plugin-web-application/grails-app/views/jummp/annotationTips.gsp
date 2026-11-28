@@ -66,7 +66,7 @@ BioModels Database follows the <a href="http://biomodels.net/miriam/" title="MIR
 </p>
 
 <div style="text-align: center; padding-top:5px;">
-  <img src="https://www.biomodels.org/static-assets/images/qualifiers.png" alt="relation between model and data" />
+  <img src="${bmStaticAssetsURL}/images/qualifiers.png" alt="relation between model and data" />
 </div>
 
 <p>

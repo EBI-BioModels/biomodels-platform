@@ -61,7 +61,7 @@
 </p>
 
 <div class="doc_img">
-  <img src="https://www.biomodels.org/static-assets/GRAPHICS/SBML_annotation_example.png" alt="Example of annotation in SBML" title="Example of annotation in SBML" />
+  <img src="${bmStaticAssetsURL}/GRAPHICS/SBML_annotation_example.png" alt="Example of annotation in SBML" title="Example of annotation in SBML" />
   <div class="doc_img_legend">
     <span class="mom_figure_ref">Figure 1</span> Example of one annotation block from an SBML file.
   </div>
@@ -116,8 +116,8 @@
 </p>
 
 <div class="doc_img">
-  <a href="https://www.biomodels.org/static-assets/GRAPHICS/BioModels_Database_annotation-interface.png" title="Click to view the full size image...">
-    <img src="https://www.biomodels.org/static-assets/GRAPHICS/BioModels_Database_annotation-interface_small.png" alt="Annotation interface of BioModels Database" title="Annotation interface of BioModels Database (Click to view the full size image)" />
+  <a href="${bmStaticAssetsURL}/GRAPHICS/BioModels_Database_annotation-interface.png" title="Click to view the full size image...">
+    <img src="${bmStaticAssetsURL}/GRAPHICS/BioModels_Database_annotation-interface_small.png" alt="Annotation interface of BioModels Database" title="Annotation interface of BioModels Database (Click to view the full size image)" />
   </a>
   <div class="doc_img_legend">
     <span class="mom_figure_ref">Figure 2</span> Annotation Interface of BioModels Database.
@@ -129,8 +129,8 @@
 </p>
 
 <div class="doc_img">
-  <a href="https://www.biomodels.org/static-assets/GRAPHICS/SBMLeditor_annotation-interface.png" title="Click to view the full size image...">
-    <img src="https://www.biomodels.org/static-assets/GRAPHICS/SBMLeditor_annotation-interface_small.png" alt="Annotation interface of SBMLeditor" title="Annotation interface of SBMLeditor (Click to view the full size image)" />
+  <a href="${bmStaticAssetsURL}/GRAPHICS/SBMLeditor_annotation-interface.png" title="Click to view the full size image...">
+    <img src="${bmStaticAssetsURL}/GRAPHICS/SBMLeditor_annotation-interface_small.png" alt="Annotation interface of SBMLeditor" title="Annotation interface of SBMLeditor (Click to view the full size image)" />
   </a>
   <div class="doc_img_legend">
     <span class="mom_figure_ref">Figure 3</span> Annotation interface of SBMLeditor.
@@ -142,8 +142,8 @@
 </p>
 
 <div class="doc_img">
-  <a href="https://www.biomodels.org/static-assets/GRAPHICS/COPASI_annotation-interface.png" title="Click to view the full size image...">
-    <img src="https://www.biomodels.org/static-assets/GRAPHICS/COPASI_annotation-interface_small.png" alt="Annotation interface of COPASI" title="Annotation interface of COPASI (Click to view the full size image)" />
+  <a href="${bmStaticAssetsURL}/GRAPHICS/COPASI_annotation-interface.png" title="Click to view the full size image...">
+    <img src="${bmStaticAssetsURL}/GRAPHICS/COPASI_annotation-interface_small.png" alt="Annotation interface of COPASI" title="Annotation interface of COPASI (Click to view the full size image)" />
   </a>
   <div class="doc_img_legend">
     <span class="mom_figure_ref">Figure 4</span> Annotation interface of COPASI.
@@ -155,8 +155,8 @@
 </p>
 
 <div class="doc_img">
-  <a href="https://www.biomodels.org/static-assets/GRAPHICS/CellDesigner_annotation-interface.png" title="Click to view the full size image...">
-    <img src="https://www.biomodels.org/static-assets/GRAPHICS/CellDesigner_annotation-interface_small.png" alt="Annotation interface of CellDesigner" title="Annotation interface of CellDesigner (Click to view the full size image)" />
+  <a href="${bmStaticAssetsURL}/GRAPHICS/CellDesigner_annotation-interface.png" title="Click to view the full size image...">
+    <img src="${bmStaticAssetsURL}/GRAPHICS/CellDesigner_annotation-interface_small.png" alt="Annotation interface of CellDesigner" title="Annotation interface of CellDesigner (Click to view the full size image)" />
   </a>
   <div class="doc_img_legend">
     <span class="mom_figure_ref">Figure 5</span> Annotation interface of CellDesigner.
@@ -168,8 +168,8 @@
 </p>
 
 <div class="doc_img">
-  <a href="https://www.biomodels.org/static-assets/GRAPHICS/SemanticSBML_annotation-interface.png" title="Click to view the full size image...">
-    <img src="https://www.biomodels.org/static-assets/GRAPHICS/SemanticSBML_annotation-interface_small.png" alt="Annotation interface of semanticSBML" title="Annotation interface of semanticSBML (Click to view the full size image)" />
+  <a href="${bmStaticAssetsURL}/GRAPHICS/SemanticSBML_annotation-interface.png" title="Click to view the full size image...">
+    <img src="${bmStaticAssetsURL}/GRAPHICS/SemanticSBML_annotation-interface_small.png" alt="Annotation interface of semanticSBML" title="Annotation interface of semanticSBML (Click to view the full size image)" />
   </a>
   <div class="doc_img_legend">
     <span class="mom_figure_ref">Figure 6</span> Annotation interface of semanticSBML.
